@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>KEY Universe Prototype</title>
+<style>
+:root{
+  --bg1:#151421;
+  --bg2:#221f35;
+  --panel:#2b2740;
+  --panel-2:#373151;
+  --panel-3:#433b63;
+  --line:rgba(255,255,255,.08);
+  --text:#f4f1ff;
+  --sub:#bfb8d9;
+  --accent:#ff78c8;
+  --accent-2:#8f7cff;
+  --good:#7ef0c5;
+  --warn:#ffd36c;
+  --shadow:0 14px 36px rgba(0,0,0,.34);
+  --radius:20px;
+  --radius-sm:14px;
+  --hud-h:72px;
+  --bottom-h:84px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top, #2f2850 0%, transparent 32%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  overflow:hidden;
+}
+
+button{
+  font:inherit;
+  border:0;
+  cursor:pointer;
+  color:var(--text);
+}
+
+.app{
+  width:100%;
+  height:100%;
+  position:relative;
+  overflow:hidden;
+}
+
+.screen{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(12px);
+  transition:opacity .35s ease, transform .35s ease;
+}
+
+.screen.active{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+
+.topbar{
+  position:absolute;
+  left:0; right:0; top:0;
+  height:var(--hud-h);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  z-index:20;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.brand .title{
+  font-weight:800;
+  letter-spacing:.02em;
+  font-size:18px;
+}
+.brand .subtitle{
+  font-size:12px;
+  color:var(--sub);
+}
+
+.hud-pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  padding:10px 12px;
+  border-radius:999px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(8px);
+  font-size:13px;
+  color:var(--sub);
+}
+
+.main-wrap{
+  position:absolute;
+  inset:var(--hud-h) 0 var(--bottom-h) 0;
+  padding:10px 16px 16px;
+  overflow:auto;
+}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+
+.bottom-nav{
+  position:absolute;
+  left:14px; right:14px; bottom:14px;
+  height:calc(var(--bottom-h) - 14px);
+  padding:8px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  background:rgba(25,22,38,.75);
+  border:1px solid var(--line);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(14px);
+  z-index:30;
+}
+
+.nav-btn{
+  border-radius:16px;
+  background:transparent;
+  border:1px solid transparent;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  color:var(--sub);
+  transition:.18s ease;
+}
+.nav-btn.active,
+.nav-btn:hover{
+  background:rgba(255,255,255,.06);
+  border-color:var(--line);
+  color:var(--text);
+}
+.nav-btn .icon{
+  font-size:18px;
+  line-height:1;
+}
+.nav-btn .label{
+  font-size:11px;
+  font-weight:700;
+}
+
+.room-layout{
+  display:grid;
+  grid-template-columns:1.35fr .9fr;
+  gap:14px;
+  min-height:100%;
+}
+
+.room-panel{
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.room-scene{
+  position:relative;
+  min-height:520px;
+  overflow:hidden;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255,120,200,.22), transparent 22%),
+    radial-gradient(circle at 78% 20%, rgba(143,124,255,.22), transparent 22%),
+    linear-gradient(180deg,#3a3457 0%,#2e2a48 44%,#26223d 44%,#1e1b31 100%);
+}
+
+.room-scene.night{
+  background:
+    radial-gradient(circle at 20% 18%, rgba(111,155,255,.18), transparent 22%),
+    radial-gradient(circle at 78% 20%, rgba(144,90,255,.16), transparent 22%),
+    linear-gradient(180deg,#22203a 0%,#1d1a31 44%,#17142a 44%,#121021 100%);
+}
+
+.wall-lamp{
+  position:absolute;
+  top:54px;
+  width:74px;
+  height:74px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,244,182,.92) 0%, rgba(255,232,163,.52) 30%, rgba(255,232,163,0) 72%);
+  filter:blur(3px);
+}
+.wall-lamp.left{left:50px}
+.wall-lamp.right{right:50px}
+
+.room-grid{
+  position:absolute;
+  left:22px; right:22px; bottom:22px; top:130px;
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:10px;
+}
+
+.slot{
+  border-radius:14px;
+  border:1px dashed rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+  position:relative;
+  overflow:hidden;
+}
+
+.item{
+  position:absolute;
+  inset:6px;
+  border-radius:12px;
+  padding:8px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+
+.item.pink{
+  background:linear-gradient(135deg,#ff97d6,#ff6db7);
+  color:#fff7fc;
+}
+.item.dark{
+  background:linear-gradient(135deg,#4b426e,#231f38);
+  color:#f0ecff;
+}
+.item.neo{
+  background:linear-gradient(135deg,#7b7cff,#a962ff);
+  color:#f7f4ff;
+}
+.item.warm{
+  background:linear-gradient(135deg,#f7c88e,#f59f6d);
+  color:#fff8ef;
+}
+.item.cute{
+  background:linear-gradient(135deg,#ffc6ee,#ffa8e2);
+  color:#6d2950;
+}
+.item.classic{
+  background:linear-gradient(135deg,#c2a98a,#8e7355);
+  color:#fff9f1;
+}
+
+.avatar-seed{
+  position:absolute;
+  left:32px;
+  bottom:24px;
+  width:90px;
+  height:134px;
+  border-radius:40px 40px 28px 28px;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255,255,255,.18) 0 16%, transparent 17%),
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 16px 32px rgba(0,0,0,.28);
+  backdrop-filter:blur(8px);
+}
+.avatar-seed:before{
+  content:"?";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:40px;
+  font-weight:900;
+  color:rgba(255,255,255,.78);
+}
+.avatar-seed:after{
+  content:"미지의 나";
+  position:absolute;
+  left:50%;
+  bottom:-30px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:12px;
+  color:var(--sub);
+}
+
+.room-side{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.info-card,
+.inventory-card,
+.goal-card{
+  padding:14px;
+}
+
+.section-title{
+  margin:0 0 10px;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.hint-box{
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  color:var(--sub);
+  line-height:1.5;
+  min-height:76px;
+}
+
+.meter-list{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+}
+
+.meter-row{
+  display:grid;
+  grid-template-columns:72px 1fr 32px;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  color:var(--sub);
+}
+.bar{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.05);
+}
+.fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  transition:width .25s ease;
+}
+
+.inventory-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+.inv-btn{
+  border-radius:14px;
+  padding:12px 10px;
+  text-align:left;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  transition:.18s ease;
+}
+.inv-btn:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.07);
+}
+.inv-btn .name{
+  display:block;
+  font-size:13px;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.inv-btn .tag{
+  display:block;
+  font-size:11px;
+  color:var(--sub);
+}
+
+.goal-list{
+  display:grid;
+  gap:10px;
+}
+.goal-chip{
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--sub);
+  font-size:12px;
+}
+.goal-chip strong{
+  color:var(--text);
+}
+
+.primary-btn,
+.secondary-btn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:16px;
+  font-weight:900;
+  letter-spacing:.02em;
+  transition:.18s ease;
+}
+.primary-btn{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 10px 24px rgba(151,112,255,.28);
+}
+.primary-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.secondary-btn{
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+}
+
+.center-screen{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+.awaken-panel{
+  width:min(760px,100%);
+  padding:26px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.awaken-panel:before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,120,200,.18), transparent 18%),
+    radial-gradient(circle at 48% 52%, rgba(143,124,255,.18), transparent 24%);
+  filter:blur(18px);
+  animation:pulseGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow{
+  0%,100%{transform:scale(1);opacity:.7}
+  50%{transform:scale(1.06);opacity:1}
+}
+
+.awaken-content{
+  position:relative;
+  z-index:1;
+}
+
+.awaken-label{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.07);
+  border:1px solid var(--line);
+  color:var(--sub);
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:16px;
+}
+
+.silhouette-wrap{
+  position:relative;
+  height:340px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:8px 0 18px;
+}
+
+.silhouette{
+  width:200px;
+  height:280px;
+  border-radius:90px 90px 46px 46px;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,.18) 0 11%, transparent 12%),
+    linear-gradient(180deg,#fff 0%, #dbcfff 36%, #9f82ff 100%);
+  box-shadow:
+    0 0 36px rgba(255,145,215,.38),
+    0 0 84px rgba(143,124,255,.28);
+  opacity:.92;
+  animation:floaty 2.8s ease-in-out infinite;
+}
+
+@keyframes floaty{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-10px) scale(1.02)}
+}
+
+.awaken-title{
+  font-size:34px;
+  font-weight:900;
+  margin:0 0 10px;
+}
+.awaken-desc{
+  color:var(--sub);
+  line-height:1.7;
+  max-width:520px;
+  margin:0 auto 18px;
+}
+
+.state-layout{
+  display:grid;
+  grid-template-columns:1fr .95fr;
+  gap:14px;
+  min-height:100%;
+}
+
+.state-main,
+.state-side{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.character-card,
+.trait-card,
+.route-card,
+.relation-card{
+  padding:16px;
+}
+
+.character-hero{
+  min-height:520px;
+  display:grid;
+  place-items:center;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,120,200,.18), transparent 18%),
+    radial-gradient(circle at 50% 55%, rgba(143,124,255,.14), transparent 28%),
+    linear-gradient(180deg,#30294c,#221e36);
+  border-radius:18px;
+  border:1px solid var(--line);
+}
+
+.key-avatar{
+  width:220px;
+  height:320px;
+  border-radius:90px 90px 46px 46px;
+  position:relative;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
+    linear-gradient(180deg,#ffd0f0,#ff8dd0 40%, #9e82ff 100%);
+  box-shadow:
+    0 0 42px rgba(255,120,200,.28),
+    0 14px 40px rgba(0,0,0,.26);
+}
+.key-avatar:after{
+  content:"Pink Muse KEY";
+  position:absolute;
+  left:50%;
+  bottom:-34px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:800;
+  color:var(--sub);
+}
+
+.badge-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.badge{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.05);
+  font-size:12px;
+  color:var(--sub);
+}
+.badge strong{color:var(--text)}
+
+.route-list,
+.relation-list{
+  display:grid;
+  gap:10px;
+}
+
+.route-item,
+.relation-item{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+}
+
+.route-item .top,
+.relation-item .top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.route-item .name,
+.relation-item .name{
+  font-weight:800;
+  font-size:13px;
+}
+.route-item .meta,
+.relation-item .meta{
+  color:var(--sub);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.rel-layout{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:14px;
+  min-height:100%;
+}
+
+.dialog-card,
+.contact-card{
+  padding:16px;
+}
+
+.dialog-stage{
+  min-height:520px;
+  padding:18px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255,255,255,.06), transparent 12%),
+    linear-gradient(180deg,#2f2949,#1e1a31);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.duo{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:20px;
+  min-height:290px;
+}
+
+.mini-avatar{
+  width:170px;
+  height:230px;
+  border-radius:70px 70px 34px 34px;
+  position:relative;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 11%, transparent 12%),
+    linear-gradient(180deg,#ffd0f0,#ff91d1 42%, #8f7cff 100%);
+  box-shadow:0 14px 34px rgba(0,0,0,.26);
+}
+.mini-avatar.other{
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.16) 0 11%, transparent 12%),
+    linear-gradient(180deg,#d2d8ff,#8ca7ff 42%, #4b4f89 100%);
+}
+.mini-label{
+  text-align:center;
+  margin-top:10px;
+  color:var(--sub);
+  font-size:12px;
+  font-weight:800;
+}
+
+.dialog-box{
+  margin-top:14px;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  line-height:1.7;
+  color:#f7f5ff;
+  min-height:110px;
+}
+
+.action-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+.action-btn{
+  border-radius:14px;
+  padding:12px 10px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  font-weight:800;
+}
+.action-btn:hover{
+  background:rgba(255,255,255,.08);
+}
+
+.heart-row{
+  display:flex;
+  gap:4px;
+  font-size:18px;
+  margin-top:8px;
+}
+
+.note{
+  margin-top:12px;
+  color:var(--sub);
+  font-size:12px;
+  line-height:1.6;
+}
+
+@media (max-width: 980px){
+  .room-layout,
+  .state-layout,
+  .rel-layout{
+    grid-template-columns:1fr;
+  }
+  .room-scene,
+  .character-hero,
+  .dialog-stage{
+    min-height:420px;
+  }
+}
+
+@media (max-width: 640px){
+  :root{
+    --hud-h:68px;
+    --bottom-h:82px;
+  }
+  .topbar{
+    padding:12px;
+  }
+  .brand .title{
+    font-size:16px;
+  }
+  .main-wrap{
+    padding:8px 12px 16px;
+  }
+  .room-grid{
+    left:14px; right:14px; top:112px; bottom:14px;
+    gap:8px;
+  }
+  .inventory-grid{
+    grid-template-columns:1fr 1fr;
+  }
+  .silhouette{
+    width:170px;
+    height:250px;
+  }
+  .awaken-title{
+    font-size:28px;
+  }
+  .duo{
+    gap:10px;
+  }
+  .mini-avatar{
+    width:132px;
+    height:186px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ROOM SCREEN -->
+  <section class="screen active" id="screen-room">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">KEY Universe: Room Prototype</div>
+        <div class="subtitle">방을 꾸미고, 분위기를 쌓아, 미지의 나를 각성시키세요</div>
+      </div>
+      <div class="hud-pill">
+        <span>현재 상태</span>
+        <strong id="mood-summary">아직 흐릿한 가능성</strong>
+      </div>
+    </div>
+
+    <div class="main-wrap">
+      <div class="room-layout">
+        <div class="card room-panel">
+          <div class="room-scene" id="roomScene">
+            <div class="wall-lamp left"></div>
+            <div class="wall-lamp right"></div>
+            <div class="avatar-seed"></div>
+            <div class="room-grid" id="roomGrid"></div>
+          </div>
+        </div>
+
+        <div class="room-side">
+          <div class="card info-card">
+            <h3 class="section-title">분위기 감지</h3>
+            <div class="hint-box" id="hintText">
+              공간이 아직 불안정해요. 색감과 오브제를 조금 더 모아보세요.
+            </div>
+
+            <div class="meter-list">
+              <div class="meter-row">
+                <span>Pink</span>
+                <div class="bar"><div class="fill" id="bar-pink"></div></div>
+                <strong id="val-pink">0</strong>
+              </div>
+              <div class="meter-row">
+                <span>Cute</span>
+                <div class="bar"><div class="fill" id="bar-cute"></div></div>
+                <strong id="val-cute">0</strong>
+              </div>
+              <div class="meter-row">
+                <span>Dark</span>
+                <div class="bar"><div class="fill" id="bar-dark"></div></div>
+                <strong id="val-dark">0</strong>
+              </div>
+              <div class="meter-row">
+                <span>Neon</span>
+                <div class="bar"><div class="fill" id="bar-neon"></div></div>
+                <strong id="val-neon">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="card inventory-card">
+            <h3 class="section-title">인벤토리</h3>
+            <div class="inventory-grid">
+              <button class="inv-btn" data-item="pinkSofa">
+                <span class="name">핑크 소파</span>
+                <span class="tag">Pink +2 / Cute +1</span>
+              </button>
+              <button class="inv-btn" data-item="plushLamp">
+                <span class="name">토끼 조명</span>
+                <span class="tag">Cute +2 / Pink +1</span>
+              </button>
+              <button class="inv-btn" data-item="neonSign">
+                <span class="name">네온 사인</span>
+                <span class="tag">Neon +3 / Dark +1</span>
+              </button>
+              <button class="inv-btn" data-item="darkShelf">
+                <span class="name">다크 선반</span>
+                <span class="tag">Dark +3</span>
+              </button>
+              <button class="inv-btn" data-item="warmFrame">
+                <span class="name">빈티지 액자</span>
+                <span class="tag">Warm / Classic</span>
+              </button>
+              <button class="inv-btn" data-item="pinkPoster">
+                <span class="name">핑크 포스터</span>
+                <span class="tag">Pink +2 / Cute +1</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card goal-card">
+            <h3 class="section-title">각성 조건 힌트</h3>
+            <div class="goal-list">
+              <div class="goal-chip"><strong>Pink Muse</strong> : 핑크와 귀여움이 강해질수록 가까워져요</div>
+              <div class="goal-chip"><strong>Night Rebel</strong> : 어둠과 네온이 공간을 지배할수록 가까워져요</div>
+              <div class="goal-chip"><strong>Classic Dreamer</strong> : 정돈된 클래식 무드가 쌓일수록 가까워져요</div>
+            </div>
+            <div style="height:12px"></div>
+            <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
+            <div style="height:10px"></div>
+            <button class="secondary-btn" id="clearBtn">방 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" data-go="room">
+        <span class="icon">🏠</span><span class="label">방</span>
+      </button>
+      <button class="nav-btn" data-go="awaken">
+        <span class="icon">✨</span><span class="label">각성</span>
+      </button>
+      <button class="nav-btn" data-go="state">
+        <span class="icon">🪞</span><span class="label">상태</span>
+      </button>
+      <button class="nav-btn" data-go="relation">
+        <span class="icon">🤝</span><span class="label">관계</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- AWAKEN SCREEN -->
+  <section class="screen" id="screen-awaken">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">Awakening</div>
+        <div class="subtitle">플레이 결과가 하나의 KEY 정체성으로 응결됩니다</div>
+      </div>
+      <div class="hud-pill">
+        <span>감지된 정체성</span>
+        <strong id="awakenNameTop">Pink Muse KEY</strong>
+      </div>
+    </div>
+
+    <div class="main-wrap center-screen">
+      <div class="card awaken-panel">
+        <div class="awaken-content">
+          <div class="awaken-label">AWAKENING EVENT</div>
+          <div class="silhouette-wrap">
+            <div class="silhouette"></div>
+          </div>
+          <h1 class="awaken-title" id="awakenName">Pink Muse KEY</h1>
+          <p class="awaken-desc" id="awakenDesc">
+            핑크와 귀여움이 공간 깊숙이 스며들며, 미지의 나는 밝고 사랑스러운 무드를 품은 존재로 각성했습니다.
+          </p>
+          <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
+            <button class="primary-btn" id="toStateBtn">이 정체성 확인하기</button>
+            <button class="secondary-btn" data-go="room">방으로 돌아가기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" data-go="room">
+        <span class="icon">🏠</span><span class="label">방</span>
+      </button>
+      <button class="nav-btn active" data-go="awaken">
+        <span class="icon">✨</span><span class="label">각성</span>
+      </button>
+      <button class="nav-btn" data-go="state">
+        <span class="icon">🪞</span><span class="label">상태</span>
+      </button>
+      <button class="nav-btn" data-go="relation">
+        <span class="icon">🤝</span><span class="label">관계</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- STATE SCREEN -->
+  <section class="screen" id="screen-state">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">KEY State</div>
+        <div class="subtitle">현재 내가 각성한 KEY 정체성과 다음 루트</div>
+      </div>
+      <div class="hud-pill">
+        <span>현재 전직</span>
+        <strong id="stateTopName">Pink Muse KEY</strong>
+      </div>
+    </div>
+
+    <div class="main-wrap">
+      <div class="state-layout">
+        <div class="state-main">
+          <div class="card character-card">
+            <div class="character-hero">
+              <div class="key-avatar" id="stateAvatar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-side">
+          <div class="card trait-card">
+            <h3 class="section-title">정체성 요약</h3>
+            <div class="hint-box" id="stateSummary">
+              사랑스러운 분위기와 소프트한 에너지가 응집된 상태입니다. 밝은 감정선과 친근한 상호작용에 강합니다.
+            </div>
+            <div class="badge-row" id="stateBadges">
+              <div class="badge"><strong>주 속성</strong> Pink</div>
+              <div class="badge"><strong>보조 속성</strong> Cute</div>
+              <div class="badge"><strong>무드</strong> Soft Sparkle</div>
+            </div>
+          </div>
+
+          <div class="card route-card">
+            <h3 class="section-title">다음 루트 힌트</h3>
+            <div class="route-list">
+              <div class="route-item">
+                <div class="top">
+                  <div class="name">친밀 루트 확장</div>
+                  <div class="badge">추천</div>
+                </div>
+                <div class="meta">현재 정체성과 잘 맞는 아바타를 만나면 전용 대사와 선물 반응이 열립니다.</div>
+              </div>
+              <div class="route-item">
+                <div class="top">
+                  <div class="name">반대 속성 탐색</div>
+                  <div class="badge">실험</div>
+                </div>
+                <div class="meta">다크/네온 아이템을 누적하면 전혀 다른 KEY 루트의 힌트를 확인할 수 있습니다.</div>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <button class="primary-btn" data-go="relation">관계 화면으로 이동</button>
+          </div>
+
+          <div class="card relation-card">
+            <h3 class="section-title">예상 관계성</h3>
+            <div class="relation-list">
+              <div class="relation-item">
+                <div class="top">
+                  <div class="name">Blue Night KEY</div>
+                  <div class="badge">미묘한 긴장</div>
+                </div>
+                <div class="meta">상반된 분위기로 인해 특별한 이벤트가 발생할 수 있습니다.</div>
+              </div>
+              <div class="relation-item">
+                <div class="top">
+                  <div class="name">Candy Stage KEY</div>
+                  <div class="badge">높은 궁합</div>
+                </div>
+                <div class="meta">선물 반응과 대화 호감도가 빠르게 상승합니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" data-go="room">
+        <span class="icon">🏠</span><span class="label">방</span>
+      </button>
+      <button class="nav-btn" data-go="awaken">
+        <span class="icon">✨</span><span class="label">각성</span>
+      </button>
+      <button class="nav-btn active" data-go="state">
+        <span class="icon">🪞</span><span class="label">상태</span>
+      </button>
+      <button class="nav-btn" data-go="relation">
+        <span class="icon">🤝</span><span class="label">관계</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- RELATION SCREEN -->
+  <section class="screen" id="screen-relation">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">Relationship Event</div>
+        <div class="subtitle">다른 KEY 아바타와의 상호작용, 선물, 대화 이벤트</div>
+      </div>
+      <div class="hud-pill">
+        <span>현재 방문자</span>
+        <strong id="relationTopName">Blue Night KEY</strong>
+      </div>
+    </div>
+
+    <div class="main-wrap">
+      <div class="rel-layout">
+        <div class="card dialog-card">
+          <div class="dialog-stage">
+            <div>
+              <div class="duo">
+                <div>
+                  <div class="mini-avatar"></div>
+                  <div class="mini-label" id="myLabel">나 · Pink Muse KEY</div>
+                </div>
+                <div>
+                  <div class="mini-avatar other"></div>
+                  <div class="mini-label" id="otherLabel">방문자 · Blue Night KEY</div>
+                </div>
+              </div>
+
+              <div class="dialog-box" id="dialogText">
+                “이 방… 생각보다 따뜻하네. 네 취향이 이렇게 선명할 줄은 몰랐어.”
+              </div>
+            </div>
+
+            <div>
+              <div class="action-row">
+                <button class="action-btn" id="talkBtn">대화하기</button>
+                <button class="action-btn" id="giftBtn">선물하기</button>
+                <button class="action-btn" id="observeBtn">관찰하기</button>
+              </div>
+              <div class="note">
+                현재 프로토타입에서는 버튼을 누르면 관계 대사가 바뀌는 정도로 동작합니다.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card contact-card">
+          <h3 class="section-title">관계 카드</h3>
+          <div class="hint-box">
+            현재 정체성과 방문자의 분위기 차이가 커서, 호감도 상승과 동시에 특수한 긴장 연출이 발생할 수 있습니다.
+            같은 공간 안의 조명과 장식 배치에 따라 대사 톤이 달라질 수 있어요.
+          </div>
+
+          <div style="height:14px"></div>
+
+          <div class="relation-item">
+            <div class="top">
+              <div class="name">호감도</div>
+              <div class="badge">1회차</div>
+            </div>
+            <div class="heart-row" id="heartRow">❤ ❤ ♡ ♡ ♡</div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="relation-item">
+            <div class="top">
+              <div class="name">특수 이벤트 조건</div>
+              <div class="badge">잠김</div>
+            </div>
+            <div class="meta">
+              밤 테마 + 네온 오브제 2개 이상 + 방문자와 2회 이상 대화 시, 특별한 관계 이벤트가 열립니다.
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <button class="primary-btn" data-go="room">방으로 돌아가 계속 꾸미기</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" data-go="room">
+        <span class="icon">🏠</span><span class="label">방</span>
+      </button>
+      <button class="nav-btn" data-go="awaken">
+        <span class="icon">✨</span><span class="label">각성</span>
+      </button>
+      <button class="nav-btn" data-go="state">
+        <span class="icon">🪞</span><span class="label">상태</span>
+      </button>
+      <button class="nav-btn active" data-go="relation">
+        <span class="icon">🤝</span><span class="label">관계</span>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const screens = {
+  room: document.getElementById('screen-room'),
+  awaken: document.getElementById('screen-awaken'),
+  state: document.getElementById('screen-state'),
+  relation: document.getElementById('screen-relation')
+};
+
+const roomGrid = document.getElementById('roomGrid');
+const moodSummary = document.getElementById('mood-summary');
+const hintText = document.getElementById('hintText');
+const awakenBtn = document.getElementById('awakenBtn');
+const clearBtn = document.getElementById('clearBtn');
+const roomScene = document.getElementById('roomScene');
+
+const itemDefs = {
+  pinkSofa:  { name:'핑크 소파', className:'pink',  label:'SOFA',   stats:{ pink:2, cute:1, dark:0, neon:0, classic:0 } },
+  plushLamp: { name:'토끼 조명', className:'cute',  label:'LAMP',   stats:{ pink:1, cute:2, dark:0, neon:0, classic:0 } },
+  neonSign:  { name:'네온 사인', className:'neo',   label:'NEON',   stats:{ pink:0, cute:0, dark:1, neon:3, classic:0 } },
+  darkShelf: { name:'다크 선반', className:'dark',  label:'SHELF',  stats:{ pink:0, cute:0, dark:3, neon:0, classic:0 } },
+  warmFrame: { name:'빈티지 액자', className:'classic', label:'FRAME', stats:{ pink:0, cute:0, dark:0, neon:0, classic:3 } },
+  pinkPoster:{ name:'핑크 포스터', className:'pink', label:'POSTER', stats:{ pink:2, cute:1, dark:0, neon:0, classic:0 } }
+};
+
+const state = {
+  placed: [],
+  stats: { pink:0, cute:0, dark:0, neon:0, classic:0 },
+  awakened: null,
+  relationHearts: 2
+};
+
+for(let i=0;i<24;i++){
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  roomGrid.appendChild(slot);
+}
+
+document.querySelectorAll('.inv-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    addItem(btn.dataset.item);
+  });
+});
+
+document.querySelectorAll('[data-go]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const target = btn.dataset.go;
+    showScreen(target);
+  });
+});
+
+awakenBtn.addEventListener('click', ()=>{
+  state.awakened = detectAwakenType();
+  syncAwakenUI();
+  showScreen('awaken');
+});
+
+document.getElementById('toStateBtn').addEventListener('click', ()=>{
+  showScreen('state');
+});
+
+clearBtn.addEventListener('click', resetRoom);
+
+const dialogs = {
+  talk: [
+    '“네가 만든 분위기, 꽤 흥미로운데. 조금 더 가까이서 봐도 될까?”',
+    '“이 방의 색감은 네 감정이 쌓여서 생긴 거야? 왠지 이해할 수 있을 것 같아.”',
+    '“생각보다 부드럽네. 겉으로 보이는 것보다 훨씬.”'
+  ],
+  gift: [
+    '“이걸 나한테? 취향을 잘 알고 있네.” 호감도가 조금 오른 느낌이다.',
+    '“의외로… 마음에 들어. 다음엔 내가 뭘 좋아하는지도 알아맞혀 봐.”',
+    '“고마워. 네 공간에 어울리는 선택이야.”'
+  ],
+  observe: [
+    '상대 KEY는 조명을 한 번 올려다본 뒤, 네 배치 취향을 조용히 훑어본다.',
+    '방문자의 시선이 소파와 포스터 사이를 오간다. 이 공간의 의도를 읽는 듯하다.',
+    '낯선 듯 익숙한 표정. 너의 분위기가 상대의 기억을 자극한 것 같다.'
+  ]
+};
+
+document.getElementById('talkBtn').addEventListener('click', ()=>changeDialog('talk'));
+document.getElementById('giftBtn').addEventListener('click', ()=>changeDialog('gift', true));
+document.getElementById('observeBtn').addEventListener('click', ()=>changeDialog('observe'));
+
+function addItem(key){
+  const slots = [...document.querySelectorAll('.slot')];
+  const empty = slots.find(slot => !slot.querySelector('.item'));
+  if(!empty) return;
+
+  const def = itemDefs[key];
+  const item = document.createElement('div');
+  item.className = `item ${def.className}`;
+  item.textContent = def.label;
+  empty.appendChild(item);
+
+  state.placed.push(key);
+  for(const stat in def.stats){
+    state.stats[stat] += def.stats[stat];
+  }
+  updateRoomState();
+}
+
+function resetRoom(){
+  document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = '');
+  state.placed = [];
+  state.stats = { pink:0, cute:0, dark:0, neon:0, classic:0 };
+  state.awakened = null;
+  state.relationHearts = 2;
+  updateRoomState();
+  syncAwakenUI();
+  document.getElementById('dialogText').textContent = '“이 방… 생각보다 따뜻하네. 네 취향이 이렇게 선명할 줄은 몰랐어.”';
+  updateHearts();
+}
+
+function updateRoomState(){
+  setBar('pink', state.stats.pink, 12);
+  setBar('cute', state.stats.cute, 12);
+  setBar('dark', state.stats.dark, 12);
+  setBar('neon', state.stats.neon, 12);
+
+  const mode = detectAwakenType();
+  const canAwaken = getAwakenScore(mode) >= 7;
+
+  if(mode === 'Pink Muse KEY'){
+    moodSummary.textContent = '핑크 감도가 상승 중';
+    hintText.textContent = '부드럽고 사랑스러운 취향이 강해지고 있어요. 밝은 감정선이 한 인물을 향해 모이는 중입니다.';
+  }else if(mode === 'Night Rebel KEY'){
+    moodSummary.textContent = '밤의 기류 감지';
+    hintText.textContent = '어둠과 네온이 공간을 장악하고 있어요. 차갑고 강렬한 정체성이 가까워지고 있습니다.';
+  }else if(mode === 'Classic Dreamer KEY'){
+    moodSummary.textContent = '정돈된 고전 감성';
+    hintText.textContent = '정제된 배치와 오래된 무드가 층을 이루고 있어요. 차분하고 우아한 각성 루트가 보입니다.';
+  }else{
+    moodSummary.textContent = '아직 흐릿한 가능성';
+    hintText.textContent = '공간이 아직 불안정해요. 색감과 오브제를 조금 더 모아보세요.';
+  }
+
+  awakenBtn.disabled = !canAwaken;
+  roomScene.classList.toggle('night', state.stats.dark + state.stats.neon >= 6);
+}
+
+function setBar(name, value, max){
+  document.getElementById(`val-${name}`).textContent = value;
+  document.getElementById(`bar-${name}`).style.width = `${Math.min(100, value / max * 100)}%`;
+}
+
+function detectAwakenType(){
+  const pinkMuse = state.stats.pink * 2 + state.stats.cute * 2;
+  const nightRebel = state.stats.dark * 2 + state.stats.neon * 2;
+  const classicDreamer = state.stats.classic * 3 + Math.max(0, 4 - state.stats.neon);
+
+  const max = Math.max(pinkMuse, nightRebel, classicDreamer);
+
+  if(max < 7) return 'Unknown';
+  if(max === pinkMuse) return 'Pink Muse KEY';
+  if(max === nightRebel) return 'Night Rebel KEY';
+  return 'Classic Dreamer KEY';
+}
+
+function getAwakenScore(type){
+  if(type === 'Pink Muse KEY') return state.stats.pink * 2 + state.stats.cute * 2;
+  if(type === 'Night Rebel KEY') return state.stats.dark * 2 + state.stats.neon * 2;
+  if(type === 'Classic Dreamer KEY') return state.stats.classic * 3 + Math.max(0, 4 - state.stats.neon);
+  return 0;
+}
+
+function syncAwakenUI(){
+  const type = state.awakened || detectAwakenType();
+
+  const awakenName = document.getElementById('awakenName');
+  const awakenNameTop = document.getElementById('awakenNameTop');
+  const awakenDesc = document.getElementById('awakenDesc');
+  const stateTopName = document.getElementById('stateTopName');
+  const stateSummary = document.getElementById('stateSummary');
+  const stateBadges = document.getElementById('stateBadges');
+  const myLabel = document.getElementById('myLabel');
+  const relationTopName = document.getElementById('relationTopName');
+  const otherLabel = document.getElementById('otherLabel');
+
+  let desc = '아직 각성 전입니다.';
+  let summary = '방의 분위기를 더 쌓아 정체성을 응결시키세요.';
+  let badges = [
+    ['주 속성', 'Unknown'],
+    ['보조 속성', 'Unknown'],
+    ['무드', 'Undefined']
+  ];
+  let visitor = 'Blue Night KEY';
+
+  if(type === 'Pink Muse KEY'){
+    desc = '핑크와 귀여움이 공간 깊숙이 스며들며, 미지의 나는 밝고 사랑스러운 무드를 품은 존재로 각성했습니다.';
+    summary = '사랑스러운 분위기와 소프트한 에너지가 응집된 상태입니다. 밝은 감정선과 친근한 상호작용에 강합니다.';
+    badges = [
+      ['주 속성','Pink'],
+      ['보조 속성','Cute'],
+      ['무드','Soft Sparkle']
+    ];
+    visitor = 'Blue Night KEY';
+  }else if(type === 'Night Rebel KEY'){
+    desc = '어둠과 네온이 감정의 층을 통과하며, 미지의 나는 밤을 두른 날카로운 정체성으로 각성했습니다.';
+    summary = '차갑고 선명한 에너지가 강한 상태입니다. 긴장감 있는 관계 이벤트와 도시적 공간 연출에 강합니다.';
+    badges = [
+      ['주 속성','Dark'],
+      ['보조 속성','Neon'],
+      ['무드','Midnight Voltage']
+    ];
+    visitor = 'Pink Muse KEY';
+  }else if(type === 'Classic Dreamer KEY'){
+    desc = '정돈된 고전미와 차분한 분위기가 쌓여, 미지의 나는 섬세하고 우아한 정체성으로 각성했습니다.';
+    summary = '절제된 감성과 우아한 취향이 응집된 상태입니다. 서정적인 관계 이벤트와 깊은 대화 루트에 강합니다.';
+    badges = [
+      ['주 속성','Classic'],
+      ['보조 속성','Warm'],
+      ['무드','Quiet Velvet']
+    ];
+    visitor = 'Stage Prince KEY';
+  }
+
+  awakenName.textContent = type === 'Unknown' ? '미지의 상태' : type;
+  awakenNameTop.textContent = type === 'Unknown' ? '미확정' : type;
+  awakenDesc.textContent = desc;
+  stateTopName.textContent = type === 'Unknown' ? '미확정' : type;
+  stateSummary.textContent = summary;
+  myLabel.textContent = `나 · ${type === 'Unknown' ? '미지의 나' : type}`;
+  relationTopName.textContent = visitor;
+  otherLabel.textContent = `방문자 · ${visitor}`;
+
+  stateBadges.innerHTML = '';
+  badges.forEach(([k,v])=>{
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.innerHTML = `<strong>${k}</strong> ${v}`;
+    stateBadges.appendChild(el);
+  });
+}
+
+function showScreen(name){
+  Object.values(screens).forEach(screen => screen.classList.remove('active'));
+  screens[name].classList.add('active');
+
+  document.querySelectorAll('.screen').forEach(screen=>{
+    const navs = screen.querySelectorAll('.nav-btn');
+    navs.forEach(btn => btn.classList.toggle('active', btn.dataset.go === name));
+  });
+
+  if(name === 'awaken' || name === 'state' || name === 'relation'){
+    syncAwakenUI();
+  }
+}
+
+function changeDialog(type, addHeart = false){
+  const pool = dialogs[type];
+  const text = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('dialogText').textContent = text;
+  if(addHeart){
+    state.relationHearts = Math.min(5, state.relationHearts + 1);
+    updateHearts();
+  }
+}
+
+function updateHearts(){
+  const filled = '❤'.repeat(state.relationHearts);
+  const empty = '♡'.repeat(5 - state.relationHearts);
+  document.getElementById('heartRow').textContent = `${filled} ${empty}`.trim();
+}
+
+updateRoomState();
+syncAwakenUI();
+updateHearts();
+</script>
+</body>
+</html>
