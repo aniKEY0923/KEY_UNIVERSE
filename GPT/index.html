@@ -210,7 +210,7 @@ img{
 
 .seed-avatar{
   position:relative;
-  z-index:1;
+  z-index:2;
   width:180px;
   height:250px;
   border-radius:80px 80px 42px 42px;
@@ -225,6 +225,7 @@ img{
   padding:16px;
   backdrop-filter:blur(4px);
 }
+
 .seed-avatar img,
 .awaken-figure img{
   width:100%;
@@ -234,9 +235,31 @@ img{
   filter:drop-shadow(0 6px 12px rgba(0,0,0,.4));
 }
 
+/* schedule stage moving sprite */
+.seed-player{
+  position:absolute;
+  z-index:3;
+  width:28px;
+  height:40px;
+  left:80px;
+  top:340px;
+  pointer-events:none;
+  will-change:left, top, transform;
+}
+.seed-player img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.42));
+}
+.seed-player.left{
+  transform:scaleX(-1);
+}
+
 .seed-label{
   position:relative;
-  z-index:1;
+  z-index:2;
   text-align:center;
 }
 .seed-label .name{
@@ -566,7 +589,8 @@ img{
   .schedule-grid,
   .action-row{ grid-template-columns:1fr 1fr; }
   .awaken-title{ font-size:28px; }
-  .room-player{
+  .room-player,
+  .seed-player{
     width:26px;
     height:38px;
   }
@@ -591,10 +615,15 @@ img{
     <div class="main">
       <div class="layout">
         <div class="card panel">
-          <div class="seed-stage">
+          <div class="seed-stage" id="seedStage">
             <div class="seed-avatar">
               <img id="seedImg" src="img/KEY_default.png" alt="미지의 키" />
             </div>
+
+            <div class="seed-player" id="seedPlayer">
+              <img id="seedPlayerImg" src="img/KEY_default_s.png" alt="이동 캐릭터" />
+            </div>
+
             <div class="seed-label">
               <div class="name">미지의 나</div>
               <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
@@ -680,6 +709,25 @@ img{
             <div class="action-row">
               <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
               <button class="secondary-btn" id="resetBtn">처음부터</button>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title">이동 버튼</h3>
+            <div class="small">각성 전에도 미지의 나를 스테이지 안에서 움직일 수 있어요.</div>
+
+            <div class="dpad">
+              <div class="empty"></div>
+              <button data-move="up">▲</button>
+              <div class="empty"></div>
+
+              <button data-move="left">◀</button>
+              <div class="empty"></div>
+              <button data-move="right">▶</button>
+
+              <div class="empty"></div>
+              <button data-move="down">▼</button>
+              <div class="empty"></div>
             </div>
           </div>
         </div>
@@ -794,6 +842,16 @@ const state = {
   maxEnergy: 100,
   stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
   awakened: null,
+
+  seedPlayer: {
+    x: 80,
+    y: 340,
+    w: 28,
+    h: 40,
+    speed: 10,
+    facing: 'right'
+  },
+
   player: {
     x: 100,
     y: 340,
@@ -829,11 +887,17 @@ const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 const scheduleDialog = document.getElementById('scheduleDialog');
 const awakenBtn = document.getElementById('awakenBtn');
+
 const seedImg = document.getElementById('seedImg');
 const awakenImg = document.getElementById('awakenImg');
+
+const seedStage = document.getElementById('seedStage');
+const seedPlayer = document.getElementById('seedPlayer');
+const seedPlayerImg = document.getElementById('seedPlayerImg');
+
+const roomScene = document.getElementById('roomScene');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
-const roomScene = document.getElementById('roomScene');
 const roomHint = document.getElementById('roomHint');
 
 const statEls = {
@@ -852,8 +916,8 @@ document.getElementById('resetBtn').addEventListener('click', resetAll);
 document.getElementById('awakenBtn').addEventListener('click', doAwaken);
 document.getElementById('toRoomBtn').addEventListener('click', () => {
   showScreen('room');
-  placePlayerInitial();
-  renderPlayer();
+  placeRoomPlayerInitial();
+  renderRoomPlayer();
 });
 document.getElementById('backScheduleBtn').addEventListener('click', () => showScreen('schedule'));
 document.getElementById('restartAllBtn').addEventListener('click', resetAll);
@@ -861,13 +925,23 @@ document.getElementById('backAwakenBtn').addEventListener('click', () => showScr
 
 document.querySelectorAll('[data-move]').forEach(btn => {
   const move = btn.dataset.move;
+
   const run = (e) => {
     e.preventDefault();
-    if(move === 'up') movePlayer(0, -state.player.speed);
-    if(move === 'down') movePlayer(0, state.player.speed);
-    if(move === 'left') movePlayer(-state.player.speed, 0);
-    if(move === 'right') movePlayer(state.player.speed, 0);
+
+    if(screens.schedule.classList.contains('active')){
+      if(move === 'up') moveSeedPlayer(0, -state.seedPlayer.speed);
+      if(move === 'down') moveSeedPlayer(0, state.seedPlayer.speed);
+      if(move === 'left') moveSeedPlayer(-state.seedPlayer.speed, 0);
+      if(move === 'right') moveSeedPlayer(state.seedPlayer.speed, 0);
+    } else if(screens.room.classList.contains('active')){
+      if(move === 'up') moveRoomPlayer(0, -state.player.speed);
+      if(move === 'down') moveRoomPlayer(0, state.player.speed);
+      if(move === 'left') moveRoomPlayer(-state.player.speed, 0);
+      if(move === 'right') moveRoomPlayer(state.player.speed, 0);
+    }
   };
+
   btn.addEventListener('click', run);
   btn.addEventListener('touchstart', run, { passive:false });
 });
@@ -1005,19 +1079,51 @@ function syncRoomUI(){
   });
 }
 
-function placePlayerInitial(){
+/* schedule player */
+function placeSeedPlayerInitial(){
+  const rect = seedStage.getBoundingClientRect();
+  state.seedPlayer.x = Math.max(12, rect.width * 0.18);
+  state.seedPlayer.y = Math.max(110, rect.height * 0.72);
+}
+
+function renderSeedPlayer(){
+  seedPlayer.style.left = `${state.seedPlayer.x}px`;
+  seedPlayer.style.top = `${state.seedPlayer.y}px`;
+  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+}
+
+function moveSeedPlayer(dx, dy){
+  if(!screens.schedule.classList.contains('active')) return;
+
+  const rect = seedStage.getBoundingClientRect();
+  const minX = 0;
+  const minY = 0;
+  const maxX = rect.width - state.seedPlayer.w;
+  const maxY = rect.height - state.seedPlayer.h;
+
+  state.seedPlayer.x = clamp(state.seedPlayer.x + dx, minX, maxX);
+  state.seedPlayer.y = clamp(state.seedPlayer.y + dy, minY, maxY);
+
+  if(dx < 0) state.seedPlayer.facing = 'left';
+  if(dx > 0) state.seedPlayer.facing = 'right';
+
+  renderSeedPlayer();
+}
+
+/* room player */
+function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
   state.player.x = Math.max(12, rect.width * 0.18);
   state.player.y = Math.max(110, rect.height * 0.72);
 }
 
-function renderPlayer(){
+function renderRoomPlayer(){
   roomPlayer.style.left = `${state.player.x}px`;
   roomPlayer.style.top = `${state.player.y}px`;
   roomPlayer.classList.toggle('left', state.player.facing === 'left');
 }
 
-function movePlayer(dx, dy){
+function moveRoomPlayer(dx, dy){
   if(!screens.room.classList.contains('active')) return;
 
   const rect = roomScene.getBoundingClientRect();
@@ -1032,7 +1138,7 @@ function movePlayer(dx, dy){
   if(dx < 0) state.player.facing = 'left';
   if(dx > 0) state.player.facing = 'right';
 
-  renderPlayer();
+  renderRoomPlayer();
   checkPointEvent();
 }
 
@@ -1054,24 +1160,41 @@ function checkPointEvent(){
 }
 
 document.addEventListener('keydown', (e) => {
-  if(!screens.room.classList.contains('active')) return;
-
   switch(e.key){
     case 'ArrowUp':
       e.preventDefault();
-      movePlayer(0, -state.player.speed);
+      if(screens.schedule.classList.contains('active')){
+        moveSeedPlayer(0, -state.seedPlayer.speed);
+      } else if(screens.room.classList.contains('active')){
+        moveRoomPlayer(0, -state.player.speed);
+      }
       break;
+
     case 'ArrowDown':
       e.preventDefault();
-      movePlayer(0, state.player.speed);
+      if(screens.schedule.classList.contains('active')){
+        moveSeedPlayer(0, state.seedPlayer.speed);
+      } else if(screens.room.classList.contains('active')){
+        moveRoomPlayer(0, state.player.speed);
+      }
       break;
+
     case 'ArrowLeft':
       e.preventDefault();
-      movePlayer(-state.player.speed, 0);
+      if(screens.schedule.classList.contains('active')){
+        moveSeedPlayer(-state.seedPlayer.speed, 0);
+      } else if(screens.room.classList.contains('active')){
+        moveRoomPlayer(-state.player.speed, 0);
+      }
       break;
+
     case 'ArrowRight':
       e.preventDefault();
-      movePlayer(state.player.speed, 0);
+      if(screens.schedule.classList.contains('active')){
+        moveSeedPlayer(state.seedPlayer.speed, 0);
+      } else if(screens.room.classList.contains('active')){
+        moveRoomPlayer(state.player.speed, 0);
+      }
       break;
   }
 });
@@ -1084,6 +1207,7 @@ function resetAll(){
 
   seedImg.src = imageSet.defaultLarge;
   awakenImg.src = imageSet.defaultLarge;
+  seedPlayerImg.src = imageSet.defaultSmall;
   roomPlayerImg.src = imageSet.defaultSmall;
 
   scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
@@ -1091,17 +1215,29 @@ function resetAll(){
   document.getElementById('roomBadges').innerHTML = '';
   roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
 
+  placeSeedPlayerInitial();
+  renderSeedPlayer();
+  placeRoomPlayerInitial();
+  renderRoomPlayer();
+
   updateScheduleUI();
   showScreen('schedule');
 }
 
 window.addEventListener('resize', () => {
-  if(screens.room.classList.contains('active')) renderPlayer();
+  if(screens.schedule.classList.contains('active')){
+    renderSeedPlayer();
+  }
+  if(screens.room.classList.contains('active')){
+    renderRoomPlayer();
+  }
 });
 
 updateScheduleUI();
-placePlayerInitial();
-renderPlayer();
+placeSeedPlayerInitial();
+renderSeedPlayer();
+placeRoomPlayerInitial();
+renderRoomPlayer();
 </script>
 </body>
 </html>
