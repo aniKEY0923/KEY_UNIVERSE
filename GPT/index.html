@@ -170,11 +170,12 @@ img{
 
 .layout{
   display:grid;
-  grid-template-columns:1.1fr .9fr;
+  grid-template-columns:1.08fr .92fr;
   gap:14px;
   min-height:calc(100vh - var(--top-h) - 30px);
 }
 
+/* schedule */
 .seed-stage{
   position:relative;
   min-height:520px;
@@ -350,13 +351,13 @@ img{
   line-height:1.45;
 }
 
+/* awaken */
 .center-wrap{
   min-height:calc(100vh - var(--top-h) - 30px);
   display:flex;
   align-items:center;
   justify-content:center;
 }
-
 .awaken-card{
   width:min(760px,100%);
   padding:26px;
@@ -417,16 +418,17 @@ img{
   line-height:1.7;
 }
 
+/* room */
 .room-layout{
   display:grid;
-  grid-template-columns:1.2fr .8fr;
+  grid-template-columns:1.18fr .82fr;
   gap:14px;
   min-height:calc(100vh - var(--top-h) - 30px);
 }
 
 .room-scene{
   position:relative;
-  min-height:540px;
+  min-height:560px;
   border-radius:18px;
   border:1px solid var(--line);
   overflow:hidden;
@@ -457,19 +459,20 @@ img{
 
 .room-player{
   position:absolute;
-  z-index:8;
-  width:44px;
-  height:60px;
-  left:120px;
-  top:360px;
+  z-index:10;
+  width:28px;
+  height:40px;
+  left:100px;
+  top:340px;
   pointer-events:none;
+  will-change:left, top, transform;
 }
 .room-player img{
   width:100%;
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.42));
 }
 .room-player.left{
   transform:scaleX(-1);
@@ -564,8 +567,8 @@ img{
   .action-row{ grid-template-columns:1fr 1fr; }
   .awaken-title{ font-size:28px; }
   .room-player{
-    width:40px;
-    height:54px;
+    width:26px;
+    height:38px;
   }
 }
 </style>
@@ -718,7 +721,7 @@ img{
     <div class="topbar">
       <div class="brand">
         <div class="title">My Room</div>
-        <div class="subtitle">키보드 또는 아래 버튼으로 움직여보세요</div>
+        <div class="subtitle">스테이지 안에서만 캐릭터가 이동합니다</div>
       </div>
       <div class="pill">
         <span>Identity</span>
@@ -732,10 +735,11 @@ img{
           <div class="room-scene" id="roomScene">
             <div class="room-map"></div>
             <div class="room-help">↑↓←→ 또는 터치 버튼으로 이동</div>
+
             <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
 
             <div class="room-player" id="roomPlayer">
-              <img id="roomPlayerImg" src="img/KEY_default.png" alt="플레이어" />
+              <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
             </div>
           </div>
         </div>
@@ -749,7 +753,7 @@ img{
 
           <div class="card panel">
             <h3 class="section-title">이동 버튼</h3>
-            <div class="small">모바일에서는 아래 버튼으로도 움직일 수 있어요.</div>
+            <div class="small">모바일에서는 아래 버튼으로 움직일 수 있어요.</div>
 
             <div class="dpad">
               <div class="empty"></div>
@@ -791,13 +795,22 @@ const state = {
   stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
   awakened: null,
   player: {
-    x: 120,
-    y: 300,
-    w: 44,
-    h: 60,
+    x: 100,
+    y: 340,
+    w: 28,
+    h: 40,
     speed: 10,
     facing: 'right'
   }
+};
+
+const imageSet = {
+  defaultLarge: 'img/KEY_default.png',
+  gasolineLarge: 'img/KEY_gasoline.png',
+  badloveLarge: 'img/KEY_badlove.png',
+  defaultSmall: 'img/KEY_default_s.png',
+  gasolineSmall: 'img/KEY_gasoline_s.png',
+  badloveSmall: 'img/KEY_badlove_s.png'
 };
 
 const dialogues = {
@@ -892,17 +905,35 @@ function act(type){
 
   switch(type){
     case 'practice':
-      state.stats.stage += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.practice; break;
+      state.stats.stage += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.practice;
+      break;
     case 'study':
-      state.stats.style += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.study; break;
+      state.stats.style += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.study;
+      break;
     case 'movie':
-      state.stats.mood += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.movie; break;
+      state.stats.mood += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.movie;
+      break;
     case 'walk':
-      state.stats.mystery += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.walk; break;
+      state.stats.mystery += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.walk;
+      break;
     case 'letters':
-      state.stats.charm += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.letters; break;
+      state.stats.charm += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.letters;
+      break;
     case 'rest':
-      state.day += 1; state.energy = state.maxEnergy; scheduleDialog.textContent = dialogues.rest; break;
+      state.day += 1;
+      state.energy = state.maxEnergy;
+      scheduleDialog.textContent = dialogues.rest;
+      break;
   }
 
   state.energy = clamp(state.energy, 0, state.maxEnergy);
@@ -924,7 +955,8 @@ function detectIdentity(){
   if(gasolineScore >= badLoveScore){
     return {
       name: 'Gasoline KEY',
-      img: 'img/KEY_gasoline.png',
+      largeImg: imageSet.gasolineLarge,
+      smallImg: imageSet.gasolineSmall,
       desc: '강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.',
       badges: [['주 속성','Stage'], ['보조 속성','Style'], ['무드','Royal Voltage']]
     };
@@ -932,7 +964,8 @@ function detectIdentity(){
 
   return {
     name: 'Bad Love KEY',
-    img: 'img/KEY_badlove.png',
+    largeImg: imageSet.badloveLarge,
+    smallImg: imageSet.badloveSmall,
     desc: '감정과 밤의 잔향이 뒤섞이며, 몽환적이고 신비로운 KEY로 각성했습니다.',
     badges: [['주 속성','Mood'], ['보조 속성','Mystery'], ['무드','Dark Dream']]
   };
@@ -952,7 +985,7 @@ function syncAwakenUI(){
   document.getElementById('awakenTopName').textContent = id.name;
   document.getElementById('awakenName').textContent = id.name;
   document.getElementById('awakenDesc').textContent = id.desc;
-  awakenImg.src = id.img;
+  awakenImg.src = id.largeImg;
 }
 
 function syncRoomUI(){
@@ -960,7 +993,7 @@ function syncRoomUI(){
   if(!id) return;
 
   document.getElementById('roomIdentity').textContent = id.name;
-  roomPlayerImg.src = id.img;
+  roomPlayerImg.src = id.smallImg;
 
   const badgeWrap = document.getElementById('roomBadges');
   badgeWrap.innerHTML = '';
@@ -974,8 +1007,8 @@ function syncRoomUI(){
 
 function placePlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
-  state.player.x = Math.max(20, rect.width * 0.18);
-  state.player.y = Math.max(120, rect.height * 0.72);
+  state.player.x = Math.max(12, rect.width * 0.18);
+  state.player.y = Math.max(110, rect.height * 0.72);
 }
 
 function renderPlayer(){
@@ -988,10 +1021,10 @@ function movePlayer(dx, dy){
   if(!screens.room.classList.contains('active')) return;
 
   const rect = roomScene.getBoundingClientRect();
-  const minX = 8;
-  const minY = 88;
-  const maxX = rect.width - state.player.w - 8;
-  const maxY = rect.height - state.player.h - 8;
+  const minX = 0;
+  const minY = 0;
+  const maxX = rect.width - state.player.w;
+  const maxY = rect.height - state.player.h;
 
   state.player.x = clamp(state.player.x + dx, minX, maxX);
   state.player.y = clamp(state.player.y + dy, minY, maxY);
@@ -1049,9 +1082,9 @@ function resetAll(){
   state.stats = { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 };
   state.awakened = null;
 
-  seedImg.src = 'img/KEY_default.png';
-  awakenImg.src = 'img/KEY_default.png';
-  roomPlayerImg.src = 'img/KEY_default.png';
+  seedImg.src = imageSet.defaultLarge;
+  awakenImg.src = imageSet.defaultLarge;
+  roomPlayerImg.src = imageSet.defaultSmall;
 
   scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
   document.getElementById('roomIdentity').textContent = '-';
