@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
 <title>KEY:VERSE Proto</title>
 <style>
 :root{
@@ -42,6 +42,11 @@ button{
   cursor:pointer;
 }
 
+img{
+  display:block;
+  max-width:100%;
+}
+
 .app{
   position:relative;
   width:100%;
@@ -57,6 +62,7 @@ button{
   transform:translateY(12px);
   transition:opacity .28s ease, transform .28s ease;
 }
+
 .screen.active{
   opacity:1;
   pointer-events:auto;
@@ -80,11 +86,13 @@ button{
   flex-direction:column;
   gap:4px;
 }
+
 .brand .title{
   font-size:18px;
   font-weight:900;
   letter-spacing:.02em;
 }
+
 .brand .subtitle{
   font-size:12px;
   color:var(--sub);
@@ -150,8 +158,8 @@ button{
   overflow:hidden;
   border:1px solid var(--line);
   background:
-    radial-gradient(circle at 50% 22%, rgba(255,255,255,.05), transparent 18%),
-    linear-gradient(180deg,#2e2a47,#211d35);
+    linear-gradient(rgba(20,19,32,.38), rgba(20,19,32,.52)),
+    url("img/room_default.png") center center / cover no-repeat;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -165,10 +173,11 @@ button{
   width:280px;
   height:280px;
   border-radius:50%;
-  background:radial-gradient(circle, rgba(255,123,199,.18), rgba(139,125,255,0));
+  background:radial-gradient(circle, rgba(255,123,199,.12), rgba(139,125,255,0));
   filter:blur(8px);
   animation:pulse 3s ease-in-out infinite;
 }
+
 @keyframes pulse{
   0%,100%{transform:scale(1);opacity:.72}
   50%{transform:scale(1.06);opacity:1}
@@ -188,9 +197,19 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:42px;
-  font-weight:900;
-  color:rgba(255,255,255,.85);
+  padding:16px;
+  backdrop-filter:blur(4px);
+}
+
+.seed-avatar img,
+.awaken-figure img,
+.room-avatar img,
+#visitorAvatar img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.4));
 }
 
 .seed-label{
@@ -198,14 +217,18 @@ button{
   z-index:1;
   text-align:center;
 }
+
 .seed-label .name{
   font-size:22px;
   font-weight:900;
+  text-shadow:0 2px 10px rgba(0,0,0,.25);
 }
+
 .seed-label .desc{
   margin-top:6px;
-  color:var(--sub);
+  color:#ddd6f5;
   font-size:13px;
+  text-shadow:0 2px 10px rgba(0,0,0,.3);
 }
 
 .dialog{
@@ -222,6 +245,7 @@ button{
   gap:10px;
   margin-top:12px;
 }
+
 .stat-row{
   display:grid;
   grid-template-columns:78px 1fr 34px;
@@ -230,6 +254,7 @@ button{
   color:var(--sub);
   font-size:12px;
 }
+
 .bar{
   height:10px;
   border-radius:999px;
@@ -237,12 +262,14 @@ button{
   overflow:hidden;
   border:1px solid rgba(255,255,255,.05);
 }
+
 .fill{
   height:100%;
   width:0%;
   border-radius:999px;
   transition:width .25s ease;
 }
+
 .fill.stage{background:linear-gradient(90deg,var(--gold),#ffd98a)}
 .fill.mood{background:linear-gradient(90deg,var(--pink),#ffb1df)}
 .fill.style{background:linear-gradient(90deg,var(--violet),#b0a7ff)}
@@ -256,6 +283,7 @@ button{
   border:1px solid var(--line);
   background:rgba(255,255,255,.04);
 }
+
 .energy-top{
   display:flex;
   align-items:center;
@@ -263,6 +291,7 @@ button{
   margin-bottom:8px;
   font-size:13px;
 }
+
 .energy-bar{
   height:12px;
   border-radius:999px;
@@ -270,6 +299,7 @@ button{
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.05);
 }
+
 .energy-fill{
   height:100%;
   width:100%;
@@ -283,6 +313,7 @@ button{
   gap:10px;
   margin-top:12px;
 }
+
 .schedule-btn{
   text-align:left;
   padding:14px 12px;
@@ -291,16 +322,19 @@ button{
   border:1px solid var(--line);
   transition:.18s ease;
 }
+
 .schedule-btn:hover{
   transform:translateY(-1px);
   background:rgba(255,255,255,.07);
 }
+
 .schedule-btn .title{
   display:block;
   font-size:13px;
   font-weight:900;
   margin-bottom:5px;
 }
+
 .schedule-btn .meta{
   display:block;
   font-size:11px;
@@ -324,14 +358,17 @@ button{
   letter-spacing:.02em;
   transition:.18s ease;
 }
+
 .primary-btn{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   box-shadow:0 12px 28px rgba(145,110,255,.25);
 }
+
 .primary-btn:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
+
 .secondary-btn{
   background:rgba(255,255,255,.06);
   border:1px solid var(--line);
@@ -351,6 +388,7 @@ button{
   position:relative;
   overflow:hidden;
 }
+
 .awaken-card:before{
   content:"";
   position:absolute;
@@ -361,10 +399,12 @@ button{
   filter:blur(16px);
   animation:pulse 2.8s ease-in-out infinite;
 }
+
 .awaken-inner{
   position:relative;
   z-index:1;
 }
+
 .awaken-badge{
   display:inline-block;
   padding:8px 12px;
@@ -376,6 +416,7 @@ button{
   font-weight:800;
   margin-bottom:14px;
 }
+
 .awaken-figure{
   width:220px;
   height:300px;
@@ -388,16 +429,23 @@ button{
     0 0 36px rgba(255,123,199,.26),
     0 0 92px rgba(139,125,255,.22);
   animation:floaty 2.8s ease-in-out infinite;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
 }
+
 @keyframes floaty{
   0%,100%{transform:translateY(0)}
   50%{transform:translateY(-8px)}
 }
+
 .awaken-title{
   margin:0 0 10px;
   font-size:34px;
   font-weight:900;
 }
+
 .awaken-desc{
   max-width:520px;
   margin:0 auto 18px;
@@ -423,12 +471,14 @@ button{
     radial-gradient(circle at 78% 22%, rgba(139,125,255,.18), transparent 18%),
     linear-gradient(180deg,#3a3458 0%,#2e2848 44%,#26213e 44%,#1d1a2f 100%);
 }
+
 .room-scene.night{
   background:
     radial-gradient(circle at 22% 18%, rgba(124,213,255,.16), transparent 18%),
     radial-gradient(circle at 78% 22%, rgba(139,125,255,.14), transparent 18%),
     linear-gradient(180deg,#24213c 0%,#1e1a33 44%,#181427 44%,#12101f 100%);
 }
+
 .room-lamp{
   position:absolute;
   top:52px;
@@ -438,6 +488,7 @@ button{
   background:radial-gradient(circle, rgba(255,241,182,.9) 0%, rgba(255,233,175,.46) 30%, rgba(255,233,175,0) 72%);
   filter:blur(3px);
 }
+
 .room-lamp.left{left:48px}
 .room-lamp.right{right:48px}
 
@@ -471,6 +522,7 @@ button{
   letter-spacing:.02em;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
 }
+
 .item.pink{background:linear-gradient(135deg,#ff9ed9,#ff70bd);color:#fff8fc}
 .item.cute{background:linear-gradient(135deg,#ffd0ef,#ffade2);color:#6f2750}
 .item.neo{background:linear-gradient(135deg,#7b7cff,#ae63ff);color:#f7f4ff}
@@ -488,17 +540,12 @@ button{
     radial-gradient(circle at 50% 24%, rgba(255,255,255,.16) 0 11%, transparent 12%),
     linear-gradient(180deg,#ffd6f1,#ff97d5 42%, #8f7cff 100%);
   box-shadow:0 14px 30px rgba(0,0,0,.26);
+  padding:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
-.room-avatar.night{
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.14) 0 11%, transparent 12%),
-    linear-gradient(180deg,#d8deff,#89a5ff 42%, #4d4d87 100%);
-}
-.room-avatar.classic{
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.14) 0 11%, transparent 12%),
-    linear-gradient(180deg,#f1e2d1,#cba887 42%, #87664f 100%);
-}
+
 .room-avatar:after{
   content:attr(data-name);
   position:absolute;
@@ -517,6 +564,7 @@ button{
   gap:10px;
   margin-top:12px;
 }
+
 .inv-btn{
   text-align:left;
   padding:12px;
@@ -525,16 +573,19 @@ button{
   border:1px solid var(--line);
   transition:.18s ease;
 }
+
 .inv-btn:hover{
   transform:translateY(-1px);
   background:rgba(255,255,255,.07);
 }
+
 .inv-btn .name{
   display:block;
   font-size:13px;
   font-weight:900;
   margin-bottom:4px;
 }
+
 .inv-btn .meta{
   display:block;
   font-size:11px;
@@ -557,6 +608,7 @@ button{
   gap:8px;
   margin-top:12px;
 }
+
 .badge{
   padding:8px 12px;
   border-radius:999px;
@@ -565,7 +617,33 @@ button{
   color:var(--sub);
   font-size:12px;
 }
+
 .badge strong{color:var(--text)}
+
+.visitor-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:12px;
+}
+
+#visitorAvatar{
+  width:70px;
+  height:90px;
+  border-radius:30px;
+  background:linear-gradient(180deg,#cfd6ff,#7f8cff);
+  padding:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+}
+
+.heart-row{
+  margin-top:10px;
+  font-size:18px;
+  letter-spacing:2px;
+}
 
 @media (max-width: 980px){
   .layout,
@@ -580,13 +658,23 @@ button{
 
 @media (max-width: 640px){
   :root{ --top-h:68px; }
+
   .topbar{ padding:12px; }
+
   .brand .title{ font-size:16px; }
+
   .main{ padding:10px 12px 12px; }
-  .room-grid{ left:14px; right:14px; top:112px; bottom:14px; gap:8px; }
+
+  .room-grid{
+    left:14px; right:14px; top:112px; bottom:14px; gap:8px;
+  }
+
   .schedule-grid,
   .inv-grid,
-  .action-row{ grid-template-columns:1fr 1fr; }
+  .action-row{
+    grid-template-columns:1fr 1fr;
+  }
+
   .awaken-title{ font-size:28px; }
 }
 </style>
@@ -611,7 +699,9 @@ button{
       <div class="layout">
         <div class="card panel">
           <div class="seed-stage">
-            <div class="seed-avatar">?</div>
+            <div class="seed-avatar">
+              <img id="seedImg" src="img/KEY_default.png" alt="미지의 키" />
+            </div>
             <div class="seed-label">
               <div class="name">미지의 나</div>
               <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
@@ -715,7 +805,7 @@ button{
       </div>
       <div class="pill">
         <span>Result</span>
-        <strong id="awakenTopName">Pink Muse KEY</strong>
+        <strong id="awakenTopName">Gasoline KEY</strong>
       </div>
     </div>
 
@@ -723,10 +813,12 @@ button{
       <div class="card awaken-card">
         <div class="awaken-inner">
           <div class="awaken-badge">AWAKENING EVENT</div>
-          <div class="awaken-figure" id="awakenFigure"></div>
-          <h1 class="awaken-title" id="awakenName">Pink Muse KEY</h1>
+          <div class="awaken-figure">
+            <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
+          </div>
+          <h1 class="awaken-title" id="awakenName">Gasoline KEY</h1>
           <p class="awaken-desc" id="awakenDesc">
-            부드러운 감정선과 사랑스러운 스타일이 응집되며, 미지의 나는 밝고 친화적인 KEY 정체성으로 각성했습니다.
+            강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.
           </p>
           <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
             <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
@@ -746,7 +838,7 @@ button{
       </div>
       <div class="pill">
         <span>Identity</span>
-        <strong id="roomIdentity">Pink Muse KEY</strong>
+        <strong id="roomIdentity">Gasoline KEY</strong>
       </div>
     </div>
 
@@ -756,7 +848,7 @@ button{
           <div class="room-scene" id="roomScene">
             <div class="room-lamp left"></div>
             <div class="room-lamp right"></div>
-            <div class="room-avatar" id="roomAvatar" data-name="Pink Muse KEY"></div>
+            <div class="room-avatar" id="roomAvatar" data-name="Gasoline KEY"></div>
             <div class="room-grid" id="roomGrid"></div>
           </div>
         </div>
@@ -769,8 +861,8 @@ button{
             </div>
 
             <div class="badge-row" id="roomBadges">
-              <div class="badge"><strong>주 속성</strong> Pink</div>
-              <div class="badge"><strong>보조 속성</strong> Charm</div>
+              <div class="badge"><strong>주 속성</strong> Stage</div>
+              <div class="badge"><strong>보조 속성</strong> Style</div>
             </div>
           </div>
 
@@ -811,11 +903,35 @@ button{
             </div>
           </div>
 
+          <div class="card panel" id="visitorPanel" style="display:none;">
+            <h3 class="section-title">방문자</h3>
+
+            <div class="dialog" id="visitorDialog">
+              누군가가 방문할 것 같은 기운이 느껴진다...
+            </div>
+
+            <div class="visitor-head">
+              <div id="visitorAvatar"></div>
+              <div>
+                <div id="visitorName" style="font-weight:900;">???</div>
+                <div id="visitorMood" class="small">낯선 기류</div>
+              </div>
+            </div>
+
+            <div class="heart-row" id="heartRow">♡ ♡ ♡ ♡ ♡</div>
+
+            <div class="action-row" style="margin-top:12px;">
+              <button class="secondary-btn" id="talkBtn">대화</button>
+              <button class="secondary-btn" id="giftBtn">선물</button>
+              <button class="secondary-btn" id="observeBtn">관찰</button>
+            </div>
+          </div>
+
           <div class="card panel">
             <h3 class="section-title">다음 확장 포인트</h3>
             <div class="small">
-              다음 단계에서는 여기서부터 방문 이벤트, 선물, 대화, 호감도, 숨겨진 관계 루트를 붙이면 돼.
-              지금 버전은 우선 “초반 스케줄 육성 → 각성 → 방 진입” 흐름 검증용이야.
+              다음 단계에서는 여기서부터 방문 이벤트, 선물, 대화, 호감도, 숨겨진 관계 루트를 더 깊게 붙이면 돼.
+              지금 버전은 우선 “초반 스케줄 육성 → 각성 → 방 진입 → 첫 방문자 이벤트” 흐름 검증용이야.
             </div>
           </div>
         </div>
@@ -844,7 +960,9 @@ const state = {
     charm: 0
   },
   awakened: null,
-  roomItems: []
+  roomItems: [],
+  visitor: null,
+  affinity: 0
 };
 
 const dialogues = {
@@ -872,6 +990,8 @@ const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 const scheduleDialog = document.getElementById('scheduleDialog');
 const awakenBtn = document.getElementById('awakenBtn');
+const seedImg = document.getElementById('seedImg');
+const awakenImg = document.getElementById('awakenImg');
 
 const statEls = {
   stage: { fill: document.getElementById('fill-stage'), val: document.getElementById('val-stage') },
@@ -901,6 +1021,25 @@ for(let i = 0; i < 24; i++){
 
 document.querySelectorAll('.inv-btn').forEach(btn => {
   btn.addEventListener('click', () => addRoomItem(btn.dataset.item));
+});
+
+document.getElementById('talkBtn').addEventListener('click', () => {
+  if(!state.visitor) return;
+  state.affinity = Math.min(5, state.affinity + 1);
+  document.getElementById('visitorDialog').textContent = '“조금 더 이야기해도 될 것 같아.”';
+  updateHearts();
+});
+
+document.getElementById('giftBtn').addEventListener('click', () => {
+  if(!state.visitor) return;
+  state.affinity = Math.min(5, state.affinity + 2);
+  document.getElementById('visitorDialog').textContent = '“이건… 나를 생각하고 준 거야?”';
+  updateHearts();
+});
+
+document.getElementById('observeBtn').addEventListener('click', () => {
+  if(!state.visitor) return;
+  document.getElementById('visitorDialog').textContent = '상대는 방을 천천히 둘러보고 있다...';
 });
 
 function showScreen(name){
@@ -975,58 +1114,34 @@ function act(type){
 
 function canAwaken(){
   const s = state.stats;
-  const topScore = Math.max(
-    s.mood + s.style + s.charm,
-    s.stage + s.style,
-    s.mystery + s.mood,
-    s.mood + s.style
-  );
-  return topScore >= 10;
+  const gasolineScore = s.stage + s.style;
+  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
+  return Math.max(gasolineScore, badLoveScore) >= 10;
 }
 
 function detectIdentity(){
   const s = state.stats;
+  const gasolineScore = s.stage + s.style;
+  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
 
-  const pinkMuse = s.mood + s.style + s.charm;
-  const nightRebel = s.stage + s.style;
-  const blueNoir = s.mystery + s.mood;
-  const classicDreamer = s.mood + s.style;
-
-  const max = Math.max(pinkMuse, nightRebel, blueNoir, classicDreamer);
-
-  if(max === pinkMuse){
+  if(gasolineScore >= badLoveScore){
     return {
-      name: 'Pink Muse KEY',
-      desc: '부드러운 감정선과 사랑스러운 스타일이 응집되며, 미지의 나는 밝고 친화적인 KEY 정체성으로 각성했습니다.',
-      badges: [['주 속성','Pink'], ['보조 속성','Charm'], ['무드','Soft Sparkle']],
-      roomHint: '따뜻하고 사랑스러운 공간을 만들수록 부드러운 방문자 루트가 열릴 것 같아요.',
-      roomClass: 'pink'
-    };
-  }
-  if(max === nightRebel){
-    return {
-      name: 'Night Rebel KEY',
-      desc: '강한 존재감과 선명한 스타일 감각이 겹쳐지며, 미지의 나는 날카롭고 화려한 KEY 정체성으로 각성했습니다.',
-      badges: [['주 속성','Stage'], ['보조 속성','Style'], ['무드','Neon Voltage']],
-      roomHint: '네온과 강한 대비의 공간을 만들수록 도시적이고 긴장감 있는 관계 루트가 열릴 것 같아요.',
+      name: 'Gasoline KEY',
+      img: 'img/KEY_gasoline.png',
+      desc: '강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.',
+      badges: [['주 속성','Stage'], ['보조 속성','Style'], ['무드','Royal Voltage']],
+      roomHint: '강한 대비와 네온 무드가 살아있는 공간을 만들수록 도전적인 방문자 루트가 열릴 것 같아요.',
       roomClass: 'night'
     };
   }
-  if(max === blueNoir){
-    return {
-      name: 'Blue Noir KEY',
-      desc: '밤의 공기와 감정의 잔향이 쌓이며, 미지의 나는 몽환적이고 신비로운 KEY 정체성으로 각성했습니다.',
-      badges: [['주 속성','Mystery'], ['보조 속성','Mood'], ['무드','Midnight Echo']],
-      roomHint: '차가운 조명과 어두운 오브제를 배치하면, 비밀스러운 방문자 이벤트가 더 잘 어울릴 것 같아요.',
-      roomClass: 'night'
-    };
-  }
+
   return {
-    name: 'Classic Dreamer KEY',
-    desc: '차분한 감정과 정돈된 미감이 층을 이루며, 미지의 나는 우아하고 서정적인 KEY 정체성으로 각성했습니다.',
-    badges: [['주 속성','Mood'], ['보조 속성','Style'], ['무드','Quiet Velvet']],
-    roomHint: '정제되고 안정된 공간을 만들수록 깊은 대화형 관계 루트가 열릴 것 같아요.',
-    roomClass: 'classic'
+    name: 'Bad Love KEY',
+    img: 'img/KEY_badlove.png',
+    desc: '감정과 밤의 잔향이 뒤섞이며, 몽환적이고 신비로운 KEY로 각성했습니다.',
+    badges: [['주 속성','Mood'], ['보조 속성','Mystery'], ['무드','Dark Dream']],
+    roomHint: '차갑고 감성적인 분위기를 쌓을수록 섬세하고 묘한 관계 이벤트가 더 잘 어울릴 것 같아요.',
+    roomClass: 'night'
   };
 }
 
@@ -1045,6 +1160,7 @@ function syncAwakenUI(){
   document.getElementById('awakenTopName').textContent = id.name;
   document.getElementById('awakenName').textContent = id.name;
   document.getElementById('awakenDesc').textContent = id.desc;
+  awakenImg.src = id.img;
 }
 
 function syncRoomUI(){
@@ -1065,15 +1181,17 @@ function syncRoomUI(){
 
   const roomAvatar = document.getElementById('roomAvatar');
   roomAvatar.dataset.name = id.name;
-  roomAvatar.className = 'room-avatar';
+  roomAvatar.innerHTML = '';
+
+  const avatarImg = document.createElement('img');
+  avatarImg.src = id.img;
+  avatarImg.alt = id.name;
+  roomAvatar.appendChild(avatarImg);
+
   const roomScene = document.getElementById('roomScene');
   roomScene.classList.remove('night');
-
   if(id.roomClass === 'night'){
     roomScene.classList.add('night');
-    roomAvatar.classList.add('night');
-  }else if(id.roomClass === 'classic'){
-    roomAvatar.classList.add('classic');
   }
 }
 
@@ -1088,11 +1206,83 @@ function addRoomItem(key){
   item.textContent = def.label;
   empty.appendChild(item);
   state.roomItems.push(key);
+
+  checkVisitorSpawn();
 }
 
 function clearRoom(){
   document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = '');
   state.roomItems = [];
+  clearVisitor();
+}
+
+function checkVisitorSpawn(){
+  if(!state.awakened) return;
+  if(state.visitor) return;
+
+  const hasPink = state.roomItems.includes('pinkSofa') || state.roomItems.includes('pinkPoster') || state.roomItems.includes('plushLamp');
+  const hasDark = state.roomItems.includes('darkShelf') || state.roomItems.includes('neonSign');
+
+  let visitor = null;
+
+  if(state.awakened.name === 'Gasoline KEY' && hasPink){
+    visitor = {
+      name: 'Bad Love KEY',
+      mood: '부드럽지만 낯선 긴장감',
+      dialog: '“이렇게 따뜻한 공간도… 의외로 나쁘지 않네.”',
+      img: 'img/KEY_badlove.png'
+    };
+  }
+
+  if(state.awakened.name === 'Bad Love KEY' && hasDark){
+    visitor = {
+      name: 'Gasoline KEY',
+      mood: '강한 존재감과 미묘한 끌림',
+      dialog: '“어두운 방인데도 시선이 자꾸 머무네.”',
+      img: 'img/KEY_gasoline.png'
+    };
+  }
+
+  if(visitor){
+    spawnVisitor(visitor);
+  }
+}
+
+function spawnVisitor(visitor){
+  state.visitor = visitor;
+  state.affinity = 1;
+
+  document.getElementById('visitorPanel').style.display = 'block';
+  document.getElementById('visitorName').textContent = visitor.name;
+  document.getElementById('visitorMood').textContent = visitor.mood;
+  document.getElementById('visitorDialog').textContent = visitor.dialog;
+
+  const visitorAvatar = document.getElementById('visitorAvatar');
+  visitorAvatar.innerHTML = '';
+
+  const img = document.createElement('img');
+  img.src = visitor.img;
+  img.alt = visitor.name;
+  visitorAvatar.appendChild(img);
+
+  updateHearts();
+}
+
+function clearVisitor(){
+  state.visitor = null;
+  state.affinity = 0;
+  document.getElementById('visitorPanel').style.display = 'none';
+  document.getElementById('visitorAvatar').innerHTML = '';
+  document.getElementById('visitorDialog').textContent = '누군가가 방문할 것 같은 기운이 느껴진다...';
+  document.getElementById('visitorName').textContent = '???';
+  document.getElementById('visitorMood').textContent = '낯선 기류';
+  updateHearts();
+}
+
+function updateHearts(){
+  const filled = '❤'.repeat(state.affinity);
+  const empty = '♡'.repeat(5 - state.affinity);
+  document.getElementById('heartRow').textContent = `${filled} ${empty}`.trim();
 }
 
 function resetAll(){
@@ -1107,13 +1297,29 @@ function resetAll(){
   };
   state.awakened = null;
   state.roomItems = [];
+  state.visitor = null;
+  state.affinity = 0;
+
   clearRoom();
+
+  seedImg.src = 'img/KEY_default.png';
+  awakenImg.src = 'img/KEY_default.png';
+
+  const roomAvatar = document.getElementById('roomAvatar');
+  roomAvatar.dataset.name = '';
+  roomAvatar.innerHTML = '';
+
+  document.getElementById('roomIdentity').textContent = '-';
+  document.getElementById('roomHint').textContent = '지금의 정체성에 맞는 공간이 열렸어요. 어떤 오브제를 배치하느냐에 따라 이후 방문자와 관계 루트가 달라질 수 있습니다.';
+  document.getElementById('roomBadges').innerHTML = '';
+
   scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
   updateScheduleUI();
   showScreen('schedule');
 }
 
 updateScheduleUI();
+updateHearts();
 </script>
 </body>
 </html>
