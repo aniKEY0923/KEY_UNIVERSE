@@ -1,170 +1,1057 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KEY:VERSE</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>KEY:VERSE Proto</title>
 <style>
+:root{
+  --bg1:#141320;
+  --bg2:#211d34;
+  --panel:#2a2640;
+  --line:rgba(255,255,255,.08);
+  --text:#f5f2ff;
+  --sub:#bdb6d8;
+  --pink:#ff7bc7;
+  --violet:#8b7dff;
+  --gold:#f3c56c;
+  --cyan:#7cd5ff;
+  --mint:#7df0d0;
+  --radius:20px;
+  --shadow:0 16px 40px rgba(0,0,0,.32);
+  --top-h:72px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
   margin:0;
-  background:#111;
-  color:white;
-  font-family:sans-serif;
-}
-
-/* ===== 화면 ===== */
-.screen{
-  display:none;
-}
-.screen.active{
-  display:block;
-}
-
-/* ===== 방 ===== */
-.room{
-  position:relative;
-  width:100%;
-  height:100vh;
-  background:url("img/room_default.png") center/cover no-repeat;
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(125,100,255,.24) 0%, transparent 28%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
   overflow:hidden;
 }
 
-/* ===== 캐릭터 (🔥 1/3 크기) ===== */
-.player{
-  position:absolute;
-  width:48px;   /* 기존 144 기준 → 1/3 */
-  height:72px;
-  left:50%;
-  top:60%;
-  transform:translate(-50%, -50%);
+button{
+  font:inherit;
+  color:inherit;
+  border:0;
+  cursor:pointer;
 }
 
-.player img{
+img{
+  display:block;
+  max-width:100%;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+.app{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+
+.screen{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(12px);
+  transition:opacity .28s ease, transform .28s ease;
+}
+.screen.active{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+
+.topbar{
+  position:absolute;
+  left:0; right:0; top:0;
+  height:var(--top-h);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  z-index:20;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.brand .title{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+.brand .subtitle{
+  font-size:12px;
+  color:var(--sub);
+}
+
+.pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  border-radius:999px;
+  box-shadow:var(--shadow);
+  color:var(--sub);
+  font-size:13px;
+  backdrop-filter:blur(10px);
+}
+
+.main{
+  position:absolute;
+  inset:var(--top-h) 0 0 0;
+  padding:14px 16px 16px;
+  overflow:auto;
+}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+
+.panel{ padding:16px; }
+
+.section-title{
+  margin:0 0 12px;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.small{
+  font-size:12px;
+  color:var(--sub);
+  line-height:1.6;
+}
+
+.action-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.primary-btn,
+.secondary-btn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:16px;
+  font-weight:900;
+  letter-spacing:.02em;
+  transition:.18s ease;
+}
+.primary-btn{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  box-shadow:0 12px 28px rgba(145,110,255,.25);
+}
+.primary-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.secondary-btn{
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+}
+
+/* schedule */
+.layout{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:14px;
+  min-height:calc(100vh - var(--top-h) - 30px);
+}
+
+.seed-stage{
+  position:relative;
+  min-height:520px;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:
+    linear-gradient(rgba(20,19,32,.38), rgba(20,19,32,.52)),
+    url("img/room_default.png") center center / cover no-repeat;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+}
+
+.seed-stage:before{
+  content:"";
+  position:absolute;
+  width:280px;
+  height:280px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,123,199,.12), rgba(139,125,255,0));
+  filter:blur(8px);
+  animation:pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse{
+  0%,100%{transform:scale(1);opacity:.72}
+  50%{transform:scale(1.06);opacity:1}
+}
+
+.seed-avatar{
+  position:relative;
+  z-index:1;
+  width:180px;
+  height:250px;
+  border-radius:80px 80px 42px 42px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 14px 30px rgba(0,0,0,.26);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  backdrop-filter:blur(4px);
+}
+.seed-avatar img,
+.awaken-figure img{
   width:100%;
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.4));
 }
 
-/* ===== 간단 UI ===== */
-.ui{
-  position:absolute;
-  top:10px;
-  left:10px;
+.seed-label{
+  position:relative;
+  z-index:1;
+  text-align:center;
 }
-button{
-  padding:10px;
-  margin:5px;
+.seed-label .name{
+  font-size:22px;
+  font-weight:900;
+  text-shadow:0 2px 10px rgba(0,0,0,.25);
+}
+.seed-label .desc{
+  margin-top:6px;
+  color:#ddd6f5;
+  font-size:13px;
+  text-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+
+.dialog{
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  line-height:1.7;
+  color:#f7f5ff;
+}
+
+.stat-list{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+}
+.stat-row{
+  display:grid;
+  grid-template-columns:78px 1fr 34px;
+  gap:10px;
+  align-items:center;
+  color:var(--sub);
+  font-size:12px;
+}
+.bar{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.05);
+}
+.fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.fill.stage{background:linear-gradient(90deg,var(--gold),#ffd98a)}
+.fill.mood{background:linear-gradient(90deg,var(--pink),#ffb1df)}
+.fill.style{background:linear-gradient(90deg,var(--violet),#b0a7ff)}
+.fill.mystery{background:linear-gradient(90deg,#567dff,#8fc2ff)}
+.fill.charm{background:linear-gradient(90deg,var(--mint),#b2ffe6)}
+
+.energy-box{
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+}
+.energy-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  font-size:13px;
+}
+.energy-bar{
+  height:12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.05);
+}
+.energy-fill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,var(--mint),#b6ffe8);
+  transition:width .25s ease;
+}
+
+.schedule-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.schedule-btn{
+  text-align:left;
+  padding:14px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line);
+  transition:.18s ease;
+}
+.schedule-btn:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.07);
+}
+.schedule-btn .title{
+  display:block;
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:5px;
+}
+.schedule-btn .meta{
+  display:block;
+  font-size:11px;
+  color:var(--sub);
+  line-height:1.45;
+}
+
+/* awaken */
+.center-wrap{
+  min-height:calc(100vh - var(--top-h) - 30px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.awaken-card{
+  width:min(760px,100%);
+  padding:26px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.awaken-card:before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,123,199,.18), transparent 18%),
+    radial-gradient(circle at 50% 52%, rgba(139,125,255,.18), transparent 28%);
+  filter:blur(16px);
+  animation:pulse 2.8s ease-in-out infinite;
+}
+.awaken-inner{
+  position:relative;
+  z-index:1;
+}
+.awaken-badge{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.07);
+  color:var(--sub);
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:14px;
+}
+.awaken-figure{
+  width:220px;
+  height:300px;
+  margin:10px auto 18px;
+  border-radius:96px 96px 48px 48px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
+    linear-gradient(180deg,#ffe2f3,#ff98d4 38%, #907fff 100%);
+  box-shadow:
+    0 0 36px rgba(255,123,199,.26),
+    0 0 92px rgba(139,125,255,.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.awaken-title{
+  margin:0 0 10px;
+  font-size:34px;
+  font-weight:900;
+}
+.awaken-desc{
+  max-width:520px;
+  margin:0 auto 18px;
+  color:var(--sub);
+  line-height:1.7;
+}
+
+/* room */
+.room-layout{
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:14px;
+  min-height:calc(100vh - var(--top-h) - 30px);
+}
+
+.room-scene{
+  position:relative;
+  min-height:540px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  overflow:hidden;
+  background:#222;
+}
+
+.room-map{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(rgba(20,19,32,.18), rgba(20,19,32,.22)),
+    url("img/room_default.png") center center / cover no-repeat;
+}
+
+.room-help{
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:6;
+  padding:8px 10px;
+  border-radius:12px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:12px;
+  color:#f0ebff;
+  backdrop-filter:blur(8px);
+}
+
+.room-player{
+  position:absolute;
+  z-index:8;
+  width:44px;
+  height:60px;
+  left:120px;
+  top:360px;
+  pointer-events:none;
+}
+.room-player img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));
+}
+
+.room-player.left{
+  transform:scaleX(-1);
+}
+
+.room-marker{
+  position:absolute;
+  z-index:5;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2px dashed rgba(255,255,255,.35);
+  background:rgba(255,255,255,.05);
+  box-shadow:0 0 0 6px rgba(255,255,255,.03);
+  pointer-events:none;
+}
+.room-marker::after{
+  content:attr(data-label);
+  position:absolute;
+  left:50%;
+  top:48px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:11px;
+  color:#eee8ff;
+  text-shadow:0 2px 6px rgba(0,0,0,.45);
+}
+
+.hint-box{
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  color:var(--sub);
+  line-height:1.6;
+  min-height:90px;
+}
+
+.badge-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+.badge{
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  color:var(--sub);
+  font-size:12px;
+}
+.badge strong{color:var(--text)}
+
+@media (max-width: 980px){
+  .layout,
+  .room-layout{
+    grid-template-columns:1fr;
+  }
+  .seed-stage,
+  .room-scene{
+    min-height:420px;
+  }
+}
+
+@media (max-width: 640px){
+  :root{ --top-h:68px; }
+  .topbar{ padding:12px; }
+  .brand .title{ font-size:16px; }
+  .main{ padding:10px 12px 12px; }
+  .schedule-grid,
+  .action-row{ grid-template-columns:1fr 1fr; }
+  .awaken-title{ font-size:28px; }
+  .room-player{
+    width:40px;
+    height:54px;
+  }
 }
 </style>
 </head>
-
 <body>
+<div class="app">
 
-<!-- ===== 스케줄 화면 ===== -->
-<div class="screen active" id="schedule">
-  <h2>스케줄</h2>
-  <button onclick="addStat('stage')">연습</button>
-  <button onclick="addStat('mood')">감상</button>
-  <button onclick="rest()">휴식</button>
-  <button onclick="awaken()">각성</button>
-</div>
-
-<!-- ===== 각성 ===== -->
-<div class="screen" id="awaken">
-  <h2 id="resultText"></h2>
-  <button onclick="enterRoom()">방으로 이동</button>
-</div>
-
-<!-- ===== 방 ===== -->
-<div class="screen" id="room">
-  <div class="room" id="roomMap">
-
-    <!-- 캐릭터 -->
-    <div class="player" id="player">
-      <img id="playerImg" src="img/KEY_default.png">
+  <section class="screen active" id="screen-schedule">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">KEY:VERSE — Prelude</div>
+        <div class="subtitle">미지의 나를 육성해 어떤 KEY로 각성할지 결정하세요</div>
+      </div>
+      <div class="pill">
+        <span>Day</span>
+        <strong id="dayText">1</strong>
+      </div>
     </div>
 
-    <div class="ui">
-      <button onclick="reset()">리셋</button>
+    <div class="main">
+      <div class="layout">
+        <div class="card panel">
+          <div class="seed-stage">
+            <div class="seed-avatar">
+              <img id="seedImg" src="img/KEY_default.png" alt="미지의 키" />
+            </div>
+            <div class="seed-label">
+              <div class="name">미지의 나</div>
+              <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card panel">
+            <h3 class="section-title">오늘의 상태</h3>
+            <div class="dialog" id="scheduleDialog">“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”</div>
+
+            <div class="stat-list">
+              <div class="stat-row">
+                <span>Stage</span>
+                <div class="bar"><div class="fill stage" id="fill-stage"></div></div>
+                <strong id="val-stage">0</strong>
+              </div>
+              <div class="stat-row">
+                <span>Mood</span>
+                <div class="bar"><div class="fill mood" id="fill-mood"></div></div>
+                <strong id="val-mood">0</strong>
+              </div>
+              <div class="stat-row">
+                <span>Style</span>
+                <div class="bar"><div class="fill style" id="fill-style"></div></div>
+                <strong id="val-style">0</strong>
+              </div>
+              <div class="stat-row">
+                <span>Mystery</span>
+                <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
+                <strong id="val-mystery">0</strong>
+              </div>
+              <div class="stat-row">
+                <span>Charm</span>
+                <div class="bar"><div class="fill charm" id="fill-charm"></div></div>
+                <strong id="val-charm">0</strong>
+              </div>
+            </div>
+
+            <div class="energy-box">
+              <div class="energy-top">
+                <span>Energy</span>
+                <strong id="energyText">100 / 100</strong>
+              </div>
+              <div class="energy-bar">
+                <div class="energy-fill" id="energyFill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title">스케줄 수행</h3>
+            <div class="small">행동을 수행하면 성향이 쌓이고 에너지가 소모됩니다. 휴식을 선택하면 다음 날로 넘어가며 에너지가 회복됩니다.</div>
+
+            <div class="schedule-grid">
+              <button class="schedule-btn" data-act="practice">
+                <span class="title">🎤 보컬 연습</span>
+                <span class="meta">Stage +2 / Energy -20</span>
+              </button>
+              <button class="schedule-btn" data-act="study">
+                <span class="title">👗 콘셉트 연구</span>
+                <span class="meta">Style +2 / Energy -20</span>
+              </button>
+              <button class="schedule-btn" data-act="movie">
+                <span class="title">🎬 영화 감상</span>
+                <span class="meta">Mood +2 / Energy -20</span>
+              </button>
+              <button class="schedule-btn" data-act="walk">
+                <span class="title">🌙 야간 산책</span>
+                <span class="meta">Mystery +2 / Energy -20</span>
+              </button>
+              <button class="schedule-btn" data-act="letters">
+                <span class="title">💌 팬레터 읽기</span>
+                <span class="meta">Charm +2 / Energy -20</span>
+              </button>
+              <button class="schedule-btn" data-act="rest">
+                <span class="title">🛌 휴식</span>
+                <span class="meta">Next Day / Energy Full</span>
+              </button>
+            </div>
+
+            <div class="action-row">
+              <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
+              <button class="secondary-btn" id="resetBtn">처음부터</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-awaken">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">Awakening</div>
+        <div class="subtitle">스케줄의 결과가 하나의 정체성으로 응결됩니다</div>
+      </div>
+      <div class="pill">
+        <span>Result</span>
+        <strong id="awakenTopName">Gasoline KEY</strong>
+      </div>
     </div>
 
-  </div>
+    <div class="main center-wrap">
+      <div class="card awaken-card">
+        <div class="awaken-inner">
+          <div class="awaken-badge">AWAKENING EVENT</div>
+          <div class="awaken-figure">
+            <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
+          </div>
+          <h1 class="awaken-title" id="awakenName">Gasoline KEY</h1>
+          <p class="awaken-desc" id="awakenDesc">강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.</p>
+          <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
+            <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
+            <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-room">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">My Room</div>
+        <div class="subtitle">방향키로 움직여보세요</div>
+      </div>
+      <div class="pill">
+        <span>Identity</span>
+        <strong id="roomIdentity">-</strong>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="room-layout">
+        <div class="card panel">
+          <div class="room-scene" id="roomScene">
+            <div class="room-map" id="roomMap"></div>
+            <div class="room-help">방향키로 이동</div>
+
+            <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
+
+            <div class="room-player" id="roomPlayer">
+              <img id="roomPlayerImg" src="img/KEY_default.png" alt="플레이어" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card panel">
+            <h3 class="section-title">현재 상태</h3>
+            <div class="hint-box" id="roomHint">방 안으로 들어왔어요. 방향키로 움직여보세요.</div>
+            <div class="badge-row" id="roomBadges"></div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title">조작</h3>
+            <div class="small">
+              ↑ ↓ ← → 로 이동할 수 있어요.<br>
+              지금 버전은 맵 위 이동 테스트에 집중한 프로토타입입니다.
+            </div>
+            <div class="action-row">
+              <button class="secondary-btn" id="restartAllBtn">처음으로</button>
+              <button class="primary-btn" id="backAwakenBtn">각성 화면</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <script>
-
-/* ===== 상태 ===== */
-let state = {
-  stage:0,
-  mood:0,
-  awakened:null,
-  x:window.innerWidth/2,
-  y:window.innerHeight*0.6
+const screens = {
+  schedule: document.getElementById('screen-schedule'),
+  awaken: document.getElementById('screen-awaken'),
+  room: document.getElementById('screen-room')
 };
 
-/* ===== 스케줄 ===== */
-function addStat(type){
-  state[type]+=1;
-}
-
-function rest(){
-  alert("휴식 완료");
-}
-
-/* ===== 각성 ===== */
-function awaken(){
-  if(state.stage >= state.mood){
-    state.awakened = "gasoline";
-    document.getElementById("playerImg").src = "img/KEY_gasoline.png";
-    document.getElementById("resultText").innerText = "Gasoline KEY";
-  }else{
-    state.awakened = "badlove";
-    document.getElementById("playerImg").src = "img/KEY_badlove.png";
-    document.getElementById("resultText").innerText = "Bad Love KEY";
+const state = {
+  day: 1,
+  energy: 100,
+  maxEnergy: 100,
+  stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
+  awakened: null,
+  player: {
+    x: 120,
+    y: 300,
+    w: 44,
+    h: 60,
+    speed: 8,
+    facing: 'right'
   }
+};
 
-  show("awaken");
-}
+const dialogues = {
+  practice: '“조금 더 선명해지는 느낌이야. 무대 위의 내가 가까워졌어.”',
+  study: '“옷과 분위기를 고르는 것도 나를 만드는 일이네.”',
+  movie: '“감정이 쌓이는 날이 있어. 오늘이 그런 날 같아.”',
+  walk: '“밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.”',
+  letters: '“사람의 마음을 읽고 있으면 나도 조금 부드러워지는 것 같아.”',
+  rest: '“푹 쉬었어. 다음 하루를 시작할 준비가 됐어.”',
+  lowEnergy: '“지금은 조금 지쳤어… 쉬어가자.”',
+  ready: '“이제 충분히 선명해졌어. 어떤 KEY가 될지 정해질 것 같아.”'
+};
 
-/* ===== 화면 전환 ===== */
-function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
+const dayText = document.getElementById('dayText');
+const energyText = document.getElementById('energyText');
+const energyFill = document.getElementById('energyFill');
+const scheduleDialog = document.getElementById('scheduleDialog');
+const awakenBtn = document.getElementById('awakenBtn');
+const seedImg = document.getElementById('seedImg');
+const awakenImg = document.getElementById('awakenImg');
+const roomPlayer = document.getElementById('roomPlayer');
+const roomPlayerImg = document.getElementById('roomPlayerImg');
+const roomScene = document.getElementById('roomScene');
+const roomHint = document.getElementById('roomHint');
 
-function enterRoom(){
-  show("room");
-}
+const statEls = {
+  stage: { fill: document.getElementById('fill-stage'), val: document.getElementById('val-stage') },
+  mood: { fill: document.getElementById('fill-mood'), val: document.getElementById('val-mood') },
+  style: { fill: document.getElementById('fill-style'), val: document.getElementById('val-style') },
+  mystery: { fill: document.getElementById('fill-mystery'), val: document.getElementById('val-mystery') },
+  charm: { fill: document.getElementById('fill-charm'), val: document.getElementById('val-charm') }
+};
 
-/* ===== 이동 ===== */
-const speed = 6;
-
-document.addEventListener("keydown", (e)=>{
-  const player = document.getElementById("player");
-
-  if(!document.getElementById("room").classList.contains("active")) return;
-
-  if(e.key === "ArrowUp") state.y -= speed;
-  if(e.key === "ArrowDown") state.y += speed;
-  if(e.key === "ArrowLeft") state.x -= speed;
-  if(e.key === "ArrowRight") state.x += speed;
-
-  // 경계 제한
-  state.x = Math.max(0, Math.min(window.innerWidth - 48, state.x));
-  state.y = Math.max(0, Math.min(window.innerHeight - 72, state.y));
-
-  player.style.left = state.x + "px";
-  player.style.top = state.y + "px";
+document.querySelectorAll('.schedule-btn').forEach(btn => {
+  btn.addEventListener('click', () => act(btn.dataset.act));
 });
 
-/* ===== 리셋 ===== */
-function reset(){
-  location.reload();
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+document.getElementById('awakenBtn').addEventListener('click', doAwaken);
+document.getElementById('toRoomBtn').addEventListener('click', () => {
+  showScreen('room');
+  placePlayerInitial();
+  renderPlayer();
+});
+document.getElementById('backScheduleBtn').addEventListener('click', () => showScreen('schedule'));
+document.getElementById('restartAllBtn').addEventListener('click', resetAll);
+document.getElementById('backAwakenBtn').addEventListener('click', () => showScreen('awaken'));
+
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
 }
 
-</script>
+function clamp(val, min, max){
+  return Math.max(min, Math.min(max, val));
+}
 
+function updateScheduleUI(){
+  dayText.textContent = state.day;
+  energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
+  energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
+
+  Object.keys(state.stats).forEach(key => {
+    statEls[key].val.textContent = state.stats[key];
+    statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+  });
+
+  awakenBtn.disabled = !canAwaken();
+  if(canAwaken()){
+    scheduleDialog.textContent = dialogues.ready;
+  }
+}
+
+function act(type){
+  if(state.awakened) return;
+
+  if(type !== 'rest' && state.energy < 20){
+    scheduleDialog.textContent = dialogues.lowEnergy;
+    return;
+  }
+
+  switch(type){
+    case 'practice':
+      state.stats.stage += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.practice;
+      break;
+    case 'study':
+      state.stats.style += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.study;
+      break;
+    case 'movie':
+      state.stats.mood += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.movie;
+      break;
+    case 'walk':
+      state.stats.mystery += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.walk;
+      break;
+    case 'letters':
+      state.stats.charm += 2;
+      state.energy -= 20;
+      scheduleDialog.textContent = dialogues.letters;
+      break;
+    case 'rest':
+      state.day += 1;
+      state.energy = state.maxEnergy;
+      scheduleDialog.textContent = dialogues.rest;
+      break;
+  }
+
+  state.energy = clamp(state.energy, 0, state.maxEnergy);
+  updateScheduleUI();
+}
+
+function canAwaken(){
+  const s = state.stats;
+  const gasolineScore = s.stage + s.style;
+  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
+  return Math.max(gasolineScore, badLoveScore) >= 10;
+}
+
+function detectIdentity(){
+  const s = state.stats;
+  const gasolineScore = s.stage + s.style;
+  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
+
+  if(gasolineScore >= badLoveScore){
+    return {
+      name: 'Gasoline KEY',
+      img: 'img/KEY_gasoline.png',
+      desc: '강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.',
+      badges: [['주 속성','Stage'], ['보조 속성','Style'], ['무드','Royal Voltage']]
+    };
+  }
+
+  return {
+    name: 'Bad Love KEY',
+    img: 'img/KEY_badlove.png',
+    desc: '감정과 밤의 잔향이 뒤섞이며, 몽환적이고 신비로운 KEY로 각성했습니다.',
+    badges: [['주 속성','Mood'], ['보조 속성','Mystery'], ['무드','Dark Dream']]
+  };
+}
+
+function doAwaken(){
+  if(!canAwaken()) return;
+  state.awakened = detectIdentity();
+  syncAwakenUI();
+  syncRoomUI();
+  showScreen('awaken');
+}
+
+function syncAwakenUI(){
+  const id = state.awakened;
+  if(!id) return;
+  document.getElementById('awakenTopName').textContent = id.name;
+  document.getElementById('awakenName').textContent = id.name;
+  document.getElementById('awakenDesc').textContent = id.desc;
+  awakenImg.src = id.img;
+}
+
+function syncRoomUI(){
+  const id = state.awakened;
+  if(!id) return;
+
+  document.getElementById('roomIdentity').textContent = id.name;
+  roomPlayerImg.src = id.img;
+
+  const badgeWrap = document.getElementById('roomBadges');
+  badgeWrap.innerHTML = '';
+  id.badges.forEach(([k, v]) => {
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.innerHTML = `<strong>${k}</strong> ${v}`;
+    badgeWrap.appendChild(el);
+  });
+}
+
+function placePlayerInitial(){
+  const rect = roomScene.getBoundingClientRect();
+  state.player.x = Math.max(20, rect.width * 0.18);
+  state.player.y = Math.max(120, rect.height * 0.72);
+}
+
+function renderPlayer(){
+  roomPlayer.style.left = `${state.player.x}px`;
+  roomPlayer.style.top = `${state.player.y}px`;
+  roomPlayer.classList.toggle('left', state.player.facing === 'left');
+}
+
+function movePlayer(dx, dy){
+  if(!screens.room.classList.contains('active')) return;
+
+  const rect = roomScene.getBoundingClientRect();
+  const minX = 8;
+  const minY = 88;
+  const maxX = rect.width - state.player.w - 8;
+  const maxY = rect.height - state.player.h - 8;
+
+  state.player.x = clamp(state.player.x + dx, minX, maxX);
+  state.player.y = clamp(state.player.y + dy, minY, maxY);
+
+  if(dx < 0) state.player.facing = 'left';
+  if(dx > 0) state.player.facing = 'right';
+
+  renderPlayer();
+  checkPointEvent();
+}
+
+function checkPointEvent(){
+  const marker = document.getElementById('markerDesk');
+  const markerX = marker.offsetLeft + marker.offsetWidth / 2;
+  const markerY = marker.offsetTop + marker.offsetHeight / 2;
+
+  const playerX = state.player.x + state.player.w / 2;
+  const playerY = state.player.y + state.player.h / 2;
+
+  const dist = Math.hypot(markerX - playerX, markerY - playerY);
+
+  if(dist < 70){
+    roomHint.textContent = '포인트 근처에 도착했어요. 나중에는 여기서 대화나 이벤트를 붙일 수 있어요.';
+  } else {
+    roomHint.textContent = '방 안으로 들어왔어요. 방향키로 움직여보세요.';
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if(!screens.room.classList.contains('active')) return;
+
+  switch(e.key){
+    case 'ArrowUp':
+      e.preventDefault();
+      movePlayer(0, -state.player.speed);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      movePlayer(0, state.player.speed);
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      movePlayer(-state.player.speed, 0);
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      movePlayer(state.player.speed, 0);
+      break;
+  }
+});
+
+function resetAll(){
+  state.day = 1;
+  state.energy = 100;
+  state.stats = { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 };
+  state.awakened = null;
+
+  seedImg.src = 'img/KEY_default.png';
+  awakenImg.src = 'img/KEY_default.png';
+  roomPlayerImg.src = 'img/KEY_default.png';
+
+  scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
+  document.getElementById('roomIdentity').textContent = '-';
+  document.getElementById('roomBadges').innerHTML = '';
+  roomHint.textContent = '방 안으로 들어왔어요. 방향키로 움직여보세요.';
+
+  updateScheduleUI();
+  showScreen('schedule');
+}
+
+window.addEventListener('resize', () => {
+  if(screens.room.classList.contains('active')){
+    renderPlayer();
+  }
+});
+
+updateScheduleUI();
+placePlayerInitial();
+renderPlayer();
+</script>
 </body>
 </html>
