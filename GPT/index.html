@@ -1,1325 +1,170 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>KEY:VERSE Proto</title>
-<style>
-:root{
-  --bg1:#141320;
-  --bg2:#211d34;
-  --panel:#2a2640;
-  --panel2:#363053;
-  --line:rgba(255,255,255,.08);
-  --text:#f5f2ff;
-  --sub:#bdb6d8;
-  --pink:#ff7bc7;
-  --violet:#8b7dff;
-  --gold:#f3c56c;
-  --cyan:#7cd5ff;
-  --mint:#7df0d0;
-  --radius:20px;
-  --shadow:0 16px 40px rgba(0,0,0,.32);
-  --top-h:72px;
-}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEY:VERSE</title>
 
-*{box-sizing:border-box}
-html,body{height:100%}
+<style>
 body{
   margin:0;
-  color:var(--text);
-  font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(125,100,255,.24) 0%, transparent 28%),
-    linear-gradient(180deg,var(--bg1),var(--bg2));
-  overflow:hidden;
+  background:#111;
+  color:white;
+  font-family:sans-serif;
 }
 
-button{
-  font:inherit;
-  color:inherit;
-  border:0;
-  cursor:pointer;
+/* ===== 화면 ===== */
+.screen{
+  display:none;
 }
-
-img{
+.screen.active{
   display:block;
-  max-width:100%;
 }
 
-.app{
+/* ===== 방 ===== */
+.room{
   position:relative;
   width:100%;
-  height:100%;
+  height:100vh;
+  background:url("img/room_default.png") center/cover no-repeat;
   overflow:hidden;
 }
 
-.screen{
+/* ===== 캐릭터 (🔥 1/3 크기) ===== */
+.player{
   position:absolute;
-  inset:0;
-  opacity:0;
-  pointer-events:none;
-  transform:translateY(12px);
-  transition:opacity .28s ease, transform .28s ease;
+  width:48px;   /* 기존 144 기준 → 1/3 */
+  height:72px;
+  left:50%;
+  top:60%;
+  transform:translate(-50%, -50%);
 }
 
-.screen.active{
-  opacity:1;
-  pointer-events:auto;
-  transform:translateY(0);
-}
-
-.topbar{
-  position:absolute;
-  left:0; right:0; top:0;
-  height:var(--top-h);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:14px 16px;
-  z-index:10;
-}
-
-.brand{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
-
-.brand .title{
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:.02em;
-}
-
-.brand .subtitle{
-  font-size:12px;
-  color:var(--sub);
-}
-
-.pill{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 12px;
-  background:rgba(255,255,255,.06);
-  border:1px solid var(--line);
-  border-radius:999px;
-  box-shadow:var(--shadow);
-  color:var(--sub);
-  font-size:13px;
-  backdrop-filter:blur(10px);
-}
-
-.main{
-  position:absolute;
-  inset:var(--top-h) 0 0 0;
-  padding:14px 16px 16px;
-  overflow:auto;
-}
-
-.card{
-  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  backdrop-filter:blur(10px);
-}
-
-.section-title{
-  margin:0 0 12px;
-  font-size:15px;
-  font-weight:900;
-  letter-spacing:.02em;
-}
-
-.small{
-  font-size:12px;
-  color:var(--sub);
-  line-height:1.6;
-}
-
-.layout{
-  display:grid;
-  grid-template-columns:1.1fr .9fr;
-  gap:14px;
-  min-height:calc(100vh - var(--top-h) - 30px);
-}
-
-.panel{
-  padding:16px;
-}
-
-.seed-stage{
-  position:relative;
-  min-height:520px;
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid var(--line);
-  background:
-    linear-gradient(rgba(20,19,32,.38), rgba(20,19,32,.52)),
-    url("img/room_default.png") center center / cover no-repeat;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:18px;
-}
-
-.seed-stage:before{
-  content:"";
-  position:absolute;
-  width:280px;
-  height:280px;
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(255,123,199,.12), rgba(139,125,255,0));
-  filter:blur(8px);
-  animation:pulse 3s ease-in-out infinite;
-}
-
-@keyframes pulse{
-  0%,100%{transform:scale(1);opacity:.72}
-  50%{transform:scale(1.06);opacity:1}
-}
-
-.seed-avatar{
-  position:relative;
-  z-index:1;
-  width:180px;
-  height:250px;
-  border-radius:80px 80px 42px 42px;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
-    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 14px 30px rgba(0,0,0,.26);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  backdrop-filter:blur(4px);
-}
-
-.seed-avatar img,
-.awaken-figure img,
-.room-avatar img,
-#visitorAvatar img{
+.player img{
   width:100%;
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 6px 12px rgba(0,0,0,.4));
 }
 
-.seed-label{
-  position:relative;
-  z-index:1;
-  text-align:center;
-}
-
-.seed-label .name{
-  font-size:22px;
-  font-weight:900;
-  text-shadow:0 2px 10px rgba(0,0,0,.25);
-}
-
-.seed-label .desc{
-  margin-top:6px;
-  color:#ddd6f5;
-  font-size:13px;
-  text-shadow:0 2px 10px rgba(0,0,0,.3);
-}
-
-.dialog{
-  padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--line);
-  line-height:1.7;
-  color:#f7f5ff;
-}
-
-.stat-list{
-  display:grid;
-  gap:10px;
-  margin-top:12px;
-}
-
-.stat-row{
-  display:grid;
-  grid-template-columns:78px 1fr 34px;
-  gap:10px;
-  align-items:center;
-  color:var(--sub);
-  font-size:12px;
-}
-
-.bar{
-  height:10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.06);
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.05);
-}
-
-.fill{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  transition:width .25s ease;
-}
-
-.fill.stage{background:linear-gradient(90deg,var(--gold),#ffd98a)}
-.fill.mood{background:linear-gradient(90deg,var(--pink),#ffb1df)}
-.fill.style{background:linear-gradient(90deg,var(--violet),#b0a7ff)}
-.fill.mystery{background:linear-gradient(90deg,#567dff,#8fc2ff)}
-.fill.charm{background:linear-gradient(90deg,var(--mint),#b2ffe6)}
-
-.energy-box{
-  margin-top:12px;
-  padding:12px;
-  border-radius:16px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.04);
-}
-
-.energy-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:8px;
-  font-size:13px;
-}
-
-.energy-bar{
-  height:12px;
-  border-radius:999px;
-  overflow:hidden;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.05);
-}
-
-.energy-fill{
-  height:100%;
-  width:100%;
-  background:linear-gradient(90deg,var(--mint),#b6ffe8);
-  transition:width .25s ease;
-}
-
-.schedule-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-
-.schedule-btn{
-  text-align:left;
-  padding:14px 12px;
-  border-radius:16px;
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--line);
-  transition:.18s ease;
-}
-
-.schedule-btn:hover{
-  transform:translateY(-1px);
-  background:rgba(255,255,255,.07);
-}
-
-.schedule-btn .title{
-  display:block;
-  font-size:13px;
-  font-weight:900;
-  margin-bottom:5px;
-}
-
-.schedule-btn .meta{
-  display:block;
-  font-size:11px;
-  color:var(--sub);
-  line-height:1.45;
-}
-
-.action-row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-
-.primary-btn,
-.secondary-btn{
-  width:100%;
-  padding:14px 16px;
-  border-radius:16px;
-  font-weight:900;
-  letter-spacing:.02em;
-  transition:.18s ease;
-}
-
-.primary-btn{
-  background:linear-gradient(135deg,var(--pink),var(--violet));
-  box-shadow:0 12px 28px rgba(145,110,255,.25);
-}
-
-.primary-btn:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-
-.secondary-btn{
-  background:rgba(255,255,255,.06);
-  border:1px solid var(--line);
-}
-
-.center-wrap{
-  min-height:calc(100vh - var(--top-h) - 30px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.awaken-card{
-  width:min(760px,100%);
-  padding:26px;
-  text-align:center;
-  position:relative;
-  overflow:hidden;
-}
-
-.awaken-card:before{
-  content:"";
+/* ===== 간단 UI ===== */
+.ui{
   position:absolute;
-  inset:-20%;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(255,123,199,.18), transparent 18%),
-    radial-gradient(circle at 50% 52%, rgba(139,125,255,.18), transparent 28%);
-  filter:blur(16px);
-  animation:pulse 2.8s ease-in-out infinite;
+  top:10px;
+  left:10px;
 }
-
-.awaken-inner{
-  position:relative;
-  z-index:1;
-}
-
-.awaken-badge{
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.07);
-  color:var(--sub);
-  font-size:12px;
-  font-weight:800;
-  margin-bottom:14px;
-}
-
-.awaken-figure{
-  width:220px;
-  height:300px;
-  margin:10px auto 18px;
-  border-radius:96px 96px 48px 48px;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
-    linear-gradient(180deg,#ffe2f3,#ff98d4 38%, #907fff 100%);
-  box-shadow:
-    0 0 36px rgba(255,123,199,.26),
-    0 0 92px rgba(139,125,255,.22);
-  animation:floaty 2.8s ease-in-out infinite;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-@keyframes floaty{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-8px)}
-}
-
-.awaken-title{
-  margin:0 0 10px;
-  font-size:34px;
-  font-weight:900;
-}
-
-.awaken-desc{
-  max-width:520px;
-  margin:0 auto 18px;
-  color:var(--sub);
-  line-height:1.7;
-}
-
-.room-layout{
-  display:grid;
-  grid-template-columns:1.2fr .8fr;
-  gap:14px;
-  min-height:calc(100vh - var(--top-h) - 30px);
-}
-
-.room-scene{
-  position:relative;
-  min-height:540px;
-  border-radius:18px;
-  border:1px solid var(--line);
-  overflow:hidden;
-  background:
-    radial-gradient(circle at 22% 18%, rgba(255,123,199,.18), transparent 18%),
-    radial-gradient(circle at 78% 22%, rgba(139,125,255,.18), transparent 18%),
-    linear-gradient(180deg,#3a3458 0%,#2e2848 44%,#26213e 44%,#1d1a2f 100%);
-}
-
-.room-scene.night{
-  background:
-    radial-gradient(circle at 22% 18%, rgba(124,213,255,.16), transparent 18%),
-    radial-gradient(circle at 78% 22%, rgba(139,125,255,.14), transparent 18%),
-    linear-gradient(180deg,#24213c 0%,#1e1a33 44%,#181427 44%,#12101f 100%);
-}
-
-.room-lamp{
-  position:absolute;
-  top:52px;
-  width:74px;
-  height:74px;
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(255,241,182,.9) 0%, rgba(255,233,175,.46) 30%, rgba(255,233,175,0) 72%);
-  filter:blur(3px);
-}
-
-.room-lamp.left{left:48px}
-.room-lamp.right{right:48px}
-
-.room-grid{
-  position:absolute;
-  left:22px; right:22px; bottom:22px; top:128px;
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  grid-template-rows:repeat(4,1fr);
-  gap:10px;
-}
-
-.slot{
-  border-radius:14px;
-  border:1px dashed rgba(255,255,255,.08);
-  background:rgba(255,255,255,.02);
-  position:relative;
-  overflow:hidden;
-}
-
-.item{
-  position:absolute;
-  inset:6px;
-  border-radius:12px;
-  display:flex;
-  align-items:flex-end;
-  justify-content:flex-start;
-  padding:8px;
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.02em;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
-}
-
-.item.pink{background:linear-gradient(135deg,#ff9ed9,#ff70bd);color:#fff8fc}
-.item.cute{background:linear-gradient(135deg,#ffd0ef,#ffade2);color:#6f2750}
-.item.neo{background:linear-gradient(135deg,#7b7cff,#ae63ff);color:#f7f4ff}
-.item.dark{background:linear-gradient(135deg,#4b426e,#231f38);color:#f0ecff}
-.item.classic{background:linear-gradient(135deg,#c2a98a,#8e7355);color:#fff9f1}
-
-.room-avatar{
-  position:absolute;
-  left:30px;
-  bottom:26px;
-  width:98px;
-  height:138px;
-  border-radius:44px 44px 28px 28px;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.16) 0 11%, transparent 12%),
-    linear-gradient(180deg,#ffd6f1,#ff97d5 42%, #8f7cff 100%);
-  box-shadow:0 14px 30px rgba(0,0,0,.26);
+button{
   padding:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.room-avatar:after{
-  content:attr(data-name);
-  position:absolute;
-  left:50%;
-  bottom:-28px;
-  transform:translateX(-50%);
-  white-space:nowrap;
-  font-size:12px;
-  color:var(--sub);
-  font-weight:800;
-}
-
-.inv-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-
-.inv-btn{
-  text-align:left;
-  padding:12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--line);
-  transition:.18s ease;
-}
-
-.inv-btn:hover{
-  transform:translateY(-1px);
-  background:rgba(255,255,255,.07);
-}
-
-.inv-btn .name{
-  display:block;
-  font-size:13px;
-  font-weight:900;
-  margin-bottom:4px;
-}
-
-.inv-btn .meta{
-  display:block;
-  font-size:11px;
-  color:var(--sub);
-}
-
-.hint-box{
-  padding:12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--line);
-  color:var(--sub);
-  line-height:1.6;
-  min-height:90px;
-}
-
-.badge-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:12px;
-}
-
-.badge{
-  padding:8px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--line);
-  color:var(--sub);
-  font-size:12px;
-}
-
-.badge strong{color:var(--text)}
-
-.visitor-head{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-top:12px;
-}
-
-#visitorAvatar{
-  width:70px;
-  height:90px;
-  border-radius:30px;
-  background:linear-gradient(180deg,#cfd6ff,#7f8cff);
-  padding:8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
-}
-
-.heart-row{
-  margin-top:10px;
-  font-size:18px;
-  letter-spacing:2px;
-}
-
-@media (max-width: 980px){
-  .layout,
-  .room-layout{
-    grid-template-columns:1fr;
-  }
-  .seed-stage,
-  .room-scene{
-    min-height:420px;
-  }
-}
-
-@media (max-width: 640px){
-  :root{ --top-h:68px; }
-
-  .topbar{ padding:12px; }
-
-  .brand .title{ font-size:16px; }
-
-  .main{ padding:10px 12px 12px; }
-
-  .room-grid{
-    left:14px; right:14px; top:112px; bottom:14px; gap:8px;
-  }
-
-  .schedule-grid,
-  .inv-grid,
-  .action-row{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .awaken-title{ font-size:28px; }
+  margin:5px;
 }
 </style>
 </head>
+
 <body>
-<div class="app">
 
-  <!-- 1. SCHEDULE -->
-  <section class="screen active" id="screen-schedule">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">KEY:VERSE — Prelude</div>
-        <div class="subtitle">미지의 나를 육성해 어떤 KEY로 각성할지 결정하세요</div>
-      </div>
-      <div class="pill">
-        <span>Day</span>
-        <strong id="dayText">1</strong>
-      </div>
+<!-- ===== 스케줄 화면 ===== -->
+<div class="screen active" id="schedule">
+  <h2>스케줄</h2>
+  <button onclick="addStat('stage')">연습</button>
+  <button onclick="addStat('mood')">감상</button>
+  <button onclick="rest()">휴식</button>
+  <button onclick="awaken()">각성</button>
+</div>
+
+<!-- ===== 각성 ===== -->
+<div class="screen" id="awaken">
+  <h2 id="resultText"></h2>
+  <button onclick="enterRoom()">방으로 이동</button>
+</div>
+
+<!-- ===== 방 ===== -->
+<div class="screen" id="room">
+  <div class="room" id="roomMap">
+
+    <!-- 캐릭터 -->
+    <div class="player" id="player">
+      <img id="playerImg" src="img/KEY_default.png">
     </div>
 
-    <div class="main">
-      <div class="layout">
-        <div class="card panel">
-          <div class="seed-stage">
-            <div class="seed-avatar">
-              <img id="seedImg" src="img/KEY_default.png" alt="미지의 키" />
-            </div>
-            <div class="seed-label">
-              <div class="name">미지의 나</div>
-              <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="card panel">
-            <h3 class="section-title">오늘의 상태</h3>
-            <div class="dialog" id="scheduleDialog">
-              “어? 왔어? 오늘은 어떤 하루를 보내게 될까?”
-            </div>
-
-            <div class="stat-list">
-              <div class="stat-row">
-                <span>Stage</span>
-                <div class="bar"><div class="fill stage" id="fill-stage"></div></div>
-                <strong id="val-stage">0</strong>
-              </div>
-              <div class="stat-row">
-                <span>Mood</span>
-                <div class="bar"><div class="fill mood" id="fill-mood"></div></div>
-                <strong id="val-mood">0</strong>
-              </div>
-              <div class="stat-row">
-                <span>Style</span>
-                <div class="bar"><div class="fill style" id="fill-style"></div></div>
-                <strong id="val-style">0</strong>
-              </div>
-              <div class="stat-row">
-                <span>Mystery</span>
-                <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
-                <strong id="val-mystery">0</strong>
-              </div>
-              <div class="stat-row">
-                <span>Charm</span>
-                <div class="bar"><div class="fill charm" id="fill-charm"></div></div>
-                <strong id="val-charm">0</strong>
-              </div>
-            </div>
-
-            <div class="energy-box">
-              <div class="energy-top">
-                <span>Energy</span>
-                <strong id="energyText">100 / 100</strong>
-              </div>
-              <div class="energy-bar">
-                <div class="energy-fill" id="energyFill"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card panel">
-            <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">행동을 수행하면 성향이 쌓이고 에너지가 소모됩니다. 휴식을 선택하면 다음 날로 넘어가며 에너지가 회복됩니다.</div>
-
-            <div class="schedule-grid">
-              <button class="schedule-btn" data-act="practice">
-                <span class="title">🎤 보컬 연습</span>
-                <span class="meta">Stage +2 / Energy -20</span>
-              </button>
-              <button class="schedule-btn" data-act="study">
-                <span class="title">👗 콘셉트 연구</span>
-                <span class="meta">Style +2 / Energy -20</span>
-              </button>
-              <button class="schedule-btn" data-act="movie">
-                <span class="title">🎬 영화 감상</span>
-                <span class="meta">Mood +2 / Energy -20</span>
-              </button>
-              <button class="schedule-btn" data-act="walk">
-                <span class="title">🌙 야간 산책</span>
-                <span class="meta">Mystery +2 / Energy -20</span>
-              </button>
-              <button class="schedule-btn" data-act="letters">
-                <span class="title">💌 팬레터 읽기</span>
-                <span class="meta">Charm +2 / Energy -20</span>
-              </button>
-              <button class="schedule-btn" data-act="rest">
-                <span class="title">🛌 휴식</span>
-                <span class="meta">Next Day / Energy Full</span>
-              </button>
-            </div>
-
-            <div class="action-row">
-              <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
-              <button class="secondary-btn" id="resetBtn">처음부터</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. AWAKEN -->
-  <section class="screen" id="screen-awaken">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">Awakening</div>
-        <div class="subtitle">스케줄의 결과가 하나의 정체성으로 응결됩니다</div>
-      </div>
-      <div class="pill">
-        <span>Result</span>
-        <strong id="awakenTopName">Gasoline KEY</strong>
-      </div>
+    <div class="ui">
+      <button onclick="reset()">리셋</button>
     </div>
 
-    <div class="main center-wrap">
-      <div class="card awaken-card">
-        <div class="awaken-inner">
-          <div class="awaken-badge">AWAKENING EVENT</div>
-          <div class="awaken-figure">
-            <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
-          </div>
-          <h1 class="awaken-title" id="awakenName">Gasoline KEY</h1>
-          <p class="awaken-desc" id="awakenDesc">
-            강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.
-          </p>
-          <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
-            <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
-            <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. ROOM -->
-  <section class="screen" id="screen-room">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">My Room</div>
-        <div class="subtitle">전직 이후의 생활, 분위기 조성, 관계 루트의 시작</div>
-      </div>
-      <div class="pill">
-        <span>Identity</span>
-        <strong id="roomIdentity">Gasoline KEY</strong>
-      </div>
-    </div>
-
-    <div class="main">
-      <div class="room-layout">
-        <div class="card panel">
-          <div class="room-scene" id="roomScene">
-            <div class="room-lamp left"></div>
-            <div class="room-lamp right"></div>
-            <div class="room-avatar" id="roomAvatar" data-name="Gasoline KEY"></div>
-            <div class="room-grid" id="roomGrid"></div>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="card panel">
-            <h3 class="section-title">방의 분위기</h3>
-            <div class="hint-box" id="roomHint">
-              지금의 정체성에 맞는 공간이 열렸어요. 어떤 오브제를 배치하느냐에 따라 이후 방문자와 관계 루트가 달라질 수 있습니다.
-            </div>
-
-            <div class="badge-row" id="roomBadges">
-              <div class="badge"><strong>주 속성</strong> Stage</div>
-              <div class="badge"><strong>보조 속성</strong> Style</div>
-            </div>
-          </div>
-
-          <div class="card panel">
-            <h3 class="section-title">인벤토리</h3>
-            <div class="small">아래 아이템을 눌러 방에 배치해보세요. 이 프로토타입에서는 빈 슬롯에 순서대로 놓입니다.</div>
-
-            <div class="inv-grid" id="inventoryGrid">
-              <button class="inv-btn" data-item="pinkSofa">
-                <span class="name">핑크 소파</span>
-                <span class="meta">Pink / Soft</span>
-              </button>
-              <button class="inv-btn" data-item="plushLamp">
-                <span class="name">토끼 조명</span>
-                <span class="meta">Cute / Charm</span>
-              </button>
-              <button class="inv-btn" data-item="neonSign">
-                <span class="name">네온 사인</span>
-                <span class="meta">Neon / Night</span>
-              </button>
-              <button class="inv-btn" data-item="darkShelf">
-                <span class="name">다크 선반</span>
-                <span class="meta">Dark / Cool</span>
-              </button>
-              <button class="inv-btn" data-item="vintageFrame">
-                <span class="name">빈티지 액자</span>
-                <span class="meta">Classic / Calm</span>
-              </button>
-              <button class="inv-btn" data-item="pinkPoster">
-                <span class="name">핑크 포스터</span>
-                <span class="meta">Pink / Style</span>
-              </button>
-            </div>
-
-            <div class="action-row">
-              <button class="secondary-btn" id="clearRoomBtn">방 비우기</button>
-              <button class="primary-btn" id="restartAllBtn">새 회차 시작</button>
-            </div>
-          </div>
-
-          <div class="card panel" id="visitorPanel" style="display:none;">
-            <h3 class="section-title">방문자</h3>
-
-            <div class="dialog" id="visitorDialog">
-              누군가가 방문할 것 같은 기운이 느껴진다...
-            </div>
-
-            <div class="visitor-head">
-              <div id="visitorAvatar"></div>
-              <div>
-                <div id="visitorName" style="font-weight:900;">???</div>
-                <div id="visitorMood" class="small">낯선 기류</div>
-              </div>
-            </div>
-
-            <div class="heart-row" id="heartRow">♡ ♡ ♡ ♡ ♡</div>
-
-            <div class="action-row" style="margin-top:12px;">
-              <button class="secondary-btn" id="talkBtn">대화</button>
-              <button class="secondary-btn" id="giftBtn">선물</button>
-              <button class="secondary-btn" id="observeBtn">관찰</button>
-            </div>
-          </div>
-
-          <div class="card panel">
-            <h3 class="section-title">다음 확장 포인트</h3>
-            <div class="small">
-              다음 단계에서는 여기서부터 방문 이벤트, 선물, 대화, 호감도, 숨겨진 관계 루트를 더 깊게 붙이면 돼.
-              지금 버전은 우선 “초반 스케줄 육성 → 각성 → 방 진입 → 첫 방문자 이벤트” 흐름 검증용이야.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  </div>
 </div>
 
 <script>
-const screens = {
-  schedule: document.getElementById('screen-schedule'),
-  awaken: document.getElementById('screen-awaken'),
-  room: document.getElementById('screen-room')
+
+/* ===== 상태 ===== */
+let state = {
+  stage:0,
+  mood:0,
+  awakened:null,
+  x:window.innerWidth/2,
+  y:window.innerHeight*0.6
 };
 
-const state = {
-  day: 1,
-  energy: 100,
-  maxEnergy: 100,
-  stats: {
-    stage: 0,
-    mood: 0,
-    style: 0,
-    mystery: 0,
-    charm: 0
-  },
-  awakened: null,
-  roomItems: [],
-  visitor: null,
-  affinity: 0
-};
+/* ===== 스케줄 ===== */
+function addStat(type){
+  state[type]+=1;
+}
 
-const dialogues = {
-  practice: '“조금 더 선명해지는 느낌이야. 무대 위의 내가 가까워졌어.”',
-  study: '“옷과 분위기를 고르는 것도 나를 만드는 일이네.”',
-  movie: '“감정이 쌓이는 날이 있어. 오늘이 그런 날 같아.”',
-  walk: '“밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.”',
-  letters: '“사람의 마음을 읽고 있으면 나도 조금 부드러워지는 것 같아.”',
-  rest: '“푹 쉬었어. 다음 하루를 시작할 준비가 됐어.”',
-  lowEnergy: '“지금은 조금 지쳤어… 쉬어가자.”',
-  ready: '“이제 충분히 선명해졌어. 어떤 KEY가 될지 정해질 것 같아.”'
-};
+function rest(){
+  alert("휴식 완료");
+}
 
-const itemDefs = {
-  pinkSofa: { label:'SOFA', className:'pink' },
-  plushLamp: { label:'LAMP', className:'cute' },
-  neonSign: { label:'NEON', className:'neo' },
-  darkShelf: { label:'SHELF', className:'dark' },
-  vintageFrame: { label:'FRAME', className:'classic' },
-  pinkPoster: { label:'POSTER', className:'pink' }
-};
+/* ===== 각성 ===== */
+function awaken(){
+  if(state.stage >= state.mood){
+    state.awakened = "gasoline";
+    document.getElementById("playerImg").src = "img/KEY_gasoline.png";
+    document.getElementById("resultText").innerText = "Gasoline KEY";
+  }else{
+    state.awakened = "badlove";
+    document.getElementById("playerImg").src = "img/KEY_badlove.png";
+    document.getElementById("resultText").innerText = "Bad Love KEY";
+  }
 
-const dayText = document.getElementById('dayText');
-const energyText = document.getElementById('energyText');
-const energyFill = document.getElementById('energyFill');
-const scheduleDialog = document.getElementById('scheduleDialog');
-const awakenBtn = document.getElementById('awakenBtn');
-const seedImg = document.getElementById('seedImg');
-const awakenImg = document.getElementById('awakenImg');
+  show("awaken");
+}
 
-const statEls = {
-  stage: { fill: document.getElementById('fill-stage'), val: document.getElementById('val-stage') },
-  mood: { fill: document.getElementById('fill-mood'), val: document.getElementById('val-mood') },
-  style: { fill: document.getElementById('fill-style'), val: document.getElementById('val-style') },
-  mystery: { fill: document.getElementById('fill-mystery'), val: document.getElementById('val-mystery') },
-  charm: { fill: document.getElementById('fill-charm'), val: document.getElementById('val-charm') }
-};
+/* ===== 화면 전환 ===== */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-document.querySelectorAll('.schedule-btn').forEach(btn => {
-  btn.addEventListener('click', () => act(btn.dataset.act));
+function enterRoom(){
+  show("room");
+}
+
+/* ===== 이동 ===== */
+const speed = 6;
+
+document.addEventListener("keydown", (e)=>{
+  const player = document.getElementById("player");
+
+  if(!document.getElementById("room").classList.contains("active")) return;
+
+  if(e.key === "ArrowUp") state.y -= speed;
+  if(e.key === "ArrowDown") state.y += speed;
+  if(e.key === "ArrowLeft") state.x -= speed;
+  if(e.key === "ArrowRight") state.x += speed;
+
+  // 경계 제한
+  state.x = Math.max(0, Math.min(window.innerWidth - 48, state.x));
+  state.y = Math.max(0, Math.min(window.innerHeight - 72, state.y));
+
+  player.style.left = state.x + "px";
+  player.style.top = state.y + "px";
 });
 
-document.getElementById('resetBtn').addEventListener('click', resetAll);
-document.getElementById('awakenBtn').addEventListener('click', doAwaken);
-document.getElementById('toRoomBtn').addEventListener('click', () => showScreen('room'));
-document.getElementById('backScheduleBtn').addEventListener('click', () => showScreen('schedule'));
-document.getElementById('clearRoomBtn').addEventListener('click', clearRoom);
-document.getElementById('restartAllBtn').addEventListener('click', resetAll);
-
-const roomGrid = document.getElementById('roomGrid');
-for(let i = 0; i < 24; i++){
-  const slot = document.createElement('div');
-  slot.className = 'slot';
-  roomGrid.appendChild(slot);
+/* ===== 리셋 ===== */
+function reset(){
+  location.reload();
 }
 
-document.querySelectorAll('.inv-btn').forEach(btn => {
-  btn.addEventListener('click', () => addRoomItem(btn.dataset.item));
-});
-
-document.getElementById('talkBtn').addEventListener('click', () => {
-  if(!state.visitor) return;
-  state.affinity = Math.min(5, state.affinity + 1);
-  document.getElementById('visitorDialog').textContent = '“조금 더 이야기해도 될 것 같아.”';
-  updateHearts();
-});
-
-document.getElementById('giftBtn').addEventListener('click', () => {
-  if(!state.visitor) return;
-  state.affinity = Math.min(5, state.affinity + 2);
-  document.getElementById('visitorDialog').textContent = '“이건… 나를 생각하고 준 거야?”';
-  updateHearts();
-});
-
-document.getElementById('observeBtn').addEventListener('click', () => {
-  if(!state.visitor) return;
-  document.getElementById('visitorDialog').textContent = '상대는 방을 천천히 둘러보고 있다...';
-});
-
-function showScreen(name){
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  screens[name].classList.add('active');
-}
-
-function clamp(val, min, max){
-  return Math.max(min, Math.min(max, val));
-}
-
-function updateScheduleUI(){
-  dayText.textContent = state.day;
-  energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
-  energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
-
-  Object.keys(state.stats).forEach(key => {
-    statEls[key].val.textContent = state.stats[key];
-    statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
-  });
-
-  awakenBtn.disabled = !canAwaken();
-  if(canAwaken()){
-    scheduleDialog.textContent = dialogues.ready;
-  }
-}
-
-function act(type){
-  if(state.awakened) return;
-
-  if(type !== 'rest' && state.energy < 20){
-    scheduleDialog.textContent = dialogues.lowEnergy;
-    return;
-  }
-
-  switch(type){
-    case 'practice':
-      state.stats.stage += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.practice;
-      break;
-    case 'study':
-      state.stats.style += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.study;
-      break;
-    case 'movie':
-      state.stats.mood += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.movie;
-      break;
-    case 'walk':
-      state.stats.mystery += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.walk;
-      break;
-    case 'letters':
-      state.stats.charm += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.letters;
-      break;
-    case 'rest':
-      state.day += 1;
-      state.energy = state.maxEnergy;
-      scheduleDialog.textContent = dialogues.rest;
-      break;
-  }
-
-  state.energy = clamp(state.energy, 0, state.maxEnergy);
-  updateScheduleUI();
-}
-
-function canAwaken(){
-  const s = state.stats;
-  const gasolineScore = s.stage + s.style;
-  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
-  return Math.max(gasolineScore, badLoveScore) >= 10;
-}
-
-function detectIdentity(){
-  const s = state.stats;
-  const gasolineScore = s.stage + s.style;
-  const badLoveScore = s.mood + s.mystery + s.charm * 0.5;
-
-  if(gasolineScore >= badLoveScore){
-    return {
-      name: 'Gasoline KEY',
-      img: 'img/KEY_gasoline.png',
-      desc: '강렬한 에너지와 존재감이 응집되며, 파워풀한 KEY로 각성했습니다.',
-      badges: [['주 속성','Stage'], ['보조 속성','Style'], ['무드','Royal Voltage']],
-      roomHint: '강한 대비와 네온 무드가 살아있는 공간을 만들수록 도전적인 방문자 루트가 열릴 것 같아요.',
-      roomClass: 'night'
-    };
-  }
-
-  return {
-    name: 'Bad Love KEY',
-    img: 'img/KEY_badlove.png',
-    desc: '감정과 밤의 잔향이 뒤섞이며, 몽환적이고 신비로운 KEY로 각성했습니다.',
-    badges: [['주 속성','Mood'], ['보조 속성','Mystery'], ['무드','Dark Dream']],
-    roomHint: '차갑고 감성적인 분위기를 쌓을수록 섬세하고 묘한 관계 이벤트가 더 잘 어울릴 것 같아요.',
-    roomClass: 'night'
-  };
-}
-
-function doAwaken(){
-  if(!canAwaken()) return;
-  state.awakened = detectIdentity();
-  syncAwakenUI();
-  syncRoomUI();
-  showScreen('awaken');
-}
-
-function syncAwakenUI(){
-  const id = state.awakened;
-  if(!id) return;
-
-  document.getElementById('awakenTopName').textContent = id.name;
-  document.getElementById('awakenName').textContent = id.name;
-  document.getElementById('awakenDesc').textContent = id.desc;
-  awakenImg.src = id.img;
-}
-
-function syncRoomUI(){
-  const id = state.awakened;
-  if(!id) return;
-
-  document.getElementById('roomIdentity').textContent = id.name;
-  document.getElementById('roomHint').textContent = id.roomHint;
-
-  const badgeWrap = document.getElementById('roomBadges');
-  badgeWrap.innerHTML = '';
-  id.badges.forEach(([k, v]) => {
-    const el = document.createElement('div');
-    el.className = 'badge';
-    el.innerHTML = `<strong>${k}</strong> ${v}`;
-    badgeWrap.appendChild(el);
-  });
-
-  const roomAvatar = document.getElementById('roomAvatar');
-  roomAvatar.dataset.name = id.name;
-  roomAvatar.innerHTML = '';
-
-  const avatarImg = document.createElement('img');
-  avatarImg.src = id.img;
-  avatarImg.alt = id.name;
-  roomAvatar.appendChild(avatarImg);
-
-  const roomScene = document.getElementById('roomScene');
-  roomScene.classList.remove('night');
-  if(id.roomClass === 'night'){
-    roomScene.classList.add('night');
-  }
-}
-
-function addRoomItem(key){
-  const slots = [...document.querySelectorAll('.slot')];
-  const empty = slots.find(slot => !slot.querySelector('.item'));
-  if(!empty) return;
-
-  const def = itemDefs[key];
-  const item = document.createElement('div');
-  item.className = `item ${def.className}`;
-  item.textContent = def.label;
-  empty.appendChild(item);
-  state.roomItems.push(key);
-
-  checkVisitorSpawn();
-}
-
-function clearRoom(){
-  document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = '');
-  state.roomItems = [];
-  clearVisitor();
-}
-
-function checkVisitorSpawn(){
-  if(!state.awakened) return;
-  if(state.visitor) return;
-
-  const hasPink = state.roomItems.includes('pinkSofa') || state.roomItems.includes('pinkPoster') || state.roomItems.includes('plushLamp');
-  const hasDark = state.roomItems.includes('darkShelf') || state.roomItems.includes('neonSign');
-
-  let visitor = null;
-
-  if(state.awakened.name === 'Gasoline KEY' && hasPink){
-    visitor = {
-      name: 'Bad Love KEY',
-      mood: '부드럽지만 낯선 긴장감',
-      dialog: '“이렇게 따뜻한 공간도… 의외로 나쁘지 않네.”',
-      img: 'img/KEY_badlove.png'
-    };
-  }
-
-  if(state.awakened.name === 'Bad Love KEY' && hasDark){
-    visitor = {
-      name: 'Gasoline KEY',
-      mood: '강한 존재감과 미묘한 끌림',
-      dialog: '“어두운 방인데도 시선이 자꾸 머무네.”',
-      img: 'img/KEY_gasoline.png'
-    };
-  }
-
-  if(visitor){
-    spawnVisitor(visitor);
-  }
-}
-
-function spawnVisitor(visitor){
-  state.visitor = visitor;
-  state.affinity = 1;
-
-  document.getElementById('visitorPanel').style.display = 'block';
-  document.getElementById('visitorName').textContent = visitor.name;
-  document.getElementById('visitorMood').textContent = visitor.mood;
-  document.getElementById('visitorDialog').textContent = visitor.dialog;
-
-  const visitorAvatar = document.getElementById('visitorAvatar');
-  visitorAvatar.innerHTML = '';
-
-  const img = document.createElement('img');
-  img.src = visitor.img;
-  img.alt = visitor.name;
-  visitorAvatar.appendChild(img);
-
-  updateHearts();
-}
-
-function clearVisitor(){
-  state.visitor = null;
-  state.affinity = 0;
-  document.getElementById('visitorPanel').style.display = 'none';
-  document.getElementById('visitorAvatar').innerHTML = '';
-  document.getElementById('visitorDialog').textContent = '누군가가 방문할 것 같은 기운이 느껴진다...';
-  document.getElementById('visitorName').textContent = '???';
-  document.getElementById('visitorMood').textContent = '낯선 기류';
-  updateHearts();
-}
-
-function updateHearts(){
-  const filled = '❤'.repeat(state.affinity);
-  const empty = '♡'.repeat(5 - state.affinity);
-  document.getElementById('heartRow').textContent = `${filled} ${empty}`.trim();
-}
-
-function resetAll(){
-  state.day = 1;
-  state.energy = 100;
-  state.stats = {
-    stage: 0,
-    mood: 0,
-    style: 0,
-    mystery: 0,
-    charm: 0
-  };
-  state.awakened = null;
-  state.roomItems = [];
-  state.visitor = null;
-  state.affinity = 0;
-
-  clearRoom();
-
-  seedImg.src = 'img/KEY_default.png';
-  awakenImg.src = 'img/KEY_default.png';
-
-  const roomAvatar = document.getElementById('roomAvatar');
-  roomAvatar.dataset.name = '';
-  roomAvatar.innerHTML = '';
-
-  document.getElementById('roomIdentity').textContent = '-';
-  document.getElementById('roomHint').textContent = '지금의 정체성에 맞는 공간이 열렸어요. 어떤 오브제를 배치하느냐에 따라 이후 방문자와 관계 루트가 달라질 수 있습니다.';
-  document.getElementById('roomBadges').innerHTML = '';
-
-  scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
-  updateScheduleUI();
-  showScreen('schedule');
-}
-
-updateScheduleUI();
-updateHearts();
 </script>
+
 </body>
 </html>
