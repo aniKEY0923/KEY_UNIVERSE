@@ -15,7 +15,6 @@
   --pink:#ff7bc7;
   --violet:#8b7dff;
   --gold:#f3c56c;
-  --cyan:#7cd5ff;
   --mint:#7df0d0;
   --radius:20px;
   --shadow:0 16px 40px rgba(0,0,0,.32);
@@ -169,7 +168,6 @@ img{
   border:1px solid var(--line);
 }
 
-/* schedule */
 .layout{
   display:grid;
   grid-template-columns:1.1fr .9fr;
@@ -352,7 +350,6 @@ img{
   line-height:1.45;
 }
 
-/* awaken */
 .center-wrap{
   min-height:calc(100vh - var(--top-h) - 30px);
   display:flex;
@@ -420,7 +417,6 @@ img{
   line-height:1.7;
 }
 
-/* room */
 .room-layout{
   display:grid;
   grid-template-columns:1.2fr .8fr;
@@ -475,7 +471,6 @@ img{
   image-rendering:pixelated;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));
 }
-
 .room-player.left{
   transform:scaleX(-1);
 }
@@ -528,6 +523,26 @@ img{
   font-size:12px;
 }
 .badge strong{color:var(--text)}
+
+.dpad{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:56px 56px 56px;
+  grid-template-rows:56px 56px 56px;
+  gap:8px;
+  justify-content:center;
+}
+.dpad button{
+  border-radius:16px;
+  background:rgba(255,255,255,.07);
+  border:1px solid var(--line);
+  font-size:22px;
+  font-weight:900;
+  touch-action:manipulation;
+}
+.dpad .empty{
+  visibility:hidden;
+}
 
 @media (max-width: 980px){
   .layout,
@@ -703,7 +718,7 @@ img{
     <div class="topbar">
       <div class="brand">
         <div class="title">My Room</div>
-        <div class="subtitle">방향키로 움직여보세요</div>
+        <div class="subtitle">키보드 또는 아래 버튼으로 움직여보세요</div>
       </div>
       <div class="pill">
         <span>Identity</span>
@@ -715,9 +730,8 @@ img{
       <div class="room-layout">
         <div class="card panel">
           <div class="room-scene" id="roomScene">
-            <div class="room-map" id="roomMap"></div>
-            <div class="room-help">방향키로 이동</div>
-
+            <div class="room-map"></div>
+            <div class="room-help">↑↓←→ 또는 터치 버튼으로 이동</div>
             <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
 
             <div class="room-player" id="roomPlayer">
@@ -729,16 +743,28 @@ img{
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="card panel">
             <h3 class="section-title">현재 상태</h3>
-            <div class="hint-box" id="roomHint">방 안으로 들어왔어요. 방향키로 움직여보세요.</div>
+            <div class="hint-box" id="roomHint">방 안으로 들어왔어요. 움직여보세요.</div>
             <div class="badge-row" id="roomBadges"></div>
           </div>
 
           <div class="card panel">
-            <h3 class="section-title">조작</h3>
-            <div class="small">
-              ↑ ↓ ← → 로 이동할 수 있어요.<br>
-              지금 버전은 맵 위 이동 테스트에 집중한 프로토타입입니다.
+            <h3 class="section-title">이동 버튼</h3>
+            <div class="small">모바일에서는 아래 버튼으로도 움직일 수 있어요.</div>
+
+            <div class="dpad">
+              <div class="empty"></div>
+              <button data-move="up">▲</button>
+              <div class="empty"></div>
+
+              <button data-move="left">◀</button>
+              <div class="empty"></div>
+              <button data-move="right">▶</button>
+
+              <div class="empty"></div>
+              <button data-move="down">▼</button>
+              <div class="empty"></div>
             </div>
+
             <div class="action-row">
               <button class="secondary-btn" id="restartAllBtn">처음으로</button>
               <button class="primary-btn" id="backAwakenBtn">각성 화면</button>
@@ -769,7 +795,7 @@ const state = {
     y: 300,
     w: 44,
     h: 60,
-    speed: 8,
+    speed: 10,
     facing: 'right'
   }
 };
@@ -820,6 +846,19 @@ document.getElementById('backScheduleBtn').addEventListener('click', () => showS
 document.getElementById('restartAllBtn').addEventListener('click', resetAll);
 document.getElementById('backAwakenBtn').addEventListener('click', () => showScreen('awaken'));
 
+document.querySelectorAll('[data-move]').forEach(btn => {
+  const move = btn.dataset.move;
+  const run = (e) => {
+    e.preventDefault();
+    if(move === 'up') movePlayer(0, -state.player.speed);
+    if(move === 'down') movePlayer(0, state.player.speed);
+    if(move === 'left') movePlayer(-state.player.speed, 0);
+    if(move === 'right') movePlayer(state.player.speed, 0);
+  };
+  btn.addEventListener('click', run);
+  btn.addEventListener('touchstart', run, { passive:false });
+});
+
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
@@ -840,9 +879,7 @@ function updateScheduleUI(){
   });
 
   awakenBtn.disabled = !canAwaken();
-  if(canAwaken()){
-    scheduleDialog.textContent = dialogues.ready;
-  }
+  if(canAwaken()) scheduleDialog.textContent = dialogues.ready;
 }
 
 function act(type){
@@ -855,35 +892,17 @@ function act(type){
 
   switch(type){
     case 'practice':
-      state.stats.stage += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.practice;
-      break;
+      state.stats.stage += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.practice; break;
     case 'study':
-      state.stats.style += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.study;
-      break;
+      state.stats.style += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.study; break;
     case 'movie':
-      state.stats.mood += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.movie;
-      break;
+      state.stats.mood += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.movie; break;
     case 'walk':
-      state.stats.mystery += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.walk;
-      break;
+      state.stats.mystery += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.walk; break;
     case 'letters':
-      state.stats.charm += 2;
-      state.energy -= 20;
-      scheduleDialog.textContent = dialogues.letters;
-      break;
+      state.stats.charm += 2; state.energy -= 20; scheduleDialog.textContent = dialogues.letters; break;
     case 'rest':
-      state.day += 1;
-      state.energy = state.maxEnergy;
-      scheduleDialog.textContent = dialogues.rest;
-      break;
+      state.day += 1; state.energy = state.maxEnergy; scheduleDialog.textContent = dialogues.rest; break;
   }
 
   state.energy = clamp(state.energy, 0, state.maxEnergy);
@@ -997,7 +1016,7 @@ function checkPointEvent(){
   if(dist < 70){
     roomHint.textContent = '포인트 근처에 도착했어요. 나중에는 여기서 대화나 이벤트를 붙일 수 있어요.';
   } else {
-    roomHint.textContent = '방 안으로 들어왔어요. 방향키로 움직여보세요.';
+    roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
   }
 }
 
@@ -1037,16 +1056,14 @@ function resetAll(){
   scheduleDialog.textContent = '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”';
   document.getElementById('roomIdentity').textContent = '-';
   document.getElementById('roomBadges').innerHTML = '';
-  roomHint.textContent = '방 안으로 들어왔어요. 방향키로 움직여보세요.';
+  roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
 
   updateScheduleUI();
   showScreen('schedule');
 }
 
 window.addEventListener('resize', () => {
-  if(screens.room.classList.contains('active')){
-    renderPlayer();
-  }
+  if(screens.room.classList.contains('active')) renderPlayer();
 });
 
 updateScheduleUI();
