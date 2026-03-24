@@ -40,6 +40,10 @@ button{
   cursor:pointer;
 }
 
+button:disabled{
+  cursor:not-allowed;
+}
+
 img{
   display:block;
   max-width:100%;
@@ -161,7 +165,6 @@ img{
 }
 .primary-btn:disabled{
   opacity:.45;
-  cursor:not-allowed;
 }
 .secondary-btn{
   background:rgba(255,255,255,.06);
@@ -217,8 +220,8 @@ img{
   z-index:3;
   width:54px;
   height:78px;
-  left:80px;
-  top:170px;
+  left:50%;
+  top:50%;
   pointer-events:none;
   will-change:left, top, transform;
 }
@@ -256,7 +259,7 @@ img{
   position:absolute;
   z-index:4;
   max-width:220px;
-  min-width:150px;
+  min-width:160px;
   padding:10px 12px;
   border-radius:16px;
   background:rgba(255,255,255,.92);
@@ -265,29 +268,44 @@ img{
   line-height:1.45;
   box-shadow:0 8px 20px rgba(0,0,0,.18);
   border:1px solid rgba(120,100,180,.14);
-  left:110px;
-  top:48px;
 }
 .seed-bubble:after{
   content:"";
   position:absolute;
-  left:22px;
+  left:50%;
   bottom:-10px;
   width:16px;
   height:16px;
   background:rgba(255,255,255,.92);
   border-right:1px solid rgba(120,100,180,.14);
   border-bottom:1px solid rgba(120,100,180,.14);
-  transform:rotate(45deg);
+  transform:translateX(-50%) rotate(45deg);
 }
 
-.dialog{
-  padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--line);
-  line-height:1.7;
-  color:#f7f5ff;
+.seed-status{
+  position:absolute;
+  z-index:5;
+  min-width:38px;
+  text-align:center;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(0,0,0,.62);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.04em;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(0);
+}
+.seed-status.show{
+  opacity:1;
+  animation:statusBob .9s ease-in-out infinite;
+}
+@keyframes statusBob{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-4px); }
 }
 
 .stat-list{
@@ -364,9 +382,12 @@ img{
   border:1px solid var(--line);
   transition:.18s ease;
 }
-.schedule-btn:hover{
+.schedule-btn:hover:not(:disabled){
   transform:translateY(-1px);
   background:rgba(255,255,255,.07);
+}
+.schedule-btn:disabled{
+  opacity:.45;
 }
 .schedule-btn .title{
   display:block;
@@ -604,8 +625,7 @@ img{
   }
   .seed-bubble{
     max-width:180px;
-    left:86px;
-    top:36px;
+    min-width:140px;
     font-size:11px;
   }
 
@@ -638,6 +658,8 @@ img{
             <div class="seed-player" id="seedPlayer">
               <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
             </div>
+
+            <div class="seed-status" id="seedStatus">...</div>
 
             <div class="seed-bubble" id="seedBubble">
               “어? 왔어? 오늘은 어떤 하루를 보내게 될까?”
@@ -697,7 +719,7 @@ img{
             <h3 class="section-title">스케줄 수행</h3>
             <div class="small">행동을 수행하면 성향이 쌓이고 에너지가 소모됩니다. 휴식을 선택하면 다음 날로 넘어가며 에너지가 회복됩니다.</div>
 
-            <div class="schedule-grid">
+            <div class="schedule-grid" id="scheduleGrid">
               <button class="schedule-btn" data-act="practice">
                 <span class="title">🎤 보컬 연습</span>
                 <span class="meta">Stage +2 / Energy -20</span>
@@ -860,6 +882,7 @@ const state = {
   maxEnergy: 100,
   stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
   awakened: null,
+  isActing: false,
 
   seedPlayer: {
     x: 80,
@@ -890,15 +913,24 @@ const imageSet = {
 };
 
 const dialogues = {
-  intro: '“어? 왔어? 오늘은 어떤 하루를 보내게 될까?”',
-  practice: '“조금 더 선명해지는 느낌이야. 무대 위의 내가 가까워졌어.”',
-  study: '“옷과 분위기를 고르는 것도 나를 만드는 일이네.”',
-  movie: '“감정이 쌓이는 날이 있어. 오늘이 그런 날 같아.”',
-  walk: '“밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.”',
-  letters: '“사람의 마음을 읽고 있으면 나도 조금 부드러워지는 것 같아.”',
-  rest: '“푹 쉬었어. 다음 하루를 시작할 준비가 됐어.”',
-  lowEnergy: '“지금은 조금 지쳤어… 쉬어가자.”',
-  ready: '“이제 충분히 선명해졌어. 어떤 KEY가 될지 정해질 것 같아.”'
+  intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
+  practice: '조금 더 선명해지는 느낌이야. 무대 위의 내가 가까워졌어.',
+  study: '옷과 분위기를 고르는 것도 나를 만드는 일이네.',
+  movie: '감정이 쌓이는 날이 있어. 오늘이 그런 날 같아.',
+  walk: '밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.',
+  letters: '사람의 마음을 읽고 있으면 나도 조금 부드러워지는 것 같아.',
+  rest: '푹 쉬었어. 다음 하루를 시작할 준비가 됐어.',
+  lowEnergy: '지금은 조금 지쳤어… 쉬어가자.',
+  ready: '자고 일어나면 새로운 모습으로 태어날 것 같아.'
+};
+
+const actionMeta = {
+  practice: { text: '...', duration: 900 },
+  study:    { text: '...', duration: 900 },
+  movie:    { text: '...', duration: 900 },
+  walk:     { text: '...', duration: 900 },
+  letters:  { text: '...', duration: 900 },
+  rest:     { text: 'Zzz', duration: 1100 }
 };
 
 const dayText = document.getElementById('dayText');
@@ -913,11 +945,13 @@ const seedStage = document.getElementById('seedStage');
 const seedPlayer = document.getElementById('seedPlayer');
 const seedPlayerImg = document.getElementById('seedPlayerImg');
 const seedBubble = document.getElementById('seedBubble');
+const seedStatus = document.getElementById('seedStatus');
 
 const roomScene = document.getElementById('roomScene');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomHint = document.getElementById('roomHint');
+const scheduleGrid = document.getElementById('scheduleGrid');
 
 const statEls = {
   stage: { fill: document.getElementById('fill-stage'), val: document.getElementById('val-stage') },
@@ -928,7 +962,7 @@ const statEls = {
 };
 
 document.querySelectorAll('.schedule-btn').forEach(btn => {
-  btn.addEventListener('click', () => act(btn.dataset.act));
+  btn.addEventListener('click', () => startAction(btn.dataset.act));
 });
 
 document.getElementById('resetBtn').addEventListener('click', resetAll);
@@ -947,6 +981,7 @@ document.querySelectorAll('[data-move]').forEach(btn => {
 
   const run = (e) => {
     e.preventDefault();
+    if(state.isActing) return;
 
     if(screens.schedule.classList.contains('active')){
       if(move === 'up') moveSeedPlayer(0, -state.seedPlayer.speed);
@@ -976,6 +1011,41 @@ function clamp(val, min, max){
 
 function setSeedMessage(text){
   seedBubble.textContent = text;
+  positionSeedBubble();
+}
+
+function setScheduleButtonsDisabled(disabled){
+  scheduleGrid.querySelectorAll('button').forEach(btn => {
+    btn.disabled = disabled;
+  });
+}
+
+function showSeedStatus(text){
+  seedStatus.textContent = text;
+  positionSeedStatus();
+  seedStatus.classList.add('show');
+}
+
+function hideSeedStatus(){
+  seedStatus.classList.remove('show');
+}
+
+function positionSeedBubble(){
+  const bubbleWidth = seedBubble.offsetWidth || 180;
+  const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
+  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
+  const bubbleTop = Math.max(8, state.seedPlayer.y - 78);
+
+  seedBubble.style.left = `${bubbleLeft}px`;
+  seedBubble.style.top = `${bubbleTop}px`;
+}
+
+function positionSeedStatus(){
+  const statusWidth = seedStatus.offsetWidth || 40;
+  const x = state.seedPlayer.x + state.seedPlayer.w / 2 - statusWidth / 2;
+  const y = state.seedPlayer.y - 22;
+  seedStatus.style.left = `${clamp(x, 8, seedStage.clientWidth - statusWidth - 8)}px`;
+  seedStatus.style.top = `${Math.max(8, y)}px`;
 }
 
 function updateScheduleUI(){
@@ -992,18 +1062,35 @@ function updateScheduleUI(){
     awakenBtn.disabled = false;
     setSeedMessage(dialogues.ready);
   } else {
-    awakenBtn.disabled = true;
+    awakenBtn.disabled = state.isActing;
   }
 }
 
-function act(type){
-  if(state.awakened) return;
+function startAction(type){
+  if(state.awakened || state.isActing) return;
 
   if(type !== 'rest' && state.energy < 20){
     setSeedMessage(dialogues.lowEnergy);
     return;
   }
 
+  state.isActing = true;
+  setScheduleButtonsDisabled(true);
+  awakenBtn.disabled = true;
+
+  const meta = actionMeta[type];
+  showSeedStatus(meta.text);
+
+  setTimeout(() => {
+    finishAction(type);
+    hideSeedStatus();
+    state.isActing = false;
+    setScheduleButtonsDisabled(false);
+    updateScheduleUI();
+  }, meta.duration);
+}
+
+function finishAction(type){
   switch(type){
     case 'practice':
       state.stats.stage += 2;
@@ -1038,7 +1125,6 @@ function act(type){
   }
 
   state.energy = clamp(state.energy, 0, state.maxEnergy);
-  updateScheduleUI();
 }
 
 function canAwaken(){
@@ -1073,7 +1159,7 @@ function detectIdentity(){
 }
 
 function doAwaken(){
-  if(!canAwaken()) return;
+  if(!canAwaken() || state.isActing) return;
   state.awakened = detectIdentity();
   syncAwakenUI();
   syncRoomUI();
@@ -1109,18 +1195,22 @@ function syncRoomUI(){
 /* schedule player */
 function placeSeedPlayerInitial(){
   const rect = seedStage.getBoundingClientRect();
-  state.seedPlayer.x = Math.max(8, rect.width * 0.14);
-  state.seedPlayer.y = Math.max(110, rect.height * 0.62);
+  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
+  state.seedPlayer.y = Math.max(90, rect.height / 2 - state.seedPlayer.h / 2 + 18);
+  positionSeedBubble();
+  positionSeedStatus();
 }
 
 function renderSeedPlayer(){
   seedPlayer.style.left = `${state.seedPlayer.x}px`;
   seedPlayer.style.top = `${state.seedPlayer.y}px`;
   seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  positionSeedBubble();
+  positionSeedStatus();
 }
 
 function moveSeedPlayer(dx, dy){
-  if(!screens.schedule.classList.contains('active')) return;
+  if(!screens.schedule.classList.contains('active') || state.isActing) return;
 
   const rect = seedStage.getBoundingClientRect();
   const minX = 0;
@@ -1151,7 +1241,7 @@ function renderRoomPlayer(){
 }
 
 function moveRoomPlayer(dx, dy){
-  if(!screens.room.classList.contains('active')) return;
+  if(!screens.room.classList.contains('active') || state.isActing) return;
 
   const rect = roomScene.getBoundingClientRect();
   const minX = 0;
@@ -1231,12 +1321,16 @@ function resetAll(){
   state.energy = 100;
   state.stats = { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 };
   state.awakened = null;
+  state.isActing = false;
 
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
   roomPlayerImg.src = imageSet.defaultRoom;
 
   setSeedMessage(dialogues.intro);
+  hideSeedStatus();
+  setScheduleButtonsDisabled(false);
+
   document.getElementById('roomIdentity').textContent = '-';
   document.getElementById('roomBadges').innerHTML = '';
   roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
@@ -1252,6 +1346,8 @@ function resetAll(){
 
 window.addEventListener('resize', () => {
   if(screens.schedule.classList.contains('active')){
+    positionSeedBubble();
+    positionSeedStatus();
     renderSeedPlayer();
   }
   if(screens.room.classList.contains('active')){
