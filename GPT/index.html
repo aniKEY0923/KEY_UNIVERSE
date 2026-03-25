@@ -224,6 +224,7 @@ img{
   top:50%;
   pointer-events:none;
   will-change:left, top, transform;
+  transition:left .45s ease, top .45s ease, transform .2s ease;
 }
 .seed-player img{
   width:100%;
@@ -614,26 +615,6 @@ img{
 }
 .badge strong{color:var(--text)}
 
-.dpad{
-  margin-top:14px;
-  display:grid;
-  grid-template-columns:56px 56px 56px;
-  grid-template-rows:56px 56px 56px;
-  gap:8px;
-  justify-content:center;
-}
-.dpad button{
-  border-radius:16px;
-  background:rgba(255,255,255,.07);
-  border:1px solid var(--line);
-  font-size:22px;
-  font-weight:900;
-  touch-action:manipulation;
-}
-.dpad .empty{
-  visibility:hidden;
-}
-
 @media (max-width: 980px){
   .room-layout{
     grid-template-columns:1fr;
@@ -773,57 +754,38 @@ img{
 
         <div class="card panel">
           <h3 class="section-title">스케줄 수행</h3>
-          <div class="small">행동을 수행하면 성향이 쌓이고 에너지가 소모됩니다. 휴식을 선택하면 다음 날로 넘어가며 에너지가 회복됩니다.</div>
+          <div class="small">어떤 행동이 어떤 성향을 키우는지 직접 경험하며 알아가보세요.</div>
 
           <div class="schedule-grid" id="scheduleGrid">
             <button class="schedule-btn" data-act="practice">
               <span class="title">🎤 보컬 연습</span>
-              <span class="meta">Stage +2 / Energy -20</span>
+              <span class="meta">꾸준히 쌓아보자</span>
             </button>
             <button class="schedule-btn" data-act="study">
               <span class="title">👗 콘셉트 연구</span>
-              <span class="meta">Style +2 / Energy -20</span>
+              <span class="meta">분위기를 탐색해보자</span>
             </button>
             <button class="schedule-btn" data-act="movie">
               <span class="title">🎬 영화 감상</span>
-              <span class="meta">Mood +2 / Energy -20</span>
+              <span class="meta">감정의 결을 모아보자</span>
             </button>
             <button class="schedule-btn" data-act="walk">
               <span class="title">🌙 야간 산책</span>
-              <span class="meta">Mystery +2 / Energy -20</span>
+              <span class="meta">밤의 공기를 느껴보자</span>
             </button>
             <button class="schedule-btn" data-act="letters">
               <span class="title">💌 팬레터 읽기</span>
-              <span class="meta">Charm +2 / Energy -20</span>
+              <span class="meta">마음을 들여다보자</span>
             </button>
             <button class="schedule-btn" data-act="rest">
               <span class="title">🛌 휴식</span>
-              <span class="meta">Next Day / Energy Full</span>
+              <span class="meta">하루를 정리하고 쉰다</span>
             </button>
           </div>
 
           <div class="action-row">
             <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
             <button class="secondary-btn" id="resetBtn">처음부터</button>
-          </div>
-        </div>
-
-        <div class="card panel">
-          <h3 class="section-title">이동 버튼</h3>
-          <div class="small">각성 전에도 미지의 나를 스테이지 안에서 움직일 수 있어요.</div>
-
-          <div class="dpad">
-            <div class="empty"></div>
-            <button data-move="up">▲</button>
-            <div class="empty"></div>
-
-            <button data-move="left">◀</button>
-            <div class="empty"></div>
-            <button data-move="right">▶</button>
-
-            <div class="empty"></div>
-            <button data-move="down">▼</button>
-            <div class="empty"></div>
           </div>
         </div>
       </div>
@@ -864,7 +826,7 @@ img{
     <div class="topbar">
       <div class="brand">
         <div class="title">My Room</div>
-        <div class="subtitle">스테이지 안에서만 캐릭터가 이동합니다</div>
+        <div class="subtitle">정체성에 따라 다른 생활이 열립니다</div>
       </div>
       <div class="pill">
         <span>Identity</span>
@@ -877,7 +839,7 @@ img{
         <div class="card panel">
           <div class="room-scene" id="roomScene">
             <div class="room-map"></div>
-            <div class="room-help">↑↓←→ 또는 터치 버튼으로 이동</div>
+            <div class="room-help">다음 단계에서 생활 연출과 관계 이벤트를 더 붙일 수 있어요</div>
 
             <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
 
@@ -890,27 +852,13 @@ img{
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="card panel">
             <h3 class="section-title">현재 상태</h3>
-            <div class="hint-box" id="roomHint">방 안으로 들어왔어요. 움직여보세요.</div>
+            <div class="hint-box" id="roomHint">방 안으로 들어왔어요.</div>
             <div class="badge-row" id="roomBadges"></div>
           </div>
 
           <div class="card panel">
-            <h3 class="section-title">이동 버튼</h3>
-            <div class="small">모바일에서는 아래 버튼으로 움직일 수 있어요.</div>
-
-            <div class="dpad">
-              <div class="empty"></div>
-              <button data-move="up">▲</button>
-              <div class="empty"></div>
-
-              <button data-move="left">◀</button>
-              <div class="empty"></div>
-              <button data-move="right">▶</button>
-
-              <div class="empty"></div>
-              <button data-move="down">▼</button>
-              <div class="empty"></div>
-            </div>
+            <h3 class="section-title">다음 단계</h3>
+            <div class="small">이제 각성 후에도 직접 조작보다 자동 생활 연출 중심으로 확장하면 자연스러워요.</div>
 
             <div class="action-row">
               <button class="secondary-btn" id="restartAllBtn">처음으로</button>
@@ -944,16 +892,14 @@ const state = {
     y: 170,
     w: 54,
     h: 78,
-    speed: 10,
     facing: 'right'
   },
 
-  player: {
+  roomPlayer: {
     x: 100,
     y: 340,
     w: 42,
     h: 60,
-    speed: 10,
     facing: 'right'
   }
 };
@@ -980,12 +926,12 @@ const dialogues = {
 };
 
 const actionMeta = {
-  practice: { text: '...', duration: 900 },
-  study:    { text: '...', duration: 900 },
-  movie:    { text: '...', duration: 900 },
-  walk:     { text: '...', duration: 900 },
-  letters:  { text: '...', duration: 900 },
-  rest:     { text: 'Zzz', duration: 1100 }
+  practice: { text: '!!!', duration: 950, target: () => getSeedActionPoint('practice') },
+  study:    { text: '???', duration: 950, target: () => getSeedActionPoint('study') },
+  movie:    { text: '...', duration: 950, target: () => getSeedActionPoint('movie') },
+  walk:     { text: '...', duration: 950, target: () => getSeedActionPoint('walk') },
+  letters:  { text: '...', duration: 950, target: () => getSeedActionPoint('letters') },
+  rest:     { text: 'Zzz', duration: 1200, target: () => getSeedActionPoint('rest') }
 };
 
 const dayText = document.getElementById('dayText');
@@ -1029,30 +975,6 @@ document.getElementById('toRoomBtn').addEventListener('click', () => {
 document.getElementById('backScheduleBtn').addEventListener('click', () => showScreen('schedule'));
 document.getElementById('restartAllBtn').addEventListener('click', resetAll);
 document.getElementById('backAwakenBtn').addEventListener('click', () => showScreen('awaken'));
-
-document.querySelectorAll('[data-move]').forEach(btn => {
-  const move = btn.dataset.move;
-
-  const run = (e) => {
-    e.preventDefault();
-    if(state.isActing) return;
-
-    if(screens.schedule.classList.contains('active')){
-      if(move === 'up') moveSeedPlayer(0, -state.seedPlayer.speed);
-      if(move === 'down') moveSeedPlayer(0, state.seedPlayer.speed);
-      if(move === 'left') moveSeedPlayer(-state.seedPlayer.speed, 0);
-      if(move === 'right') moveSeedPlayer(state.seedPlayer.speed, 0);
-    } else if(screens.room.classList.contains('active')){
-      if(move === 'up') moveRoomPlayer(0, -state.player.speed);
-      if(move === 'down') moveRoomPlayer(0, state.player.speed);
-      if(move === 'left') moveRoomPlayer(-state.player.speed, 0);
-      if(move === 'right') moveRoomPlayer(state.player.speed, 0);
-    }
-  };
-
-  btn.addEventListener('click', run);
-  btn.addEventListener('touchstart', run, { passive:false });
-});
 
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
@@ -1120,6 +1042,43 @@ function updateScheduleUI(){
   }
 }
 
+function getSeedActionPoint(type){
+  const w = seedStage.clientWidth;
+  const h = seedStage.clientHeight;
+
+  switch(type){
+    case 'practice':
+      return { x: w * 0.30, y: h * 0.58 };
+    case 'study':
+      return { x: w * 0.72, y: h * 0.58 };
+    case 'movie':
+      return { x: w * 0.56, y: h * 0.67 };
+    case 'walk':
+      return { x: w * 0.84, y: h * 0.38 };
+    case 'letters':
+      return { x: w * 0.70, y: h * 0.62 };
+    case 'rest':
+      return { x: w * 0.20, y: h * 0.66 };
+    default:
+      return { x: w * 0.5, y: h * 0.6 };
+  }
+}
+
+function moveSeedPlayerTo(targetX, targetY){
+  const maxX = seedStage.clientWidth - state.seedPlayer.w;
+  const maxY = seedStage.clientHeight - state.seedPlayer.h;
+
+  const nextX = clamp(targetX - state.seedPlayer.w / 2, 0, maxX);
+  const nextY = clamp(targetY - state.seedPlayer.h / 2, 70, maxY);
+
+  if(nextX < state.seedPlayer.x) state.seedPlayer.facing = 'left';
+  if(nextX > state.seedPlayer.x) state.seedPlayer.facing = 'right';
+
+  state.seedPlayer.x = nextX;
+  state.seedPlayer.y = nextY;
+  renderSeedPlayer();
+}
+
 function startAction(type){
   if(state.awakened || state.isActing) return;
 
@@ -1133,6 +1092,8 @@ function startAction(type){
   awakenBtn.disabled = true;
 
   const meta = actionMeta[type];
+  const point = meta.target();
+  moveSeedPlayerTo(point.x, point.y);
   showSeedStatus(meta.text);
 
   setTimeout(() => {
@@ -1263,112 +1224,18 @@ function renderSeedPlayer(){
   positionSeedStatus();
 }
 
-function moveSeedPlayer(dx, dy){
-  if(!screens.schedule.classList.contains('active') || state.isActing) return;
-
-  const rect = seedStage.getBoundingClientRect();
-  const minX = 0;
-  const minY = 70;
-  const maxX = rect.width - state.seedPlayer.w;
-  const maxY = rect.height - state.seedPlayer.h;
-
-  state.seedPlayer.x = clamp(state.seedPlayer.x + dx, minX, maxX);
-  state.seedPlayer.y = clamp(state.seedPlayer.y + dy, minY, maxY);
-
-  if(dx < 0) state.seedPlayer.facing = 'left';
-  if(dx > 0) state.seedPlayer.facing = 'right';
-
-  renderSeedPlayer();
-}
-
 /* room player */
 function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
-  state.player.x = Math.max(12, rect.width * 0.18);
-  state.player.y = Math.max(110, rect.height * 0.72);
+  state.roomPlayer.x = Math.max(12, rect.width * 0.18);
+  state.roomPlayer.y = Math.max(110, rect.height * 0.72);
 }
 
 function renderRoomPlayer(){
-  roomPlayer.style.left = `${state.player.x}px`;
-  roomPlayer.style.top = `${state.player.y}px`;
-  roomPlayer.classList.toggle('left', state.player.facing === 'left');
+  roomPlayer.style.left = `${state.roomPlayer.x}px`;
+  roomPlayer.style.top = `${state.roomPlayer.y}px`;
+  roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
 }
-
-function moveRoomPlayer(dx, dy){
-  if(!screens.room.classList.contains('active') || state.isActing) return;
-
-  const rect = roomScene.getBoundingClientRect();
-  const minX = 0;
-  const minY = 0;
-  const maxX = rect.width - state.player.w;
-  const maxY = rect.height - state.player.h;
-
-  state.player.x = clamp(state.player.x + dx, minX, maxX);
-  state.player.y = clamp(state.player.y + dy, minY, maxY);
-
-  if(dx < 0) state.player.facing = 'left';
-  if(dx > 0) state.player.facing = 'right';
-
-  renderRoomPlayer();
-  checkPointEvent();
-}
-
-function checkPointEvent(){
-  const marker = document.getElementById('markerDesk');
-  const markerX = marker.offsetLeft + marker.offsetWidth / 2;
-  const markerY = marker.offsetTop + marker.offsetHeight / 2;
-
-  const playerX = state.player.x + state.player.w / 2;
-  const playerY = state.player.y + state.player.h / 2;
-
-  const dist = Math.hypot(markerX - playerX, markerY - playerY);
-
-  if(dist < 70){
-    roomHint.textContent = '포인트 근처에 도착했어요. 나중에는 여기서 대화나 이벤트를 붙일 수 있어요.';
-  } else {
-    roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
-  }
-}
-
-document.addEventListener('keydown', (e) => {
-  switch(e.key){
-    case 'ArrowUp':
-      e.preventDefault();
-      if(screens.schedule.classList.contains('active')){
-        moveSeedPlayer(0, -state.seedPlayer.speed);
-      } else if(screens.room.classList.contains('active')){
-        moveRoomPlayer(0, -state.player.speed);
-      }
-      break;
-
-    case 'ArrowDown':
-      e.preventDefault();
-      if(screens.schedule.classList.contains('active')){
-        moveSeedPlayer(0, state.seedPlayer.speed);
-      } else if(screens.room.classList.contains('active')){
-        moveRoomPlayer(0, state.player.speed);
-      }
-      break;
-
-    case 'ArrowLeft':
-      e.preventDefault();
-      if(screens.schedule.classList.contains('active')){
-        moveSeedPlayer(-state.seedPlayer.speed, 0);
-      } else if(screens.room.classList.contains('active')){
-        moveRoomPlayer(-state.player.speed, 0);
-      }
-      break;
-
-    case 'ArrowRight':
-      e.preventDefault();
-      if(screens.schedule.classList.contains('active')){
-        moveSeedPlayer(state.seedPlayer.speed, 0);
-      } else if(screens.room.classList.contains('active')){
-        moveRoomPlayer(state.player.speed, 0);
-      }
-      break;
-  }
-});
 
 function resetAll(){
   state.day = 1;
@@ -1387,7 +1254,7 @@ function resetAll(){
 
   document.getElementById('roomIdentity').textContent = '-';
   document.getElementById('roomBadges').innerHTML = '';
-  roomHint.textContent = '방 안으로 들어왔어요. 움직여보세요.';
+  roomHint.textContent = '방 안으로 들어왔어요.';
 
   placeSeedPlayerInitial();
   renderSeedPlayer();
@@ -1400,8 +1267,7 @@ function resetAll(){
 
 window.addEventListener('resize', () => {
   if(screens.schedule.classList.contains('active')){
-    positionSeedBubble();
-    positionSeedStatus();
+    placeSeedPlayerInitial();
     renderSeedPlayer();
   }
   if(screens.room.classList.contains('active')){
