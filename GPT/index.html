@@ -1,237 +1,167 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KEY Prototype</title>
-
-<style>
-body{
-  margin:0;
-  background:#111;
-  color:#fff;
-  font-family:sans-serif;
-}
-
-.container{
-  max-width:420px;
-  margin:auto;
-  padding:12px;
-}
-
-/* 씬 */
-.stage{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/2;
-  background:url("img/room_default.png") center/cover;
-  border-radius:16px;
-  overflow:hidden;
-}
-
-.day{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:rgba(0,0,0,.5);
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:bold;
-}
-
-.player{
-  position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  width:60px;
-}
-
-.awaken-btn{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:-40px;
-  padding:8px 14px;
-  border-radius:999px;
-  background:linear-gradient(45deg,pink,purple);
-  display:none;
-}
-
-/* 스탯 */
-.stat{
-  margin:6px 0;
-}
-.bar{
-  height:8px;
-  background:#333;
-  border-radius:999px;
-  overflow:hidden;
-}
-.fill{
-  height:100%;
-  background:linear-gradient(90deg,pink,purple);
-}
-
-/* 버튼 */
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:6px;
-  margin-top:10px;
-}
-button{
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  background:#222;
-  color:#fff;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<div class="stage" id="stage">
-  <div class="day" id="day">DAY 1</div>
-  <img src="img/KEY_default.png" class="player">
-  <button class="awaken-btn" id="awakenBtn">각성하기</button>
-</div>
-
-<div id="stats"></div>
-
-<div class="grid" id="actions"></div>
-
-</div>
+<!-- 🔥 핵심 변경된 부분만 포함된 안전 통합본 -->
 
 <script>
 
-const state={
-  day:1,
-  energy:100,
-  stats:{
-    dark:0,
-    mystery:0,
-    social:0,
-    cute:0,
-    scary:0,
-    humor:0
+// ✅ state 수정
+const state = {
+  day: 1,
+  energy: 100,
+  maxEnergy: 100,
+  stats: {
+    dark: 0,
+    mystery: 0,
+    social: 0,
+    cute: 0,
+    scary: 0,
+    humor: 0
   },
-  awakened:null
+  awakened: null,
+  isActing: false
 };
 
-const actions=[
-  {key:"dance",name:"댄스연습"},
-  {key:"vocal",name:"보컬연습"},
-  {key:"cook",name:"요리"},
-  {key:"bath",name:"목욕"},
-  {key:"walk",name:"산책"},
-  {key:"clean",name:"청소"},
-  {key:"study",name:"콘셉트연구"},
-  {key:"shop",name:"쇼핑"},
-  {key:"letters",name:"팬레터읽기"},
-  {key:"exhibit",name:"전시회보기"},
-  {key:"netflix",name:"넷플릭스"},
-  {key:"rest",name:"휴식"}
-];
 
-function render(){
-  document.getElementById("day").innerText="DAY "+state.day;
+// ✅ statEls 수정
+const statEls = {
+  dark: { fill: document.getElementById('fill-dark'), val: document.getElementById('val-dark') },
+  mystery: { fill: document.getElementById('fill-mystery'), val: document.getElementById('val-mystery') },
+  social: { fill: document.getElementById('fill-social'), val: document.getElementById('val-social') },
+  cute: { fill: document.getElementById('fill-cute'), val: document.getElementById('val-cute') },
+  scary: { fill: document.getElementById('fill-scary'), val: document.getElementById('val-scary') },
+  humor: { fill: document.getElementById('fill-humor'), val: document.getElementById('val-humor') }
+};
 
-  const statsEl=document.getElementById("stats");
-  statsEl.innerHTML="";
-  for(let k in state.stats){
-    statsEl.innerHTML+=`
-    <div class="stat">
-      ${k}: ${state.stats[k]}
-      <div class="bar">
-        <div class="fill" style="width:${state.stats[k]*10}%"></div>
-      </div>
-    </div>`;
-  }
 
-  const actEl=document.getElementById("actions");
-  actEl.innerHTML="";
-  actions.forEach(a=>{
-    const b=document.createElement("button");
-    b.innerText=a.name;
-    b.onclick=()=>doAction(a.key);
-    actEl.appendChild(b);
-  });
+// ✅ 스케줄 버튼 이벤트 유지 (기존 코드 그대로 사용)
+document.querySelectorAll('.schedule-btn').forEach(btn => {
+  btn.addEventListener('click', () => startAction(btn.dataset.act));
+});
 
-  document.getElementById("awakenBtn").style.display=
-    canAwaken()?"block":"none";
-}
 
-function doAction(type){
-
-  if(type==="walk"){
-    document.getElementById("stage").style.background=
-      "url('img/walk.jpg') center/cover";
-  }else{
-    document.getElementById("stage").style.background=
-      "url('img/room_default.png') center/cover";
-  }
+// ✅ 액션 로직 완전 교체
+function finishAction(type){
 
   switch(type){
 
-    case"dance": state.stats.social+=2; break;
-    case"vocal": state.stats.dark+=2; break;
-    case"cook": state.stats.cute+=2; break;
-    case"bath": state.stats.cute+=1; state.stats.mystery+=1; break;
-    case"walk": state.stats.mystery+=2; state.stats.scary+=1; break;
-    case"clean": state.stats.social+=1; break;
-    case"study": state.stats.dark+=1; state.stats.scary+=1; break;
-    case"shop": state.stats.social+=2; state.stats.cute+=1; break;
-    case"letters": state.stats.humor+=2; break;
-    case"exhibit": state.stats.mystery+=2; break;
-    case"netflix": state.stats.humor+=1; state.stats.dark+=1; break;
+    case 'dance':
+      state.stats.social += 2;
+      state.energy -= 20;
+      break;
 
-    case"rest":
-      state.day++;
-      state.energy=100;
+    case 'vocal':
+      state.stats.dark += 2;
+      state.energy -= 20;
+      break;
+
+    case 'cook':
+      state.stats.cute += 2;
+      state.energy -= 20;
+      break;
+
+    case 'bath':
+      state.stats.cute += 1;
+      state.stats.mystery += 1;
+      state.energy -= 15;
+      break;
+
+    case 'walk':
+      state.stats.mystery += 2;
+      state.stats.scary += 1;
+      state.energy -= 20;
+      break;
+
+    case 'clean':
+      state.stats.social += 1;
+      state.energy -= 15;
+      break;
+
+    case 'study':
+      state.stats.dark += 1;
+      state.stats.scary += 1;
+      state.energy -= 20;
+      break;
+
+    case 'shop':
+      state.stats.social += 2;
+      state.stats.cute += 1;
+      state.energy -= 20;
+      break;
+
+    case 'letters':
+      state.stats.humor += 2;
+      state.energy -= 20;
+      break;
+
+    case 'exhibit':
+      state.stats.mystery += 2;
+      state.energy -= 20;
+      break;
+
+    case 'netflix':
+      state.stats.humor += 1;
+      state.stats.dark += 1;
+      state.energy -= 20;
+      break;
+
+    case 'rest':
+      state.day += 1;
+      state.energy = state.maxEnergy;
       break;
   }
 
-  render();
+  state.energy = clamp(state.energy, 0, state.maxEnergy);
 }
 
+
+// ✅ 각성 조건 변경
 function canAwaken(){
-  const s=state.stats;
-  return Object.values(s).reduce((a,b)=>a+b,0)>=20;
+  const total = Object.values(state.stats).reduce((a,b)=>a+b,0);
+  return total >= 20;
 }
 
-function getTopStat(){
-  return Object.entries(state.stats)
-    .sort((a,b)=>b[1]-a[1])[0][0];
-}
 
+// ✅ KEY 분기 시스템 추가
 function detectIdentity(){
 
-  const s=state.stats;
+  const s = state.stats;
 
-  const builds=[
-    {name:"Villain KEY",score:s.dark*1.2+s.scary},
-    {name:"Dream KEY",score:s.mystery*1.2+s.dark},
-    {name:"Idol KEY",score:s.cute*1.2+s.social},
-    {name:"Trickster KEY",score:s.humor*1.2+s.mystery},
-    {name:"Royal KEY",score:s.social*1.2+s.dark},
-    {name:"Healing KEY",score:s.cute*1.2+s.humor}
+  const builds = [
+    { name:'Villain KEY', score:s.dark*1.2 + s.scary },
+    { name:'Dream KEY', score:s.mystery*1.2 + s.dark },
+    { name:'Idol KEY', score:s.cute*1.2 + s.social },
+    { name:'Trickster KEY', score:s.humor*1.2 + s.mystery },
+    { name:'Royal KEY', score:s.social*1.2 + s.dark },
+    { name:'Healing KEY', score:s.cute*1.2 + s.humor }
   ];
 
   return builds.sort((a,b)=>b.score-a.score)[0];
 }
 
-document.getElementById("awakenBtn").onclick=()=>{
-  const result=detectIdentity();
-  alert("각성: "+result.name);
-};
 
-render();
+// ✅ UI 업데이트 (기존 코드 유지하면서 자동 대응)
+function updateScheduleUI(){
+
+  Object.keys(state.stats).forEach(key => {
+    if(statEls[key]){
+      statEls[key].val.textContent = state.stats[key];
+      statEls[key].fill.style.width =
+        `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+    }
+  });
+
+}
+
+
+// ✅ 각성 버튼 클릭 (기존 흐름 유지)
+document.getElementById('awakenBtn').addEventListener('click', () => {
+
+  if(!canAwaken()) return;
+
+  const result = detectIdentity();
+
+  alert("각성: " + result.name);
+
+  state.awakened = result;
+});
+
 
 </script>
-
-</body>
-</html>
