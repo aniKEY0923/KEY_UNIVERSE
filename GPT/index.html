@@ -1,297 +1,2041 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-<title>KEY Prototype</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>KEY:VERSE Proto</title>
 <style>
+:root{
+  --bg1:#141320;
+  --bg2:#211d34;
+  --panel:#2a2640;
+  --line:rgba(255,255,255,.08);
+  --text:#f5f2ff;
+  --sub:#bdb6d8;
+  --pink:#ff7bc7;
+  --violet:#8b7dff;
+  --gold:#f3c56c;
+  --mint:#7df0d0;
+  --radius:20px;
+  --shadow:0 16px 40px rgba(0,0,0,.32);
+  --top-h:84px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
   margin:0;
-  background:#111;
-  color:#fff;
-  font-family:sans-serif;
-  touch-action: manipulation;
-}
-
-.container{
-  max-width:420px;
-  margin:auto;
-  padding:12px;
-}
-
-.stage{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/2;
-  background:url("img/room_default.png") center/cover;
-  border-radius:16px;
-}
-
-.day{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:rgba(0,0,0,.5);
-  padding:6px 10px;
-  border-radius:999px;
-}
-
-.player{
-  position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  width:60px;
-}
-
-.awaken{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:-40px;
-  display:none;
-  background:linear-gradient(45deg,pink,purple);
-  padding:8px 14px;
-  border-radius:999px;
-}
-
-.stat{
-  margin:6px 0;
-}
-
-.bar{
-  height:8px;
-  background:#333;
-  border-radius:999px;
-}
-
-.fill{
-  height:100%;
-  background:linear-gradient(90deg,pink,purple);
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:6px;
-  margin-top:10px;
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(125,100,255,.24) 0%, transparent 28%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  overflow:hidden;
+  touch-action:manipulation;
 }
 
 button{
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  background:#222;
+  font:inherit;
+  color:inherit;
+  border:0;
+  cursor:pointer;
+}
+button:disabled{cursor:not-allowed}
+
+img{
+  display:block;
+  max-width:100%;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+.app{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+
+.screen{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(12px);
+  transition:opacity .28s ease, transform .28s ease;
+}
+.screen.active{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+
+.topbar{
+  position:absolute;
+  left:0; right:0; top:0;
+  min-height:var(--top-h);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  z-index:20;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.brand .title{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+.brand .subtitle{
+  font-size:12px;
+  color:var(--sub);
+}
+
+.topbar-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+
+.top-auth-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  border-radius:999px;
+  box-shadow:var(--shadow);
+  color:var(--sub);
+  font-size:13px;
+  backdrop-filter:blur(10px);
+}
+
+.auth-pill{
+  max-width:260px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.mini-btn{
+  padding:10px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+  backdrop-filter:blur(10px);
+}
+
+.mini-btn.primary{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  border:0;
+}
+
+.main{
+  position:absolute;
+  inset:var(--top-h) 0 0 0;
+  padding:14px 16px 16px;
+  overflow:auto;
+}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+
+.panel{ padding:16px; }
+
+.section-title{
+  margin:0 0 12px;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.small{
+  font-size:12px;
+  color:var(--sub);
+  line-height:1.6;
+}
+
+.action-row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.primary-btn,
+.secondary-btn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:16px;
+  font-weight:900;
+  letter-spacing:.02em;
+  transition:.18s ease;
+}
+.primary-btn{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  box-shadow:0 12px 28px rgba(145,110,255,.25);
+}
+.primary-btn:disabled{
+  opacity:.45;
+}
+.secondary-btn{
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+  max-width:760px;
+  margin:0 auto;
+}
+
+.seed-stage-wrap{ position:relative; }
+
+.seed-stage{
+  position:relative;
+  width:100%;
+  aspect-ratio:3 / 2;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:
+    linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
+    url("img/room_default.png") center center / cover no-repeat;
+  transition:filter .35s ease, background .35s ease;
+}
+.seed-stage.bg-default{
+  background:
+    linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
+    url("img/room_default.png") center center / cover no-repeat;
+}
+.seed-stage.bg-walk{
+  background:
+    linear-gradient(rgba(12,10,24,.20), rgba(12,10,24,.42)),
+    url("img/walk.jpg") center center / cover no-repeat;
+}
+.seed-stage:before{
+  content:"";
+  position:absolute;
+  width:220px;
+  height:220px;
+  left:50%;
+  top:48%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,123,199,.10), rgba(139,125,255,0));
+  filter:blur(8px);
+  animation:pulse 3s ease-in-out infinite;
+}
+.seed-stage.resting{
+  filter:brightness(.62) saturate(.88);
+}
+
+@keyframes pulse{
+  0%,100%{opacity:.72}
+  50%{opacity:1}
+}
+
+.seed-day-badge{
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:7;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(14,12,24,.58);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  backdrop-filter:blur(8px);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
   color:#fff;
+}
+
+.seed-player{
+  position:absolute;
+  z-index:3;
+  width:54px;
+  height:78px;
+  left:50%;
+  top:50%;
+  pointer-events:none;
+  will-change:left, top, transform, filter;
+  transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease;
+}
+.seed-player img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.42));
+}
+.seed-player.left{
+  transform:scaleX(-1);
+}
+.seed-stage.resting .seed-player{
+  filter:brightness(.78);
+}
+
+.seed-awaken-anchor{
+  position:absolute;
+  z-index:8;
+  left:0;
+  top:0;
+  transform:translate(-50%, 0);
+  pointer-events:none;
+}
+.seed-awaken-btn{
+  pointer-events:auto;
+  padding:10px 14px;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  box-shadow:0 10px 24px rgba(145,110,255,.30);
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.seed-awaken-anchor.hidden{
+  display:none;
+}
+
+.seed-bubble{
+  position:absolute;
+  z-index:4;
+  max-width:220px;
+  min-width:160px;
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.92);
+  color:#453b62;
+  font-size:12px;
+  line-height:1.45;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+  border:1px solid rgba(120,100,180,.14);
+}
+.seed-bubble:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-10px;
+  width:16px;
+  height:16px;
+  background:rgba(255,255,255,.92);
+  border-right:1px solid rgba(120,100,180,.14);
+  border-bottom:1px solid rgba(120,100,180,.14);
+  transform:translateX(-50%) rotate(45deg);
+}
+
+.seed-status{
+  position:absolute;
+  z-index:5;
+  min-width:38px;
+  text-align:center;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(0,0,0,.62);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.04em;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(0);
+}
+.seed-status.show{
+  opacity:1;
+  animation:statusBob .9s ease-in-out infinite;
+}
+@keyframes statusBob{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-4px); }
+}
+
+.seed-label{
+  position:absolute;
+  left:14px;
+  bottom:12px;
+  z-index:2;
+  text-align:left;
+}
+.seed-label .name{
+  font-size:18px;
+  font-weight:900;
+  text-shadow:0 2px 10px rgba(0,0,0,.25);
+}
+.seed-label .desc{
+  margin-top:4px;
+  color:#ddd6f5;
+  font-size:12px;
+  text-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+
+.seed-mini-status{
+  position:absolute;
+  right:10px;
+  top:10px;
+  z-index:6;
+  width:122px;
+  padding:8px;
+  border-radius:14px;
+  background:rgba(26,22,42,.76);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 8px 20px rgba(0,0,0,.20);
+  backdrop-filter:blur(8px);
+}
+
+.seed-mini-title{
+  font-size:10px;
+  font-weight:900;
+  color:#f3efff;
+  margin-bottom:7px;
+  letter-spacing:.02em;
+}
+
+.seed-mini-row{
+  display:grid;
+  grid-template-columns:34px 1fr 18px;
+  gap:4px;
+  align-items:center;
+  margin-bottom:5px;
+  font-size:8px;
+  color:#d8d1f0;
+}
+
+.seed-mini-row strong{
+  font-size:8px;
+  text-align:right;
+  color:#fff;
+}
+
+.seed-mini-row .bar{
+  height:7px;
+}
+
+.seed-energy-box{
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.seed-energy-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:5px;
+  font-size:8px;
+  color:#d8d1f0;
+}
+
+.seed-energy-top strong{
+  color:#fff;
+  font-size:8px;
+}
+
+.bar{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.05);
+}
+.fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.fill.dark{background:linear-gradient(90deg,#6d5b93,#a085c7)}
+.fill.mystery{background:linear-gradient(90deg,#567dff,#8fc2ff)}
+.fill.social{background:linear-gradient(90deg,var(--mint),#b2ffe6)}
+.fill.cute{background:linear-gradient(90deg,var(--pink),#ffb1df)}
+.fill.scary{background:linear-gradient(90deg,#8f4d5f,#d28293)}
+.fill.humor{background:linear-gradient(90deg,var(--gold),#ffd98a)}
+
+.energy-bar{
+  height:12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.05);
+}
+.energy-fill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,var(--mint),#b6ffe8);
+  transition:width .25s ease;
+}
+
+.schedule-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+.schedule-btn{
+  text-align:left;
+  padding:10px 10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line);
+  transition:.18s ease;
+}
+.schedule-btn:hover:not(:disabled){
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.07);
+}
+.schedule-btn:disabled{
+  opacity:.45;
+}
+.schedule-btn .title{
+  display:block;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:3px;
+}
+.schedule-btn .meta{
+  display:block;
+  font-size:10px;
+  color:var(--sub);
+  line-height:1.3;
+}
+
+.center-wrap{
+  min-height:calc(100vh - var(--top-h) - 30px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.awaken-card{
+  width:min(760px,100%);
+  padding:26px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.awaken-card:before{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,123,199,.18), transparent 18%),
+    radial-gradient(circle at 50% 52%, rgba(139,125,255,.18), transparent 28%);
+  filter:blur(16px);
+  animation:pulse 2.8s ease-in-out infinite;
+}
+.awaken-inner{
+  position:relative;
+  z-index:1;
+}
+.awaken-badge{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.07);
+  color:var(--sub);
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:14px;
+}
+.awaken-figure{
+  width:220px;
+  height:300px;
+  margin:10px auto 18px;
+  border-radius:96px 96px 48px 48px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
+    linear-gradient(180deg,#ffe2f3,#ff98d4 38%, #907fff 100%);
+  box-shadow:
+    0 0 36px rgba(255,123,199,.26),
+    0 0 92px rgba(139,125,255,.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.awaken-title{
+  margin:0 0 10px;
+  font-size:34px;
+  font-weight:900;
+}
+.awaken-desc{
+  max-width:520px;
+  margin:0 auto 18px;
+  color:var(--sub);
+  line-height:1.7;
+}
+
+.room-layout{
+  display:grid;
+  grid-template-columns:1.18fr .82fr;
+  gap:14px;
+  min-height:calc(100vh - var(--top-h) - 30px);
+}
+
+.room-scene{
+  position:relative;
+  min-height:560px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  overflow:hidden;
+  background:#222;
+}
+
+.room-map{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(rgba(20,19,32,.18), rgba(20,19,32,.22)),
+    url("img/room_default.png") center center / cover no-repeat;
+}
+
+.room-help{
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:6;
+  padding:8px 10px;
+  border-radius:12px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:12px;
+  color:#f0ebff;
+  backdrop-filter:blur(8px);
+}
+
+.room-player{
+  position:absolute;
+  z-index:10;
+  width:42px;
+  height:60px;
+  left:100px;
+  top:340px;
+  pointer-events:none;
+  will-change:left, top, transform;
+}
+.room-player img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.42));
+}
+.room-player.left{
+  transform:scaleX(-1);
+}
+
+.room-marker{
+  position:absolute;
+  z-index:5;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2px dashed rgba(255,255,255,.35);
+  background:rgba(255,255,255,.05);
+  box-shadow:0 0 0 6px rgba(255,255,255,.03);
+  pointer-events:none;
+}
+.room-marker::after{
+  content:attr(data-label);
+  position:absolute;
+  left:50%;
+  top:48px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:11px;
+  color:#eee8ff;
+  text-shadow:0 2px 6px rgba(0,0,0,.45);
+}
+
+.hint-box{
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  color:var(--sub);
+  line-height:1.6;
+  min-height:90px;
+}
+
+.badge-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+.badge{
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  color:var(--sub);
+  font-size:12px;
+}
+.badge strong{color:var(--text)}
+
+@media (max-width: 980px){
+  .room-layout{
+    grid-template-columns:1fr;
+  }
+  .room-scene{
+    min-height:420px;
+  }
+}
+
+@media (max-width: 640px){
+  :root{ --top-h:120px; }
+  .topbar{ padding:12px; }
+  .brand .title{ font-size:16px; }
+  .main{ padding:10px 12px 12px; }
+  .schedule-grid{ grid-template-columns:1fr 1fr; }
+  .action-row{ grid-template-columns:1fr; }
+  .awaken-title{ font-size:28px; }
+
+  .seed-player{
+    width:48px;
+    height:70px;
+  }
+  .seed-bubble{
+    max-width:180px;
+    min-width:140px;
+    font-size:11px;
+  }
+
+  .seed-mini-status{
+    width:108px;
+    padding:7px;
+    right:8px;
+    top:8px;
+  }
+  .seed-mini-row{
+    grid-template-columns:28px 1fr 14px;
+    gap:4px;
+    font-size:8px;
+  }
+  .seed-mini-row strong,
+  .seed-energy-top,
+  .seed-mini-title{
+    font-size:8px;
+  }
+
+  .schedule-btn{
+    padding:9px 9px;
+  }
+  .schedule-btn .title{
+    font-size:11px;
+  }
+  .schedule-btn .meta{
+    font-size:9px;
+  }
+
+  .room-player{
+    width:39px;
+    height:57px;
+  }
+
+  .topbar-right{
+    width:100%;
+    align-items:flex-start;
+  }
+
+  .top-auth-row{
+    justify-content:flex-start;
+  }
+
+  .seed-day-badge{
+    font-size:11px;
+    padding:7px 10px;
+  }
+
+  .seed-awaken-btn{
+    padding:9px 12px;
+    font-size:11px;
+  }
 }
 </style>
 </head>
-
 <body>
+<div class="app">
 
-<div class="container">
+  <section class="screen active" id="screen-schedule">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">KEY:VERSE — Prelude</div>
+        <div class="subtitle">한 달 동안 스케줄을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
+      </div>
 
-<div class="stage" id="stage">
-  <div class="day" id="day">DAY 1</div>
-  <img src="img/KEY_default.png" class="player">
-  <button class="awaken" id="awakenBtn">각성하기</button>
+      <div class="topbar-right">
+        <div class="top-auth-row">
+          <button class="mini-btn primary" id="loginBtn">Google 로그인</button>
+          <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
+          <button class="mini-btn" id="saveBtn">지금 저장</button>
+        </div>
+        <div class="top-auth-row">
+          <div class="pill auth-pill" id="authStatus">게스트 모드</div>
+          <div class="pill">
+            <span>Day</span>
+            <strong id="dayText">1</strong>
+          </div>
+          <div class="pill">
+            <span>행동</span>
+            <strong id="actionsText">0 / 5</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="layout">
+        <div class="card panel">
+          <div class="seed-stage-wrap">
+            <div class="seed-stage bg-default" id="seedStage">
+              <div class="seed-day-badge" id="seedDayBadge">DAY1</div>
+
+              <div class="seed-player" id="seedPlayer">
+                <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
+              </div>
+
+              <div class="seed-awaken-anchor hidden" id="seedAwakenAnchor">
+                <button class="seed-awaken-btn" id="awakenBtn">각성하기</button>
+              </div>
+
+              <div class="seed-status" id="seedStatus">...</div>
+
+              <div class="seed-bubble" id="seedBubble">
+                어? 왔어? 오늘은 어떤 하루를 보내게 될까?
+              </div>
+
+              <div class="seed-mini-status">
+                <div class="seed-mini-title">오늘의 상태</div>
+
+                <div class="seed-mini-row">
+                  <span>Dark</span>
+                  <div class="bar"><div class="fill dark" id="fill-dark"></div></div>
+                  <strong id="val-dark">0</strong>
+                </div>
+
+                <div class="seed-mini-row">
+                  <span>Myst</span>
+                  <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
+                  <strong id="val-mystery">0</strong>
+                </div>
+
+                <div class="seed-mini-row">
+                  <span>Social</span>
+                  <div class="bar"><div class="fill social" id="fill-social"></div></div>
+                  <strong id="val-social">0</strong>
+                </div>
+
+                <div class="seed-mini-row">
+                  <span>Cute</span>
+                  <div class="bar"><div class="fill cute" id="fill-cute"></div></div>
+                  <strong id="val-cute">0</strong>
+                </div>
+
+                <div class="seed-mini-row">
+                  <span>Scary</span>
+                  <div class="bar"><div class="fill scary" id="fill-scary"></div></div>
+                  <strong id="val-scary">0</strong>
+                </div>
+
+                <div class="seed-mini-row">
+                  <span>Humor</span>
+                  <div class="bar"><div class="fill humor" id="fill-humor"></div></div>
+                  <strong id="val-humor">0</strong>
+                </div>
+
+                <div class="seed-energy-box">
+                  <div class="seed-energy-top">
+                    <span>Energy</span>
+                    <strong id="energyText">100 / 100</strong>
+                  </div>
+                  <div class="energy-bar">
+                    <div class="energy-fill" id="energyFill"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="seed-label">
+                <div class="name">미지의 KEY</div>
+                <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <h3 class="section-title">스케줄 수행</h3>
+          <div class="small">하루에 5번 행동하면 자동으로 다음 날로 넘어가요. 30일째가 되면 각성의 날이 찾아옵니다.</div>
+
+          <div class="schedule-grid" id="scheduleGrid">
+            <button class="schedule-btn" data-act="dance">
+              <span class="title">💃 댄스 연습</span>
+              <span class="meta">사교성↑ 다크니스↓</span>
+            </button>
+            <button class="schedule-btn" data-act="vocal">
+              <span class="title">🎤 보컬 연습</span>
+              <span class="meta">다크니스↑ 귀여움↓</span>
+            </button>
+            <button class="schedule-btn" data-act="cook">
+              <span class="title">🍳 요리</span>
+              <span class="meta">귀여움↑ 스캐어리↓</span>
+            </button>
+            <button class="schedule-btn" data-act="bath">
+              <span class="title">🛁 목욕</span>
+              <span class="meta">귀여움↑ 신비로움↑</span>
+            </button>
+            <button class="schedule-btn" data-act="walk">
+              <span class="title">🌙 산책</span>
+              <span class="meta">신비로움↑ 스캐어리↑</span>
+            </button>
+            <button class="schedule-btn" data-act="clean">
+              <span class="title">🧹 청소</span>
+              <span class="meta">사교성↑ 유머↓</span>
+            </button>
+            <button class="schedule-btn" data-act="study">
+              <span class="title">👗 콘셉트 연구</span>
+              <span class="meta">다크니스↑ 스캐어리↑</span>
+            </button>
+            <button class="schedule-btn" data-act="shop">
+              <span class="title">🛍️ 쇼핑</span>
+              <span class="meta">사교성↑ 귀여움↑</span>
+            </button>
+            <button class="schedule-btn" data-act="letters">
+              <span class="title">💌 팬레터 읽기</span>
+              <span class="meta">유머↑ 다크니스↓</span>
+            </button>
+            <button class="schedule-btn" data-act="exhibit">
+              <span class="title">🖼️ 전시회 보기</span>
+              <span class="meta">신비로움↑ 사교성↓</span>
+            </button>
+            <button class="schedule-btn" data-act="netflix">
+              <span class="title">📺 넷플릭스 보기</span>
+              <span class="meta">유머↑ 다크니스↑</span>
+            </button>
+          </div>
+
+          <div class="action-row">
+            <button class="secondary-btn" id="resetBtn">처음부터</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-awaken">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">Awakening</div>
+        <div class="subtitle">30일간의 스케줄이 하나의 정체성으로 응결됩니다</div>
+      </div>
+      <div class="pill">
+        <span>Result</span>
+        <strong id="awakenTopName">Villain KEY</strong>
+      </div>
+    </div>
+
+    <div class="main center-wrap">
+      <div class="card awaken-card">
+        <div class="awaken-inner">
+          <div class="awaken-badge">AWAKENING DAY</div>
+          <div class="awaken-figure">
+            <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
+          </div>
+          <h1 class="awaken-title" id="awakenName">Villain KEY</h1>
+          <p class="awaken-desc" id="awakenDesc">한 달의 시간이 쌓여, 새로운 KEY가 눈을 뜹니다.</p>
+          <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
+            <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
+            <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-room">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">My Room</div>
+        <div class="subtitle">정체성에 따라 다른 생활이 열립니다</div>
+      </div>
+      <div class="pill">
+        <span>Identity</span>
+        <strong id="roomIdentity">-</strong>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="room-layout">
+        <div class="card panel">
+          <div class="room-scene" id="roomScene">
+            <div class="room-map"></div>
+            <div class="room-help">다음 단계에서 전용 이벤트와 방 연출을 더 붙일 수 있어요</div>
+            <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
+
+            <div class="room-player" id="roomPlayer">
+              <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card panel">
+            <h3 class="section-title">현재 상태</h3>
+            <div class="hint-box" id="roomHint">방 안으로 들어왔어요.</div>
+            <div class="badge-row" id="roomBadges"></div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title">다음 단계</h3>
+            <div class="small">각성 후 생활, 전용 대사, 이벤트를 여기에 확장할 수 있어요.</div>
+
+            <div class="action-row">
+              <button class="secondary-btn" id="restartAllBtn">처음으로</button>
+              <button class="primary-btn" id="backAwakenBtn">각성 화면</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
-<div id="stats"></div>
-
-<div class="grid" id="actions"></div>
-
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://tddfncbmoyytunsvfbwm.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd";
 
-const state={
-  day:1,
-  energy:100,
-  maxEnergy:100,
-  actionsToday:0,
-  maxActionsPerDay:5,
-  stats:{
-    dark:0,
-    mystery:0,
-    social:0,
-    cute:0,
-    scary:0,
-    humor:0
+const GAME_ID = 'keyverse-prelude';
+const SLOT_ID = 'main';
+const SCHEMA_VERSION = 2;
+const LOCAL_SAVE_KEY = 'keyverse_save_v4';
+
+let supabaseClient = null;
+
+try {
+  if (window.supabase && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  }
+} catch (err) {
+  console.error('Supabase init error:', err);
+  supabaseClient = null;
+}
+
+const screens = {
+  schedule: document.getElementById('screen-schedule'),
+  awaken: document.getElementById('screen-awaken'),
+  room: document.getElementById('screen-room')
+};
+
+let cloudRevision = null;
+let saveTimer = null;
+let bootFinished = false;
+let currentUser = null;
+
+const state = {
+  day: 1,
+  actionsToday: 0,
+  maxActionsPerDay: 5,
+  energy: 100,
+  maxEnergy: 100,
+  stats: {
+    dark: 0,
+    mystery: 0,
+    social: 0,
+    cute: 0,
+    scary: 0,
+    humor: 0
+  },
+  awakened: null,
+  isActing: false,
+  currentStageBg: 'default',
+  seedPlayer: {
+    x: 80,
+    y: 170,
+    w: 54,
+    h: 78,
+    facing: 'right'
+  },
+  roomPlayer: {
+    x: 100,
+    y: 340,
+    w: 42,
+    h: 60,
+    facing: 'right'
   }
 };
 
-const actions=[
-  {key:"dance",name:"댄스연습"},
-  {key:"vocal",name:"보컬연습"},
-  {key:"cook",name:"요리"},
-  {key:"bath",name:"목욕"},
-  {key:"walk",name:"산책"},
-  {key:"clean",name:"청소"},
-  {key:"study",name:"콘셉트연구"},
-  {key:"shop",name:"쇼핑"},
-  {key:"letters",name:"팬레터"},
-  {key:"exhibit",name:"전시회"},
-  {key:"netflix",name:"넷플릭스"},
-  {key:"rest",name:"휴식"}
-];
+const imageSet = {
+  defaultLarge: 'img/KEY_default.png',
+  gasolineLarge: 'img/KEY_gasoline.png',
+  badloveLarge: 'img/KEY_badlove.png',
+  defaultRoom: 'img/KEY_default_s.png',
+  gasolineRoom: 'img/KEY_gasoline_s.png',
+  badloveRoom: 'img/KEY_badlove_s.png'
+};
 
-function render(){
+const dialogues = {
+  intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
+  dance: '몸을 움직이다 보니 사람들 사이로 자연스럽게 녹아드는 기분이야.',
+  vocal: '목소리에 조금 더 짙은 그림자가 생긴 것 같아.',
+  cook: '따뜻한 냄새가 감도는 날은 마음도 말랑해져.',
+  bath: '깨끗해지면 묘하게 신비로운 기분까지 따라와.',
+  walk: '밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.',
+  clean: '정리하고 나면 마음도 반듯해져.',
+  study: '이미지와 분위기를 뜯어볼수록 더 날카로워져.',
+  shop: '새로운 것들을 고르다 보면 조금 더 사랑스러워져.',
+  letters: '팬레터를 읽다 보면 피식 웃게 되는 순간이 있어.',
+  exhibit: '조용한 전시장은 묘한 잔향을 남겨.',
+  netflix: '보다 보니 웃기기도 하고, 또 괜히 어두워지기도 해.',
+  lowEnergy: '지금은 조금 지쳤어… 쉬어가자.',
+  nextDay: '하루가 지나고 새로운 아침이 밝았어.',
+  ready: '오늘은… 각성의 날이 온 것 같아.'
+};
 
-  document.getElementById("day").innerText="DAY "+state.day;
+const actionMeta = {
+  dance:   { text: '♪', duration: 1700 },
+  vocal:   { text: '♫', duration: 1700 },
+  cook:    { text: '냠', duration: 1700 },
+  bath:    { text: '…', duration: 1700 },
+  walk:    { text: '…', duration: 1700 },
+  clean:   { text: '슥', duration: 1700 },
+  study:   { text: '?!', duration: 1700 },
+  shop:    { text: '♥', duration: 1700 },
+  letters: { text: '✉', duration: 1700 },
+  exhibit: { text: '…', duration: 1700 },
+  netflix: { text: '▶', duration: 1700 }
+};
 
-  const statsEl=document.getElementById("stats");
-  statsEl.innerHTML="";
+const dayText = document.getElementById('dayText');
+const seedDayBadge = document.getElementById('seedDayBadge');
+const actionsText = document.getElementById('actionsText');
+const energyText = document.getElementById('energyText');
+const energyFill = document.getElementById('energyFill');
 
-  for(let k in state.stats){
-    statsEl.innerHTML+=`
-    <div class="stat">
-      ${k}: ${state.stats[k]}
-      <div class="bar">
-        <div class="fill" style="width:${state.stats[k]*10}%"></div>
-      </div>
-    </div>`;
-  }
+const awakenBtn = document.getElementById('awakenBtn');
+const awakenImg = document.getElementById('awakenImg');
 
-  const actEl=document.getElementById("actions");
-  actEl.innerHTML="";
+const seedStage = document.getElementById('seedStage');
+const seedPlayer = document.getElementById('seedPlayer');
+const seedPlayerImg = document.getElementById('seedPlayerImg');
+const seedBubble = document.getElementById('seedBubble');
+const seedStatus = document.getElementById('seedStatus');
+const seedAwakenAnchor = document.getElementById('seedAwakenAnchor');
 
-  actions.forEach(a=>{
-    const b=document.createElement("button");
-    b.innerText=a.name;
-    b.onclick=()=>doAction(a.key);
-    actEl.appendChild(b);
+const roomScene = document.getElementById('roomScene');
+const roomPlayer = document.getElementById('roomPlayer');
+const roomPlayerImg = document.getElementById('roomPlayerImg');
+const roomHint = document.getElementById('roomHint');
+const scheduleGrid = document.getElementById('scheduleGrid');
+
+const authStatus = document.getElementById('authStatus');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const saveBtn = document.getElementById('saveBtn');
+
+const statEls = {
+  dark: { fill: document.getElementById('fill-dark'), val: document.getElementById('val-dark') },
+  mystery: { fill: document.getElementById('fill-mystery'), val: document.getElementById('val-mystery') },
+  social: { fill: document.getElementById('fill-social'), val: document.getElementById('val-social') },
+  cute: { fill: document.getElementById('fill-cute'), val: document.getElementById('val-cute') },
+  scary: { fill: document.getElementById('fill-scary'), val: document.getElementById('val-scary') },
+  humor: { fill: document.getElementById('fill-humor'), val: document.getElementById('val-humor') }
+};
+
+document.querySelectorAll('.schedule-btn').forEach(btn => {
+  btn.addEventListener('click', () => startAction(btn.dataset.act));
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  resetAll();
+  await triggerSaveNow();
+});
+
+document.getElementById('awakenBtn').addEventListener('click', async () => {
+  doAwaken();
+  await triggerSaveNow();
+});
+
+document.getElementById('toRoomBtn').addEventListener('click', async () => {
+  showScreen('room');
+  placeRoomPlayerInitial();
+  renderRoomPlayer();
+  await triggerSaveNow();
+});
+
+document.getElementById('backScheduleBtn').addEventListener('click', async () => {
+  showScreen('schedule');
+  await triggerSaveNow();
+});
+
+document.getElementById('restartAllBtn').addEventListener('click', async () => {
+  resetAll();
+  await triggerSaveNow();
+});
+
+document.getElementById('backAwakenBtn').addEventListener('click', async () => {
+  showScreen('awaken');
+  await triggerSaveNow();
+});
+
+if (loginBtn) loginBtn.addEventListener('click', signInWithGoogle);
+if (logoutBtn) logoutBtn.addEventListener('click', signOut);
+if (saveBtn) {
+  saveBtn.addEventListener('click', async () => {
+    await triggerSaveNow();
+    alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
   });
-
-  document.getElementById("awakenBtn").style.display=
-    state.day>=30?"block":"none";
 }
 
-function doAction(type){
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
 
-  if(state.actionsToday>=state.maxActionsPerDay){
+function getCurrentScreenName(){
+  if (screens.schedule.classList.contains('active')) return 'schedule';
+  if (screens.awaken.classList.contains('active')) return 'awaken';
+  if (screens.room.classList.contains('active')) return 'room';
+  return 'schedule';
+}
+
+function clamp(val, min, max){
+  return Math.max(min, Math.min(max, val));
+}
+
+function setSeedMessage(text){
+  seedBubble.textContent = text;
+  positionSeedBubble();
+}
+
+function setScheduleButtonsDisabled(disabled){
+  scheduleGrid.querySelectorAll('button').forEach(btn => {
+    btn.disabled = disabled;
+  });
+}
+
+function showSeedStatus(text){
+  seedStatus.textContent = text;
+  positionSeedStatus();
+  seedStatus.classList.add('show');
+}
+
+function hideSeedStatus(){
+  seedStatus.classList.remove('show');
+}
+
+function updateSeedStageBackground(mode){
+  state.currentStageBg = mode;
+  seedStage.classList.remove('bg-default', 'bg-walk');
+  if (mode === 'walk') {
+    seedStage.classList.add('bg-walk');
+  } else {
+    seedStage.classList.add('bg-default');
+  }
+}
+
+function positionSeedBubble(){
+  const bubbleWidth = seedBubble.offsetWidth || 180;
+  const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
+  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
+  const bubbleTop = Math.max(8, state.seedPlayer.y - 74);
+
+  seedBubble.style.left = `${bubbleLeft}px`;
+  seedBubble.style.top = `${bubbleTop}px`;
+}
+
+function positionSeedStatus(){
+  const statusWidth = seedStatus.offsetWidth || 40;
+  const x = state.seedPlayer.x + state.seedPlayer.w / 2 - statusWidth / 2;
+  const y = state.seedPlayer.y - 22;
+  seedStatus.style.left = `${clamp(x, 8, seedStage.clientWidth - statusWidth - 8)}px`;
+  seedStatus.style.top = `${Math.max(8, y)}px`;
+}
+
+function positionAwakenButton(){
+  const btnWidth = seedAwakenAnchor.offsetWidth || 120;
+  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
+  const y = state.seedPlayer.y + state.seedPlayer.h + 10;
+
+  const minX = btnWidth / 2 + 8;
+  const maxX = seedStage.clientWidth - btnWidth / 2 - 8;
+  const finalX = clamp(x, minX, maxX);
+
+  seedAwakenAnchor.style.left = `${finalX}px`;
+  seedAwakenAnchor.style.top = `${y}px`;
+}
+
+function updateAwakenButtonUI(){
+  const visible = canAwaken() && !state.isActing && !state.awakened;
+  seedAwakenAnchor.classList.toggle('hidden', !visible);
+  if (visible) {
+    positionAwakenButton();
+  }
+}
+
+function updateScheduleUI(){
+  dayText.textContent = state.day;
+  seedDayBadge.textContent = `DAY${state.day}`;
+  actionsText.textContent = `${state.actionsToday} / ${state.maxActionsPerDay}`;
+  energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
+  energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
+
+  Object.keys(state.stats).forEach(key => {
+    statEls[key].val.textContent = state.stats[key];
+    statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+  });
+
+  if (canAwaken() && !state.awakened && !state.isActing) {
+    setSeedMessage(dialogues.ready);
+  }
+
+  updateAwakenButtonUI();
+}
+
+function getSeedRestPoint(){
+  const w = seedStage.clientWidth;
+  const h = seedStage.clientHeight;
+  return { x: w * 0.20, y: h * 0.74 };
+}
+
+function moveSeedPlayerTo(targetX, targetY){
+  const maxX = seedStage.clientWidth - state.seedPlayer.w;
+  const maxY = seedStage.clientHeight - state.seedPlayer.h;
+
+  const nextX = clamp(targetX - state.seedPlayer.w / 2, 0, maxX);
+  const nextY = clamp(targetY - state.seedPlayer.h / 2, 88, maxY);
+
+  if(nextX < state.seedPlayer.x) state.seedPlayer.facing = 'left';
+  if(nextX > state.seedPlayer.x) state.seedPlayer.facing = 'right';
+
+  state.seedPlayer.x = nextX;
+  state.seedPlayer.y = nextY;
+  renderSeedPlayer();
+}
+
+function startAction(type){
+  if(state.awakened || state.isActing) return;
+
+  if(state.actionsToday >= state.maxActionsPerDay){
     nextDay();
     return;
   }
 
-  if(type==="walk"){
-    document.getElementById("stage").style.background=
-      "url('img/walk.jpg') center/cover";
-  }else{
-    document.getElementById("stage").style.background=
-      "url('img/room_default.png') center/cover";
+  if(state.energy < 12){
+    setSeedMessage(dialogues.lowEnergy);
+    return;
   }
 
-  switch(type){
+  state.isActing = true;
+  setScheduleButtonsDisabled(true);
+  updateAwakenButtonUI();
 
-    case"dance":
-      state.stats.social+=2;
-      state.stats.dark-=1;
-      break;
+  const meta = actionMeta[type];
 
-    case"vocal":
-      state.stats.dark+=2;
-      state.stats.cute-=1;
-      break;
-
-    case"cook":
-      state.stats.cute+=2;
-      state.stats.scary-=1;
-      break;
-
-    case"bath":
-      state.stats.cute+=1;
-      state.stats.mystery+=1;
-      break;
-
-    case"walk":
-      state.stats.mystery+=2;
-      state.stats.scary+=1;
-      state.stats.social-=1;
-      break;
-
-    case"clean":
-      state.stats.social+=1;
-      state.stats.humor-=1;
-      break;
-
-    case"study":
-      state.stats.dark+=1;
-      state.stats.scary+=1;
-      state.stats.cute-=1;
-      break;
-
-    case"shop":
-      state.stats.social+=2;
-      state.stats.cute+=1;
-      state.stats.mystery-=1;
-      break;
-
-    case"letters":
-      state.stats.humor+=2;
-      state.stats.dark-=1;
-      break;
-
-    case"exhibit":
-      state.stats.mystery+=2;
-      state.stats.social-=1;
-      break;
-
-    case"netflix":
-      state.stats.humor+=1;
-      state.stats.dark+=1;
-      state.stats.social-=1;
-      break;
-
-    case"rest":
-      nextDay();
-      return;
+  if(type === 'walk'){
+    updateSeedStageBackground('walk');
+  } else {
+    updateSeedStageBackground('default');
   }
 
-  // 음수 방지
-  Object.keys(state.stats).forEach(k=>{
-    state.stats[k]=Math.max(0,state.stats[k]);
+  seedStage.classList.remove('resting');
+  placeSeedPlayerInitial();
+  renderSeedPlayer();
+
+  showSeedStatus(meta.text);
+
+  setTimeout(async () => {
+    finishAction(type);
+    hideSeedStatus();
+    state.isActing = false;
+    setScheduleButtonsDisabled(false);
+    updateScheduleUI();
+    await triggerSaveNow();
+  }, meta.duration);
+}
+
+function applyStatDelta(deltaMap){
+  Object.keys(deltaMap).forEach(key => {
+    state.stats[key] = clamp((state.stats[key] || 0) + deltaMap[key], 0, 10);
   });
+}
 
-  state.actionsToday++;
+function finishAction(type){
+  switch(type){
+    case 'dance':
+      applyStatDelta({ social: +2, dark: -1 });
+      state.energy -= 18;
+      setSeedMessage(dialogues.dance);
+      break;
 
-  render();
+    case 'vocal':
+      applyStatDelta({ dark: +2, cute: -1 });
+      state.energy -= 18;
+      setSeedMessage(dialogues.vocal);
+      break;
+
+    case 'cook':
+      applyStatDelta({ cute: +2, scary: -1 });
+      state.energy -= 16;
+      setSeedMessage(dialogues.cook);
+      break;
+
+    case 'bath':
+      applyStatDelta({ cute: +1, mystery: +1 });
+      state.energy -= 12;
+      setSeedMessage(dialogues.bath);
+      break;
+
+    case 'walk':
+      applyStatDelta({ mystery: +2, scary: +1, social: -1 });
+      state.energy -= 16;
+      setSeedMessage(dialogues.walk);
+      break;
+
+    case 'clean':
+      applyStatDelta({ social: +1, humor: -1 });
+      state.energy -= 12;
+      setSeedMessage(dialogues.clean);
+      break;
+
+    case 'study':
+      applyStatDelta({ dark: +1, scary: +1, cute: -1 });
+      state.energy -= 18;
+      setSeedMessage(dialogues.study);
+      break;
+
+    case 'shop':
+      applyStatDelta({ social: +2, cute: +1, mystery: -1 });
+      state.energy -= 16;
+      setSeedMessage(dialogues.shop);
+      break;
+
+    case 'letters':
+      applyStatDelta({ humor: +2, dark: -1 });
+      state.energy -= 14;
+      setSeedMessage(dialogues.letters);
+      break;
+
+    case 'exhibit':
+      applyStatDelta({ mystery: +2, social: -1 });
+      state.energy -= 14;
+      setSeedMessage(dialogues.exhibit);
+      break;
+
+    case 'netflix':
+      applyStatDelta({ humor: +1, dark: +1, social: -1 });
+      state.energy -= 12;
+      setSeedMessage(dialogues.netflix);
+      break;
+  }
+
+  state.energy = clamp(state.energy, 0, state.maxEnergy);
+  state.actionsToday += 1;
+
+  if(!state.awakened && state.day >= 30){
+    setSeedMessage(dialogues.ready);
+  }
+
+  if(state.actionsToday >= state.maxActionsPerDay){
+    nextDay();
+  }
 }
 
 function nextDay(){
-  state.day++;
-  state.energy=state.maxEnergy;
-  state.actionsToday=0;
-  alert("하루가 지나갔다!");
-  render();
+  state.day += 1;
+  state.actionsToday = 0;
+  state.energy = state.maxEnergy;
+  updateSeedStageBackground('default');
+  setSeedMessage(state.day >= 30 ? dialogues.ready : dialogues.nextDay);
+}
+
+function canAwaken(){
+  return state.day >= 30;
+}
+
+function getTopStatName(){
+  const labels = {
+    dark: 'Darkness',
+    mystery: 'Mystery',
+    social: 'Social',
+    cute: 'Cute',
+    scary: 'Scary',
+    humor: 'Humor'
+  };
+  const top = Object.entries(state.stats).sort((a,b) => b[1] - a[1])[0];
+  return labels[top[0]];
 }
 
 function detectIdentity(){
+  const s = state.stats;
 
-  const s=state.stats;
-
-  const builds=[
-    {name:"Villain KEY",score:s.dark*1.2+s.scary},
-    {name:"Dream KEY",score:s.mystery*1.2+s.dark},
-    {name:"Idol KEY",score:s.cute*1.2+s.social},
-    {name:"Trickster KEY",score:s.humor*1.2+s.mystery},
-    {name:"Royal KEY",score:s.social*1.2+s.dark},
-    {name:"Healing KEY",score:s.cute*1.2+s.humor}
+  const builds = [
+    {
+      name:'Villain KEY',
+      score:s.dark * 1.2 + s.scary,
+      largeImg:imageSet.gasolineLarge,
+      roomImg:imageSet.gasolineRoom,
+      desc:'다크니스와 스캐어리가 응집되어, 압도적이고 위험한 분위기의 KEY로 각성했습니다.',
+      badges:[['코어', 'Dark + Scary'], ['상징', 'Villain Aura'], ['대표 스탯', getTopStatName()]]
+    },
+    {
+      name:'Dream KEY',
+      score:s.mystery * 1.2 + s.dark,
+      largeImg:imageSet.badloveLarge,
+      roomImg:imageSet.badloveRoom,
+      desc:'신비로움과 어둠이 겹쳐져, 몽환적인 잔향을 남기는 KEY로 각성했습니다.',
+      badges:[['코어', 'Mystery + Dark'], ['상징', 'Dream Aura'], ['대표 스탯', getTopStatName()]]
+    },
+    {
+      name:'Idol KEY',
+      score:s.cute * 1.2 + s.social,
+      largeImg:imageSet.defaultLarge,
+      roomImg:imageSet.defaultRoom,
+      desc:'귀여움과 사교성이 빛나며, 가장 사랑받는 무드의 KEY로 각성했습니다.',
+      badges:[['코어', 'Cute + Social'], ['상징', 'Idol Aura'], ['대표 스탯', getTopStatName()]]
+    },
+    {
+      name:'Trickster KEY',
+      score:s.humor * 1.2 + s.mystery,
+      largeImg:imageSet.badloveLarge,
+      roomImg:imageSet.badloveRoom,
+      desc:'유머와 신비로움이 뒤섞여, 예측할 수 없는 매력의 KEY가 되었습니다.',
+      badges:[['코어', 'Humor + Mystery'], ['상징', 'Trickster Aura'], ['대표 스탯', getTopStatName()]]
+    },
+    {
+      name:'Royal KEY',
+      score:s.social * 1.2 + s.dark,
+      largeImg:imageSet.gasolineLarge,
+      roomImg:imageSet.gasolineRoom,
+      desc:'사교성과 다크니스가 균형을 이루며, 고급스럽고 카리스마 있는 KEY로 각성했습니다.',
+      badges:[['코어', 'Social + Dark'], ['상징', 'Royal Aura'], ['대표 스탯', getTopStatName()]]
+    },
+    {
+      name:'Healing KEY',
+      score:s.cute * 1.2 + s.humor,
+      largeImg:imageSet.defaultLarge,
+      roomImg:imageSet.defaultRoom,
+      desc:'귀여움과 유머가 따뜻하게 쌓여, 주변을 편안하게 만드는 KEY가 되었습니다.',
+      badges:[['코어', 'Cute + Humor'], ['상징', 'Healing Aura'], ['대표 스탯', getTopStatName()]]
+    }
   ];
 
   return builds.sort((a,b)=>b.score-a.score)[0];
 }
 
-document.getElementById("awakenBtn").onclick=()=>{
-  const result=detectIdentity();
-  alert("각성: "+result.name);
-};
+function doAwaken(){
+  if(!canAwaken() || state.isActing) return;
+  state.awakened = detectIdentity();
+  updateAwakenButtonUI();
+  syncAwakenUI();
+  syncRoomUI();
+  showScreen('awaken');
+}
 
-render();
+function syncAwakenUI(){
+  const id = state.awakened;
+  if(!id) return;
+  document.getElementById('awakenTopName').textContent = id.name;
+  document.getElementById('awakenName').textContent = id.name;
+  document.getElementById('awakenDesc').textContent = id.desc;
+  awakenImg.src = id.largeImg;
+}
 
+function syncRoomUI(){
+  const id = state.awakened;
+  if(!id) return;
+
+  document.getElementById('roomIdentity').textContent = id.name;
+  roomPlayerImg.src = id.roomImg;
+  roomHint.textContent = `${id.name}로 각성했어요. 이제 이 정체성을 바탕으로 다음 생활이 시작됩니다.`;
+
+  const badgeWrap = document.getElementById('roomBadges');
+  badgeWrap.innerHTML = '';
+  id.badges.forEach(([k, v]) => {
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.innerHTML = `<strong>${k}</strong> ${v}`;
+    badgeWrap.appendChild(el);
+  });
+}
+
+function placeSeedPlayerInitial(){
+  const rect = seedStage.getBoundingClientRect();
+  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
+  state.seedPlayer.y = Math.max(88, rect.height / 2 - state.seedPlayer.h / 2 + 20);
+  positionSeedBubble();
+  positionSeedStatus();
+  positionAwakenButton();
+}
+
+function renderSeedPlayer(){
+  seedPlayer.style.left = `${state.seedPlayer.x}px`;
+  seedPlayer.style.top = `${state.seedPlayer.y}px`;
+  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  positionSeedBubble();
+  positionSeedStatus();
+  positionAwakenButton();
+}
+
+function placeRoomPlayerInitial(){
+  const rect = roomScene.getBoundingClientRect();
+  state.roomPlayer.x = Math.max(12, rect.width * 0.18);
+  state.roomPlayer.y = Math.max(110, rect.height * 0.72);
+}
+
+function renderRoomPlayer(){
+  roomPlayer.style.left = `${state.roomPlayer.x}px`;
+  roomPlayer.style.top = `${state.roomPlayer.y}px`;
+  roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
+}
+
+function resetAll(){
+  state.day = 1;
+  state.actionsToday = 0;
+  state.energy = 100;
+  state.maxEnergy = 100;
+  state.stats = {
+    dark: 0,
+    mystery: 0,
+    social: 0,
+    cute: 0,
+    scary: 0,
+    humor: 0
+  };
+  state.awakened = null;
+  state.isActing = false;
+  state.currentStageBg = 'default';
+
+  awakenImg.src = imageSet.defaultLarge;
+  seedPlayerImg.src = imageSet.defaultLarge;
+  roomPlayerImg.src = imageSet.defaultRoom;
+
+  seedStage.classList.remove('resting');
+  updateSeedStageBackground('default');
+  setSeedMessage(dialogues.intro);
+  hideSeedStatus();
+  setScheduleButtonsDisabled(false);
+
+  document.getElementById('roomIdentity').textContent = '-';
+  document.getElementById('roomBadges').innerHTML = '';
+  roomHint.textContent = '방 안으로 들어왔어요.';
+
+  placeSeedPlayerInitial();
+  renderSeedPlayer();
+  placeRoomPlayerInitial();
+  renderRoomPlayer();
+
+  updateScheduleUI();
+  showScreen('schedule');
+}
+
+function deepClone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function serializeGameState(){
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    gameId: GAME_ID,
+    slotId: SLOT_ID,
+    clientUpdatedAt: Date.now(),
+    progress: {
+      day: state.day,
+      actionsToday: state.actionsToday,
+      maxActionsPerDay: state.maxActionsPerDay,
+      energy: state.energy,
+      maxEnergy: state.maxEnergy,
+      stats: { ...state.stats },
+      awakened: state.awakened ? deepClone(state.awakened) : null,
+      currentStageBg: state.currentStageBg,
+      seedPlayer: { ...state.seedPlayer },
+      roomPlayer: { ...state.roomPlayer },
+      currentScreen: getCurrentScreenName()
+    }
+  };
+}
+
+function migrateSave(save){
+  if (!save) return null;
+  if (!save.schemaVersion) save.schemaVersion = 1;
+  if (!save.progress) return null;
+
+  const p = save.progress;
+  const oldStats = p.stats || {};
+
+  if (!p.maxEnergy) p.maxEnergy = 100;
+  if (!p.actionsToday) p.actionsToday = 0;
+  if (!p.maxActionsPerDay) p.maxActionsPerDay = 5;
+  if (!p.currentScreen) p.currentScreen = 'schedule';
+  if (!p.currentStageBg) p.currentStageBg = 'default';
+
+  if (!('dark' in oldStats)) {
+    p.stats = {
+      dark: 0,
+      mystery: oldStats.mystery ?? 0,
+      social: oldStats.charm ?? 0,
+      cute: oldStats.mood ?? 0,
+      scary: 0,
+      humor: oldStats.style ?? 0
+    };
+  }
+
+  return save;
+}
+
+function applySaveToState(save){
+  const migrated = migrateSave(save);
+  if (!migrated || !migrated.progress) return false;
+
+  const p = migrated.progress;
+
+  state.day = p.day ?? 1;
+  state.actionsToday = p.actionsToday ?? 0;
+  state.maxActionsPerDay = p.maxActionsPerDay ?? 5;
+  state.energy = p.energy ?? 100;
+  state.maxEnergy = p.maxEnergy ?? 100;
+  state.stats = {
+    dark: p.stats?.dark ?? 0,
+    mystery: p.stats?.mystery ?? 0,
+    social: p.stats?.social ?? 0,
+    cute: p.stats?.cute ?? 0,
+    scary: p.stats?.scary ?? 0,
+    humor: p.stats?.humor ?? 0
+  };
+  state.awakened = p.awakened ?? null;
+  state.isActing = false;
+  state.currentStageBg = p.currentStageBg ?? 'default';
+
+  if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
+  if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
+
+  seedStage.classList.remove('resting');
+  hideSeedStatus();
+  updateSeedStageBackground(state.currentStageBg);
+
+  seedPlayerImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
+  roomPlayerImg.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
+  awakenImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
+
+  if (state.awakened) {
+    syncAwakenUI();
+    syncRoomUI();
+  } else {
+    document.getElementById('roomIdentity').textContent = '-';
+    document.getElementById('roomBadges').innerHTML = '';
+    roomHint.textContent = '방 안으로 들어왔어요.';
+  }
+
+  updateScheduleUI();
+  renderSeedPlayer();
+  renderRoomPlayer();
+
+  const nextScreen = ['schedule', 'awaken', 'room'].includes(p.currentScreen)
+    ? p.currentScreen
+    : 'schedule';
+  showScreen(nextScreen);
+
+  setSeedMessage(state.day >= 30 && !state.awakened ? dialogues.ready : dialogues.intro);
+  return true;
+}
+
+function saveLocal(saveData){
+  localStorage.setItem(LOCAL_SAVE_KEY, JSON.stringify(saveData));
+}
+
+function loadLocalSave(){
+  const raw = localStorage.getItem(LOCAL_SAVE_KEY);
+  if (!raw) return null;
+  try {
+    return migrateSave(JSON.parse(raw));
+  } catch (err) {
+    console.error('local save parse error', err);
+    return null;
+  }
+}
+
+async function getSessionUser(){
+  if (!supabaseClient) return null;
+
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) {
+      console.warn(error.message);
+      return null;
+    }
+    return data.user ?? null;
+  } catch (err) {
+    console.error('getSessionUser error:', err);
+    return null;
+  }
+}
+
+async function fetchCloudSave(){
+  const user = await getSessionUser();
+  if (!user || !supabaseClient) return null;
+
+  const { data, error } = await supabaseClient
+    .from('game_saves')
+    .select('revision, updated_at, save_json')
+    .eq('user_id', user.id)
+    .eq('game_id', GAME_ID)
+    .eq('slot_id', SLOT_ID)
+    .maybeSingle();
+
+  if (error) {
+    console.error('fetchCloudSave', error.message);
+    return null;
+  }
+
+  if (!data) return null;
+
+  cloudRevision = data.revision;
+  return {
+    revision: data.revision,
+    updatedAt: data.updated_at,
+    data: migrateSave(data.save_json)
+  };
+}
+
+async function uploadCloudSave(saveData){
+  const user = await getSessionUser();
+  if (!user || !supabaseClient) return;
+
+  const nextRevision = (cloudRevision ?? 0) + 1;
+
+  const row = {
+    user_id: user.id,
+    game_id: GAME_ID,
+    slot_id: SLOT_ID,
+    schema_version: saveData.schemaVersion ?? SCHEMA_VERSION,
+    revision: nextRevision,
+    save_json: saveData
+  };
+
+  const { data, error } = await supabaseClient
+    .from('game_saves')
+    .upsert(row, { onConflict: 'user_id,game_id,slot_id' })
+    .select('revision, updated_at')
+    .single();
+
+  if (error) {
+    console.error('uploadCloudSave', error.message);
+    return;
+  }
+
+  cloudRevision = data.revision;
+}
+
+function chooseNewerSave(localSave, cloudSave){
+  if (!localSave && !cloudSave) return null;
+  if (localSave && !cloudSave) return { source: 'local', save: localSave };
+  if (!localSave && cloudSave) return { source: 'cloud', save: cloudSave.data };
+
+  const localTs = Number(localSave.clientUpdatedAt || 0);
+  const cloudTs = Date.parse(cloudSave.updatedAt || 0);
+
+  if (localTs >= cloudTs) return { source: 'local', save: localSave };
+  return { source: 'cloud', save: cloudSave.data };
+}
+
+async function triggerSaveNow(){
+  const saveData = serializeGameState();
+  saveLocal(saveData);
+  if (currentUser) {
+    await uploadCloudSave(saveData);
+  }
+}
+
+function scheduleCloudSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const saveData = serializeGameState();
+    saveLocal(saveData);
+    if (currentUser) {
+      await uploadCloudSave(saveData);
+    }
+  }, 1200);
+}
+
+async function signInWithGoogle(){
+  if (!supabaseClient) {
+    alert('Supabase 연결 설정을 먼저 확인해주세요.');
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.href
+    }
+  });
+
+  if (error) {
+    alert('로그인 중 오류가 발생했어요: ' + error.message);
+  }
+}
+
+async function signOut(){
+  if (!supabaseClient) return;
+
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    alert('로그아웃 중 오류가 발생했어요: ' + error.message);
+    return;
+  }
+
+  currentUser = null;
+  updateAuthUI(null);
+  cloudRevision = null;
+  alert('로그아웃했어요. 이 기기 저장은 계속 남아 있어요.');
+}
+
+function updateAuthUI(user){
+  currentUser = user;
+
+  if (user) {
+    const email = user.email || '로그인됨';
+    authStatus.textContent = `클라우드 연결됨 · ${email}`;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = '';
+  } else {
+    authStatus.textContent = '게스트 모드';
+    loginBtn.style.display = '';
+    logoutBtn.style.display = 'none';
+  }
+}
+
+async function bootGame(){
+  const localSave = loadLocalSave();
+
+  if (!supabaseClient) {
+    updateAuthUI(null);
+
+    if (localSave) {
+      applySaveToState(localSave);
+    } else {
+      resetAll();
+      saveLocal(serializeGameState());
+    }
+
+    bootFinished = true;
+    return;
+  }
+
+  try {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user ?? null;
+    updateAuthUI(user);
+
+    const cloudSave = user ? await fetchCloudSave() : null;
+    const chosen = chooseNewerSave(localSave, cloudSave);
+
+    if (chosen?.save) {
+      applySaveToState(chosen.save);
+
+      if (chosen.source === 'local') {
+        scheduleCloudSave();
+      } else {
+        saveLocal(chosen.save);
+      }
+    } else {
+      resetAll();
+      saveLocal(serializeGameState());
+    }
+  } catch (err) {
+    console.error('bootGame error:', err);
+    if (localSave) {
+      applySaveToState(localSave);
+    } else {
+      resetAll();
+      saveLocal(serializeGameState());
+    }
+  }
+
+  bootFinished = true;
+}
+
+window.addEventListener('resize', () => {
+  if(screens.schedule.classList.contains('active')){
+    renderSeedPlayer();
+    updateAwakenButtonUI();
+  }
+  if(screens.room.classList.contains('active')){
+    renderRoomPlayer();
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  const saveData = serializeGameState();
+  saveLocal(saveData);
+});
+
+if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    updateAuthUI(session?.user ?? null);
+
+    if (!bootFinished) return;
+
+    if (session?.user) {
+      const localSave = loadLocalSave();
+      const cloudSave = await fetchCloudSave();
+      const chosen = chooseNewerSave(localSave, cloudSave);
+
+      if (chosen?.save) {
+        applySaveToState(chosen.save);
+        if (chosen.source === 'local') {
+          await uploadCloudSave(chosen.save);
+        } else {
+          saveLocal(chosen.save);
+        }
+      } else {
+        await triggerSaveNow();
+      }
+    }
+  });
+}
+
+seedPlayerImg.src = imageSet.defaultLarge;
+roomPlayerImg.src = imageSet.defaultRoom;
+awakenImg.src = imageSet.defaultLarge;
+
+updateSeedStageBackground('default');
+placeSeedPlayerInitial();
+renderSeedPlayer();
+placeRoomPlayerInitial();
+renderRoomPlayer();
+updateAwakenButtonUI();
+
+bootGame();
 </script>
-
 </body>
 </html>
