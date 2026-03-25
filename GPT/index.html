@@ -39,10 +39,7 @@ button{
   border:0;
   cursor:pointer;
 }
-
-button:disabled{
-  cursor:not-allowed;
-}
+button:disabled{cursor:not-allowed}
 
 img{
   display:block;
@@ -175,15 +172,12 @@ img{
   display:grid;
   grid-template-columns:1fr;
   gap:14px;
-  min-height:calc(100vh - var(--top-h) - 30px);
   max-width:760px;
   margin:0 auto;
 }
 
 /* schedule */
-.seed-stage-wrap{
-  position:relative;
-}
+.seed-stage-wrap{ position:relative; }
 
 .seed-stage{
   position:relative;
@@ -194,8 +188,8 @@ img{
   background:
     linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
     url("img/room_default.png") center center / cover no-repeat;
+  transition:filter .35s ease;
 }
-
 .seed-stage:before{
   content:"";
   position:absolute;
@@ -208,6 +202,9 @@ img{
   background:radial-gradient(circle, rgba(255,123,199,.10), rgba(139,125,255,0));
   filter:blur(8px);
   animation:pulse 3s ease-in-out infinite;
+}
+.seed-stage.resting{
+  filter:brightness(.62) saturate(.88);
 }
 
 @keyframes pulse{
@@ -223,8 +220,8 @@ img{
   left:50%;
   top:50%;
   pointer-events:none;
-  will-change:left, top, transform;
-  transition:left .45s ease, top .45s ease, transform .2s ease;
+  will-change:left, top, transform, filter;
+  transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease;
 }
 .seed-player img{
   width:100%;
@@ -235,6 +232,9 @@ img{
 }
 .seed-player.left{
   transform:scaleX(-1);
+}
+.seed-stage.resting .seed-player{
+  filter:brightness(.78);
 }
 
 .seed-bubble{
@@ -936,12 +936,12 @@ const dialogues = {
 };
 
 const actionMeta = {
-  practice: { text: '!!!', duration: 950, target: () => getSeedActionPoint('practice') },
-  study:    { text: '???', duration: 950, target: () => getSeedActionPoint('study') },
-  movie:    { text: '...', duration: 950, target: () => getSeedActionPoint('movie') },
-  walk:     { text: '...', duration: 950, target: () => getSeedActionPoint('walk') },
-  letters:  { text: '...', duration: 950, target: () => getSeedActionPoint('letters') },
-  rest:     { text: 'Zzz', duration: 1200, target: () => getSeedActionPoint('rest') }
+  practice: { text: '!!!', duration: 1900 },
+  study:    { text: '???', duration: 1900 },
+  movie:    { text: '...', duration: 1900 },
+  walk:     { text: '...', duration: 1900 },
+  letters:  { text: '...', duration: 1900 },
+  rest:     { text: 'Zzz', duration: 2400 }
 };
 
 const dayText = document.getElementById('dayText');
@@ -1052,26 +1052,10 @@ function updateScheduleUI(){
   }
 }
 
-function getSeedActionPoint(type){
+function getSeedRestPoint(){
   const w = seedStage.clientWidth;
   const h = seedStage.clientHeight;
-
-  switch(type){
-    case 'practice':
-      return { x: w * 0.30, y: h * 0.66 };
-    case 'study':
-      return { x: w * 0.72, y: h * 0.64 };
-    case 'movie':
-      return { x: w * 0.56, y: h * 0.73 };
-    case 'walk':
-      return { x: w * 0.84, y: h * 0.46 };
-    case 'letters':
-      return { x: w * 0.70, y: h * 0.68 };
-    case 'rest':
-      return { x: w * 0.20, y: h * 0.74 };
-    default:
-      return { x: w * 0.5, y: h * 0.66 };
-  }
+  return { x: w * 0.20, y: h * 0.74 };
 }
 
 function moveSeedPlayerTo(targetX, targetY){
@@ -1102,8 +1086,17 @@ function startAction(type){
   awakenBtn.disabled = true;
 
   const meta = actionMeta[type];
-  const point = meta.target();
-  moveSeedPlayerTo(point.x, point.y);
+
+  if(type === 'rest'){
+    const point = getSeedRestPoint();
+    moveSeedPlayerTo(point.x, point.y);
+    seedStage.classList.add('resting');
+  } else {
+    seedStage.classList.remove('resting');
+    placeSeedPlayerInitial();
+    renderSeedPlayer();
+  }
+
   showSeedStatus(meta.text);
 
   setTimeout(() => {
@@ -1111,6 +1104,13 @@ function startAction(type){
     hideSeedStatus();
     state.isActing = false;
     setScheduleButtonsDisabled(false);
+
+    if(type === 'rest'){
+      seedStage.classList.remove('resting');
+      placeSeedPlayerInitial();
+      renderSeedPlayer();
+    }
+
     updateScheduleUI();
   }, meta.duration);
 }
@@ -1258,6 +1258,7 @@ function resetAll(){
   seedPlayerImg.src = imageSet.defaultLarge;
   roomPlayerImg.src = imageSet.defaultRoom;
 
+  seedStage.classList.remove('resting');
   setSeedMessage(dialogues.intro);
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
