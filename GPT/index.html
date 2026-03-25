@@ -219,14 +219,26 @@ img{
 
 .seed-stage{
   position:relative;
-  min-height:280px;
+  width:100%;
+  aspect-ratio:3 / 2;
+  min-height:0;
   border-radius:18px;
   overflow:hidden;
   border:1px solid var(--line);
   background:
     linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
     url("img/room_default.png") center center / cover no-repeat;
-  transition:filter .35s ease;
+  transition:filter .35s ease, background .35s ease;
+}
+.seed-stage.bg-default{
+  background:
+    linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
+    url("img/room_default.png") center center / cover no-repeat;
+}
+.seed-stage.bg-walk{
+  background:
+    linear-gradient(rgba(12,10,24,.24), rgba(12,10,24,.40)),
+    url("img/walk.jpg") center center / cover no-repeat;
 }
 .seed-stage:before{
   content:"";
@@ -248,6 +260,23 @@ img{
 @keyframes pulse{
   0%,100%{opacity:.72}
   50%{opacity:1}
+}
+
+.seed-day-badge{
+  position:absolute;
+  left:12px;
+  top:12px;
+  z-index:7;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(14,12,24,.58);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  backdrop-filter:blur(8px);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  color:#fff;
 }
 
 .seed-player{
@@ -273,6 +302,28 @@ img{
 }
 .seed-stage.resting .seed-player{
   filter:brightness(.78);
+}
+
+.seed-awaken-anchor{
+  position:absolute;
+  z-index:8;
+  left:0;
+  top:0;
+  transform:translate(-50%, 0);
+  pointer-events:none;
+}
+.seed-awaken-btn{
+  pointer-events:auto;
+  padding:10px 14px;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  box-shadow:0 10px 24px rgba(145,110,255,.30);
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.seed-awaken-anchor.hidden{
+  display:none;
 }
 
 .seed-bubble{
@@ -670,9 +721,6 @@ img{
   .action-row{ grid-template-columns:1fr 1fr; }
   .awaken-title{ font-size:28px; }
 
-  .seed-stage{
-    min-height:240px;
-  }
   .seed-player{
     width:48px;
     height:70px;
@@ -723,6 +771,16 @@ img{
   .top-auth-row{
     justify-content:flex-start;
   }
+
+  .seed-day-badge{
+    font-size:11px;
+    padding:7px 10px;
+  }
+
+  .seed-awaken-btn{
+    padding:9px 12px;
+    font-size:11px;
+  }
 }
 </style>
 </head>
@@ -756,9 +814,15 @@ img{
       <div class="layout">
         <div class="card panel">
           <div class="seed-stage-wrap">
-            <div class="seed-stage" id="seedStage">
+            <div class="seed-stage bg-default" id="seedStage">
+              <div class="seed-day-badge" id="seedDayBadge">DAY1</div>
+
               <div class="seed-player" id="seedPlayer">
                 <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
+              </div>
+
+              <div class="seed-awaken-anchor hidden" id="seedAwakenAnchor">
+                <button class="seed-awaken-btn" id="awakenBtn">각성하기</button>
               </div>
 
               <div class="seed-status" id="seedStatus">...</div>
@@ -851,7 +915,6 @@ img{
           </div>
 
           <div class="action-row">
-            <button class="primary-btn" id="awakenBtn" disabled>각성하기</button>
             <button class="secondary-btn" id="resetBtn">처음부터</button>
           </div>
         </div>
@@ -978,6 +1041,7 @@ const state = {
   stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
   awakened: null,
   isActing: false,
+  currentStageBg: 'default',
   seedPlayer: {
     x: 80,
     y: 170,
@@ -1025,6 +1089,7 @@ const actionMeta = {
 };
 
 const dayText = document.getElementById('dayText');
+const seedDayBadge = document.getElementById('seedDayBadge');
 const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 const awakenBtn = document.getElementById('awakenBtn');
@@ -1035,6 +1100,7 @@ const seedPlayer = document.getElementById('seedPlayer');
 const seedPlayerImg = document.getElementById('seedPlayerImg');
 const seedBubble = document.getElementById('seedBubble');
 const seedStatus = document.getElementById('seedStatus');
+const seedAwakenAnchor = document.getElementById('seedAwakenAnchor');
 
 const roomScene = document.getElementById('roomScene');
 const roomPlayer = document.getElementById('roomPlayer');
@@ -1137,6 +1203,16 @@ function hideSeedStatus(){
   seedStatus.classList.remove('show');
 }
 
+function updateSeedStageBackground(mode){
+  state.currentStageBg = mode;
+  seedStage.classList.remove('bg-default', 'bg-walk');
+  if (mode === 'walk') {
+    seedStage.classList.add('bg-walk');
+  } else {
+    seedStage.classList.add('bg-default');
+  }
+}
+
 function positionSeedBubble(){
   const bubbleWidth = seedBubble.offsetWidth || 180;
   const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
@@ -1155,8 +1231,30 @@ function positionSeedStatus(){
   seedStatus.style.top = `${Math.max(8, y)}px`;
 }
 
+function positionAwakenButton(){
+  const btnWidth = seedAwakenAnchor.offsetWidth || 120;
+  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
+  const y = state.seedPlayer.y + state.seedPlayer.h + 10;
+
+  const minX = btnWidth / 2 + 8;
+  const maxX = seedStage.clientWidth - btnWidth / 2 - 8;
+  const finalX = clamp(x, minX, maxX);
+
+  seedAwakenAnchor.style.left = `${finalX}px`;
+  seedAwakenAnchor.style.top = `${y}px`;
+}
+
+function updateAwakenButtonUI(){
+  const visible = canAwaken() && !state.isActing && !state.awakened;
+  seedAwakenAnchor.classList.toggle('hidden', !visible);
+  if (visible) {
+    positionAwakenButton();
+  }
+}
+
 function updateScheduleUI(){
   dayText.textContent = state.day;
+  seedDayBadge.textContent = `DAY${state.day}`;
   energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
   energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
 
@@ -1165,12 +1263,11 @@ function updateScheduleUI(){
     statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
   });
 
-  if(canAwaken()){
-    awakenBtn.disabled = false;
-    if (!state.isActing) setSeedMessage(dialogues.ready);
-  } else {
-    awakenBtn.disabled = state.isActing;
+  if (canAwaken()) {
+    if (!state.isActing && !state.awakened) setSeedMessage(dialogues.ready);
   }
+
+  updateAwakenButtonUI();
 }
 
 function getSeedRestPoint(){
@@ -1204,7 +1301,7 @@ function startAction(type){
 
   state.isActing = true;
   setScheduleButtonsDisabled(true);
-  awakenBtn.disabled = true;
+  updateAwakenButtonUI();
 
   const meta = actionMeta[type];
 
@@ -1212,8 +1309,15 @@ function startAction(type){
     const point = getSeedRestPoint();
     moveSeedPlayerTo(point.x, point.y);
     seedStage.classList.add('resting');
+    updateSeedStageBackground('default');
+  } else if (type === 'walk') {
+    seedStage.classList.remove('resting');
+    updateSeedStageBackground('walk');
+    placeSeedPlayerInitial();
+    renderSeedPlayer();
   } else {
     seedStage.classList.remove('resting');
+    updateSeedStageBackground('default');
     placeSeedPlayerInitial();
     renderSeedPlayer();
   }
@@ -1228,8 +1332,11 @@ function startAction(type){
 
     if(type === 'rest'){
       seedStage.classList.remove('resting');
+      updateSeedStageBackground('default');
       placeSeedPlayerInitial();
       renderSeedPlayer();
+    } else if (type !== 'walk') {
+      updateSeedStageBackground('default');
     }
 
     updateScheduleUI();
@@ -1308,6 +1415,7 @@ function detectIdentity(){
 function doAwaken(){
   if(!canAwaken() || state.isActing) return;
   state.awakened = detectIdentity();
+  updateAwakenButtonUI();
   syncAwakenUI();
   syncRoomUI();
   showScreen('awaken');
@@ -1345,6 +1453,7 @@ function placeSeedPlayerInitial(){
   state.seedPlayer.y = Math.max(110, rect.height / 2 - state.seedPlayer.h / 2 + 34);
   positionSeedBubble();
   positionSeedStatus();
+  positionAwakenButton();
 }
 
 function renderSeedPlayer(){
@@ -1353,6 +1462,7 @@ function renderSeedPlayer(){
   seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
   positionSeedBubble();
   positionSeedStatus();
+  positionAwakenButton();
 }
 
 function placeRoomPlayerInitial(){
@@ -1374,12 +1484,14 @@ function resetAll(){
   state.stats = { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 };
   state.awakened = null;
   state.isActing = false;
+  state.currentStageBg = 'default';
 
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
   roomPlayerImg.src = imageSet.defaultRoom;
 
   seedStage.classList.remove('resting');
+  updateSeedStageBackground('default');
   setSeedMessage(dialogues.intro);
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
@@ -1413,6 +1525,7 @@ function serializeGameState(){
       maxEnergy: state.maxEnergy,
       stats: { ...state.stats },
       awakened: state.awakened ? deepClone(state.awakened) : null,
+      currentStageBg: state.currentStageBg,
       seedPlayer: { ...state.seedPlayer },
       roomPlayer: { ...state.roomPlayer },
       currentScreen: getCurrentScreenName()
@@ -1426,6 +1539,7 @@ function migrateSave(save){
   if (!save.progress) return null;
   if (!save.progress.maxEnergy) save.progress.maxEnergy = 100;
   if (!save.progress.currentScreen) save.progress.currentScreen = 'schedule';
+  if (!save.progress.currentStageBg) save.progress.currentStageBg = 'default';
   return save;
 }
 
@@ -1447,12 +1561,14 @@ function applySaveToState(save){
   };
   state.awakened = p.awakened ?? null;
   state.isActing = false;
+  state.currentStageBg = p.currentStageBg ?? 'default';
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
 
   seedStage.classList.remove('resting');
   hideSeedStatus();
+  updateSeedStageBackground(state.currentStageBg);
 
   seedPlayerImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
   roomPlayerImg.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
@@ -1698,6 +1814,7 @@ async function bootGame(){
 window.addEventListener('resize', () => {
   if(screens.schedule.classList.contains('active')){
     renderSeedPlayer();
+    updateAwakenButtonUI();
   }
   if(screens.room.classList.contains('active')){
     renderRoomPlayer();
@@ -1738,10 +1855,12 @@ seedPlayerImg.src = imageSet.defaultLarge;
 roomPlayerImg.src = imageSet.defaultRoom;
 awakenImg.src = imageSet.defaultLarge;
 
+updateSeedStageBackground('default');
 placeSeedPlayerInitial();
 renderSeedPlayer();
 placeRoomPlayerInitial();
 renderRoomPlayer();
+updateAwakenButtonUI();
 
 bootGame();
 </script>
