@@ -18,7 +18,7 @@
   --mint:#7df0d0;
   --radius:20px;
   --shadow:0 16px 40px rgba(0,0,0,.32);
-  --top-h:72px;
+  --top-h:84px;
 }
 
 *{box-sizing:border-box}
@@ -72,12 +72,12 @@ img{
 .topbar{
   position:absolute;
   left:0; right:0; top:0;
-  height:var(--top-h);
+  min-height:var(--top-h);
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  padding:14px 16px;
+  padding:12px 16px;
   z-index:20;
 }
 
@@ -96,6 +96,20 @@ img{
   color:var(--sub);
 }
 
+.topbar-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+
+.top-auth-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
 .pill{
   display:flex;
   align-items:center;
@@ -108,6 +122,30 @@ img{
   color:var(--sub);
   font-size:13px;
   backdrop-filter:blur(10px);
+}
+
+.auth-pill{
+  max-width:240px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.mini-btn{
+  padding:10px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+  backdrop-filter:blur(10px);
+}
+
+.mini-btn.primary{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  border:0;
 }
 
 .main{
@@ -625,7 +663,7 @@ img{
 }
 
 @media (max-width: 640px){
-  :root{ --top-h:68px; }
+  :root{ --top-h:120px; }
   .topbar{ padding:12px; }
   .brand .title{ font-size:16px; }
   .main{ padding:10px 12px 12px; }
@@ -677,6 +715,15 @@ img{
     width:39px;
     height:57px;
   }
+
+  .topbar-right{
+    width:100%;
+    align-items:flex-start;
+  }
+
+  .top-auth-row{
+    justify-content:flex-start;
+  }
 }
 </style>
 </head>
@@ -689,9 +736,20 @@ img{
         <div class="title">KEY:VERSE — Prelude</div>
         <div class="subtitle">미지의 KEY를 육성해 어떤 KEY로 각성할지 결정하세요</div>
       </div>
-      <div class="pill">
-        <span>Day</span>
-        <strong id="dayText">1</strong>
+
+      <div class="topbar-right">
+        <div class="top-auth-row">
+          <button class="mini-btn primary" id="loginBtn">Google 로그인</button>
+          <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
+          <button class="mini-btn" id="saveBtn">지금 저장</button>
+        </div>
+        <div class="top-auth-row">
+          <div class="pill auth-pill" id="authStatus">게스트 모드</div>
+          <div class="pill">
+            <span>Day</span>
+            <strong id="dayText">1</strong>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -882,12 +940,34 @@ img{
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* =========================
+   Supabase 설정
+   ========================= */
+const SUPABASE_URL = "https://tddfncbmoyytunsvfbwm.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd";
+
+const GAME_ID = 'keyverse-prelude';
+const SLOT_ID = 'main';
+const SCHEMA_VERSION = 1;
+const LOCAL_SAVE_KEY = 'keyverse_save_v3';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+/* =========================
+   화면 / 상태
+   ========================= */
 const screens = {
   schedule: document.getElementById('screen-schedule'),
   awaken: document.getElementById('screen-awaken'),
   room: document.getElementById('screen-room')
 };
+
+let cloudRevision = null;
+let saveTimer = null;
+let bootFinished = false;
+let currentUser = null;
 
 const state = {
   day: 1,
@@ -948,7 +1028,6 @@ const dayText = document.getElementById('dayText');
 const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 const awakenBtn = document.getElementById('awakenBtn');
-
 const awakenImg = document.getElementById('awakenImg');
 
 const seedStage = document.getElementById('seedStage');
@@ -963,6 +1042,11 @@ const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomHint = document.getElementById('roomHint');
 const scheduleGrid = document.getElementById('scheduleGrid');
 
+const authStatus = document.getElementById('authStatus');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const saveBtn = document.getElementById('saveBtn');
+
 const statEls = {
   stage: { fill: document.getElementById('fill-stage'), val: document.getElementById('val-stage') },
   mood: { fill: document.getElementById('fill-mood'), val: document.getElementById('val-mood') },
@@ -971,24 +1055,65 @@ const statEls = {
   charm: { fill: document.getElementById('fill-charm'), val: document.getElementById('val-charm') }
 };
 
+/* =========================
+   UI 이벤트
+   ========================= */
 document.querySelectorAll('.schedule-btn').forEach(btn => {
   btn.addEventListener('click', () => startAction(btn.dataset.act));
 });
 
-document.getElementById('resetBtn').addEventListener('click', resetAll);
-document.getElementById('awakenBtn').addEventListener('click', doAwaken);
-document.getElementById('toRoomBtn').addEventListener('click', () => {
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  resetAll();
+  await triggerSaveNow();
+});
+
+document.getElementById('awakenBtn').addEventListener('click', async () => {
+  doAwaken();
+  await triggerSaveNow();
+});
+
+document.getElementById('toRoomBtn').addEventListener('click', async () => {
   showScreen('room');
   placeRoomPlayerInitial();
   renderRoomPlayer();
+  await triggerSaveNow();
 });
-document.getElementById('backScheduleBtn').addEventListener('click', () => showScreen('schedule'));
-document.getElementById('restartAllBtn').addEventListener('click', resetAll);
-document.getElementById('backAwakenBtn').addEventListener('click', () => showScreen('awaken'));
 
+document.getElementById('backScheduleBtn').addEventListener('click', async () => {
+  showScreen('schedule');
+  await triggerSaveNow();
+});
+
+document.getElementById('restartAllBtn').addEventListener('click', async () => {
+  resetAll();
+  await triggerSaveNow();
+});
+
+document.getElementById('backAwakenBtn').addEventListener('click', async () => {
+  showScreen('awaken');
+  await triggerSaveNow();
+});
+
+loginBtn.addEventListener('click', signInWithGoogle);
+logoutBtn.addEventListener('click', signOut);
+saveBtn.addEventListener('click', async () => {
+  await triggerSaveNow();
+  alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
+});
+
+/* =========================
+   일반 함수
+   ========================= */
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
+}
+
+function getCurrentScreenName(){
+  if (screens.schedule.classList.contains('active')) return 'schedule';
+  if (screens.awaken.classList.contains('active')) return 'awaken';
+  if (screens.room.classList.contains('active')) return 'room';
+  return 'schedule';
 }
 
 function clamp(val, min, max){
@@ -1046,7 +1171,7 @@ function updateScheduleUI(){
 
   if(canAwaken()){
     awakenBtn.disabled = false;
-    setSeedMessage(dialogues.ready);
+    if (!state.isActing) setSeedMessage(dialogues.ready);
   } else {
     awakenBtn.disabled = state.isActing;
   }
@@ -1073,6 +1198,9 @@ function moveSeedPlayerTo(targetX, targetY){
   renderSeedPlayer();
 }
 
+/* =========================
+   게임 로직
+   ========================= */
 function startAction(type){
   if(state.awakened || state.isActing) return;
 
@@ -1099,7 +1227,7 @@ function startAction(type){
 
   showSeedStatus(meta.text);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     finishAction(type);
     hideSeedStatus();
     state.isActing = false;
@@ -1112,6 +1240,7 @@ function startAction(type){
     }
 
     updateScheduleUI();
+    await triggerSaveNow();
   }, meta.duration);
 }
 
@@ -1217,7 +1346,9 @@ function syncRoomUI(){
   });
 }
 
-/* schedule player */
+/* =========================
+   캐릭터 렌더
+   ========================= */
 function placeSeedPlayerInitial(){
   const rect = seedStage.getBoundingClientRect();
   state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
@@ -1234,7 +1365,6 @@ function renderSeedPlayer(){
   positionSeedStatus();
 }
 
-/* room player */
 function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
   state.roomPlayer.x = Math.max(12, rect.width * 0.18);
@@ -1250,6 +1380,7 @@ function renderRoomPlayer(){
 function resetAll(){
   state.day = 1;
   state.energy = 100;
+  state.maxEnergy = 100;
   state.stats = { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 };
   state.awakened = null;
   state.isActing = false;
@@ -1276,9 +1407,281 @@ function resetAll(){
   showScreen('schedule');
 }
 
+/* =========================
+   저장 / 불러오기
+   ========================= */
+function serializeGameState(){
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    gameId: GAME_ID,
+    slotId: SLOT_ID,
+    clientUpdatedAt: Date.now(),
+    progress: {
+      day: state.day,
+      energy: state.energy,
+      maxEnergy: state.maxEnergy,
+      stats: { ...state.stats },
+      awakened: state.awakened ? deepClone(state.awakened) : null,
+      seedPlayer: { ...state.seedPlayer },
+      roomPlayer: { ...state.roomPlayer },
+      currentScreen: getCurrentScreenName()
+    }
+  };
+}
+
+function deepClone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function migrateSave(save){
+  if (!save) return null;
+  if (!save.schemaVersion) save.schemaVersion = 1;
+  if (!save.progress) return null;
+  if (!save.progress.maxEnergy) save.progress.maxEnergy = 100;
+  if (!save.progress.currentScreen) save.progress.currentScreen = 'schedule';
+  return save;
+}
+
+function applySaveToState(save){
+  const migrated = migrateSave(save);
+  if (!migrated || !migrated.progress) return false;
+
+  const p = migrated.progress;
+
+  state.day = p.day ?? 1;
+  state.energy = p.energy ?? 100;
+  state.maxEnergy = p.maxEnergy ?? 100;
+  state.stats = {
+    stage: p.stats?.stage ?? 0,
+    mood: p.stats?.mood ?? 0,
+    style: p.stats?.style ?? 0,
+    mystery: p.stats?.mystery ?? 0,
+    charm: p.stats?.charm ?? 0
+  };
+  state.awakened = p.awakened ?? null;
+  state.isActing = false;
+
+  if (p.seedPlayer) {
+    state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
+  }
+  if (p.roomPlayer) {
+    state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
+  }
+
+  seedStage.classList.remove('resting');
+  hideSeedStatus();
+
+  seedPlayerImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
+  roomPlayerImg.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
+  awakenImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
+
+  if (state.awakened) {
+    syncAwakenUI();
+    syncRoomUI();
+  } else {
+    document.getElementById('roomIdentity').textContent = '-';
+    document.getElementById('roomBadges').innerHTML = '';
+  }
+
+  updateScheduleUI();
+  renderSeedPlayer();
+  renderRoomPlayer();
+
+  const nextScreen = ['schedule', 'awaken', 'room'].includes(p.currentScreen)
+    ? p.currentScreen
+    : 'schedule';
+  showScreen(nextScreen);
+
+  setSeedMessage(canAwaken() ? dialogues.ready : dialogues.intro);
+  return true;
+}
+
+function saveLocal(saveData){
+  localStorage.setItem(LOCAL_SAVE_KEY, JSON.stringify(saveData));
+}
+
+function loadLocalSave(){
+  const raw = localStorage.getItem(LOCAL_SAVE_KEY);
+  if (!raw) return null;
+  try {
+    return migrateSave(JSON.parse(raw));
+  } catch (err) {
+    console.error('local save parse error', err);
+    return null;
+  }
+}
+
+async function getSessionUser(){
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.warn(error.message);
+    return null;
+  }
+  return data.user ?? null;
+}
+
+async function fetchCloudSave(){
+  const user = await getSessionUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('game_saves')
+    .select('revision, updated_at, save_json')
+    .eq('user_id', user.id)
+    .eq('game_id', GAME_ID)
+    .eq('slot_id', SLOT_ID)
+    .maybeSingle();
+
+  if (error) {
+    console.error('fetchCloudSave', error.message);
+    return null;
+  }
+
+  if (!data) return null;
+
+  cloudRevision = data.revision;
+  return {
+    revision: data.revision,
+    updatedAt: data.updated_at,
+    data: migrateSave(data.save_json)
+  };
+}
+
+async function uploadCloudSave(saveData){
+  const user = await getSessionUser();
+  if (!user) return;
+
+  const nextRevision = (cloudRevision ?? 0) + 1;
+
+  const row = {
+    user_id: user.id,
+    game_id: GAME_ID,
+    slot_id: SLOT_ID,
+    schema_version: saveData.schemaVersion ?? SCHEMA_VERSION,
+    revision: nextRevision,
+    save_json: saveData
+  };
+
+  const { data, error } = await supabase
+    .from('game_saves')
+    .upsert(row, { onConflict: 'user_id,game_id,slot_id' })
+    .select('revision, updated_at')
+    .single();
+
+  if (error) {
+    console.error('uploadCloudSave', error.message);
+    return;
+  }
+
+  cloudRevision = data.revision;
+}
+
+function chooseNewerSave(localSave, cloudSave){
+  if (!localSave && !cloudSave) return null;
+  if (localSave && !cloudSave) return { source: 'local', save: localSave };
+  if (!localSave && cloudSave) return { source: 'cloud', save: cloudSave.data };
+
+  const localTs = Number(localSave.clientUpdatedAt || 0);
+  const cloudTs = Date.parse(cloudSave.updatedAt || 0);
+
+  if (localTs >= cloudTs) return { source: 'local', save: localSave };
+  return { source: 'cloud', save: cloudSave.data };
+}
+
+async function triggerSaveNow(){
+  const saveData = serializeGameState();
+  saveLocal(saveData);
+  if (currentUser) {
+    await uploadCloudSave(saveData);
+  }
+}
+
+function scheduleCloudSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const saveData = serializeGameState();
+    saveLocal(saveData);
+    if (currentUser) {
+      await uploadCloudSave(saveData);
+    }
+  }, 1200);
+}
+
+/* =========================
+   인증
+   ========================= */
+async function signInWithGoogle(){
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.href
+    }
+  });
+
+  if (error) {
+    alert('로그인 중 오류가 발생했어요: ' + error.message);
+  }
+}
+
+async function signOut(){
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    alert('로그아웃 중 오류가 발생했어요: ' + error.message);
+    return;
+  }
+
+  currentUser = null;
+  updateAuthUI(null);
+  cloudRevision = null;
+  alert('로그아웃했어요. 이 기기 저장은 계속 남아 있어요.');
+}
+
+function updateAuthUI(user){
+  currentUser = user;
+
+  if (user) {
+    const email = user.email || '로그인됨';
+    authStatus.textContent = `클라우드 연결됨 · ${email}`;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = '';
+  } else {
+    authStatus.textContent = '게스트 모드';
+    loginBtn.style.display = '';
+    logoutBtn.style.display = 'none';
+  }
+}
+
+/* =========================
+   부팅
+   ========================= */
+async function bootGame(){
+  const localSave = loadLocalSave();
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user ?? null;
+  updateAuthUI(user);
+
+  const cloudSave = user ? await fetchCloudSave() : null;
+  const chosen = chooseNewerSave(localSave, cloudSave);
+
+  if (chosen?.save) {
+    applySaveToState(chosen.save);
+
+    if (chosen.source === 'local') {
+      scheduleCloudSave();
+    } else {
+      saveLocal(chosen.save);
+    }
+  } else {
+    resetAll();
+    saveLocal(serializeGameState());
+  }
+
+  bootFinished = true;
+}
+
 window.addEventListener('resize', () => {
   if(screens.schedule.classList.contains('active')){
-    placeSeedPlayerInitial();
     renderSeedPlayer();
   }
   if(screens.room.classList.contains('active')){
@@ -1286,13 +1689,47 @@ window.addEventListener('resize', () => {
   }
 });
 
-updateScheduleUI();
-setSeedMessage(dialogues.intro);
+window.addEventListener('beforeunload', () => {
+  const saveData = serializeGameState();
+  saveLocal(saveData);
+});
+
+supabase.auth.onAuthStateChange(async (_event, session) => {
+  updateAuthUI(session?.user ?? null);
+
+  if (!bootFinished) return;
+
+  if (session?.user) {
+    const localSave = loadLocalSave();
+    const cloudSave = await fetchCloudSave();
+    const chosen = chooseNewerSave(localSave, cloudSave);
+
+    if (chosen?.save) {
+      applySaveToState(chosen.save);
+      if (chosen.source === 'local') {
+        await uploadCloudSave(chosen.save);
+      } else {
+        saveLocal(chosen.save);
+      }
+    } else {
+      await triggerSaveNow();
+    }
+  }
+});
+
+/* =========================
+   초기 렌더
+   ========================= */
 seedPlayerImg.src = imageSet.defaultLarge;
+roomPlayerImg.src = imageSet.defaultRoom;
+awakenImg.src = imageSet.defaultLarge;
+
 placeSeedPlayerInitial();
 renderSeedPlayer();
 placeRoomPlayerInitial();
 renderRoomPlayer();
+
+bootGame();
 </script>
 </body>
 </html>
