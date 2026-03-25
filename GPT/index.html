@@ -941,19 +941,30 @@ img{
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* =========================
    Supabase 설정
    ========================= */
-const SUPABASE_URL = "https://tddfncbmoyytunsvfbwm.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd";
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "YOUR_PUBLISHABLE_KEY";
 
 const GAME_ID = 'keyverse-prelude';
 const SLOT_ID = 'main';
 const SCHEMA_VERSION = 1;
 const LOCAL_SAVE_KEY = 'keyverse_save_v3';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+/* ✅ supabase 중복 선언 방지 */
+let supabase = null;
+
+try {
+  if (window.supabase && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  }
+} catch (err) {
+  console.error('Supabase init error:', err);
+  supabase = null;
+}
 
 /* =========================
    화면 / 상태
@@ -1094,12 +1105,14 @@ document.getElementById('backAwakenBtn').addEventListener('click', async () => {
   await triggerSaveNow();
 });
 
-loginBtn.addEventListener('click', signInWithGoogle);
-logoutBtn.addEventListener('click', signOut);
-saveBtn.addEventListener('click', async () => {
-  await triggerSaveNow();
-  alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
-});
+if (loginBtn) loginBtn.addEventListener('click', signInWithGoogle);
+if (logoutBtn) logoutBtn.addEventListener('click', signOut);
+if (saveBtn) {
+  saveBtn.addEventListener('click', async () => {
+    await triggerSaveNow();
+    alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
+  });
+}
 
 /* =========================
    일반 함수
@@ -1512,17 +1525,24 @@ function loadLocalSave(){
 }
 
 async function getSessionUser(){
-  const { data, error } = await supabase.auth.getUser();
-  if (error) {
-    console.warn(error.message);
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.warn(error.message);
+      return null;
+    }
+    return data.user ?? null;
+  } catch (err) {
+    console.error('getSessionUser error:', err);
     return null;
   }
-  return data.user ?? null;
 }
 
 async function fetchCloudSave(){
   const user = await getSessionUser();
-  if (!user) return null;
+  if (!user || !supabase) return null;
 
   const { data, error } = await supabase
     .from('game_saves')
@@ -1549,7 +1569,7 @@ async function fetchCloudSave(){
 
 async function uploadCloudSave(saveData){
   const user = await getSessionUser();
-  if (!user) return;
+  if (!user || !supabase) return;
 
   const nextRevision = (cloudRevision ?? 0) + 1;
 
@@ -1611,6 +1631,11 @@ function scheduleCloudSave(){
    인증
    ========================= */
 async function signInWithGoogle(){
+  if (!supabase) {
+    alert('Supabase 연결 설정을 먼저 확인해주세요.');
+    return;
+  }
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -1624,6 +1649,8 @@ async function signInWithGoogle(){
 }
 
 async function signOut(){
+  if (!supabase) return;
+
   const { error } = await supabase.auth.signOut();
   if (error) {
     alert('로그아웃 중 오류가 발생했어요: ' + error.message);
@@ -1657,24 +1684,48 @@ function updateAuthUI(user){
 async function bootGame(){
   const localSave = loadLocalSave();
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user ?? null;
-  updateAuthUI(user);
+  if (!supabase) {
+    updateAuthUI(null);
 
-  const cloudSave = user ? await fetchCloudSave() : null;
-  const chosen = chooseNewerSave(localSave, cloudSave);
-
-  if (chosen?.save) {
-    applySaveToState(chosen.save);
-
-    if (chosen.source === 'local') {
-      scheduleCloudSave();
+    if (localSave) {
+      applySaveToState(localSave);
     } else {
-      saveLocal(chosen.save);
+      resetAll();
+      saveLocal(serializeGameState());
     }
-  } else {
-    resetAll();
-    saveLocal(serializeGameState());
+
+    bootFinished = true;
+    return;
+  }
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user ?? null;
+    updateAuthUI(user);
+
+    const cloudSave = user ? await fetchCloudSave() : null;
+    const chosen = chooseNewerSave(localSave, cloudSave);
+
+    if (chosen?.save) {
+      applySaveToState(chosen.save);
+
+      if (chosen.source === 'local') {
+        scheduleCloudSave();
+      } else {
+        saveLocal(chosen.save);
+      }
+    } else {
+      resetAll();
+      saveLocal(serializeGameState());
+    }
+  } catch (err) {
+    console.error('bootGame error:', err);
+    if (localSave) {
+      applySaveToState(localSave);
+    } else {
+      resetAll();
+      saveLocal(serializeGameState());
+    }
   }
 
   bootFinished = true;
@@ -1694,28 +1745,30 @@ window.addEventListener('beforeunload', () => {
   saveLocal(saveData);
 });
 
-supabase.auth.onAuthStateChange(async (_event, session) => {
-  updateAuthUI(session?.user ?? null);
+if (supabase) {
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    updateAuthUI(session?.user ?? null);
 
-  if (!bootFinished) return;
+    if (!bootFinished) return;
 
-  if (session?.user) {
-    const localSave = loadLocalSave();
-    const cloudSave = await fetchCloudSave();
-    const chosen = chooseNewerSave(localSave, cloudSave);
+    if (session?.user) {
+      const localSave = loadLocalSave();
+      const cloudSave = await fetchCloudSave();
+      const chosen = chooseNewerSave(localSave, cloudSave);
 
-    if (chosen?.save) {
-      applySaveToState(chosen.save);
-      if (chosen.source === 'local') {
-        await uploadCloudSave(chosen.save);
+      if (chosen?.save) {
+        applySaveToState(chosen.save);
+        if (chosen.source === 'local') {
+          await uploadCloudSave(chosen.save);
+        } else {
+          saveLocal(chosen.save);
+        }
       } else {
-        saveLocal(chosen.save);
+        await triggerSaveNow();
       }
-    } else {
-      await triggerSaveNow();
     }
-  }
-});
+  });
+}
 
 /* =========================
    초기 렌더
