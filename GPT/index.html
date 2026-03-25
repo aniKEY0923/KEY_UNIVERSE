@@ -315,8 +315,8 @@ img{
   right:10px;
   top:10px;
   z-index:6;
-  width:168px;
-  padding:10px;
+  width:112px;
+  padding:8px;
   border-radius:14px;
   background:rgba(26,22,42,.76);
   border:1px solid rgba(255,255,255,.10);
@@ -325,36 +325,36 @@ img{
 }
 
 .seed-mini-title{
-  font-size:11px;
+  font-size:10px;
   font-weight:900;
   color:#f3efff;
-  margin-bottom:8px;
+  margin-bottom:7px;
   letter-spacing:.02em;
 }
 
 .seed-mini-row{
   display:grid;
-  grid-template-columns:36px 1fr 22px;
-  gap:6px;
+  grid-template-columns:26px 1fr 16px;
+  gap:4px;
   align-items:center;
-  margin-bottom:6px;
-  font-size:10px;
+  margin-bottom:5px;
+  font-size:8px;
   color:#d8d1f0;
 }
 
 .seed-mini-row strong{
-  font-size:10px;
+  font-size:8px;
   text-align:right;
   color:#fff;
 }
 
 .seed-mini-row .bar{
-  height:8px;
+  height:7px;
 }
 
 .seed-energy-box{
-  margin-top:8px;
-  padding-top:8px;
+  margin-top:7px;
+  padding-top:7px;
   border-top:1px solid rgba(255,255,255,.08);
 }
 
@@ -362,14 +362,14 @@ img{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:6px;
-  font-size:10px;
+  margin-bottom:5px;
+  font-size:8px;
   color:#d8d1f0;
 }
 
 .seed-energy-top strong{
   color:#fff;
-  font-size:10px;
+  font-size:8px;
 }
 
 .bar{
@@ -408,13 +408,13 @@ img{
 .schedule-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
+  gap:8px;
   margin-top:12px;
 }
 .schedule-btn{
   text-align:left;
-  padding:14px 12px;
-  border-radius:16px;
+  padding:10px 10px;
+  border-radius:14px;
   background:rgba(255,255,255,.04);
   border:1px solid var(--line);
   transition:.18s ease;
@@ -428,15 +428,15 @@ img{
 }
 .schedule-btn .title{
   display:block;
-  font-size:13px;
+  font-size:12px;
   font-weight:900;
-  margin-bottom:5px;
+  margin-bottom:3px;
 }
 .schedule-btn .meta{
   display:block;
-  font-size:11px;
+  font-size:10px;
   color:var(--sub);
-  line-height:1.45;
+  line-height:1.3;
 }
 
 /* awaken */
@@ -647,19 +647,29 @@ img{
   }
 
   .seed-mini-status{
-    width:138px;
-    padding:8px;
+    width:102px;
+    padding:7px;
     right:8px;
     top:8px;
   }
   .seed-mini-row{
-    grid-template-columns:30px 1fr 20px;
-    gap:5px;
-    font-size:9px;
+    grid-template-columns:24px 1fr 14px;
+    gap:4px;
+    font-size:8px;
   }
   .seed-mini-row strong,
   .seed-energy-top,
   .seed-mini-title{
+    font-size:8px;
+  }
+
+  .schedule-btn{
+    padding:9px 9px;
+  }
+  .schedule-btn .title{
+    font-size:11px;
+  }
+  .schedule-btn .meta{
     font-size:9px;
   }
 
@@ -677,7 +687,7 @@ img{
     <div class="topbar">
       <div class="brand">
         <div class="title">KEY:VERSE — Prelude</div>
-        <div class="subtitle">미지의 나를 육성해 어떤 KEY로 각성할지 결정하세요</div>
+        <div class="subtitle">미지의 KEY를 육성해 어떤 KEY로 각성할지 결정하세요</div>
       </div>
       <div class="pill">
         <span>Day</span>
@@ -745,7 +755,7 @@ img{
               </div>
 
               <div class="seed-label">
-                <div class="name">미지의 나</div>
+                <div class="name">미지의 KEY</div>
                 <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
               </div>
             </div>
@@ -1048,19 +1058,19 @@ function getSeedActionPoint(type){
 
   switch(type){
     case 'practice':
-      return { x: w * 0.30, y: h * 0.58 };
+      return { x: w * 0.30, y: h * 0.66 };
     case 'study':
-      return { x: w * 0.72, y: h * 0.58 };
+      return { x: w * 0.72, y: h * 0.64 };
     case 'movie':
-      return { x: w * 0.56, y: h * 0.67 };
+      return { x: w * 0.56, y: h * 0.73 };
     case 'walk':
-      return { x: w * 0.84, y: h * 0.38 };
+      return { x: w * 0.84, y: h * 0.46 };
     case 'letters':
-      return { x: w * 0.70, y: h * 0.62 };
+      return { x: w * 0.70, y: h * 0.68 };
     case 'rest':
-      return { x: w * 0.20, y: h * 0.66 };
+      return { x: w * 0.20, y: h * 0.74 };
     default:
-      return { x: w * 0.5, y: h * 0.6 };
+      return { x: w * 0.5, y: h * 0.66 };
   }
 }
 
@@ -1069,7 +1079,7 @@ function moveSeedPlayerTo(targetX, targetY){
   const maxY = seedStage.clientHeight - state.seedPlayer.h;
 
   const nextX = clamp(targetX - state.seedPlayer.w / 2, 0, maxX);
-  const nextY = clamp(targetY - state.seedPlayer.h / 2, 70, maxY);
+  const nextY = clamp(targetY - state.seedPlayer.h / 2, 88, maxY);
 
   if(nextX < state.seedPlayer.x) state.seedPlayer.facing = 'left';
   if(nextX > state.seedPlayer.x) state.seedPlayer.facing = 'right';
@@ -1211,7 +1221,7 @@ function syncRoomUI(){
 function placeSeedPlayerInitial(){
   const rect = seedStage.getBoundingClientRect();
   state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
-  state.seedPlayer.y = Math.max(90, rect.height / 2 - state.seedPlayer.h / 2 + 18);
+  state.seedPlayer.y = Math.max(110, rect.height / 2 - state.seedPlayer.h / 2 + 34);
   positionSeedBubble();
   positionSeedStatus();
 }
