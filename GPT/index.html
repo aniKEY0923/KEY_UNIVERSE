@@ -125,7 +125,7 @@ img{
 }
 
 .auth-pill{
-  max-width:240px;
+  max-width:260px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -347,7 +347,6 @@ img{
   text-shadow:0 2px 10px rgba(0,0,0,.3);
 }
 
-/* overlay status panel */
 .seed-mini-status{
   position:absolute;
   right:10px;
@@ -941,11 +940,7 @@ img{
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* =========================
-   Supabase 설정
-   ========================= */
 const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "YOUR_PUBLISHABLE_KEY";
 
@@ -954,21 +949,17 @@ const SLOT_ID = 'main';
 const SCHEMA_VERSION = 1;
 const LOCAL_SAVE_KEY = 'keyverse_save_v3';
 
-/* ✅ supabase 중복 선언 방지 */
-let supabase = null;
+let supabaseClient = null;
 
 try {
   if (window.supabase && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   }
 } catch (err) {
   console.error('Supabase init error:', err);
-  supabase = null;
+  supabaseClient = null;
 }
 
-/* =========================
-   화면 / 상태
-   ========================= */
 const screens = {
   schedule: document.getElementById('screen-schedule'),
   awaken: document.getElementById('screen-awaken'),
@@ -987,7 +978,6 @@ const state = {
   stats: { stage: 0, mood: 0, style: 0, mystery: 0, charm: 0 },
   awakened: null,
   isActing: false,
-
   seedPlayer: {
     x: 80,
     y: 170,
@@ -995,7 +985,6 @@ const state = {
     h: 78,
     facing: 'right'
   },
-
   roomPlayer: {
     x: 100,
     y: 340,
@@ -1066,9 +1055,6 @@ const statEls = {
   charm: { fill: document.getElementById('fill-charm'), val: document.getElementById('val-charm') }
 };
 
-/* =========================
-   UI 이벤트
-   ========================= */
 document.querySelectorAll('.schedule-btn').forEach(btn => {
   btn.addEventListener('click', () => startAction(btn.dataset.act));
 });
@@ -1114,9 +1100,6 @@ if (saveBtn) {
   });
 }
 
-/* =========================
-   일반 함수
-   ========================= */
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
@@ -1211,9 +1194,6 @@ function moveSeedPlayerTo(targetX, targetY){
   renderSeedPlayer();
 }
 
-/* =========================
-   게임 로직
-   ========================= */
 function startAction(type){
   if(state.awakened || state.isActing) return;
 
@@ -1359,9 +1339,6 @@ function syncRoomUI(){
   });
 }
 
-/* =========================
-   캐릭터 렌더
-   ========================= */
 function placeSeedPlayerInitial(){
   const rect = seedStage.getBoundingClientRect();
   state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
@@ -1420,9 +1397,10 @@ function resetAll(){
   showScreen('schedule');
 }
 
-/* =========================
-   저장 / 불러오기
-   ========================= */
+function deepClone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
 function serializeGameState(){
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -1440,10 +1418,6 @@ function serializeGameState(){
       currentScreen: getCurrentScreenName()
     }
   };
-}
-
-function deepClone(obj){
-  return JSON.parse(JSON.stringify(obj));
 }
 
 function migrateSave(save){
@@ -1474,12 +1448,8 @@ function applySaveToState(save){
   state.awakened = p.awakened ?? null;
   state.isActing = false;
 
-  if (p.seedPlayer) {
-    state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
-  }
-  if (p.roomPlayer) {
-    state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
-  }
+  if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
+  if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
 
   seedStage.classList.remove('resting');
   hideSeedStatus();
@@ -1525,10 +1495,10 @@ function loadLocalSave(){
 }
 
 async function getSessionUser(){
-  if (!supabase) return null;
+  if (!supabaseClient) return null;
 
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await supabaseClient.auth.getUser();
     if (error) {
       console.warn(error.message);
       return null;
@@ -1542,9 +1512,9 @@ async function getSessionUser(){
 
 async function fetchCloudSave(){
   const user = await getSessionUser();
-  if (!user || !supabase) return null;
+  if (!user || !supabaseClient) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('game_saves')
     .select('revision, updated_at, save_json')
     .eq('user_id', user.id)
@@ -1569,7 +1539,7 @@ async function fetchCloudSave(){
 
 async function uploadCloudSave(saveData){
   const user = await getSessionUser();
-  if (!user || !supabase) return;
+  if (!user || !supabaseClient) return;
 
   const nextRevision = (cloudRevision ?? 0) + 1;
 
@@ -1582,7 +1552,7 @@ async function uploadCloudSave(saveData){
     save_json: saveData
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('game_saves')
     .upsert(row, { onConflict: 'user_id,game_id,slot_id' })
     .select('revision, updated_at')
@@ -1627,16 +1597,13 @@ function scheduleCloudSave(){
   }, 1200);
 }
 
-/* =========================
-   인증
-   ========================= */
 async function signInWithGoogle(){
-  if (!supabase) {
+  if (!supabaseClient) {
     alert('Supabase 연결 설정을 먼저 확인해주세요.');
     return;
   }
 
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: window.location.href
@@ -1649,9 +1616,9 @@ async function signInWithGoogle(){
 }
 
 async function signOut(){
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
   if (error) {
     alert('로그아웃 중 오류가 발생했어요: ' + error.message);
     return;
@@ -1678,13 +1645,10 @@ function updateAuthUI(user){
   }
 }
 
-/* =========================
-   부팅
-   ========================= */
 async function bootGame(){
   const localSave = loadLocalSave();
 
-  if (!supabase) {
+  if (!supabaseClient) {
     updateAuthUI(null);
 
     if (localSave) {
@@ -1699,7 +1663,7 @@ async function bootGame(){
   }
 
   try {
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabaseClient.auth.getSession();
     const user = sessionData?.session?.user ?? null;
     updateAuthUI(user);
 
@@ -1745,8 +1709,8 @@ window.addEventListener('beforeunload', () => {
   saveLocal(saveData);
 });
 
-if (supabase) {
-  supabase.auth.onAuthStateChange(async (_event, session) => {
+if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
     updateAuthUI(session?.user ?? null);
 
     if (!bootFinished) return;
@@ -1770,9 +1734,6 @@ if (supabase) {
   });
 }
 
-/* =========================
-   초기 렌더
-   ========================= */
 seedPlayerImg.src = imageSet.defaultLarge;
 roomPlayerImg.src = imageSet.defaultRoom;
 awakenImg.src = imageSet.defaultLarge;
