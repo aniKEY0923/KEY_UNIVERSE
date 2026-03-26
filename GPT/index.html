@@ -325,6 +325,9 @@ img{
   will-change:left, top, transform, filter, width, height;
   transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease, width .2s ease, height .2s ease;
 }
+.seed-player.no-motion{
+  transition:none !important;
+}
 .seed-player img{
   width:100%;
   height:100%;
@@ -358,7 +361,7 @@ img{
 
 .seed-bubble{
   position:absolute;
-  z-index:7;
+  z-index:6;
   max-width:220px;
   min-width:160px;
   padding:10px 12px;
@@ -370,6 +373,11 @@ img{
   box-shadow:0 8px 20px rgba(122,104,85,.12);
   border:1px solid rgba(182,160,137,.16);
   transition:left .2s ease, top .2s ease;
+}
+.seed-bubble.no-motion,
+.seed-status.no-motion,
+.stage-energy-box.no-motion{
+  transition:none !important;
 }
 .seed-bubble:after{
   content:"";
@@ -386,7 +394,7 @@ img{
 
 .seed-status{
   position:absolute;
-  z-index:6;
+  z-index:5;
   min-width:38px;
   text-align:center;
   padding:4px 8px;
@@ -427,9 +435,9 @@ img{
 
 .stage-energy-box{
   position:absolute;
-  z-index:5;
+  z-index:4;
   width:56px;
-  height:12px;
+  height:11px;
   left:0;
   top:0;
   transform:translateX(-50%);
@@ -441,11 +449,11 @@ img{
   height:100%;
   border-radius:999px;
   overflow:hidden;
-  background:linear-gradient(90deg, rgba(217,82,82,.92), rgba(241,128,128,.92));
-  border:2px solid rgba(76,56,47,.78);
+  background:linear-gradient(90deg, rgba(235,101,101,.96), rgba(198,52,52,.96));
+  border:2px solid rgba(79,58,49,.72);
   box-shadow:
-    0 2px 8px rgba(120,104,87,.16),
-    inset 0 1px 2px rgba(255,255,255,.28);
+    0 2px 8px rgba(120,104,87,.12),
+    inset 0 1px 2px rgba(255,255,255,.20);
 }
 .stage-energy-fill{
   height:100%;
@@ -616,6 +624,7 @@ img{
   0%,100%{ transform:scale(.96); }
   50%{ transform:scale(.99); }
 }
+}
 .schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
   display:block;
@@ -675,35 +684,26 @@ img{
 }
 .submenu.show{ display:block; }
 
-.schedule-panel-wrap{
+.schedule-panel{
   position:relative;
+  overflow:hidden;
 }
 .event-card{
   position:absolute;
-  inset:0;
-  z-index:12;
-  margin:0;
-  padding:20px;
-  border-radius:18px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.97), rgba(253,248,241,.96)),
-    rgba(255,255,255,.92);
-  border:1px solid rgba(120,104,87,.12);
-  box-shadow:0 18px 34px rgba(120,104,87,.14);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-}
-.event-card.show{ display:flex; }
-.event-card-inner{
-  width:min(420px,100%);
+  inset:54px 12px 62px 12px;
   padding:18px;
-  border-radius:18px;
-  background:rgba(255,255,255,.9);
-  border:1px solid rgba(120,104,87,.10);
-  box-shadow:0 10px 24px rgba(120,104,87,.08);
+  border-radius:20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(253,248,241,.98)),
+    rgba(255,255,255,.92);
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 18px 34px rgba(120,104,87,.16);
+  backdrop-filter:blur(10px);
+  display:none;
+  z-index:12;
+  align-content:center;
 }
+.event-card.show{ display:grid; }
 .event-title{
   font-size:14px;
   font-weight:900;
@@ -732,6 +732,251 @@ img{
 .event-no{
   background:rgba(255,255,255,.82);
   border:1px solid var(--line);
+}
+
+.mini-game-layer{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(241,167,200,.24), transparent 22%),
+    linear-gradient(180deg, rgba(30,26,34,.94), rgba(18,16,22,.98));
+}
+.mini-game-layer.active{ display:flex; }
+.mini-game-shell{
+  width:min(880px, 100%);
+  border-radius:28px;
+  border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,250,252,.10), rgba(255,255,255,.05));
+  box-shadow:0 22px 60px rgba(0,0,0,.34);
+  overflow:hidden;
+  backdrop-filter:blur(14px);
+}
+.mini-game-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 18px 12px;
+  color:#fff8fd;
+}
+.mini-game-title{
+  font-size:22px;
+  font-weight:950;
+  letter-spacing:.02em;
+}
+.mini-game-sub{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,244,250,.72);
+}
+.mini-game-stats{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.mini-pill{
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+.mini-game-body{
+  padding:0 16px 16px;
+}
+.mini-rhythm-stage{
+  position:relative;
+  height:min(62vh, 560px);
+  min-height:420px;
+  border-radius:24px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,.16), transparent 32%),
+    linear-gradient(180deg, rgba(64,52,77,.94), rgba(27,23,33,.98));
+  border:1px solid rgba(255,255,255,.08);
+}
+.mini-rhythm-lanes{
+  position:absolute;
+  inset:0;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+}
+.mini-lane{
+  position:relative;
+  border-right:1px solid rgba(255,255,255,.08);
+}
+.mini-lane:last-child{ border-right:none; }
+.mini-lane::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+  pointer-events:none;
+}
+.mini-hit-line{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:86px;
+  height:4px;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(241,167,200,.96), rgba(201,195,232,.96));
+  box-shadow:0 0 16px rgba(241,167,200,.34);
+}
+.mini-note{
+  position:absolute;
+  left:12%;
+  width:76%;
+  height:22px;
+  border-radius:999px;
+  background:linear-gradient(135deg, #fff4f8, #ffd2e7);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.48);
+}
+.mini-note.alt{
+  background:linear-gradient(135deg, #f5f0ff, #d9cffc);
+}
+.mini-note.hit{
+  opacity:0;
+  transform:scale(1.12);
+  transition:transform .12s ease, opacity .12s ease;
+}
+.mini-feedback{
+  position:absolute;
+  left:50%;
+  top:78px;
+  transform:translateX(-50%);
+  min-width:120px;
+  text-align:center;
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.14);
+  color:#fff;
+  font-weight:900;
+  letter-spacing:.04em;
+  opacity:0;
+  transition:opacity .14s ease, transform .14s ease;
+  pointer-events:none;
+}
+.mini-feedback.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(-6px);
+}
+.mini-hit-buttons{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:10px;
+}
+.mini-hit-btn{
+  height:64px;
+  border-radius:18px;
+  font-size:20px;
+  font-weight:950;
+  color:#fff;
+  background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 8px 18px rgba(0,0,0,.18);
+}
+.mini-hit-btn.active{
+  transform:translateY(2px) scale(.98);
+  background:linear-gradient(180deg, rgba(241,167,200,.44), rgba(201,195,232,.28));
+}
+.mini-game-result{
+  position:absolute;
+  inset:0;
+  display:none;
+  place-items:center;
+  padding:24px;
+  background:rgba(16,13,22,.72);
+  backdrop-filter:blur(8px);
+}
+.mini-game-result.show{ display:grid; }
+.mini-result-card{
+  width:min(440px, 100%);
+  padding:24px;
+  border-radius:24px;
+  text-align:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,247,250,.94));
+  color:#5b4d42;
+  box-shadow:0 16px 40px rgba(0,0,0,.24);
+}
+.mini-result-title{
+  font-size:24px;
+  font-weight:950;
+  margin-bottom:8px;
+}
+.mini-result-desc{
+  font-size:13px;
+  color:var(--sub);
+  line-height:1.65;
+}
+.mini-result-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  margin:18px 0;
+}
+.mini-result-chip{
+  padding:12px 10px;
+  border-radius:16px;
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(120,104,87,.10);
+}
+.mini-result-chip strong{
+  display:block;
+  font-size:18px;
+  margin-bottom:4px;
+}
+.mini-result-btn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:16px;
+  font-weight:900;
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
+@media (max-width: 640px){
+  .event-card{
+    inset:50px 10px 58px 10px;
+    padding:16px;
+  }
+  .mini-game-layer{ padding:10px; }
+  .mini-game-top{
+    padding:14px 14px 10px;
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .mini-game-stats{ justify-content:flex-start; }
+  .mini-rhythm-stage{
+    min-height:380px;
+    height:min(58vh, 480px);
+  }
+  .mini-hit-btn{
+    height:58px;
+    font-size:18px;
+  }
+  .mini-feedback{
+    top:66px;
+    min-width:104px;
+    font-size:12px;
+  }
+  .mini-result-grid{
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
 }
 
 .center-wrap{
@@ -914,7 +1159,7 @@ body.resizing .seed-awaken-anchor{
   }
 
   .stage-energy-box{
-    width:52px;
+    width:54px;
     height:10px;
   }
 
@@ -1087,33 +1332,29 @@ body.resizing .seed-awaken-anchor{
           </div>
         </div>
 
-        <div class="card panel">
-          <div class="schedule-panel-wrap">
-            <div class="section-title-inline">
-              <h3 class="section-title">스케줄 수행</h3>
-              <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
-            </div>
+        <div class="card panel schedule-panel">
+          <div class="section-title-inline">
+            <h3 class="section-title">스케줄 수행</h3>
+            <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
+          </div>
 
-            <div class="schedule-grid" id="scheduleGrid">
-              <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
-              <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
-              <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
-              <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
-              <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
-              <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
-              <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
-              <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
-            </div>
+          <div class="schedule-grid" id="scheduleGrid">
+            <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
+            <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
+            <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
+            <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
+            <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
+            <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
+            <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
+            <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
+          </div>
 
-            <div class="event-card" id="concertEventCard">
-              <div class="event-card-inner">
-                <div class="event-title">콘서트를 개최하시겠습니까?</div>
-                <div class="event-desc">연습 점수가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?</div>
-                <div class="event-actions">
-                  <button type="button" class="event-yes" id="concertYesBtn">예</button>
-                  <button type="button" class="event-no" id="concertNoBtn">아니오</button>
-                </div>
-              </div>
+          <div class="event-card" id="concertEventCard">
+            <div class="event-title">콘서트를 개최하시겠습니까?</div>
+            <div class="event-desc">연습 점수가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?</div>
+            <div class="event-actions">
+              <button type="button" class="event-yes" id="concertYesBtn">예</button>
+              <button type="button" class="event-no" id="concertNoBtn">아니오</button>
             </div>
           </div>
 
@@ -1236,6 +1477,22 @@ let bootFinished = false;
 let currentUser = null;
 let resizeTimer = null;
 
+const miniGame = {
+  active:false,
+  startTime:0,
+  duration:20000,
+  score:0,
+  combo:0,
+  perfect:0,
+  good:0,
+  miss:0,
+  feedbackTimer:null,
+  rafId:null,
+  spawnTimer:null,
+  noteSeq:0,
+  notes:[]
+};
+
 const state = {
   day: 1,
   gameHour: 7,
@@ -1298,13 +1555,15 @@ const dialogues = {
   giftSalad: '샐러드 맛있었다. 고마워.',
   giftFried: '두릅튀김이라니, 맛있게 잘 먹었어. 고마워.',
   giftPasta: '파스타 정말 맛있었다. 챙겨줘서 고마워.',
-  giftMediterraneanFlower: '지중해풍 꽃이라니, 방 안이 금방 환해졌어. 고마워.',
-  giftPinkFluffyKeyring: '핑크색 털뭉치 키링이 너무 귀여워. 계속 만지게 돼.',
-  giftCatBeanie: '고양이 비니라니, 꽤 잘 어울리는 것 같지 않아?',
-  giftNone: '아이템은 아직 준비중인 것 같아.',
+  giftFlower: '지중해풍 꽃이라니, 방 안 공기까지 달라진 것 같아. 고마워.',
+  giftKeyring: '핑크색 털뭉치 키링? 너무 귀엽다. 가방에 달아둘래.',
+  giftBeanie: '고양이 비니까지 준비했어? 오늘은 조금 더 장난스럽게 보여도 좋겠다.',
   concertReady: '연습이 충분히 쌓였어. 이제 무대에 올라볼 수 있을 것 같아.',
   concertYes: '좋아, 콘서트를 열어보자. 오늘은 자신 있어.',
-  concertNo: '알겠어. 조금 더 준비해보고 싶어.'
+  concertNo: '알겠어. 조금 더 준비해보고 싶어.',
+  concertPerfect: '오늘 무대, 진짜 뜨거웠어. 환호가 아직도 들리는 것 같아.',
+  concertGreat: '좋은 흐름이었어. 다음 무대는 더 크게 열 수 있을 것 같아.',
+  concertOkay: '조금 떨리긴 했지만, 그래도 끝까지 해냈어.'
 };
 
 const actionMeta = {
@@ -1352,6 +1611,21 @@ const giftItemSubmenu = document.getElementById('giftItemSubmenu');
 const concertEventCard = document.getElementById('concertEventCard');
 const concertYesBtn = document.getElementById('concertYesBtn');
 const concertNoBtn = document.getElementById('concertNoBtn');
+
+const miniGameLayer = document.getElementById('miniGameLayer');
+const miniRhythmStage = document.getElementById('miniRhythmStage');
+const miniFeedback = document.getElementById('miniFeedback');
+const miniGameResult = document.getElementById('miniGameResult');
+const miniScoreEl = document.getElementById('miniScore');
+const miniComboEl = document.getElementById('miniCombo');
+const miniTimeEl = document.getElementById('miniTime');
+const miniResultTitle = document.getElementById('miniResultTitle');
+const miniResultDesc = document.getElementById('miniResultDesc');
+const miniResultScore = document.getElementById('miniResultScore');
+const miniResultPerfect = document.getElementById('miniResultPerfect');
+const miniResultGood = document.getElementById('miniResultGood');
+const miniFinishBtn = document.getElementById('miniFinishBtn');
+const miniLaneButtons = document.querySelectorAll('.mini-hit-btn');
 
 const statEls = {
   practice: { fill: document.getElementById('fill-practice'), val: document.getElementById('val-practice') },
@@ -1428,9 +1702,9 @@ giftFoodSubmenu.querySelectorAll('[data-food]').forEach(btn => {
 giftItemSubmenu.querySelectorAll('[data-item]').forEach(btn => {
   btn.addEventListener('click', async () => {
     const item = btn.dataset.item;
-    if (item === '지중해풍 꽃') setSeedMessage(dialogues.giftMediterraneanFlower);
-    if (item === '핑크색 털뭉치 키링') setSeedMessage(dialogues.giftPinkFluffyKeyring);
-    if (item === '고양이 비니') setSeedMessage(dialogues.giftCatBeanie);
+    if (item === '지중해풍 꽃') setSeedMessage(dialogues.giftFlower);
+    if (item === '핑크색 털뭉치 키링') setSeedMessage(dialogues.giftKeyring);
+    if (item === '고양이 비니') setSeedMessage(dialogues.giftBeanie);
     closeGiftMenus();
     await triggerSaveNow();
   });
@@ -1439,10 +1713,9 @@ giftItemSubmenu.querySelectorAll('[data-item]').forEach(btn => {
 concertYesBtn.addEventListener('click', async () => {
   state.concertEventResolved = true;
   hideConcertEvent();
-  applyStatDelta({ social: +2, cute: +1, humor: +1 });
   setSeedMessage(dialogues.concertYes);
   updateScheduleUI();
-  await triggerSaveNow();
+  startConcertMiniGame();
 });
 
 concertNoBtn.addEventListener('click', async () => {
@@ -1467,6 +1740,29 @@ if (saveBtn) {
     alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
   });
 }
+
+
+miniLaneButtons.forEach(btn => {
+  const handler = (e) => {
+    e.preventDefault();
+    pressMiniLane(Number(btn.dataset.lane));
+  };
+  btn.addEventListener('pointerdown', handler);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (!miniGame.active) return;
+  const laneMap = { a:0, s:1, d:2, f:3, A:0, S:1, D:2, F:3 };
+  if (typeof laneMap[e.key] === 'number') {
+    e.preventDefault();
+    pressMiniLane(laneMap[e.key]);
+  }
+});
+
+miniFinishBtn.addEventListener('click', () => {
+  applyConcertMiniGameRewards();
+});
+
 
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
@@ -1493,30 +1789,6 @@ function closeGiftMenus(){
 function setSeedMessage(text){
   seedBubble.textContent = text;
   positionSeedBubble();
-}
-
-function renderSeedPlayer(instant = false){
-  updateSeedPlayerScale();
-
-  if (instant) {
-    seedPlayer.classList.add('no-motion');
-  }
-
-  seedPlayer.style.left = `${state.seedPlayer.x}px`;
-  seedPlayer.style.top = `${state.seedPlayer.y}px`;
-  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
-  seedPlayer.classList.add('ready');
-
-  positionStageEnergyBar();
-  positionSeedStatus();
-  positionSeedBubble();
-  positionAwakenButton();
-
-  if (instant) {
-    requestAnimationFrame(() => {
-      seedPlayer.classList.remove('no-motion');
-    });
-  }
 }
 
 function setScheduleButtonsDisabled(disabled){
@@ -1586,49 +1858,61 @@ function updateSeedPlayerScale(){
   seedPlayer.style.height = `${state.seedPlayer.h}px`;
 }
 
-function positionSeedBubble(){
-  const stageW = seedStage.clientWidth;
-  const stageH = seedStage.clientHeight;
+
+function getStageStackPositions(){
+  const stageHeight = seedStage.clientHeight || 360;
   const bubbleWidth = seedBubble.offsetWidth || 180;
-  const bubbleHeight = seedBubble.offsetHeight || 58;
+  const bubbleHeight = seedBubble.offsetHeight || 56;
+  const statusWidth = seedStatus.offsetWidth || 40;
+  const statusHeight = seedStatus.offsetHeight || 28;
+  const energyHeight = stageEnergyBox.offsetHeight || 11;
+
   const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const energyHeight = stageEnergyBox.offsetHeight || 12;
-  const statusHeight = seedStatus.offsetHeight || 26;
+  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
 
-  const energyTop = state.seedPlayer.y - clamp(stageH * 0.048, 18, 28);
-  const statusTop = energyTop - statusHeight - clamp(stageH * 0.018, 6, 10);
-  const bubbleTop = statusTop - bubbleHeight - clamp(stageH * 0.025, 8, 14);
-  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, stageW - bubbleWidth - 8);
+  const energyGap = clamp(stageHeight * 0.018, 6, 12);
+  const statusGap = clamp(stageHeight * 0.022, 8, 16);
+  const bubbleGap = clamp(stageHeight * 0.03, 12, 22);
 
-  seedBubble.style.left = `${bubbleLeft}px`;
-  seedBubble.style.top = `${Math.max(8, bubbleTop)}px`;
+  let energyTop = state.seedPlayer.y - energyHeight - energyGap;
+  let statusTop = energyTop - statusHeight - statusGap;
+  let bubbleTop = statusTop - bubbleHeight - bubbleGap - 10;
+
+  const shiftDown = Math.max(0, 8 - bubbleTop);
+  energyTop += shiftDown;
+  statusTop += shiftDown;
+  bubbleTop += shiftDown;
+
+  const halfBar = (stageEnergyBox.offsetWidth || 56) / 2;
+  const energyX = clamp(playerCenterX, halfBar + 8, seedStage.clientWidth - halfBar - 8);
+  const statusLeft = clamp(playerCenterX - statusWidth / 2, 8, seedStage.clientWidth - statusWidth - 8);
+
+  return {
+    bubbleLeft,
+    bubbleTop,
+    statusLeft,
+    statusTop,
+    energyX,
+    energyTop
+  };
+}
+
+function positionSeedBubble(){
+  const pos = getStageStackPositions();
+  seedBubble.style.left = `${pos.bubbleLeft}px`;
+  seedBubble.style.top = `${pos.bubbleTop}px`;
 }
 
 function positionSeedStatus(){
-  const stageW = seedStage.clientWidth;
-  const stageH = seedStage.clientHeight;
-  const statusWidth = seedStatus.offsetWidth || 40;
-  const statusHeight = seedStatus.offsetHeight || 26;
-  const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const energyTop = state.seedPlayer.y - clamp(stageH * 0.048, 18, 28);
-  const y = energyTop - statusHeight - clamp(stageH * 0.018, 6, 10);
-
-  seedStatus.style.left = `${clamp(playerCenterX - statusWidth / 2, 8, stageW - statusWidth - 8)}px`;
-  seedStatus.style.top = `${Math.max(8, y)}px`;
+  const pos = getStageStackPositions();
+  seedStatus.style.left = `${pos.statusLeft}px`;
+  seedStatus.style.top = `${pos.statusTop}px`;
 }
 
 function positionStageEnergyBar(){
-  const stageW = seedStage.clientWidth;
-  const stageH = seedStage.clientHeight;
-  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const y = state.seedPlayer.y - clamp(stageH * 0.048, 18, 28);
-  const halfBar = (stageEnergyBox.offsetWidth || 56) / 2;
-  const minX = halfBar + 8;
-  const maxX = stageW - halfBar - 8;
-  const finalX = clamp(x, minX, maxX);
-
-  stageEnergyBox.style.left = `${finalX}px`;
-  stageEnergyBox.style.top = `${Math.max(8, y)}px`;
+  const pos = getStageStackPositions();
+  stageEnergyBox.style.left = `${pos.energyX}px`;
+  stageEnergyBox.style.top = `${pos.energyTop}px`;
 }
 
 function positionAwakenButton(){
@@ -1657,17 +1941,219 @@ function formatGameTime(hour){
   return `${period} ${displayHour}시`;
 }
 
+
+function updateMiniGameHUD(){
+  miniScoreEl.textContent = miniGame.score;
+  miniComboEl.textContent = miniGame.combo;
+  const elapsed = performance.now() - miniGame.startTime;
+  const remain = Math.max(0, (miniGame.duration - elapsed) / 1000);
+  miniTimeEl.textContent = remain.toFixed(1);
+}
+
+function showMiniFeedback(text){
+  miniFeedback.textContent = text;
+  miniFeedback.classList.add('show');
+  clearTimeout(miniGame.feedbackTimer);
+  miniGame.feedbackTimer = setTimeout(() => {
+    miniFeedback.classList.remove('show');
+  }, 160);
+}
+
+function clearMiniNotes(){
+  miniGame.notes.forEach(note => note.el.remove());
+  miniGame.notes = [];
+}
+
+function spawnMiniNote(){
+  if (!miniGame.active) return;
+  const lane = Math.floor(Math.random() * 4);
+  const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
+  if (!laneEl) return;
+
+  const note = document.createElement('div');
+  note.className = `mini-note${lane % 2 ? ' alt' : ''}`;
+  laneEl.appendChild(note);
+
+  miniGame.notes.push({
+    id: ++miniGame.noteSeq,
+    lane,
+    y: -28,
+    speed: (miniRhythmStage.clientHeight || 420) * (0.00215 + Math.random() * 0.00045),
+    el: note
+  });
+}
+
+function pressMiniLane(lane){
+  if (!miniGame.active) return;
+
+  const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
+  if (btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 90);
+  }
+
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 86;
+  const candidates = miniGame.notes
+    .filter(note => note.lane === lane)
+    .sort((a, b) => Math.abs(a.y - hitLine) - Math.abs(b.y - hitLine));
+
+  if (!candidates.length) {
+    miniGame.combo = 0;
+    miniGame.miss += 1;
+    showMiniFeedback('MISS');
+    updateMiniGameHUD();
+    return;
+  }
+
+  const target = candidates[0];
+  const distance = Math.abs(target.y - hitLine);
+
+  if (distance <= 20) {
+    miniGame.score += 120 + Math.min(60, miniGame.combo * 2);
+    miniGame.combo += 1;
+    miniGame.perfect += 1;
+    target.el.classList.add('hit');
+    showMiniFeedback('PERFECT');
+  } else if (distance <= 42) {
+    miniGame.score += 70;
+    miniGame.combo += 1;
+    miniGame.good += 1;
+    target.el.classList.add('hit');
+    showMiniFeedback('GOOD');
+  } else {
+    miniGame.combo = 0;
+    miniGame.miss += 1;
+    showMiniFeedback('MISS');
+    updateMiniGameHUD();
+    return;
+  }
+
+  target.el.remove();
+  miniGame.notes = miniGame.notes.filter(note => note.id !== target.id);
+  updateMiniGameHUD();
+}
+
+function tickMiniGame(now){
+  if (!miniGame.active) return;
+
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 86;
+
+  miniGame.notes = miniGame.notes.filter(note => {
+    note.y += note.speed * 16.666;
+    note.el.style.transform = `translateY(${note.y}px)`;
+
+    if (note.y > hitLine + 52) {
+      note.el.remove();
+      miniGame.combo = 0;
+      miniGame.miss += 1;
+      return false;
+    }
+
+    return true;
+  });
+
+  updateMiniGameHUD();
+
+  if (now - miniGame.startTime >= miniGame.duration) {
+    finishConcertMiniGame();
+    return;
+  }
+
+  miniGame.rafId = requestAnimationFrame(tickMiniGame);
+}
+
+function beginMiniGameSpawns(){
+  spawnMiniNote();
+  miniGame.spawnTimer = setInterval(() => {
+    spawnMiniNote();
+    if (Math.random() < 0.3) {
+      setTimeout(spawnMiniNote, 170);
+    }
+  }, 520);
+}
+
+function startConcertMiniGame(){
+  if (miniGame.active) return;
+
+  miniGame.active = true;
+  miniGame.startTime = performance.now();
+  miniGame.score = 0;
+  miniGame.combo = 0;
+  miniGame.perfect = 0;
+  miniGame.good = 0;
+  miniGame.miss = 0;
+  miniGame.noteSeq = 0;
+  clearMiniNotes();
+  miniGameResult.classList.remove('show');
+  miniGameLayer.classList.add('active');
+  updateMiniGameHUD();
+  showMiniFeedback('START');
+
+  beginMiniGameSpawns();
+  miniGame.rafId = requestAnimationFrame(tickMiniGame);
+}
+
+function finishConcertMiniGame(){
+  miniGame.active = false;
+  clearInterval(miniGame.spawnTimer);
+  cancelAnimationFrame(miniGame.rafId);
+  clearMiniNotes();
+
+  let title = '좋은 무대였어요';
+  let desc = dialogues.concertOkay;
+  if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
+    title = '대성공!';
+    desc = dialogues.concertPerfect;
+  } else if (miniGame.score >= 1500 || miniGame.perfect >= 8) {
+    title = '성공적인 공연!';
+    desc = dialogues.concertGreat;
+  }
+
+  miniResultTitle.textContent = title;
+  miniResultDesc.textContent = desc;
+  miniResultScore.textContent = miniGame.score;
+  miniResultPerfect.textContent = miniGame.perfect;
+  miniResultGood.textContent = miniGame.good;
+  miniGameResult.classList.add('show');
+}
+
+function applyConcertMiniGameRewards(){
+  const rewardTier = miniGame.score >= 2400 ? 3 : miniGame.score >= 1500 ? 2 : 1;
+  const practiceGain = rewardTier;
+  const socialGain = rewardTier + (miniGame.perfect >= 10 ? 1 : 0);
+  const cuteGain = rewardTier >= 2 ? 1 : 0;
+  const humorGain = miniGame.good >= 6 ? 1 : 0;
+
+  applyStatDelta({
+    practice: practiceGain,
+    social: socialGain,
+    cute: cuteGain,
+    humor: humorGain
+  });
+
+  state.energy = clamp(state.energy - (rewardTier === 3 ? 10 : 12), 0, state.maxEnergy);
+
+  if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
+    setSeedMessage(dialogues.concertPerfect);
+  } else if (miniGame.score >= 1500 || miniGame.perfect >= 8) {
+    setSeedMessage(dialogues.concertGreat);
+  } else {
+    setSeedMessage(dialogues.concertOkay);
+  }
+
+  miniGameLayer.classList.remove('active');
+  miniGameResult.classList.remove('show');
+  updateScheduleUI();
+  triggerSaveNow();
+}
+
 function showConcertEvent(){
   if (state.concertEventResolved) return;
   concertEventCard.classList.add('show');
-  setScheduleButtonsDisabled(true);
 }
 
 function hideConcertEvent(){
   concertEventCard.classList.remove('show');
-  if (!state.isActing && !state.awakened) {
-    setScheduleButtonsDisabled(false);
-  }
 }
 
 function maybeTriggerConcertEvent(){
@@ -1683,9 +2169,7 @@ function maybeTriggerConcertEvent(){
 function updateScheduleUI(){
   seedDayBadge.textContent = `DAY${state.day}`;
   seedClockBadge.textContent = formatGameTime(state.gameHour);
-
-  const energyPct = clamp((state.energy / state.maxEnergy) * 100, 0, 100);
-  stageEnergyFill.style.width = `${energyPct}%`;
+  stageEnergyFill.style.width = `${clamp((state.energy / state.maxEnergy) * 100, 0, 100)}%`;
 
   Object.keys(state.stats).forEach(key => {
     statEls[key].val.textContent = state.stats[key];
@@ -1715,8 +2199,40 @@ function placeSeedPlayerInitial(){
     110,
     rect.height - state.seedPlayer.h - 12
   );
+
+  positionSeedBubble();
+  positionSeedStatus();
+  positionStageEnergyBar();
+  positionAwakenButton();
 }
 
+function renderSeedPlayer(options = {}){
+  const immediate = !!options.immediate;
+  if (immediate) {
+    seedPlayer.classList.add('no-motion');
+    seedBubble.classList.add('no-motion');
+    seedStatus.classList.add('no-motion');
+    stageEnergyBox.classList.add('no-motion');
+  }
+
+  updateSeedPlayerScale();
+  seedPlayer.style.left = `${state.seedPlayer.x}px`;
+  seedPlayer.style.top = `${state.seedPlayer.y}px`;
+  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  positionSeedBubble();
+  positionSeedStatus();
+  positionStageEnergyBar();
+  positionAwakenButton();
+
+  if (immediate) {
+    requestAnimationFrame(() => {
+      seedPlayer.classList.remove('no-motion');
+      seedBubble.classList.remove('no-motion');
+      seedStatus.classList.remove('no-motion');
+      stageEnergyBox.classList.remove('no-motion');
+    });
+  }
+}
 
 function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
@@ -1782,7 +2298,7 @@ function startAction(type){
   }
 
   placeSeedPlayerInitial();
-  renderSeedPlayer(true);
+  renderSeedPlayer();
   showSeedStatus(meta.text);
 
   setTimeout(async () => {
@@ -2002,7 +2518,7 @@ function resetAll(){
   roomHint.textContent = '방 안으로 들어왔어요.';
 
   placeSeedPlayerInitial();
-  renderSeedPlayer(true);
+  renderSeedPlayer();
   placeRoomPlayerInitial();
   renderRoomPlayer();
 
@@ -2114,7 +2630,7 @@ function applySaveToState(save){
   clearActionProgress();
   updateScheduleUI();
   placeSeedPlayerInitial();
-  renderSeedPlayer(true);
+  renderSeedPlayer();
   renderRoomPlayer();
 
   const nextScreen = ['schedule', 'awaken', 'room'].includes(p.currentScreen)
@@ -2344,7 +2860,7 @@ function handleResizeSync(){
 
   if(screens.schedule.classList.contains('active')){
     placeSeedPlayerInitial();
-    renderSeedPlayer(true);
+    renderSeedPlayer({ immediate:true });
     updateAwakenButtonUI();
     positionStageEnergyBar();
   }
@@ -2398,7 +2914,7 @@ awakenImg.src = imageSet.defaultLarge;
 
 updateSeedStageBackground('default');
 placeSeedPlayerInitial();
-renderSeedPlayer(true);
+renderSeedPlayer({ immediate:true });
 placeRoomPlayerInitial();
 renderRoomPlayer();
 updateAwakenButtonUI();
