@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>KEY:VERSE Proto</title>
+<title>KEY:VERSE</title>
 <style>
 :root{
   --bg1:#141320;
@@ -788,7 +788,7 @@ img{
   <section class="screen active" id="screen-schedule">
     <div class="topbar">
       <div class="brand">
-        <div class="title">KEY:VERSE — Prelude</div>
+        <div class="title">KEY:VERSE</div>
         <div class="subtitle">한 달 동안 스케줄을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
       </div>
 
@@ -800,14 +800,6 @@ img{
         </div>
         <div class="top-auth-row">
           <div class="pill auth-pill" id="authStatus">게스트 모드</div>
-          <div class="pill">
-            <span>Day</span>
-            <strong id="dayText">1</strong>
-          </div>
-          <div class="pill">
-            <span>행동</span>
-            <strong id="actionsText">0 / 5</strong>
-          </div>
         </div>
       </div>
     </div>
@@ -1135,9 +1127,7 @@ const actionMeta = {
   netflix: { text: '▶', duration: 1700 }
 };
 
-const dayText = document.getElementById('dayText');
 const seedDayBadge = document.getElementById('seedDayBadge');
-const actionsText = document.getElementById('actionsText');
 const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 
@@ -1303,9 +1293,7 @@ function updateAwakenButtonUI(){
 }
 
 function updateScheduleUI(){
-  dayText.textContent = state.day;
   seedDayBadge.textContent = `DAY${state.day}`;
-  actionsText.textContent = `${state.actionsToday} / ${state.maxActionsPerDay}`;
   energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
   energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
 
@@ -1321,25 +1309,22 @@ function updateScheduleUI(){
   updateAwakenButtonUI();
 }
 
-function getSeedRestPoint(){
-  const w = seedStage.clientWidth;
-  const h = seedStage.clientHeight;
-  return { x: w * 0.20, y: h * 0.74 };
+function placeSeedPlayerInitial(){
+  const rect = seedStage.getBoundingClientRect();
+  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
+  state.seedPlayer.y = Math.max(88, rect.height / 2 - state.seedPlayer.h / 2 + 20);
+  positionSeedBubble();
+  positionSeedStatus();
+  positionAwakenButton();
 }
 
-function moveSeedPlayerTo(targetX, targetY){
-  const maxX = seedStage.clientWidth - state.seedPlayer.w;
-  const maxY = seedStage.clientHeight - state.seedPlayer.h;
-
-  const nextX = clamp(targetX - state.seedPlayer.w / 2, 0, maxX);
-  const nextY = clamp(targetY - state.seedPlayer.h / 2, 88, maxY);
-
-  if(nextX < state.seedPlayer.x) state.seedPlayer.facing = 'left';
-  if(nextX > state.seedPlayer.x) state.seedPlayer.facing = 'right';
-
-  state.seedPlayer.x = nextX;
-  state.seedPlayer.y = nextY;
-  renderSeedPlayer();
+function renderSeedPlayer(){
+  seedPlayer.style.left = `${state.seedPlayer.x}px`;
+  seedPlayer.style.top = `${state.seedPlayer.y}px`;
+  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  positionSeedBubble();
+  positionSeedStatus();
+  positionAwakenButton();
 }
 
 function startAction(type){
@@ -1586,24 +1571,6 @@ function syncRoomUI(){
     el.innerHTML = `<strong>${k}</strong> ${v}`;
     badgeWrap.appendChild(el);
   });
-}
-
-function placeSeedPlayerInitial(){
-  const rect = seedStage.getBoundingClientRect();
-  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
-  state.seedPlayer.y = Math.max(88, rect.height / 2 - state.seedPlayer.h / 2 + 20);
-  positionSeedBubble();
-  positionSeedStatus();
-  positionAwakenButton();
-}
-
-function renderSeedPlayer(){
-  seedPlayer.style.left = `${state.seedPlayer.x}px`;
-  seedPlayer.style.top = `${state.seedPlayer.y}px`;
-  seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
-  positionSeedBubble();
-  positionSeedStatus();
-  positionAwakenButton();
 }
 
 function placeRoomPlayerInitial(){
