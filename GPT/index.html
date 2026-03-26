@@ -6,19 +6,23 @@
 <title>KEY:VERSE</title>
 <style>
 :root{
-  --bg1:#221f38;
-  --bg2:#332d52;
-  --panel:#342f52;
-  --line:rgba(255,255,255,.10);
-  --text:#f7f3ff;
-  --sub:#d0c7ea;
-  --pink:#ff7bc7;
-  --violet:#8b7dff;
-  --gold:#f3c56c;
-  --mint:#7df0d0;
+  --bg1:#f4efe7;
+  --bg2:#ece7df;
+  --panel:#fffaf3;
+  --panel-2:#f7f1e9;
+  --line:rgba(120,102,80,.12);
+  --text:#5b4d42;
+  --sub:#8c7d71;
+  --pink:#f1a7c8;
+  --pink-2:#f7bfd7;
+  --violet:#c9c3e8;
+  --beige:#efe6db;
+  --gold:#e7c985;
+  --mint:#a8d8c7;
+  --mint-2:#d9f0e7;
   --radius:20px;
-  --shadow:0 16px 40px rgba(0,0,0,.24);
-  --top-h:94px;
+  --shadow:0 12px 28px rgba(120,104,87,.10);
+  --top-h:122px;
 }
 
 *{box-sizing:border-box}
@@ -28,7 +32,7 @@ body{
   color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:
-    radial-gradient(circle at top, rgba(165,145,255,.28) 0%, transparent 30%),
+    radial-gradient(circle at top, rgba(255,255,255,.75) 0%, transparent 34%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
   overflow:hidden;
   touch-action:manipulation;
@@ -93,12 +97,6 @@ img{
   justify-content:space-between;
   gap:12px;
 }
-.schedule-subline{
-  margin-top:6px;
-  font-size:12px;
-  color:var(--sub);
-  line-height:1.5;
-}
 
 .brand{
   display:flex;
@@ -122,11 +120,12 @@ img{
   align-items:center;
 }
 .brand-title-only .title{
-  font-size:30px;
+  font-size:34px;
   line-height:1;
   font-weight:950;
   letter-spacing:.01em;
   white-space:nowrap;
+  color:#6a584a;
 }
 
 .topbar-right{
@@ -135,7 +134,6 @@ img{
   align-items:flex-end;
   gap:8px;
 }
-
 .top-auth-row{
   display:flex;
   gap:8px;
@@ -143,43 +141,42 @@ img{
   justify-content:flex-end;
 }
 
+.schedule-subline{
+  margin-top:7px;
+  font-size:12px;
+  color:var(--sub);
+  line-height:1.5;
+}
+
 .pill{
   display:flex;
   align-items:center;
   gap:8px;
   padding:10px 12px;
-  background:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.72);
   border:1px solid var(--line);
   border-radius:999px;
   box-shadow:var(--shadow);
   color:var(--sub);
   font-size:13px;
-  backdrop-filter:blur(10px);
-}
-
-.auth-pill{
-  max-width:260px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  backdrop-filter:blur(8px);
 }
 
 .mini-btn{
   padding:10px 12px;
   border-radius:999px;
-  background:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.72);
   border:1px solid var(--line);
   box-shadow:var(--shadow);
   color:var(--text);
   font-size:12px;
   font-weight:800;
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(8px);
   white-space:nowrap;
 }
-
 .mini-btn.primary{
   background:linear-gradient(135deg,var(--pink),var(--violet));
-  border:0;
+  color:#4c3f4f;
 }
 
 .main{
@@ -190,11 +187,11 @@ img{
 }
 
 .card{
-  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.05));
+  background:linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,249,241,.82));
   border:1px solid var(--line);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(8px);
 }
 
 .panel{ padding:16px; }
@@ -216,7 +213,6 @@ img{
 .section-title-inline .small{
   margin:0;
 }
-
 .small{
   font-size:12px;
   color:var(--sub);
@@ -241,11 +237,12 @@ img{
 }
 .primary-btn{
   background:linear-gradient(135deg,var(--pink),var(--violet));
-  box-shadow:0 12px 28px rgba(145,110,255,.25);
+  color:#4f4250;
+  box-shadow:0 10px 22px rgba(188,160,194,.22);
 }
 .primary-btn:disabled{ opacity:.45; }
 .secondary-btn{
-  background:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.78);
   border:1px solid var(--line);
 }
 
@@ -280,24 +277,24 @@ img{
   overflow:hidden;
   border:1px solid var(--line);
   background:
-    linear-gradient(rgba(20,19,32,.20), rgba(20,19,32,.32)),
+    linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.18)),
     url("img/room_default.png") center center / cover no-repeat;
   transition:filter .35s ease, background .35s ease;
 }
 .seed-stage.bg-default{
   background:
-    linear-gradient(rgba(20,19,32,.20), rgba(20,19,32,.32)),
+    linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.16)),
     url("img/room_default.png") center center / 108% 108% no-repeat;
 }
 .seed-stage.bg-default-night{
   background:
-    linear-gradient(rgba(10,12,28,.40), rgba(8,10,24,.56)),
+    linear-gradient(rgba(38,40,62,.30), rgba(28,30,50,.44)),
     url("img/room_default_night.png") center center / 108% 108% no-repeat;
 }
 .seed-stage.bg-walk{
   background:
-    linear-gradient(rgba(12,10,24,.16), rgba(12,10,24,.30)),
-    url("img/walk.jpg") center center / 108% 108% no-repeat;
+    linear-gradient(rgba(255,248,236,.10), rgba(190,185,180,.20)),
+    url("img/walk.png") center center / 108% 108% no-repeat;
 }
 .seed-stage:before{
   content:"";
@@ -308,14 +305,12 @@ img{
   top:50%;
   transform:translate(-50%,-50%);
   border-radius:50%;
-  background:radial-gradient(circle, rgba(255,123,199,.12), rgba(139,125,255,0));
-  filter:blur(8px);
+  background:radial-gradient(circle, rgba(255,219,230,.18), rgba(255,255,255,0));
+  filter:blur(10px);
   animation:pulse 3s ease-in-out infinite;
 }
-.seed-stage.resting{ filter:brightness(.68) saturate(.92); }
-
 @keyframes pulse{
-  0%,100%{opacity:.72}
+  0%,100%{opacity:.74}
   50%{opacity:1}
 }
 
@@ -335,10 +330,9 @@ img{
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.36));
+  filter:drop-shadow(0 4px 8px rgba(109,94,79,.22));
 }
 .seed-player.left{ transform:scaleX(-1); }
-.seed-stage.resting .seed-player{ filter:brightness(.78); }
 
 .seed-awaken-anchor{
   position:absolute;
@@ -354,9 +348,10 @@ img{
   padding:10px 14px;
   border-radius:999px;
   background:linear-gradient(135deg,var(--pink),var(--violet));
-  box-shadow:0 10px 24px rgba(145,110,255,.30);
+  box-shadow:0 10px 24px rgba(197,180,205,.28);
   font-size:12px;
   font-weight:900;
+  color:#4f4250;
   white-space:nowrap;
 }
 .seed-awaken-anchor.hidden{ display:none; }
@@ -368,12 +363,12 @@ img{
   min-width:160px;
   padding:10px 12px;
   border-radius:16px;
-  background:rgba(255,255,255,.94);
-  color:#453b62;
+  background:rgba(255,255,255,.96);
+  color:#5a4a3f;
   font-size:12px;
   line-height:1.45;
-  box-shadow:0 8px 20px rgba(0,0,0,.14);
-  border:1px solid rgba(120,100,180,.14);
+  box-shadow:0 8px 20px rgba(122,104,85,.12);
+  border:1px solid rgba(182,160,137,.16);
   transition:left .2s ease, top .2s ease;
 }
 .seed-bubble:after{
@@ -383,9 +378,9 @@ img{
   bottom:-10px;
   width:16px;
   height:16px;
-  background:rgba(255,255,255,.94);
-  border-right:1px solid rgba(120,100,180,.14);
-  border-bottom:1px solid rgba(120,100,180,.14);
+  background:rgba(255,255,255,.96);
+  border-right:1px solid rgba(182,160,137,.16);
+  border-bottom:1px solid rgba(182,160,137,.16);
   transform:translateX(-50%) rotate(45deg);
 }
 
@@ -396,12 +391,12 @@ img{
   text-align:center;
   padding:4px 8px;
   border-radius:999px;
-  background:rgba(0,0,0,.58);
+  background:rgba(117,102,88,.84);
   color:#fff;
   font-size:12px;
   font-weight:900;
   letter-spacing:.04em;
-  box-shadow:0 4px 12px rgba(0,0,0,.16);
+  box-shadow:0 4px 12px rgba(120,104,87,.14);
   pointer-events:none;
   opacity:0;
   transform:translateY(0);
@@ -426,13 +421,8 @@ img{
 .seed-label .name{
   font-size:18px;
   font-weight:900;
-  text-shadow:0 2px 10px rgba(0,0,0,.22);
-}
-.seed-label .desc{
-  margin-top:4px;
-  color:#e4dcf8;
-  font-size:12px;
-  text-shadow:0 2px 10px rgba(0,0,0,.26);
+  color:#fffdf9;
+  text-shadow:0 2px 10px rgba(102,88,74,.26);
 }
 
 .stage-energy-box{
@@ -451,23 +441,23 @@ img{
   height:100%;
   border-radius:999px;
   overflow:hidden;
-  background:rgba(0,0,0,.38);
-  border:1px solid rgba(255,255,255,.18);
-  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  background:rgba(126,111,93,.24);
+  border:1px solid rgba(255,255,255,.52);
+  box-shadow:0 2px 8px rgba(120,104,87,.12);
 }
 .stage-energy-fill{
   height:100%;
   width:100%;
-  background:linear-gradient(90deg,var(--mint),#b6ffe8);
+  background:linear-gradient(90deg,var(--mint),var(--mint-2));
   transition:width .25s ease;
 }
 
 .seed-side-status{
   padding:12px;
   border-radius:18px;
-  background:rgba(42,36,68,.74);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 8px 20px rgba(0,0,0,.16);
+  background:rgba(255,252,247,.88);
+  border:1px solid var(--line);
+  box-shadow:0 8px 20px rgba(120,104,87,.08);
   backdrop-filter:blur(8px);
   display:flex;
   flex-direction:column;
@@ -482,58 +472,48 @@ img{
   gap:8px;
   margin-bottom:10px;
   padding-bottom:10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(120,104,87,.08);
 }
-.day-badge{
-  padding:8px 10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.10);
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.06em;
-  color:#fff;
-}
+.day-badge,
 .clock-badge{
   padding:8px 10px;
   border-radius:999px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(120,104,87,.10);
   font-size:11px;
   font-weight:900;
-  color:#fff;
-  white-space:nowrap;
+  letter-spacing:.05em;
+  color:#6a584a;
 }
-
 .seed-mini-title{
   font-size:11px;
   font-weight:900;
-  color:#f3efff;
+  color:#6a584a;
   margin-bottom:10px;
   letter-spacing:.02em;
 }
 .seed-mini-row{
   display:grid;
-  grid-template-columns:40px 1fr 20px;
+  grid-template-columns:52px 1fr 22px;
   gap:6px;
   align-items:center;
   margin-bottom:8px;
-  font-size:9px;
-  color:#e1daf5;
+  font-size:10px;
+  color:#7f7064;
 }
 .seed-mini-row strong{
-  font-size:9px;
+  font-size:10px;
   text-align:right;
-  color:#fff;
+  color:#5f5045;
 }
 .seed-mini-row .bar{ height:8px; }
 
 .bar{
   height:10px;
   border-radius:999px;
-  background:rgba(255,255,255,.07);
+  background:rgba(214,200,185,.42);
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.5);
 }
 .fill{
   height:100%;
@@ -541,12 +521,12 @@ img{
   border-radius:999px;
   transition:width .25s ease;
 }
-.fill.dark{background:linear-gradient(90deg,#6d5b93,#a085c7)}
-.fill.mystery{background:linear-gradient(90deg,#567dff,#8fc2ff)}
-.fill.social{background:linear-gradient(90deg,var(--mint),#b2ffe6)}
-.fill.cute{background:linear-gradient(90deg,var(--pink),#ffb1df)}
-.fill.scary{background:linear-gradient(90deg,#8f4d5f,#d28293)}
-.fill.humor{background:linear-gradient(90deg,var(--gold),#ffd98a)}
+.fill.practice{background:linear-gradient(90deg,#ebb0c9,#f5cfe0)}
+.fill.mystery{background:linear-gradient(90deg,#b6c3f4,#d8def9)}
+.fill.social{background:linear-gradient(90deg,#a9d8c8,#d7efe7)}
+.fill.cute{background:linear-gradient(90deg,#f4b8d4,#f9d8e7)}
+.fill.scary{background:linear-gradient(90deg,#c3a7b0,#e0c7cf)}
+.fill.humor{background:linear-gradient(90deg,#e7cc91,#f5e4b6)}
 
 .schedule-grid{
   display:grid;
@@ -561,7 +541,7 @@ img{
   padding:12px 10px;
   min-height:54px;
   border-radius:14px;
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.72);
   border:1px solid var(--line);
   transition:.18s ease;
   display:flex;
@@ -573,7 +553,7 @@ img{
   position:absolute;
   inset:0 auto 0 0;
   width:0%;
-  background:linear-gradient(90deg, rgba(255,123,199,.28), rgba(139,125,255,.28));
+  background:linear-gradient(90deg, rgba(241,167,200,.26), rgba(201,195,232,.26));
   pointer-events:none;
   z-index:0;
 }
@@ -590,7 +570,7 @@ img{
 }
 .schedule-btn:hover:not(:disabled){
   transform:translateY(-1px);
-  background:rgba(255,255,255,.09);
+  background:#fffefb;
 }
 .schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
@@ -599,6 +579,96 @@ img{
   font-weight:900;
   margin:0;
   line-height:1.3;
+}
+
+.gift-anchor{
+  position:absolute;
+  right:12px;
+  bottom:12px;
+  z-index:9;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+.gift-btn{
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(120,104,87,.12);
+  color:#5b4d42;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 10px 20px rgba(120,104,87,.12);
+}
+.popup-menu{
+  min-width:164px;
+  padding:8px;
+  border-radius:16px;
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 12px 28px rgba(120,104,87,.14);
+  display:none;
+}
+.popup-menu.show{ display:block; }
+.popup-menu button{
+  width:100%;
+  text-align:left;
+  padding:10px 12px;
+  border-radius:12px;
+  background:transparent;
+  font-size:12px;
+  font-weight:800;
+}
+.popup-menu button:hover{
+  background:rgba(241,167,200,.12);
+}
+.submenu{
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid rgba(120,104,87,.08);
+  display:none;
+}
+.submenu.show{ display:block; }
+
+.event-card{
+  margin-top:12px;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(253,248,241,.9));
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 10px 22px rgba(120,104,87,.08);
+  display:none;
+}
+.event-card.show{ display:block; }
+.event-title{
+  font-size:14px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.event-desc{
+  font-size:12px;
+  color:var(--sub);
+  line-height:1.6;
+}
+.event-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.event-actions button{
+  flex:1 1 0;
+  padding:12px 14px;
+  border-radius:14px;
+  font-weight:900;
+}
+.event-yes{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
+.event-no{
+  background:rgba(255,255,255,.82);
+  border:1px solid var(--line);
 }
 
 .center-wrap{
@@ -619,8 +689,8 @@ img{
   position:absolute;
   inset:-20%;
   background:
-    radial-gradient(circle at 50% 40%, rgba(255,123,199,.18), transparent 18%),
-    radial-gradient(circle at 50% 52%, rgba(139,125,255,.18), transparent 28%);
+    radial-gradient(circle at 50% 40%, rgba(241,167,200,.16), transparent 18%),
+    radial-gradient(circle at 50% 52%, rgba(201,195,232,.18), transparent 28%);
   filter:blur(16px);
   animation:pulse 2.8s ease-in-out infinite;
 }
@@ -633,7 +703,7 @@ img{
   padding:8px 12px;
   border-radius:999px;
   border:1px solid var(--line);
-  background:rgba(255,255,255,.07);
+  background:rgba(255,255,255,.72);
   color:var(--sub);
   font-size:12px;
   font-weight:800;
@@ -646,10 +716,10 @@ img{
   border-radius:96px 96px 48px 48px;
   background:
     radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
-    linear-gradient(180deg,#ffe2f3,#ff98d4 38%, #907fff 100%);
+    linear-gradient(180deg,#fff2f7,#f7c8dd 38%, #d7d1ef 100%);
   box-shadow:
-    0 0 36px rgba(255,123,199,.26),
-    0 0 92px rgba(139,125,255,.22);
+    0 0 36px rgba(241,167,200,.18),
+    0 0 92px rgba(201,195,232,.18);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -679,13 +749,13 @@ img{
   border-radius:18px;
   border:1px solid var(--line);
   overflow:hidden;
-  background:#2f2a4a;
+  background:#f5efe7;
 }
 .room-map{
   position:absolute;
   inset:0;
   background:
-    linear-gradient(rgba(20,19,32,.14), rgba(20,19,32,.18)),
+    linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
     url("img/room_default.png") center center / 108% 108% no-repeat;
 }
 .room-help{
@@ -695,10 +765,10 @@ img{
   z-index:6;
   padding:8px 10px;
   border-radius:12px;
-  background:rgba(0,0,0,.24);
-  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.84);
+  border:1px solid rgba(120,104,87,.08);
   font-size:12px;
-  color:#f0ebff;
+  color:#6a584a;
   backdrop-filter:blur(8px);
 }
 .room-player{
@@ -716,35 +786,14 @@ img{
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.34));
+  filter:drop-shadow(0 3px 6px rgba(109,94,79,.24));
 }
 .room-player.left{ transform:scaleX(-1); }
-.room-marker{
-  position:absolute;
-  z-index:5;
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  border:2px dashed rgba(255,255,255,.35);
-  background:rgba(255,255,255,.05);
-  box-shadow:0 0 0 6px rgba(255,255,255,.03);
-  pointer-events:none;
-}
-.room-marker::after{
-  content:attr(data-label);
-  position:absolute;
-  left:50%;
-  top:48px;
-  transform:translateX(-50%);
-  white-space:nowrap;
-  font-size:11px;
-  color:#eee8ff;
-  text-shadow:0 2px 6px rgba(0,0,0,.40);
-}
+
 .hint-box{
   padding:12px;
   border-radius:14px;
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.70);
   border:1px solid var(--line);
   color:var(--sub);
   line-height:1.6;
@@ -759,7 +808,7 @@ img{
 .badge{
   padding:8px 12px;
   border-radius:999px;
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.72);
   border:1px solid var(--line);
   color:var(--sub);
   font-size:12px;
@@ -780,45 +829,11 @@ body.resizing .seed-awaken-anchor{
 }
 
 @media (max-width: 640px){
-  :root{ --top-h:118px; }
+  :root{ --top-h:128px; }
 
   .topbar{ padding:10px 12px 6px; }
   .schedule-topbar{ padding:10px 12px 6px; }
-
-  .brand .title{ font-size:16px; }
-
-  .brand-title-only .title{
-    font-size:28px;
-  }
-
-  .schedule-topbar-row{
-    align-items:flex-start;
-    gap:8px;
-  }
-
-  .topbar-right{
-    flex:0 0 auto;
-    align-items:flex-end;
-    margin-left:auto;
-    padding-right:0;
-  }
-
-  .top-auth-row{
-    justify-content:flex-end;
-    gap:6px;
-  }
-
-  .mini-btn{
-    padding:10px 11px;
-    font-size:11px;
-  }
-
-  .schedule-subline{
-    margin-top:7px;
-    padding-right:4px;
-    font-size:11px;
-  }
-
+  .brand-title-only .title{ font-size:30px; }
   .main{ padding:6px 12px 12px; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
@@ -826,10 +841,6 @@ body.resizing .seed-awaken-anchor{
   .stage-status-wrap{
     grid-template-columns:2fr 1fr;
     gap:8px;
-  }
-
-  .seed-stage{
-    aspect-ratio:1 / 1;
   }
 
   .seed-bubble{
@@ -848,11 +859,6 @@ body.resizing .seed-awaken-anchor{
     padding:8px;
   }
 
-  .day-clock-row{
-    margin-bottom:8px;
-    padding-bottom:8px;
-  }
-
   .day-badge,
   .clock-badge{
     font-size:9px;
@@ -864,13 +870,13 @@ body.resizing .seed-awaken-anchor{
     margin-bottom:8px;
   }
   .seed-mini-row{
-    grid-template-columns:28px 1fr 16px;
+    grid-template-columns:42px 1fr 18px;
     gap:4px;
-    font-size:7px;
+    font-size:8px;
     margin-bottom:6px;
   }
   .seed-mini-row strong{
-    font-size:7px;
+    font-size:8px;
   }
 
   .schedule-grid{
@@ -893,10 +899,6 @@ body.resizing .seed-awaken-anchor{
   .seed-awaken-btn{
     padding:9px 12px;
     font-size:11px;
-  }
-
-  .section-title-inline{
-    gap:6px;
   }
 }
 </style>
@@ -928,6 +930,7 @@ body.resizing .seed-awaken-anchor{
           <div class="stage-status-wrap">
             <div class="seed-stage-wrap">
               <div class="seed-stage bg-default" id="seedStage">
+
                 <div class="seed-player" id="seedPlayer">
                   <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
                 </div>
@@ -951,6 +954,24 @@ body.resizing .seed-awaken-anchor{
                 <div class="seed-label">
                   <div class="name">KEY의 방</div>
                 </div>
+
+                <div class="gift-anchor">
+                  <div class="popup-menu" id="giftMenu">
+                    <button type="button" id="giftFoodBtn">음식</button>
+                    <button type="button" id="giftItemBtn">아이템</button>
+
+                    <div class="submenu" id="giftFoodSubmenu">
+                      <button type="button" data-food="샐러드">샐러드</button>
+                      <button type="button" data-food="두릅튀김">두릅튀김</button>
+                      <button type="button" data-food="파스타">파스타</button>
+                    </div>
+
+                    <div class="submenu" id="giftItemSubmenu">
+                      <button type="button">NONE</button>
+                    </div>
+                  </div>
+                  <button class="gift-btn" id="giftBtn">선물</button>
+                </div>
               </div>
             </div>
 
@@ -963,9 +984,9 @@ body.resizing .seed-awaken-anchor{
               <div class="seed-mini-title">오늘의 상태</div>
 
               <div class="seed-mini-row">
-                <span>Dark</span>
-                <div class="bar"><div class="fill dark" id="fill-dark"></div></div>
-                <strong id="val-dark">0</strong>
+                <span>Practice</span>
+                <div class="bar"><div class="fill practice" id="fill-practice"></div></div>
+                <strong id="val-practice">0</strong>
               </div>
 
               <div class="seed-mini-row">
@@ -1004,46 +1025,27 @@ body.resizing .seed-awaken-anchor{
         <div class="card panel">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">30일째가 되면 각성의 날이 찾아옵니다.</div>
+            <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
           </div>
 
           <div class="schedule-grid" id="scheduleGrid">
-            <button class="schedule-btn" data-act="dance">
-              <span class="title">💃 댄스 연습</span>
-            </button>
-            <button class="schedule-btn" data-act="vocal">
-              <span class="title">🎤 보컬 연습</span>
-            </button>
-            <button class="schedule-btn" data-act="cook">
-              <span class="title">🍳 요리</span>
-            </button>
-            <button class="schedule-btn" data-act="bath">
-              <span class="title">🛁 목욕</span>
-            </button>
-            <button class="schedule-btn" data-act="walk">
-              <span class="title">🌙 산책</span>
-            </button>
-            <button class="schedule-btn" data-act="clean">
-              <span class="title">🧹 청소</span>
-            </button>
-            <button class="schedule-btn" data-act="study">
-              <span class="title">👗 콘셉트 연구</span>
-            </button>
-            <button class="schedule-btn" data-act="shop">
-              <span class="title">🛍️ 쇼핑</span>
-            </button>
-            <button class="schedule-btn" data-act="letters">
-              <span class="title">💌 팬레터 읽기</span>
-            </button>
-            <button class="schedule-btn" data-act="exhibit">
-              <span class="title">🖼️ 전시회 보기</span>
-            </button>
-            <button class="schedule-btn" data-act="netflix">
-              <span class="title">📺 넷플릭스 보기</span>
-            </button>
-            <button class="schedule-btn" data-act="sleep">
-              <span class="title">😴 취침</span>
-            </button>
+            <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
+            <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
+            <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
+            <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
+            <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
+            <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
+            <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
+            <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
+          </div>
+
+          <div class="event-card" id="concertEventCard">
+            <div class="event-title">콘서트를 개최하시겠습니까?</div>
+            <div class="event-desc">연습 점수가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?</div>
+            <div class="event-actions">
+              <button type="button" class="event-yes" id="concertYesBtn">예</button>
+              <button type="button" class="event-no" id="concertNoBtn">아니오</button>
+            </div>
           </div>
 
           <div class="action-row">
@@ -1058,11 +1060,11 @@ body.resizing .seed-awaken-anchor{
     <div class="topbar">
       <div class="brand">
         <div class="title">Awakening</div>
-        <div class="subtitle">30일간의 스케줄이 하나의 정체성으로 응결됩니다</div>
+        <div class="subtitle">짧은 테스트 루프에서도 각성 결과를 확인할 수 있어요</div>
       </div>
       <div class="pill">
         <span>Result</span>
-        <strong id="awakenTopName">Villain KEY</strong>
+        <strong id="awakenTopName">Idol KEY</strong>
       </div>
     </div>
 
@@ -1073,8 +1075,8 @@ body.resizing .seed-awaken-anchor{
           <div class="awaken-figure">
             <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
           </div>
-          <h1 class="awaken-title" id="awakenName">Villain KEY</h1>
-          <p class="awaken-desc" id="awakenDesc">한 달의 시간이 쌓여, 새로운 KEY가 눈을 뜹니다.</p>
+          <h1 class="awaken-title" id="awakenName">Idol KEY</h1>
+          <p class="awaken-desc" id="awakenDesc">쌓여온 하루들이 하나의 정체성으로 응결되었습니다.</p>
           <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
             <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
             <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
@@ -1101,8 +1103,7 @@ body.resizing .seed-awaken-anchor{
         <div class="card panel">
           <div class="room-scene" id="roomScene">
             <div class="room-map"></div>
-            <div class="room-help">다음 단계에서 전용 이벤트와 방 연출을 더 붙일 수 있어요</div>
-            <div class="room-marker" id="markerDesk" data-label="포인트" style="left:72%; top:58%;"></div>
+            <div class="room-help">다음 단계에서 각성 타입별 전용 방 연출을 더 붙일 수 있어요</div>
 
             <div class="room-player" id="roomPlayer">
               <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
@@ -1140,8 +1141,8 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd
 
 const GAME_ID = 'keyverse-prelude';
 const SLOT_ID = 'main';
-const SCHEMA_VERSION = 3;
-const LOCAL_SAVE_KEY = 'keyverse_save_v5';
+const SCHEMA_VERSION = 4;
+const LOCAL_SAVE_KEY = 'keyverse_save_v6';
 
 let supabaseClient = null;
 
@@ -1172,7 +1173,7 @@ const state = {
   energy: 100,
   maxEnergy: 100,
   stats: {
-    dark: 0,
+    practice: 0,
     mystery: 0,
     social: 0,
     cute: 0,
@@ -1182,6 +1183,8 @@ const state = {
   awakened: null,
   isActing: false,
   currentStageBg: 'default',
+  concertEventOffered: false,
+  concertEventResolved: false,
   seedPlayer: {
     x: 80,
     y: 170,
@@ -1211,37 +1214,36 @@ const imageSet = {
 
 const dialogues = {
   intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
-  dance: '몸을 움직이다 보니 사람들 사이로 자연스럽게 녹아드는 기분이야.',
-  vocal: '목소리에 조금 더 짙은 그림자가 생긴 것 같아.',
-  cook: '따뜻한 냄새가 감도는 날은 마음도 말랑해져.',
-  bath: '깨끗해지면 묘하게 신비로운 기분까지 따라와.',
+  practice: '집중해서 연습했어. 몸이 조금 더 기억해낸 것 같아.',
+  shoot: '카메라 앞에서는 평소랑 또 다른 무드가 나와.',
+  bath: '깨끗해지면 묘하게 기분도 정돈돼.',
   walk: '밤 공기를 걷고 오면, 설명하기 어려운 기분이 남아.',
-  clean: '정리하고 나면 마음도 반듯해져.',
-  study: '이미지와 분위기를 뜯어볼수록 더 날카로워져.',
-  shop: '새로운 것들을 고르다 보면 조금 더 사랑스러워져.',
-  letters: '팬레터를 읽다 보면 피식 웃게 되는 순간이 있어.',
   exhibit: '조용한 전시장은 묘한 잔향을 남겨.',
-  netflix: '보다 보니 웃기기도 하고, 또 괜히 어두워지기도 해.',
+  netflix: '보다 보니 웃기기도 하고, 괜히 몰입도 되네.',
+  meeting: '아이디어가 조금씩 형태를 갖추기 시작했어.',
   sleep: '푹 쉬고 나니 다시 움직일 힘이 생겼어.',
   sleepy: '조금.. 졸린 것 같아.',
   lowEnergy: '지금은 조금 지쳤어… 쉬어가자.',
   nextDay: '하루가 지나고 새로운 아침이 밝았어.',
-  ready: '오늘은… 각성의 날이 온 것 같아.'
+  ready: '오늘은… 각성의 날이 온 것 같아.',
+  giftSalad: '샐러드 맛있었다. 고마워.',
+  giftFried: '두릅튀김이라니, 맛있게 잘 먹었어. 고마워.',
+  giftPasta: '파스타 정말 맛있었다. 챙겨줘서 고마워.',
+  giftNone: '아이템은 아직 준비중인 것 같아.',
+  concertReady: '연습이 충분히 쌓였어. 이제 무대에 올라볼 수 있을 것 같아.',
+  concertYes: '좋아, 콘서트를 열어보자. 오늘은 자신 있어.',
+  concertNo: '알겠어. 조금 더 준비해보고 싶어.'
 };
 
 const actionMeta = {
-  dance:   { text: '♪', duration: 1700, hours: 2 },
-  vocal:   { text: '♫', duration: 1700, hours: 2 },
-  cook:    { text: '냠', duration: 1700, hours: 2 },
-  bath:    { text: '…', duration: 1700, hours: 2 },
-  walk:    { text: '…', duration: 1700, hours: 2 },
-  clean:   { text: '슥', duration: 1700, hours: 2 },
-  study:   { text: '?!', duration: 1700, hours: 2 },
-  shop:    { text: '♥', duration: 1700, hours: 2 },
-  letters: { text: '✉', duration: 1700, hours: 2 },
-  exhibit: { text: '…', duration: 1700, hours: 2 },
-  netflix: { text: '▶', duration: 1700, hours: 2 },
-  sleep:   { text: 'ZZZ', duration: 1700, hours: 7 }
+  practice: { text: '♪', duration: 1700, hours: 2 },
+  shoot:    { text: 'REC', duration: 1700, hours: 2 },
+  walk:     { text: '…', duration: 1700, hours: 2 },
+  bath:     { text: '…', duration: 1700, hours: 2 },
+  exhibit:  { text: '…', duration: 1700, hours: 2 },
+  netflix:  { text: '▶', duration: 1700, hours: 2 },
+  meeting:  { text: '?!', duration: 1700, hours: 2 },
+  sleep:    { text: 'ZZZ', duration: 1700, hours: 7 }
 };
 
 const seedDayBadge = document.getElementById('seedDayBadge');
@@ -1268,13 +1270,24 @@ const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const saveBtn = document.getElementById('saveBtn');
 
+const giftBtn = document.getElementById('giftBtn');
+const giftMenu = document.getElementById('giftMenu');
+const giftFoodBtn = document.getElementById('giftFoodBtn');
+const giftItemBtn = document.getElementById('giftItemBtn');
+const giftFoodSubmenu = document.getElementById('giftFoodSubmenu');
+const giftItemSubmenu = document.getElementById('giftItemSubmenu');
+
+const concertEventCard = document.getElementById('concertEventCard');
+const concertYesBtn = document.getElementById('concertYesBtn');
+const concertNoBtn = document.getElementById('concertNoBtn');
+
 const statEls = {
-  dark: { fill: document.getElementById('fill-dark'), val: document.getElementById('val-dark') },
-  mystery: { fill: document.getElementById('fill-mystery'), val: document.getElementById('val-mystery') },
-  social: { fill: document.getElementById('fill-social'), val: document.getElementById('val-social') },
-  cute: { fill: document.getElementById('fill-cute'), val: document.getElementById('val-cute') },
-  scary: { fill: document.getElementById('fill-scary'), val: document.getElementById('val-scary') },
-  humor: { fill: document.getElementById('fill-humor'), val: document.getElementById('val-humor') }
+  practice: { fill: document.getElementById('fill-practice'), val: document.getElementById('val-practice') },
+  mystery:  { fill: document.getElementById('fill-mystery'),  val: document.getElementById('val-mystery') },
+  social:   { fill: document.getElementById('fill-social'),   val: document.getElementById('val-social') },
+  cute:     { fill: document.getElementById('fill-cute'),     val: document.getElementById('val-cute') },
+  scary:    { fill: document.getElementById('fill-scary'),    val: document.getElementById('val-scary') },
+  humor:    { fill: document.getElementById('fill-humor'),    val: document.getElementById('val-humor') }
 };
 
 document.querySelectorAll('.schedule-btn').forEach(btn => {
@@ -1313,6 +1326,62 @@ document.getElementById('backAwakenBtn').addEventListener('click', async () => {
   await triggerSaveNow();
 });
 
+giftBtn.addEventListener('click', () => {
+  const willOpen = !giftMenu.classList.contains('show');
+  closeGiftMenus();
+  if (willOpen) giftMenu.classList.add('show');
+});
+
+giftFoodBtn.addEventListener('click', () => {
+  giftItemSubmenu.classList.remove('show');
+  giftFoodSubmenu.classList.toggle('show');
+});
+
+giftItemBtn.addEventListener('click', () => {
+  giftFoodSubmenu.classList.remove('show');
+  giftItemSubmenu.classList.toggle('show');
+});
+
+giftFoodSubmenu.querySelectorAll('[data-food]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const food = btn.dataset.food;
+    if (food === '샐러드') setSeedMessage(dialogues.giftSalad);
+    if (food === '두릅튀김') setSeedMessage(dialogues.giftFried);
+    if (food === '파스타') setSeedMessage(dialogues.giftPasta);
+    closeGiftMenus();
+    await triggerSaveNow();
+  });
+});
+
+giftItemSubmenu.querySelector('button').addEventListener('click', async () => {
+  setSeedMessage(dialogues.giftNone);
+  closeGiftMenus();
+  await triggerSaveNow();
+});
+
+concertYesBtn.addEventListener('click', async () => {
+  state.concertEventResolved = true;
+  hideConcertEvent();
+  applyStatDelta({ social: +2, cute: +1, humor: +1 });
+  setSeedMessage(dialogues.concertYes);
+  updateScheduleUI();
+  await triggerSaveNow();
+});
+
+concertNoBtn.addEventListener('click', async () => {
+  state.concertEventResolved = true;
+  hideConcertEvent();
+  setSeedMessage(dialogues.concertNo);
+  updateScheduleUI();
+  await triggerSaveNow();
+});
+
+document.addEventListener('click', (e) => {
+  if (!giftMenu.contains(e.target) && e.target !== giftBtn) {
+    closeGiftMenus();
+  }
+});
+
 if (loginBtn) loginBtn.addEventListener('click', signInWithGoogle);
 if (logoutBtn) logoutBtn.addEventListener('click', signOut);
 if (saveBtn) {
@@ -1336,6 +1405,12 @@ function getCurrentScreenName(){
 
 function clamp(val, min, max){
   return Math.max(min, Math.min(max, val));
+}
+
+function closeGiftMenus(){
+  giftMenu.classList.remove('show');
+  giftFoodSubmenu.classList.remove('show');
+  giftItemSubmenu.classList.remove('show');
 }
 
 function setSeedMessage(text){
@@ -1400,7 +1475,7 @@ function updateSeedPlayerScale(){
   const stageSize = Math.min(rect.width, rect.height);
 
   const baseScaledW = clamp(stageSize * 0.13, 42, 78);
-  const scaledW = baseScaledW * 1.05;
+  const scaledW = baseScaledW * 1.20;
   const scaledH = scaledW * (state.seedPlayer.baseH / state.seedPlayer.baseW);
 
   state.seedPlayer.w = scaledW;
@@ -1455,9 +1530,7 @@ function positionAwakenButton(){
 function updateAwakenButtonUI(){
   const visible = canAwaken() && !state.isActing && !state.awakened;
   seedAwakenAnchor.classList.toggle('hidden', !visible);
-  if (visible) {
-    positionAwakenButton();
-  }
+  if (visible) positionAwakenButton();
 }
 
 function formatGameTime(hour){
@@ -1465,6 +1538,25 @@ function formatGameTime(hour){
   let displayHour = hour % 12;
   if (displayHour === 0) displayHour = 12;
   return `${period} ${displayHour}시`;
+}
+
+function showConcertEvent(){
+  if (state.concertEventResolved) return;
+  concertEventCard.classList.add('show');
+}
+
+function hideConcertEvent(){
+  concertEventCard.classList.remove('show');
+}
+
+function maybeTriggerConcertEvent(){
+  if (state.stats.practice >= 10 && !state.concertEventOffered && !state.concertEventResolved) {
+    state.concertEventOffered = true;
+    setSeedMessage(dialogues.concertReady);
+    showConcertEvent();
+  } else if (!state.concertEventResolved) {
+    hideConcertEvent();
+  }
 }
 
 function updateScheduleUI(){
@@ -1483,6 +1575,7 @@ function updateScheduleUI(){
 
   updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
   updateAwakenButtonUI();
+  maybeTriggerConcertEvent();
   positionStageEnergyBar();
 }
 
@@ -1533,6 +1626,7 @@ function advanceGameTime(hours){
   let remaining = hours;
   let crossedMidnight = false;
   let reachedMorningSeven = false;
+  let touchedMidnight = false;
 
   while (remaining > 0) {
     state.gameHour += 1;
@@ -1542,6 +1636,7 @@ function advanceGameTime(hours){
       state.gameHour = 0;
       state.day += 1;
       crossedMidnight = true;
+      touchedMidnight = true;
     }
 
     if (state.gameHour === 7) {
@@ -1554,14 +1649,13 @@ function advanceGameTime(hours){
   return {
     crossedMidnight,
     reachedMorningSeven,
-    isExactlyMidnight: state.gameHour === 0
+    touchedMidnight
   };
 }
 
 function startAction(type){
-  if(state.awakened || state.isActing) return;
-
-  if(type !== 'sleep' && state.energy < 12){
+  if (state.awakened || state.isActing) return;
+  if (type !== 'sleep' && state.energy < 12){
     setSeedMessage(dialogues.lowEnergy);
     return;
   }
@@ -1573,7 +1667,7 @@ function startAction(type){
   const meta = actionMeta[type];
   startActionProgress(type, meta.duration);
 
-  if(type === 'walk'){
+  if (type === 'walk') {
     updateSeedStageBackground('walk');
   } else {
     updateSeedStageBackground('default');
@@ -1605,70 +1699,46 @@ function finishAction(type){
   const passed = advanceGameTime(actionMeta[type].hours);
 
   switch(type){
-    case 'dance':
-      applyStatDelta({ social: +2, dark: -1 });
+    case 'practice':
+      applyStatDelta({ practice: +3, social: +1 });
       state.energy -= 18;
-      message = dialogues.dance;
+      message = dialogues.practice;
       break;
 
-    case 'vocal':
-      applyStatDelta({ dark: +2, cute: -1 });
-      state.energy -= 18;
-      message = dialogues.vocal;
-      break;
-
-    case 'cook':
-      applyStatDelta({ cute: +2, scary: -1 });
+    case 'shoot':
+      applyStatDelta({ social: +1, cute: +1, humor: +1 });
       state.energy -= 16;
-      message = dialogues.cook;
-      break;
-
-    case 'bath':
-      applyStatDelta({ cute: +1, mystery: +1 });
-      state.energy -= 12;
-      message = dialogues.bath;
+      message = dialogues.shoot;
       break;
 
     case 'walk':
-      applyStatDelta({ mystery: +2, scary: +1, social: -1 });
+      applyStatDelta({ mystery: +2, scary: +1 });
       state.energy -= 16;
       message = dialogues.walk;
       break;
 
-    case 'clean':
-      applyStatDelta({ social: +1, humor: -1 });
+    case 'bath':
+      applyStatDelta({ cute: +2, mystery: +1 });
       state.energy -= 12;
-      message = dialogues.clean;
-      break;
-
-    case 'study':
-      applyStatDelta({ dark: +1, scary: +1, cute: -1 });
-      state.energy -= 18;
-      message = dialogues.study;
-      break;
-
-    case 'shop':
-      applyStatDelta({ social: +2, cute: +1, mystery: -1 });
-      state.energy -= 16;
-      message = dialogues.shop;
-      break;
-
-    case 'letters':
-      applyStatDelta({ humor: +2, dark: -1 });
-      state.energy -= 14;
-      message = dialogues.letters;
+      message = dialogues.bath;
       break;
 
     case 'exhibit':
-      applyStatDelta({ mystery: +2, social: -1 });
+      applyStatDelta({ mystery: +2, humor: +1 });
       state.energy -= 14;
       message = dialogues.exhibit;
       break;
 
     case 'netflix':
-      applyStatDelta({ humor: +1, dark: +1, social: -1 });
+      applyStatDelta({ humor: +2, scary: +1 });
       state.energy -= 12;
       message = dialogues.netflix;
+      break;
+
+    case 'meeting':
+      applyStatDelta({ practice: +1, mystery: +1, social: +1 });
+      state.energy -= 14;
+      message = dialogues.meeting;
       break;
 
     case 'sleep':
@@ -1679,9 +1749,9 @@ function finishAction(type){
 
   state.energy = clamp(state.energy, 0, state.maxEnergy);
 
-  if (!state.awakened && state.day >= 30) {
+  if (!state.awakened && state.day >= 3) {
     message = dialogues.ready;
-  } else if (type !== 'sleep' && passed.isExactlyMidnight) {
+  } else if (type !== 'sleep' && state.gameHour === 0) {
     message = dialogues.sleepy;
   } else if (passed.reachedMorningSeven && type === 'sleep') {
     message = dialogues.sleep;
@@ -1694,12 +1764,12 @@ function finishAction(type){
 }
 
 function canAwaken(){
-  return state.day >= 30;
+  return state.day >= 3;
 }
 
 function getTopStatName(){
   const labels = {
-    dark: 'Darkness',
+    practice: 'Practice',
     mystery: 'Mystery',
     social: 'Social',
     cute: 'Cute',
@@ -1715,52 +1785,36 @@ function detectIdentity(){
 
   const builds = [
     {
-      name:'Villain KEY',
-      score:s.dark * 1.2 + s.scary,
-      largeImg:imageSet.gasolineLarge,
-      roomImg:imageSet.gasolineRoom,
-      desc:'다크니스와 스캐어리가 응집되어, 압도적이고 위험한 분위기의 KEY로 각성했습니다.',
-      badges:[['코어', 'Dark + Scary'], ['상징', 'Villain Aura'], ['대표 스탯', getTopStatName()]]
+      name:'Idol KEY',
+      score:s.practice * 1.2 + s.social + s.cute,
+      largeImg:imageSet.defaultLarge,
+      roomImg:imageSet.defaultRoom,
+      desc:'연습과 무대 감각이 응집되어, 사랑받는 무드의 KEY로 각성했습니다.',
+      badges:[['코어', 'Practice + Social'], ['상징', 'Idol Aura'], ['대표 스탯', getTopStatName()]]
     },
     {
       name:'Dream KEY',
-      score:s.mystery * 1.2 + s.dark,
+      score:s.mystery * 1.3 + s.cute,
       largeImg:imageSet.badloveLarge,
       roomImg:imageSet.badloveRoom,
-      desc:'신비로움과 어둠이 겹쳐져, 몽환적인 잔향을 남기는 KEY로 각성했습니다.',
-      badges:[['코어', 'Mystery + Dark'], ['상징', 'Dream Aura'], ['대표 스탯', getTopStatName()]]
+      desc:'신비로움과 여운이 겹쳐져, 몽환적인 분위기의 KEY로 각성했습니다.',
+      badges:[['코어', 'Mystery + Cute'], ['상징', 'Dream Aura'], ['대표 스탯', getTopStatName()]]
     },
     {
-      name:'Idol KEY',
-      score:s.cute * 1.2 + s.social,
-      largeImg:imageSet.defaultLarge,
-      roomImg:imageSet.defaultRoom,
-      desc:'귀여움과 사교성이 빛나며, 가장 사랑받는 무드의 KEY로 각성했습니다.',
-      badges:[['코어', 'Cute + Social'], ['상징', 'Idol Aura'], ['대표 스탯', getTopStatName()]]
+      name:'Villain KEY',
+      score:s.scary * 1.25 + s.mystery,
+      largeImg:imageSet.gasolineLarge,
+      roomImg:imageSet.gasolineRoom,
+      desc:'차갑고 강한 잔상이 응집되어, 압도적인 분위기의 KEY가 되었습니다.',
+      badges:[['코어', 'Scary + Mystery'], ['상징', 'Villain Aura'], ['대표 스탯', getTopStatName()]]
     },
     {
       name:'Trickster KEY',
-      score:s.humor * 1.2 + s.mystery,
+      score:s.humor * 1.25 + s.social,
       largeImg:imageSet.badloveLarge,
       roomImg:imageSet.badloveRoom,
-      desc:'유머와 신비로움이 뒤섞여, 예측할 수 없는 매력의 KEY가 되었습니다.',
-      badges:[['코어', 'Humor + Mystery'], ['상징', 'Trickster Aura'], ['대표 스탯', getTopStatName()]]
-    },
-    {
-      name:'Royal KEY',
-      score:s.social * 1.2 + s.dark,
-      largeImg:imageSet.gasolineLarge,
-      roomImg:imageSet.gasolineRoom,
-      desc:'사교성과 다크니스가 균형을 이루며, 고급스럽고 카리스마 있는 KEY로 각성했습니다.',
-      badges:[['코어', 'Social + Dark'], ['상징', 'Royal Aura'], ['대표 스탯', getTopStatName()]]
-    },
-    {
-      name:'Healing KEY',
-      score:s.cute * 1.2 + s.humor,
-      largeImg:imageSet.defaultLarge,
-      roomImg:imageSet.defaultRoom,
-      desc:'귀여움과 유머가 따뜻하게 쌓여, 주변을 편안하게 만드는 KEY가 되었습니다.',
-      badges:[['코어', 'Cute + Humor'], ['상징', 'Healing Aura'], ['대표 스탯', getTopStatName()]]
+      desc:'유머와 센스가 살아나, 예측 불가의 매력을 지닌 KEY가 되었습니다.',
+      badges:[['코어', 'Humor + Social'], ['상징', 'Trickster Aura'], ['대표 스탯', getTopStatName()]]
     }
   ];
 
@@ -1809,7 +1863,7 @@ function resetAll(){
   state.energy = 100;
   state.maxEnergy = 100;
   state.stats = {
-    dark: 0,
+    practice: 0,
     mystery: 0,
     social: 0,
     cute: 0,
@@ -1819,8 +1873,12 @@ function resetAll(){
   state.awakened = null;
   state.isActing = false;
   state.currentStageBg = 'default';
+  state.concertEventOffered = false;
+  state.concertEventResolved = false;
 
   clearActionProgress();
+  closeGiftMenus();
+  hideConcertEvent();
 
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
@@ -1862,6 +1920,8 @@ function serializeGameState(){
       stats: { ...state.stats },
       awakened: state.awakened ? deepClone(state.awakened) : null,
       currentStageBg: state.currentStageBg,
+      concertEventOffered: state.concertEventOffered,
+      concertEventResolved: state.concertEventResolved,
       seedPlayer: { ...state.seedPlayer },
       roomPlayer: { ...state.roomPlayer },
       currentScreen: getCurrentScreenName()
@@ -1880,17 +1940,17 @@ function migrateSave(save){
   if (!p.currentScreen) p.currentScreen = 'schedule';
   if (!p.currentStageBg) p.currentStageBg = 'default';
   if (typeof p.gameHour !== 'number') p.gameHour = 7;
+  if (typeof p.concertEventOffered !== 'boolean') p.concertEventOffered = false;
+  if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
 
-  if (!('dark' in oldStats)) {
-    p.stats = {
-      dark: 0,
-      mystery: oldStats.mystery ?? 0,
-      social: oldStats.charm ?? 0,
-      cute: oldStats.mood ?? 0,
-      scary: 0,
-      humor: oldStats.style ?? 0
-    };
-  }
+  p.stats = {
+    practice: oldStats.practice ?? 0,
+    mystery: oldStats.mystery ?? 0,
+    social: oldStats.social ?? 0,
+    cute: oldStats.cute ?? 0,
+    scary: oldStats.scary ?? 0,
+    humor: oldStats.humor ?? 0
+  };
 
   if (p.seedPlayer) {
     if (!p.seedPlayer.baseW) p.seedPlayer.baseW = 54;
@@ -1911,7 +1971,7 @@ function applySaveToState(save){
   state.energy = p.energy ?? 100;
   state.maxEnergy = p.maxEnergy ?? 100;
   state.stats = {
-    dark: p.stats?.dark ?? 0,
+    practice: p.stats?.practice ?? 0,
     mystery: p.stats?.mystery ?? 0,
     social: p.stats?.social ?? 0,
     cute: p.stats?.cute ?? 0,
@@ -1921,6 +1981,8 @@ function applySaveToState(save){
   state.awakened = p.awakened ?? null;
   state.isActing = false;
   state.currentStageBg = p.currentStageBg ?? 'default';
+  state.concertEventOffered = p.concertEventOffered ?? false;
+  state.concertEventResolved = p.concertEventResolved ?? false;
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
@@ -1952,7 +2014,7 @@ function applySaveToState(save){
     : 'schedule';
   showScreen(nextScreen);
 
-  setSeedMessage(state.day >= 30 && !state.awakened ? dialogues.ready : dialogues.intro);
+  setSeedMessage(state.day >= 3 && !state.awakened ? dialogues.ready : dialogues.intro);
   return true;
 }
 
