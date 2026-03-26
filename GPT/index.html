@@ -20,6 +20,7 @@
   --shadow:0 16px 40px rgba(0,0,0,.32);
   --top-h:84px;
 }
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -32,6 +33,7 @@ body{
   overflow:hidden;
   touch-action:manipulation;
 }
+
 button{
   font:inherit;
   color:inherit;
@@ -39,18 +41,21 @@ button{
   cursor:pointer;
 }
 button:disabled{cursor:not-allowed}
+
 img{
   display:block;
   max-width:100%;
   user-select:none;
   -webkit-user-drag:none;
 }
+
 .app{
   position:relative;
   width:100%;
   height:100%;
   overflow:hidden;
 }
+
 .screen{
   position:absolute;
   inset:0;
@@ -64,6 +69,7 @@ img{
   pointer-events:auto;
   transform:translateY(0);
 }
+
 .topbar{
   position:absolute;
   left:0; right:0; top:0;
@@ -75,6 +81,7 @@ img{
   padding:12px 16px;
   z-index:20;
 }
+
 .brand{
   display:flex;
   flex-direction:column;
@@ -89,18 +96,21 @@ img{
   font-size:12px;
   color:var(--sub);
 }
+
 .topbar-right{
   display:flex;
   flex-direction:column;
   align-items:flex-end;
   gap:8px;
 }
+
 .top-auth-row{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
   justify-content:flex-end;
 }
+
 .pill{
   display:flex;
   align-items:center;
@@ -114,12 +124,14 @@ img{
   font-size:13px;
   backdrop-filter:blur(10px);
 }
+
 .auth-pill{
   max-width:260px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
 .mini-btn{
   padding:10px 12px;
   border-radius:999px;
@@ -131,16 +143,19 @@ img{
   font-weight:800;
   backdrop-filter:blur(10px);
 }
+
 .mini-btn.primary{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   border:0;
 }
+
 .main{
   position:absolute;
   inset:var(--top-h) 0 0 0;
   padding:14px 16px 16px;
   overflow:auto;
 }
+
 .card{
   background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
   border:1px solid var(--line);
@@ -148,24 +163,29 @@ img{
   box-shadow:var(--shadow);
   backdrop-filter:blur(10px);
 }
+
 .panel{ padding:16px; }
+
 .section-title{
   margin:0 0 12px;
   font-size:15px;
   font-weight:900;
   letter-spacing:.02em;
 }
+
 .small{
   font-size:12px;
   color:var(--sub);
   line-height:1.6;
 }
+
 .action-row{
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
   margin-top:12px;
 }
+
 .primary-btn,
 .secondary-btn{
   width:100%;
@@ -184,20 +204,25 @@ img{
   background:rgba(255,255,255,.06);
   border:1px solid var(--line);
 }
+
 .layout{
   display:grid;
   grid-template-columns:1fr;
   gap:14px;
-  max-width:860px;
+  max-width:980px;
   margin:0 auto;
 }
+
+/* 좌 스테이지 : 우 스탯바 = 2 : 1 */
 .stage-status-wrap{
   display:grid;
-  grid-template-columns:1fr 220px;
+  grid-template-columns:2fr 1fr;
   gap:12px;
   align-items:stretch;
 }
+
 .seed-stage-wrap{ position:relative; }
+
 .seed-stage{
   position:relative;
   width:100%;
@@ -234,10 +259,12 @@ img{
   animation:pulse 3s ease-in-out infinite;
 }
 .seed-stage.resting{ filter:brightness(.62) saturate(.88); }
+
 @keyframes pulse{
   0%,100%{opacity:.72}
   50%{opacity:1}
 }
+
 .seed-day-badge{
   position:absolute;
   left:12px;
@@ -254,6 +281,7 @@ img{
   letter-spacing:.08em;
   color:#fff;
 }
+
 .seed-player{
   position:absolute;
   z-index:3;
@@ -274,6 +302,7 @@ img{
 }
 .seed-player.left{ transform:scaleX(-1); }
 .seed-stage.resting .seed-player{ filter:brightness(.78); }
+
 .seed-awaken-anchor{
   position:absolute;
   z-index:8;
@@ -293,6 +322,7 @@ img{
   white-space:nowrap;
 }
 .seed-awaken-anchor.hidden{ display:none; }
+
 .seed-bubble{
   position:absolute;
   z-index:4;
@@ -319,6 +349,7 @@ img{
   border-bottom:1px solid rgba(120,100,180,.14);
   transform:translateX(-50%) rotate(45deg);
 }
+
 .seed-status{
   position:absolute;
   z-index:5;
@@ -344,6 +375,7 @@ img{
   0%,100%{ transform:translateY(0); }
   50%{ transform:translateY(-4px); }
 }
+
 .seed-label{
   position:absolute;
   left:14px;
@@ -362,6 +394,35 @@ img{
   font-size:12px;
   text-shadow:0 2px 10px rgba(0,0,0,.3);
 }
+
+/* 캐릭터 바로 위 짧은 에너지 바 */
+.stage-energy-box{
+  position:absolute;
+  z-index:6;
+  width:100px;
+  height:10px;
+  left:0;
+  top:0;
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+.stage-energy-bar{
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+.stage-energy-fill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,var(--mint),#b6ffe8);
+  transition:width .25s ease;
+}
+
+/* 오른쪽 스탯 패널 */
 .seed-side-status{
   padding:12px;
   border-radius:18px;
@@ -374,6 +435,7 @@ img{
   justify-content:flex-start;
   min-height:100%;
 }
+
 .seed-mini-title{
   font-size:11px;
   font-weight:900;
@@ -396,23 +458,7 @@ img{
   color:#fff;
 }
 .seed-mini-row .bar{ height:8px; }
-.seed-energy-box{
-  margin-top:8px;
-  padding-top:8px;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-.seed-energy-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:6px;
-  font-size:9px;
-  color:#d8d1f0;
-}
-.seed-energy-top strong{
-  color:#fff;
-  font-size:9px;
-}
+
 .bar{
   height:10px;
   border-radius:999px;
@@ -432,19 +478,7 @@ img{
 .fill.cute{background:linear-gradient(90deg,var(--pink),#ffb1df)}
 .fill.scary{background:linear-gradient(90deg,#8f4d5f,#d28293)}
 .fill.humor{background:linear-gradient(90deg,var(--gold),#ffd98a)}
-.energy-bar{
-  height:12px;
-  border-radius:999px;
-  overflow:hidden;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.05);
-}
-.energy-fill{
-  height:100%;
-  width:100%;
-  background:linear-gradient(90deg,var(--mint),#b6ffe8);
-  transition:width .25s ease;
-}
+
 .schedule-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -498,6 +532,7 @@ img{
   color:var(--sub);
   line-height:1.3;
 }
+
 .center-wrap{
   min-height:calc(100vh - var(--top-h) - 30px);
   display:flex;
@@ -563,6 +598,7 @@ img{
   color:var(--sub);
   line-height:1.7;
 }
+
 .room-layout{
   display:grid;
   grid-template-columns:1.18fr .82fr;
@@ -661,14 +697,13 @@ img{
   font-size:12px;
 }
 .badge strong{color:var(--text)}
+
 @media (max-width: 980px){
   .room-layout{ grid-template-columns:1fr; }
   .room-scene{ min-height:420px; }
 }
-@media (max-width: 760px){
-  .stage-status-wrap{ grid-template-columns:1fr; }
-  .seed-stage{ aspect-ratio:3 / 2; }
-}
+
+/* 모바일에서도 좌 스테이지 / 우 스탯 유지 */
 @media (max-width: 640px){
   :root{ --top-h:120px; }
   .topbar{ padding:12px; }
@@ -677,42 +712,70 @@ img{
   .schedule-grid{ grid-template-columns:1fr 1fr; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
+
+  .stage-status-wrap{
+    grid-template-columns:2fr 1fr;
+    gap:8px;
+  }
+
+  .seed-stage{
+    aspect-ratio:1 / 1;
+  }
+
   .seed-player{
-    width:48px;
-    height:70px;
+    width:42px;
+    height:62px;
   }
+
   .seed-bubble{
-    max-width:180px;
-    min-width:140px;
-    font-size:11px;
+    max-width:140px;
+    min-width:110px;
+    font-size:10px;
+    padding:8px 10px;
   }
-  .seed-side-status{ padding:10px; }
-  .seed-mini-row{
-    grid-template-columns:32px 1fr 18px;
-    gap:5px;
-    font-size:8px;
+
+  .stage-energy-box{
+    width:100px;
+    height:9px;
   }
-  .seed-mini-row strong,
-  .seed-energy-top,
+
+  .seed-side-status{
+    padding:8px;
+  }
   .seed-mini-title{
-    font-size:8px;
+    font-size:9px;
+    margin-bottom:8px;
   }
+  .seed-mini-row{
+    grid-template-columns:28px 1fr 16px;
+    gap:4px;
+    font-size:7px;
+    margin-bottom:6px;
+  }
+  .seed-mini-row strong{
+    font-size:7px;
+  }
+
   .schedule-btn{ padding:9px 9px; }
   .schedule-btn .title{ font-size:11px; }
   .schedule-btn .meta{ font-size:9px; }
+
   .room-player{
     width:39px;
     height:57px;
   }
+
   .topbar-right{
     width:100%;
     align-items:flex-start;
   }
   .top-auth-row{ justify-content:flex-start; }
+
   .seed-day-badge{
     font-size:11px;
     padding:7px 10px;
   }
+
   .seed-awaken-btn{
     padding:9px 12px;
     font-size:11px;
@@ -752,6 +815,12 @@ img{
 
                 <div class="seed-player" id="seedPlayer">
                   <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
+                </div>
+
+                <div class="stage-energy-box" id="stageEnergyBox">
+                  <div class="stage-energy-bar">
+                    <div class="stage-energy-fill" id="stageEnergyFill"></div>
+                  </div>
                 </div>
 
                 <div class="seed-awaken-anchor hidden" id="seedAwakenAnchor">
@@ -808,16 +877,6 @@ img{
                 <span>Humor</span>
                 <div class="bar"><div class="fill humor" id="fill-humor"></div></div>
                 <strong id="val-humor">0</strong>
-              </div>
-
-              <div class="seed-energy-box">
-                <div class="seed-energy-top">
-                  <span>Energy</span>
-                  <strong id="energyText">100 / 100</strong>
-                </div>
-                <div class="energy-bar">
-                  <div class="energy-fill" id="energyFill"></div>
-                </div>
               </div>
             </div>
           </div>
@@ -1068,8 +1127,8 @@ const actionMeta = {
 };
 
 const seedDayBadge = document.getElementById('seedDayBadge');
-const energyText = document.getElementById('energyText');
-const energyFill = document.getElementById('energyFill');
+const stageEnergyBox = document.getElementById('stageEnergyBox');
+const stageEnergyFill = document.getElementById('stageEnergyFill');
 
 const awakenImg = document.getElementById('awakenImg');
 
@@ -1226,6 +1285,16 @@ function positionSeedStatus(){
   seedStatus.style.top = `${Math.max(8, y)}px`;
 }
 
+function positionStageEnergyBar(){
+  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
+  const y = state.seedPlayer.y - 14;
+  const minX = 50 + 8;
+  const maxX = seedStage.clientWidth - 50 - 8;
+  const finalX = clamp(x, minX, maxX);
+  stageEnergyBox.style.left = `${finalX}px`;
+  stageEnergyBox.style.top = `${Math.max(8, y)}px`;
+}
+
 function positionAwakenButton(){
   const btnWidth = seedAwakenAnchor.offsetWidth || 120;
   const x = state.seedPlayer.x + state.seedPlayer.w / 2;
@@ -1249,8 +1318,7 @@ function updateAwakenButtonUI(){
 
 function updateScheduleUI(){
   seedDayBadge.textContent = `DAY${state.day}`;
-  energyText.textContent = `${state.energy} / ${state.maxEnergy}`;
-  energyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
+  stageEnergyFill.style.width = `${(state.energy / state.maxEnergy) * 100}%`;
 
   Object.keys(state.stats).forEach(key => {
     statEls[key].val.textContent = state.stats[key];
@@ -1262,6 +1330,7 @@ function updateScheduleUI(){
   }
 
   updateAwakenButtonUI();
+  positionStageEnergyBar();
 }
 
 function placeSeedPlayerInitial(){
@@ -1270,6 +1339,7 @@ function placeSeedPlayerInitial(){
   state.seedPlayer.y = Math.max(88, rect.height / 2 - state.seedPlayer.h / 2 + 20);
   positionSeedBubble();
   positionSeedStatus();
+  positionStageEnergyBar();
   positionAwakenButton();
 }
 
@@ -1279,7 +1349,20 @@ function renderSeedPlayer(){
   seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
   positionSeedBubble();
   positionSeedStatus();
+  positionStageEnergyBar();
   positionAwakenButton();
+}
+
+function placeRoomPlayerInitial(){
+  const rect = roomScene.getBoundingClientRect();
+  state.roomPlayer.x = Math.max(12, rect.width * 0.18);
+  state.roomPlayer.y = Math.max(110, rect.height * 0.72);
+}
+
+function renderRoomPlayer(){
+  roomPlayer.style.left = `${state.roomPlayer.x}px`;
+  roomPlayer.style.top = `${state.roomPlayer.y}px`;
+  roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
 }
 
 function startAction(type){
@@ -1526,18 +1609,6 @@ function syncRoomUI(){
     el.innerHTML = `<strong>${k}</strong> ${v}`;
     badgeWrap.appendChild(el);
   });
-}
-
-function placeRoomPlayerInitial(){
-  const rect = roomScene.getBoundingClientRect();
-  state.roomPlayer.x = Math.max(12, rect.width * 0.18);
-  state.roomPlayer.y = Math.max(110, rect.height * 0.72);
-}
-
-function renderRoomPlayer(){
-  roomPlayer.style.left = `${state.roomPlayer.x}px`;
-  roomPlayer.style.top = `${state.roomPlayer.y}px`;
-  roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
 }
 
 function resetAll(){
@@ -1911,6 +1982,7 @@ window.addEventListener('resize', () => {
   if(screens.schedule.classList.contains('active')){
     renderSeedPlayer();
     updateAwakenButtonUI();
+    positionStageEnergyBar();
   }
   if(screens.room.classList.contains('active')){
     renderRoomPlayer();
@@ -1957,6 +2029,7 @@ renderSeedPlayer();
 placeRoomPlayerInitial();
 renderRoomPlayer();
 updateAwakenButtonUI();
+positionStageEnergyBar();
 
 bootGame();
 </script>
