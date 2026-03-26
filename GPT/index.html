@@ -18,7 +18,7 @@
   --mint:#7df0d0;
   --radius:20px;
   --shadow:0 16px 40px rgba(0,0,0,.32);
-  --top-h:84px;
+  --top-h:72px;
 }
 
 *{box-sizing:border-box}
@@ -78,7 +78,7 @@ img{
   align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  padding:12px 16px;
+  padding:10px 16px 8px;
   z-index:20;
 }
 
@@ -152,7 +152,7 @@ img{
 .main{
   position:absolute;
   inset:var(--top-h) 0 0 0;
-  padding:14px 16px 16px;
+  padding:8px 16px 16px;
   overflow:auto;
 }
 
@@ -219,7 +219,7 @@ img{
 .layout{
   display:grid;
   grid-template-columns:1fr;
-  gap:14px;
+  gap:10px;
   max-width:980px;
   margin:0 auto;
 }
@@ -721,10 +721,10 @@ img{
 }
 
 @media (max-width: 640px){
-  :root{ --top-h:120px; }
-  .topbar{ padding:12px; }
+  :root{ --top-h:98px; }
+  .topbar{ padding:10px 12px 6px; }
   .brand .title{ font-size:16px; }
-  .main{ padding:10px 12px 12px; }
+  .main{ padding:6px 12px 12px; }
   .schedule-grid{ grid-template-columns:1fr 1fr; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
@@ -813,9 +813,6 @@ img{
           <button class="mini-btn primary" id="loginBtn">Google 로그인</button>
           <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
           <button class="mini-btn" id="saveBtn">지금 저장</button>
-        </div>
-        <div class="top-auth-row">
-          <div class="pill auth-pill" id="authStatus">게스트 모드</div>
         </div>
       </div>
     </div>
@@ -1163,7 +1160,6 @@ const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomHint = document.getElementById('roomHint');
 const scheduleGrid = document.getElementById('scheduleGrid');
 
-const authStatus = document.getElementById('authStatus');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const saveBtn = document.getElementById('saveBtn');
@@ -1373,7 +1369,7 @@ function placeSeedPlayerInitial(){
 
   state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
 
-  const targetCenterY = rect.height * (4 / 7);
+  const targetCenterY = rect.height * (3 / 5);
   state.seedPlayer.y = clamp(
     targetCenterY - state.seedPlayer.h / 2,
     88,
@@ -1966,12 +1962,9 @@ function updateAuthUI(user){
   currentUser = user;
 
   if (user) {
-    const email = user.email || '로그인됨';
-    authStatus.textContent = `클라우드 연결됨 · ${email}`;
     loginBtn.style.display = 'none';
     logoutBtn.style.display = '';
   } else {
-    authStatus.textContent = '게스트 모드';
     loginBtn.style.display = '';
     logoutBtn.style.display = 'none';
   }
