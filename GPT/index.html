@@ -111,27 +111,6 @@ img{
   justify-content:flex-end;
 }
 
-.pill{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 12px;
-  background:rgba(255,255,255,.06);
-  border:1px solid var(--line);
-  border-radius:999px;
-  box-shadow:var(--shadow);
-  color:var(--sub);
-  font-size:13px;
-  backdrop-filter:blur(10px);
-}
-
-.auth-pill{
-  max-width:260px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
 .mini-btn{
   padding:10px 12px;
   border-radius:999px;
@@ -290,8 +269,8 @@ img{
   left:50%;
   top:50%;
   pointer-events:none;
-  will-change:left, top, transform, filter;
-  transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease;
+  will-change:transform, filter;
+  transition:transform .2s ease, filter .35s ease;
 }
 .seed-player img{
   width:100%;
@@ -300,8 +279,15 @@ img{
   image-rendering:pixelated;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.42));
 }
-.seed-player.left{ transform:scaleX(-1); }
-.seed-stage.resting .seed-player{ filter:brightness(.78); }
+.seed-player.left{
+  transform:translate(-50%, -50%) scaleX(-1);
+}
+.seed-player.right{
+  transform:translate(-50%, -50%) scaleX(1);
+}
+.seed-stage.resting .seed-player{
+  filter:brightness(.78);
+}
 
 .seed-awaken-anchor{
   position:absolute;
@@ -399,10 +385,10 @@ img{
 .stage-energy-box{
   position:absolute;
   z-index:6;
-  width:100px;
-  height:10px;
-  left:0;
-  top:0;
+  width:52px;
+  height:8px;
+  left:50%;
+  top:50%;
   transform:translateX(-50%);
   pointer-events:none;
 }
@@ -481,7 +467,7 @@ img{
 
 .schedule-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:8px;
   margin-top:12px;
 }
@@ -703,13 +689,11 @@ img{
   .room-scene{ min-height:420px; }
 }
 
-/* 모바일에서도 좌 스테이지 / 우 스탯 유지 */
 @media (max-width: 640px){
   :root{ --top-h:120px; }
   .topbar{ padding:12px; }
   .brand .title{ font-size:16px; }
   .main{ padding:10px 12px 12px; }
-  .schedule-grid{ grid-template-columns:1fr 1fr; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
 
@@ -735,8 +719,8 @@ img{
   }
 
   .stage-energy-box{
-    width:100px;
-    height:9px;
+    width:52px;
+    height:8px;
   }
 
   .seed-side-status{
@@ -756,9 +740,13 @@ img{
     font-size:7px;
   }
 
-  .schedule-btn{ padding:9px 9px; }
-  .schedule-btn .title{ font-size:11px; }
-  .schedule-btn .meta{ font-size:9px; }
+  .schedule-grid{
+    grid-template-columns:1fr 1fr 1fr;
+    gap:6px;
+  }
+  .schedule-btn{ padding:8px 8px; }
+  .schedule-btn .title{ font-size:10px; }
+  .schedule-btn .meta{ font-size:8px; }
 
   .room-player{
     width:39px;
@@ -799,9 +787,6 @@ img{
           <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
           <button class="mini-btn" id="saveBtn">지금 저장</button>
         </div>
-        <div class="top-auth-row">
-          <div class="pill auth-pill" id="authStatus">게스트 모드</div>
-        </div>
       </div>
     </div>
 
@@ -813,7 +798,7 @@ img{
               <div class="seed-stage bg-default" id="seedStage">
                 <div class="seed-day-badge" id="seedDayBadge">DAY1</div>
 
-                <div class="seed-player" id="seedPlayer">
+                <div class="seed-player right" id="seedPlayer">
                   <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
                 </div>
 
@@ -947,9 +932,8 @@ img{
         <div class="title">Awakening</div>
         <div class="subtitle">30일간의 스케줄이 하나의 정체성으로 응결됩니다</div>
       </div>
-      <div class="pill">
-        <span>Result</span>
-        <strong id="awakenTopName">Villain KEY</strong>
+      <div class="top-auth-row">
+        <button class="mini-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
       </div>
     </div>
 
@@ -964,7 +948,6 @@ img{
           <p class="awaken-desc" id="awakenDesc">한 달의 시간이 쌓여, 새로운 KEY가 눈을 뜹니다.</p>
           <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
             <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
-            <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
           </div>
         </div>
       </div>
@@ -977,9 +960,8 @@ img{
         <div class="title">My Room</div>
         <div class="subtitle">정체성에 따라 다른 생활이 열립니다</div>
       </div>
-      <div class="pill">
-        <span>Identity</span>
-        <strong id="roomIdentity">-</strong>
+      <div class="top-auth-row">
+        <button class="mini-btn" id="backAwakenBtn">각성 화면</button>
       </div>
     </div>
 
@@ -1010,7 +992,6 @@ img{
 
             <div class="action-row">
               <button class="secondary-btn" id="restartAllBtn">처음으로</button>
-              <button class="primary-btn" id="backAwakenBtn">각성 화면</button>
             </div>
           </div>
         </div>
@@ -1070,8 +1051,8 @@ const state = {
   isActing: false,
   currentStageBg: 'default',
   seedPlayer: {
-    x: 80,
-    y: 170,
+    xRatio: 0.50,
+    yRatio: 0.57,
     w: 54,
     h: 78,
     facing: 'right'
@@ -1145,7 +1126,6 @@ const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomHint = document.getElementById('roomHint');
 const scheduleGrid = document.getElementById('scheduleGrid');
 
-const authStatus = document.getElementById('authStatus');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const saveBtn = document.getElementById('saveBtn');
@@ -1267,11 +1247,18 @@ function updateSeedStageBackground(mode){
   }
 }
 
+function getSeedPlayerCenter(){
+  return {
+    x: seedStage.clientWidth * state.seedPlayer.xRatio,
+    y: seedStage.clientHeight * state.seedPlayer.yRatio
+  };
+}
+
 function positionSeedBubble(){
   const bubbleWidth = seedBubble.offsetWidth || 180;
-  const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
-  const bubbleTop = Math.max(8, state.seedPlayer.y - 74);
+  const center = getSeedPlayerCenter();
+  const bubbleLeft = clamp(center.x - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
+  const bubbleTop = Math.max(8, center.y - state.seedPlayer.h / 2 - 56);
 
   seedBubble.style.left = `${bubbleLeft}px`;
   seedBubble.style.top = `${bubbleTop}px`;
@@ -1279,17 +1266,19 @@ function positionSeedBubble(){
 
 function positionSeedStatus(){
   const statusWidth = seedStatus.offsetWidth || 40;
-  const x = state.seedPlayer.x + state.seedPlayer.w / 2 - statusWidth / 2;
-  const y = state.seedPlayer.y - 22;
+  const center = getSeedPlayerCenter();
+  const x = center.x - statusWidth / 2;
+  const y = center.y - state.seedPlayer.h / 2 - 8;
   seedStatus.style.left = `${clamp(x, 8, seedStage.clientWidth - statusWidth - 8)}px`;
   seedStatus.style.top = `${Math.max(8, y)}px`;
 }
 
 function positionStageEnergyBar(){
-  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const y = state.seedPlayer.y - 14;
-  const minX = 50 + 8;
-  const maxX = seedStage.clientWidth - 50 - 8;
+  const center = getSeedPlayerCenter();
+  const x = center.x;
+  const y = center.y - state.seedPlayer.h / 2 - 18;
+  const minX = 26 + 8;
+  const maxX = seedStage.clientWidth - 26 - 8;
   const finalX = clamp(x, minX, maxX);
   stageEnergyBox.style.left = `${finalX}px`;
   stageEnergyBox.style.top = `${Math.max(8, y)}px`;
@@ -1297,8 +1286,9 @@ function positionStageEnergyBar(){
 
 function positionAwakenButton(){
   const btnWidth = seedAwakenAnchor.offsetWidth || 120;
-  const x = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const y = state.seedPlayer.y + state.seedPlayer.h + 10;
+  const center = getSeedPlayerCenter();
+  const x = center.x;
+  const y = center.y + state.seedPlayer.h / 2 + 10;
 
   const minX = btnWidth / 2 + 8;
   const maxX = seedStage.clientWidth - btnWidth / 2 - 8;
@@ -1311,9 +1301,7 @@ function positionAwakenButton(){
 function updateAwakenButtonUI(){
   const visible = canAwaken() && !state.isActing && !state.awakened;
   seedAwakenAnchor.classList.toggle('hidden', !visible);
-  if (visible) {
-    positionAwakenButton();
-  }
+  if (visible) positionAwakenButton();
 }
 
 function updateScheduleUI(){
@@ -1334,9 +1322,6 @@ function updateScheduleUI(){
 }
 
 function placeSeedPlayerInitial(){
-  const rect = seedStage.getBoundingClientRect();
-  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
-  state.seedPlayer.y = Math.max(88, rect.height / 2 - state.seedPlayer.h / 2 + 20);
   positionSeedBubble();
   positionSeedStatus();
   positionStageEnergyBar();
@@ -1344,9 +1329,11 @@ function placeSeedPlayerInitial(){
 }
 
 function renderSeedPlayer(){
-  seedPlayer.style.left = `${state.seedPlayer.x}px`;
-  seedPlayer.style.top = `${state.seedPlayer.y}px`;
+  const center = getSeedPlayerCenter();
+  seedPlayer.style.left = `${center.x}px`;
+  seedPlayer.style.top = `${center.y}px`;
   seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  seedPlayer.classList.toggle('right', state.seedPlayer.facing !== 'left');
   positionSeedBubble();
   positionSeedStatus();
   positionStageEnergyBar();
@@ -1391,7 +1378,6 @@ function startAction(type){
     updateSeedStageBackground('default');
   }
 
-  placeSeedPlayerInitial();
   renderSeedPlayer();
   showSeedStatus(meta.text);
 
@@ -1587,7 +1573,6 @@ function doAwaken(){
 function syncAwakenUI(){
   const id = state.awakened;
   if(!id) return;
-  document.getElementById('awakenTopName').textContent = id.name;
   document.getElementById('awakenName').textContent = id.name;
   document.getElementById('awakenDesc').textContent = id.desc;
   awakenImg.src = id.largeImg;
@@ -1597,7 +1582,6 @@ function syncRoomUI(){
   const id = state.awakened;
   if(!id) return;
 
-  document.getElementById('roomIdentity').textContent = id.name;
   roomPlayerImg.src = id.roomImg;
   roomHint.textContent = `${id.name}로 각성했어요. 이제 이 정체성을 바탕으로 다음 생활이 시작됩니다.`;
 
@@ -1627,6 +1611,7 @@ function resetAll(){
   state.awakened = null;
   state.isActing = false;
   state.currentStageBg = 'default';
+  state.seedPlayer.facing = 'right';
 
   clearActionProgress();
 
@@ -1639,7 +1624,6 @@ function resetAll(){
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
 
-  document.getElementById('roomIdentity').textContent = '-';
   document.getElementById('roomBadges').innerHTML = '';
   roomHint.textContent = '방 안으로 들어왔어요.';
 
@@ -1692,6 +1676,19 @@ function migrateSave(save){
   if (!p.currentScreen) p.currentScreen = 'schedule';
   if (!p.currentStageBg) p.currentStageBg = 'default';
 
+  if (!p.seedPlayer) {
+    p.seedPlayer = {
+      xRatio: 0.50,
+      yRatio: 0.57,
+      w: 54,
+      h: 78,
+      facing: 'right'
+    };
+  } else {
+    p.seedPlayer.xRatio = p.seedPlayer.xRatio ?? 0.50;
+    p.seedPlayer.yRatio = p.seedPlayer.yRatio ?? 0.57;
+  }
+
   if (!('dark' in oldStats)) {
     p.stats = {
       dark: 0,
@@ -1743,7 +1740,6 @@ function applySaveToState(save){
     syncAwakenUI();
     syncRoomUI();
   } else {
-    document.getElementById('roomIdentity').textContent = '-';
     document.getElementById('roomBadges').innerHTML = '';
     roomHint.textContent = '방 안으로 들어왔어요.';
   }
@@ -1908,32 +1904,16 @@ async function signOut(){
   }
 
   currentUser = null;
-  updateAuthUI(null);
+  loginBtn.style.display = '';
+  logoutBtn.style.display = 'none';
   cloudRevision = null;
   alert('로그아웃했어요. 이 기기 저장은 계속 남아 있어요.');
-}
-
-function updateAuthUI(user){
-  currentUser = user;
-
-  if (user) {
-    const email = user.email || '로그인됨';
-    authStatus.textContent = `클라우드 연결됨 · ${email}`;
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = '';
-  } else {
-    authStatus.textContent = '게스트 모드';
-    loginBtn.style.display = '';
-    logoutBtn.style.display = 'none';
-  }
 }
 
 async function bootGame(){
   const localSave = loadLocalSave();
 
   if (!supabaseClient) {
-    updateAuthUI(null);
-
     if (localSave) {
       applySaveToState(localSave);
     } else {
@@ -1948,7 +1928,9 @@ async function bootGame(){
   try {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     const user = sessionData?.session?.user ?? null;
-    updateAuthUI(user);
+    currentUser = user;
+    loginBtn.style.display = user ? 'none' : '';
+    logoutBtn.style.display = user ? '' : 'none';
 
     const cloudSave = user ? await fetchCloudSave() : null;
     const chosen = chooseNewerSave(localSave, cloudSave);
@@ -1996,7 +1978,9 @@ window.addEventListener('beforeunload', () => {
 
 if (supabaseClient) {
   supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-    updateAuthUI(session?.user ?? null);
+    currentUser = session?.user ?? null;
+    loginBtn.style.display = currentUser ? 'none' : '';
+    logoutBtn.style.display = currentUser ? '' : 'none';
 
     if (!bootFinished) return;
 
