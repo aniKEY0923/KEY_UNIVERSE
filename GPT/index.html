@@ -20,7 +20,6 @@
   --shadow:0 16px 40px rgba(0,0,0,.32);
   --top-h:84px;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -33,7 +32,6 @@ body{
   overflow:hidden;
   touch-action:manipulation;
 }
-
 button{
   font:inherit;
   color:inherit;
@@ -41,21 +39,18 @@ button{
   cursor:pointer;
 }
 button:disabled{cursor:not-allowed}
-
 img{
   display:block;
   max-width:100%;
   user-select:none;
   -webkit-user-drag:none;
 }
-
 .app{
   position:relative;
   width:100%;
   height:100%;
   overflow:hidden;
 }
-
 .screen{
   position:absolute;
   inset:0;
@@ -69,7 +64,6 @@ img{
   pointer-events:auto;
   transform:translateY(0);
 }
-
 .topbar{
   position:absolute;
   left:0; right:0; top:0;
@@ -81,7 +75,6 @@ img{
   padding:12px 16px;
   z-index:20;
 }
-
 .brand{
   display:flex;
   flex-direction:column;
@@ -96,21 +89,18 @@ img{
   font-size:12px;
   color:var(--sub);
 }
-
 .topbar-right{
   display:flex;
   flex-direction:column;
   align-items:flex-end;
   gap:8px;
 }
-
 .top-auth-row{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
   justify-content:flex-end;
 }
-
 .pill{
   display:flex;
   align-items:center;
@@ -124,14 +114,12 @@ img{
   font-size:13px;
   backdrop-filter:blur(10px);
 }
-
 .auth-pill{
   max-width:260px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
-
 .mini-btn{
   padding:10px 12px;
   border-radius:999px;
@@ -143,19 +131,16 @@ img{
   font-weight:800;
   backdrop-filter:blur(10px);
 }
-
 .mini-btn.primary{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   border:0;
 }
-
 .main{
   position:absolute;
   inset:var(--top-h) 0 0 0;
   padding:14px 16px 16px;
   overflow:auto;
 }
-
 .card{
   background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
   border:1px solid var(--line);
@@ -163,29 +148,24 @@ img{
   box-shadow:var(--shadow);
   backdrop-filter:blur(10px);
 }
-
 .panel{ padding:16px; }
-
 .section-title{
   margin:0 0 12px;
   font-size:15px;
   font-weight:900;
   letter-spacing:.02em;
 }
-
 .small{
   font-size:12px;
   color:var(--sub);
   line-height:1.6;
 }
-
 .action-row{
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
   margin-top:12px;
 }
-
 .primary-btn,
 .secondary-btn{
   width:100%;
@@ -199,28 +179,29 @@ img{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   box-shadow:0 12px 28px rgba(145,110,255,.25);
 }
-.primary-btn:disabled{
-  opacity:.45;
-}
+.primary-btn:disabled{ opacity:.45; }
 .secondary-btn{
   background:rgba(255,255,255,.06);
   border:1px solid var(--line);
 }
-
 .layout{
   display:grid;
   grid-template-columns:1fr;
   gap:14px;
-  max-width:760px;
+  max-width:860px;
   margin:0 auto;
 }
-
+.stage-status-wrap{
+  display:grid;
+  grid-template-columns:1fr 220px;
+  gap:12px;
+  align-items:stretch;
+}
 .seed-stage-wrap{ position:relative; }
-
 .seed-stage{
   position:relative;
   width:100%;
-  aspect-ratio:3 / 2;
+  aspect-ratio:1 / 1;
   border-radius:18px;
   overflow:hidden;
   border:1px solid var(--line);
@@ -252,15 +233,11 @@ img{
   filter:blur(8px);
   animation:pulse 3s ease-in-out infinite;
 }
-.seed-stage.resting{
-  filter:brightness(.62) saturate(.88);
-}
-
+.seed-stage.resting{ filter:brightness(.62) saturate(.88); }
 @keyframes pulse{
   0%,100%{opacity:.72}
   50%{opacity:1}
 }
-
 .seed-day-badge{
   position:absolute;
   left:12px;
@@ -277,7 +254,6 @@ img{
   letter-spacing:.08em;
   color:#fff;
 }
-
 .seed-player{
   position:absolute;
   z-index:3;
@@ -296,13 +272,8 @@ img{
   image-rendering:pixelated;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.42));
 }
-.seed-player.left{
-  transform:scaleX(-1);
-}
-.seed-stage.resting .seed-player{
-  filter:brightness(.78);
-}
-
+.seed-player.left{ transform:scaleX(-1); }
+.seed-stage.resting .seed-player{ filter:brightness(.78); }
 .seed-awaken-anchor{
   position:absolute;
   z-index:8;
@@ -321,10 +292,7 @@ img{
   font-weight:900;
   white-space:nowrap;
 }
-.seed-awaken-anchor.hidden{
-  display:none;
-}
-
+.seed-awaken-anchor.hidden{ display:none; }
 .seed-bubble{
   position:absolute;
   z-index:4;
@@ -351,7 +319,6 @@ img{
   border-bottom:1px solid rgba(120,100,180,.14);
   transform:translateX(-50%) rotate(45deg);
 }
-
 .seed-status{
   position:absolute;
   z-index:5;
@@ -377,7 +344,6 @@ img{
   0%,100%{ transform:translateY(0); }
   50%{ transform:translateY(-4px); }
 }
-
 .seed-label{
   position:absolute;
   left:14px;
@@ -396,69 +362,57 @@ img{
   font-size:12px;
   text-shadow:0 2px 10px rgba(0,0,0,.3);
 }
-
-.seed-mini-status{
-  position:absolute;
-  right:10px;
-  top:10px;
-  z-index:6;
-  width:122px;
-  padding:8px;
-  border-radius:14px;
+.seed-side-status{
+  padding:12px;
+  border-radius:18px;
   background:rgba(26,22,42,.76);
   border:1px solid rgba(255,255,255,.10);
   box-shadow:0 8px 20px rgba(0,0,0,.20);
   backdrop-filter:blur(8px);
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  min-height:100%;
 }
-
 .seed-mini-title{
-  font-size:10px;
+  font-size:11px;
   font-weight:900;
   color:#f3efff;
-  margin-bottom:7px;
+  margin-bottom:10px;
   letter-spacing:.02em;
 }
-
 .seed-mini-row{
   display:grid;
-  grid-template-columns:34px 1fr 18px;
-  gap:4px;
+  grid-template-columns:40px 1fr 20px;
+  gap:6px;
   align-items:center;
-  margin-bottom:5px;
-  font-size:8px;
+  margin-bottom:8px;
+  font-size:9px;
   color:#d8d1f0;
 }
-
 .seed-mini-row strong{
-  font-size:8px;
+  font-size:9px;
   text-align:right;
   color:#fff;
 }
-
-.seed-mini-row .bar{
-  height:7px;
-}
-
+.seed-mini-row .bar{ height:8px; }
 .seed-energy-box{
-  margin-top:7px;
-  padding-top:7px;
+  margin-top:8px;
+  padding-top:8px;
   border-top:1px solid rgba(255,255,255,.08);
 }
-
 .seed-energy-top{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:5px;
-  font-size:8px;
+  margin-bottom:6px;
+  font-size:9px;
   color:#d8d1f0;
 }
-
 .seed-energy-top strong{
   color:#fff;
-  font-size:8px;
+  font-size:9px;
 }
-
 .bar{
   height:10px;
   border-radius:999px;
@@ -478,7 +432,6 @@ img{
 .fill.cute{background:linear-gradient(90deg,var(--pink),#ffb1df)}
 .fill.scary{background:linear-gradient(90deg,#8f4d5f,#d28293)}
 .fill.humor{background:linear-gradient(90deg,var(--gold),#ffd98a)}
-
 .energy-bar{
   height:12px;
   border-radius:999px;
@@ -492,7 +445,6 @@ img{
   background:linear-gradient(90deg,var(--mint),#b6ffe8);
   transition:width .25s ease;
 }
-
 .schedule-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -500,6 +452,8 @@ img{
   margin-top:12px;
 }
 .schedule-btn{
+  position:relative;
+  overflow:hidden;
   text-align:left;
   padding:10px 10px;
   border-radius:14px;
@@ -507,13 +461,31 @@ img{
   border:1px solid var(--line);
   transition:.18s ease;
 }
+.schedule-btn::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:0%;
+  background:linear-gradient(90deg, rgba(255,123,199,.28), rgba(139,125,255,.28));
+  pointer-events:none;
+  z-index:0;
+}
+.schedule-btn > *{
+  position:relative;
+  z-index:1;
+}
+.schedule-btn.is-running::before{
+  animation:actionFill var(--fill-duration, 1700ms) linear forwards;
+}
+@keyframes actionFill{
+  from{ width:0%; }
+  to{ width:100%; }
+}
 .schedule-btn:hover:not(:disabled){
   transform:translateY(-1px);
   background:rgba(255,255,255,.07);
 }
-.schedule-btn:disabled{
-  opacity:.45;
-}
+.schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
   display:block;
   font-size:12px;
@@ -526,7 +498,6 @@ img{
   color:var(--sub);
   line-height:1.3;
 }
-
 .center-wrap{
   min-height:calc(100vh - var(--top-h) - 30px);
   display:flex;
@@ -592,14 +563,12 @@ img{
   color:var(--sub);
   line-height:1.7;
 }
-
 .room-layout{
   display:grid;
   grid-template-columns:1.18fr .82fr;
   gap:14px;
   min-height:calc(100vh - var(--top-h) - 30px);
 }
-
 .room-scene{
   position:relative;
   min-height:560px;
@@ -608,7 +577,6 @@ img{
   overflow:hidden;
   background:#222;
 }
-
 .room-map{
   position:absolute;
   inset:0;
@@ -616,7 +584,6 @@ img{
     linear-gradient(rgba(20,19,32,.18), rgba(20,19,32,.22)),
     url("img/room_default.png") center center / cover no-repeat;
 }
-
 .room-help{
   position:absolute;
   left:12px;
@@ -630,7 +597,6 @@ img{
   color:#f0ebff;
   backdrop-filter:blur(8px);
 }
-
 .room-player{
   position:absolute;
   z-index:10;
@@ -648,10 +614,7 @@ img{
   image-rendering:pixelated;
   filter:drop-shadow(0 3px 6px rgba(0,0,0,.42));
 }
-.room-player.left{
-  transform:scaleX(-1);
-}
-
+.room-player.left{ transform:scaleX(-1); }
 .room-marker{
   position:absolute;
   z-index:5;
@@ -674,7 +637,6 @@ img{
   color:#eee8ff;
   text-shadow:0 2px 6px rgba(0,0,0,.45);
 }
-
 .hint-box{
   padding:12px;
   border-radius:14px;
@@ -684,7 +646,6 @@ img{
   line-height:1.6;
   min-height:90px;
 }
-
 .badge-row{
   display:flex;
   flex-wrap:wrap;
@@ -700,16 +661,14 @@ img{
   font-size:12px;
 }
 .badge strong{color:var(--text)}
-
 @media (max-width: 980px){
-  .room-layout{
-    grid-template-columns:1fr;
-  }
-  .room-scene{
-    min-height:420px;
-  }
+  .room-layout{ grid-template-columns:1fr; }
+  .room-scene{ min-height:420px; }
 }
-
+@media (max-width: 760px){
+  .stage-status-wrap{ grid-template-columns:1fr; }
+  .seed-stage{ aspect-ratio:3 / 2; }
+}
 @media (max-width: 640px){
   :root{ --top-h:120px; }
   .topbar{ padding:12px; }
@@ -718,7 +677,6 @@ img{
   .schedule-grid{ grid-template-columns:1fr 1fr; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
-
   .seed-player{
     width:48px;
     height:70px;
@@ -728,16 +686,10 @@ img{
     min-width:140px;
     font-size:11px;
   }
-
-  .seed-mini-status{
-    width:108px;
-    padding:7px;
-    right:8px;
-    top:8px;
-  }
+  .seed-side-status{ padding:10px; }
   .seed-mini-row{
-    grid-template-columns:28px 1fr 14px;
-    gap:4px;
+    grid-template-columns:32px 1fr 18px;
+    gap:5px;
     font-size:8px;
   }
   .seed-mini-row strong,
@@ -745,36 +697,22 @@ img{
   .seed-mini-title{
     font-size:8px;
   }
-
-  .schedule-btn{
-    padding:9px 9px;
-  }
-  .schedule-btn .title{
-    font-size:11px;
-  }
-  .schedule-btn .meta{
-    font-size:9px;
-  }
-
+  .schedule-btn{ padding:9px 9px; }
+  .schedule-btn .title{ font-size:11px; }
+  .schedule-btn .meta{ font-size:9px; }
   .room-player{
     width:39px;
     height:57px;
   }
-
   .topbar-right{
     width:100%;
     align-items:flex-start;
   }
-
-  .top-auth-row{
-    justify-content:flex-start;
-  }
-
+  .top-auth-row{ justify-content:flex-start; }
   .seed-day-badge{
     font-size:11px;
     padding:7px 10px;
   }
-
   .seed-awaken-btn{
     padding:9px 12px;
     font-size:11px;
@@ -807,77 +745,79 @@ img{
     <div class="main">
       <div class="layout">
         <div class="card panel">
-          <div class="seed-stage-wrap">
-            <div class="seed-stage bg-default" id="seedStage">
-              <div class="seed-day-badge" id="seedDayBadge">DAY1</div>
+          <div class="stage-status-wrap">
+            <div class="seed-stage-wrap">
+              <div class="seed-stage bg-default" id="seedStage">
+                <div class="seed-day-badge" id="seedDayBadge">DAY1</div>
 
-              <div class="seed-player" id="seedPlayer">
-                <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
-              </div>
-
-              <div class="seed-awaken-anchor hidden" id="seedAwakenAnchor">
-                <button class="seed-awaken-btn" id="awakenBtn">각성하기</button>
-              </div>
-
-              <div class="seed-status" id="seedStatus">...</div>
-
-              <div class="seed-bubble" id="seedBubble">
-                어? 왔어? 오늘은 어떤 하루를 보내게 될까?
-              </div>
-
-              <div class="seed-mini-status">
-                <div class="seed-mini-title">오늘의 상태</div>
-
-                <div class="seed-mini-row">
-                  <span>Dark</span>
-                  <div class="bar"><div class="fill dark" id="fill-dark"></div></div>
-                  <strong id="val-dark">0</strong>
+                <div class="seed-player" id="seedPlayer">
+                  <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
                 </div>
 
-                <div class="seed-mini-row">
-                  <span>Myst</span>
-                  <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
-                  <strong id="val-mystery">0</strong>
+                <div class="seed-awaken-anchor hidden" id="seedAwakenAnchor">
+                  <button class="seed-awaken-btn" id="awakenBtn">각성하기</button>
                 </div>
 
-                <div class="seed-mini-row">
-                  <span>Social</span>
-                  <div class="bar"><div class="fill social" id="fill-social"></div></div>
-                  <strong id="val-social">0</strong>
+                <div class="seed-status" id="seedStatus">...</div>
+
+                <div class="seed-bubble" id="seedBubble">
+                  어? 왔어? 오늘은 어떤 하루를 보내게 될까?
                 </div>
 
-                <div class="seed-mini-row">
-                  <span>Cute</span>
-                  <div class="bar"><div class="fill cute" id="fill-cute"></div></div>
-                  <strong id="val-cute">0</strong>
-                </div>
-
-                <div class="seed-mini-row">
-                  <span>Scary</span>
-                  <div class="bar"><div class="fill scary" id="fill-scary"></div></div>
-                  <strong id="val-scary">0</strong>
-                </div>
-
-                <div class="seed-mini-row">
-                  <span>Humor</span>
-                  <div class="bar"><div class="fill humor" id="fill-humor"></div></div>
-                  <strong id="val-humor">0</strong>
-                </div>
-
-                <div class="seed-energy-box">
-                  <div class="seed-energy-top">
-                    <span>Energy</span>
-                    <strong id="energyText">100 / 100</strong>
-                  </div>
-                  <div class="energy-bar">
-                    <div class="energy-fill" id="energyFill"></div>
-                  </div>
+                <div class="seed-label">
+                  <div class="name">미지의 KEY</div>
+                  <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
                 </div>
               </div>
+            </div>
 
-              <div class="seed-label">
-                <div class="name">미지의 KEY</div>
-                <div class="desc">아직 정해지지 않은 KEY의 가능성</div>
+            <div class="seed-side-status">
+              <div class="seed-mini-title">오늘의 상태</div>
+
+              <div class="seed-mini-row">
+                <span>Dark</span>
+                <div class="bar"><div class="fill dark" id="fill-dark"></div></div>
+                <strong id="val-dark">0</strong>
+              </div>
+
+              <div class="seed-mini-row">
+                <span>Myst</span>
+                <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
+                <strong id="val-mystery">0</strong>
+              </div>
+
+              <div class="seed-mini-row">
+                <span>Social</span>
+                <div class="bar"><div class="fill social" id="fill-social"></div></div>
+                <strong id="val-social">0</strong>
+              </div>
+
+              <div class="seed-mini-row">
+                <span>Cute</span>
+                <div class="bar"><div class="fill cute" id="fill-cute"></div></div>
+                <strong id="val-cute">0</strong>
+              </div>
+
+              <div class="seed-mini-row">
+                <span>Scary</span>
+                <div class="bar"><div class="fill scary" id="fill-scary"></div></div>
+                <strong id="val-scary">0</strong>
+              </div>
+
+              <div class="seed-mini-row">
+                <span>Humor</span>
+                <div class="bar"><div class="fill humor" id="fill-humor"></div></div>
+                <strong id="val-humor">0</strong>
+              </div>
+
+              <div class="seed-energy-box">
+                <div class="seed-energy-top">
+                  <span>Energy</span>
+                  <strong id="energyText">100 / 100</strong>
+                </div>
+                <div class="energy-bar">
+                  <div class="energy-fill" id="energyFill"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -885,7 +825,7 @@ img{
 
         <div class="card panel">
           <h3 class="section-title">스케줄 수행</h3>
-          <div class="small">하루에 5번 행동하면 자동으로 다음 날로 넘어가요. 30일째가 되면 각성의 날이 찾아옵니다.</div>
+          <div class="small">30일째가 되면 각성의 날이 찾아옵니다.</div>
 
           <div class="schedule-grid" id="scheduleGrid">
             <button class="schedule-btn" data-act="dance">
@@ -1131,7 +1071,6 @@ const seedDayBadge = document.getElementById('seedDayBadge');
 const energyText = document.getElementById('energyText');
 const energyFill = document.getElementById('energyFill');
 
-const awakenBtn = document.getElementById('awakenBtn');
 const awakenImg = document.getElementById('awakenImg');
 
 const seedStage = document.getElementById('seedStage');
@@ -1231,6 +1170,22 @@ function setScheduleButtonsDisabled(disabled){
   scheduleGrid.querySelectorAll('button').forEach(btn => {
     btn.disabled = disabled;
   });
+}
+
+function clearActionProgress(){
+  scheduleGrid.querySelectorAll('.schedule-btn').forEach(btn => {
+    btn.classList.remove('is-running');
+    btn.style.removeProperty('--fill-duration');
+  });
+}
+
+function startActionProgress(type, duration){
+  clearActionProgress();
+  const btn = scheduleGrid.querySelector(`.schedule-btn[data-act="${type}"]`);
+  if (!btn) return;
+  btn.style.setProperty('--fill-duration', `${duration}ms`);
+  void btn.offsetWidth;
+  btn.classList.add('is-running');
 }
 
 function showSeedStatus(text){
@@ -1345,6 +1300,7 @@ function startAction(type){
   updateAwakenButtonUI();
 
   const meta = actionMeta[type];
+  startActionProgress(type, meta.duration);
 
   if(type === 'walk'){
     updateSeedStageBackground('walk');
@@ -1352,15 +1308,14 @@ function startAction(type){
     updateSeedStageBackground('default');
   }
 
-  seedStage.classList.remove('resting');
   placeSeedPlayerInitial();
   renderSeedPlayer();
-
   showSeedStatus(meta.text);
 
   setTimeout(async () => {
     finishAction(type);
     hideSeedStatus();
+    clearActionProgress();
     state.isActing = false;
     setScheduleButtonsDisabled(false);
     updateScheduleUI();
@@ -1602,11 +1557,12 @@ function resetAll(){
   state.isActing = false;
   state.currentStageBg = 'default';
 
+  clearActionProgress();
+
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
   roomPlayerImg.src = imageSet.defaultRoom;
 
-  seedStage.classList.remove('resting');
   updateSeedStageBackground('default');
   setSeedMessage(dialogues.intro);
   hideSeedStatus();
@@ -1705,7 +1661,6 @@ function applySaveToState(save){
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
 
-  seedStage.classList.remove('resting');
   hideSeedStatus();
   updateSeedStageBackground(state.currentStageBg);
 
@@ -1722,6 +1677,7 @@ function applySaveToState(save){
     roomHint.textContent = '방 안으로 들어왔어요.';
   }
 
+  clearActionProgress();
   updateScheduleUI();
   renderSeedPlayer();
   renderRoomPlayer();
