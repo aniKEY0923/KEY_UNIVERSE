@@ -281,6 +281,13 @@ img{
     url("img/room_default.png") center center / cover no-repeat;
   transition:filter .35s ease, background .35s ease;
 }
+.seed-stage:not(.layout-ready) .seed-player,
+.seed-stage:not(.layout-ready) .stage-energy-box,
+.seed-stage:not(.layout-ready) .seed-status,
+.seed-stage:not(.layout-ready) .seed-bubble,
+.seed-stage:not(.layout-ready) .seed-awaken-anchor{
+  visibility:hidden;
+}
 .seed-stage.bg-default{
   background:
     linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.16)),
@@ -382,14 +389,14 @@ img{
 .seed-bubble:after{
   content:"";
   position:absolute;
-  left:50%;
+  left:26px;
   bottom:-10px;
   width:16px;
   height:16px;
   background:rgba(255,255,255,.96);
   border-right:1px solid rgba(182,160,137,.16);
   border-bottom:1px solid rgba(182,160,137,.16);
-  transform:translateX(-50%) rotate(45deg);
+  transform:rotate(45deg);
 }
 
 .seed-status{
@@ -1442,6 +1449,55 @@ body.resizing .seed-awaken-anchor{
     </div>
   </section>
 
+  <div class="mini-game-layer" id="miniGameLayer">
+    <div class="mini-game-card">
+      <div class="mini-game-top">
+        <div>
+          <div class="mini-game-title">CONCERT RHYTHM</div>
+          <div class="mini-game-sub">A / S / D / F 키 또는 화면 버튼으로 박자를 맞춰주세요.</div>
+        </div>
+        <div class="mini-game-stats">
+          <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
+          <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
+          <div class="mini-pill">TIME <strong id="miniTime">20.0</strong></div>
+        </div>
+      </div>
+
+      <div class="mini-game-body">
+        <div class="mini-rhythm-stage" id="miniRhythmStage">
+          <div class="mini-rhythm-lanes">
+            <div class="mini-lane" data-lane="0"></div>
+            <div class="mini-lane" data-lane="1"></div>
+            <div class="mini-lane" data-lane="2"></div>
+            <div class="mini-lane" data-lane="3"></div>
+          </div>
+          <div class="mini-feedback" id="miniFeedback">START</div>
+          <div class="mini-hit-line"></div>
+          <div class="mini-hit-buttons">
+            <button type="button" class="mini-hit-btn" data-lane="0">A</button>
+            <button type="button" class="mini-hit-btn" data-lane="1">S</button>
+            <button type="button" class="mini-hit-btn" data-lane="2">D</button>
+            <button type="button" class="mini-hit-btn" data-lane="3">F</button>
+          </div>
+
+          <div class="mini-game-result" id="miniGameResult">
+            <div class="mini-result-card">
+              <div class="mini-result-title" id="miniResultTitle">좋은 무대였어요</div>
+              <div class="mini-result-desc" id="miniResultDesc">오늘 무대, 진짜 뜨거웠어.</div>
+              <div class="mini-result-grid">
+                <div class="mini-result-chip"><strong id="miniResultScore">0</strong>점수</div>
+                <div class="mini-result-chip"><strong id="miniResultPerfect">0</strong>Perfect</div>
+                <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Good</div>
+              </div>
+              <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1767,6 +1823,15 @@ miniFinishBtn.addEventListener('click', () => {
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
+
+  if (name === 'schedule') {
+    requestAnimationFrame(() => syncSeedStageLayout({ immediate:true }));
+  } else if (name === 'room') {
+    requestAnimationFrame(() => {
+      placeRoomPlayerInitial();
+      renderRoomPlayer();
+    });
+  }
 }
 
 function getCurrentScreenName(){
@@ -2186,6 +2251,23 @@ function updateScheduleUI(){
   positionStageEnergyBar();
 }
 
+function syncSeedStageLayout(options = {}){
+  const immediate = options.immediate !== false;
+  const rect = seedStage.getBoundingClientRect();
+
+  if (rect.width < 40 || rect.height < 40) {
+    seedStage.classList.remove('layout-ready');
+    requestAnimationFrame(() => syncSeedStageLayout({ immediate:true }));
+    return;
+  }
+
+  placeSeedPlayerInitial();
+  renderSeedPlayer({ immediate });
+  updateAwakenButtonUI();
+  positionStageEnergyBar();
+  seedStage.classList.add('layout-ready');
+}
+
 function placeSeedPlayerInitial(){
   const rect = seedStage.getBoundingClientRect();
 
@@ -2196,7 +2278,7 @@ function placeSeedPlayerInitial(){
   const targetCenterY = rect.height * (3 / 4);
   state.seedPlayer.y = clamp(
     targetCenterY - state.seedPlayer.h / 2,
-    110,
+    Math.max(84, rect.height * 0.25),
     rect.height - state.seedPlayer.h - 12
   );
 
@@ -2297,8 +2379,7 @@ function startAction(type){
     updateSeedStageBackground('default');
   }
 
-  placeSeedPlayerInitial();
-  renderSeedPlayer();
+  syncSeedStageLayout({ immediate:true });
   showSeedStatus(meta.text);
 
   setTimeout(async () => {
@@ -2517,8 +2598,7 @@ function resetAll(){
   document.getElementById('roomBadges').innerHTML = '';
   roomHint.textContent = '방 안으로 들어왔어요.';
 
-  placeSeedPlayerInitial();
-  renderSeedPlayer();
+  syncSeedStageLayout({ immediate:true });
   placeRoomPlayerInitial();
   renderRoomPlayer();
 
@@ -2629,8 +2709,7 @@ function applySaveToState(save){
 
   clearActionProgress();
   updateScheduleUI();
-  placeSeedPlayerInitial();
-  renderSeedPlayer();
+  syncSeedStageLayout({ immediate:true });
   renderRoomPlayer();
 
   const nextScreen = ['schedule', 'awaken', 'room'].includes(p.currentScreen)
@@ -2859,10 +2938,7 @@ function handleResizeSync(){
   document.body.classList.add('resizing');
 
   if(screens.schedule.classList.contains('active')){
-    placeSeedPlayerInitial();
-    renderSeedPlayer({ immediate:true });
-    updateAwakenButtonUI();
-    positionStageEnergyBar();
+    syncSeedStageLayout({ immediate:true });
   }
 
   if(screens.room.classList.contains('active')){
@@ -2913,12 +2989,27 @@ roomPlayerImg.src = imageSet.defaultRoom;
 awakenImg.src = imageSet.defaultLarge;
 
 updateSeedStageBackground('default');
-placeSeedPlayerInitial();
-renderSeedPlayer({ immediate:true });
+syncSeedStageLayout({ immediate:true });
 placeRoomPlayerInitial();
 renderRoomPlayer();
 updateAwakenButtonUI();
 positionStageEnergyBar();
+
+window.addEventListener('load', () => {
+  syncSeedStageLayout({ immediate:true });
+  setTimeout(() => syncSeedStageLayout({ immediate:true }), 80);
+  setTimeout(() => syncSeedStageLayout({ immediate:true }), 260);
+});
+seedPlayerImg.addEventListener('load', () => syncSeedStageLayout({ immediate:true }));
+
+if (window.ResizeObserver) {
+  const stageResizeObserver = new ResizeObserver(() => {
+    if (screens.schedule.classList.contains('active')) {
+      syncSeedStageLayout({ immediate:true });
+    }
+  });
+  stageResizeObserver.observe(seedStage);
+}
 
 bootGame();
 </script>
