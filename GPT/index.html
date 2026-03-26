@@ -6,18 +6,18 @@
 <title>KEY:VERSE</title>
 <style>
 :root{
-  --bg1:#141320;
-  --bg2:#211d34;
-  --panel:#2a2640;
-  --line:rgba(255,255,255,.08);
-  --text:#f5f2ff;
-  --sub:#bdb6d8;
+  --bg1:#221f38;
+  --bg2:#332d52;
+  --panel:#342f52;
+  --line:rgba(255,255,255,.10);
+  --text:#f7f3ff;
+  --sub:#d0c7ea;
   --pink:#ff7bc7;
   --violet:#8b7dff;
   --gold:#f3c56c;
   --mint:#7df0d0;
   --radius:20px;
-  --shadow:0 16px 40px rgba(0,0,0,.32);
+  --shadow:0 16px 40px rgba(0,0,0,.24);
   --top-h:72px;
 }
 
@@ -28,7 +28,7 @@ body{
   color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:
-    radial-gradient(circle at top, rgba(125,100,255,.24) 0%, transparent 28%),
+    radial-gradient(circle at top, rgba(165,145,255,.28) 0%, transparent 30%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
   overflow:hidden;
   touch-action:manipulation;
@@ -116,7 +116,7 @@ img{
   align-items:center;
   gap:8px;
   padding:10px 12px;
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.08);
   border:1px solid var(--line);
   border-radius:999px;
   box-shadow:var(--shadow);
@@ -135,7 +135,7 @@ img{
 .mini-btn{
   padding:10px 12px;
   border-radius:999px;
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.08);
   border:1px solid var(--line);
   box-shadow:var(--shadow);
   color:var(--text);
@@ -157,7 +157,7 @@ img{
 }
 
 .card{
-  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.05));
   border:1px solid var(--line);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
@@ -212,7 +212,7 @@ img{
 }
 .primary-btn:disabled{ opacity:.45; }
 .secondary-btn{
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.08);
   border:1px solid var(--line);
 }
 
@@ -247,34 +247,34 @@ img{
   overflow:hidden;
   border:1px solid var(--line);
   background:
-    linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
+    linear-gradient(rgba(20,19,32,.20), rgba(20,19,32,.32)),
     url("img/room_default.png") center center / cover no-repeat;
   transition:filter .35s ease, background .35s ease;
 }
 .seed-stage.bg-default{
   background:
-    linear-gradient(rgba(20,19,32,.30), rgba(20,19,32,.44)),
-    url("img/room_default.png") center center / cover no-repeat;
+    linear-gradient(rgba(20,19,32,.20), rgba(20,19,32,.32)),
+    url("img/room_default.png") center center / 108% 108% no-repeat;
 }
 .seed-stage.bg-walk{
   background:
-    linear-gradient(rgba(12,10,24,.20), rgba(12,10,24,.42)),
-    url("img/walk.jpg") center center / cover no-repeat;
+    linear-gradient(rgba(12,10,24,.16), rgba(12,10,24,.30)),
+    url("img/walk.jpg") center center / 108% 108% no-repeat;
 }
 .seed-stage:before{
   content:"";
   position:absolute;
-  width:220px;
-  height:220px;
+  width:240px;
+  height:240px;
   left:50%;
-  top:48%;
+  top:50%;
   transform:translate(-50%,-50%);
   border-radius:50%;
-  background:radial-gradient(circle, rgba(255,123,199,.10), rgba(139,125,255,0));
+  background:radial-gradient(circle, rgba(255,123,199,.12), rgba(139,125,255,0));
   filter:blur(8px);
   animation:pulse 3s ease-in-out infinite;
 }
-.seed-stage.resting{ filter:brightness(.62) saturate(.88); }
+.seed-stage.resting{ filter:brightness(.68) saturate(.92); }
 
 @keyframes pulse{
   0%,100%{opacity:.72}
@@ -288,9 +288,9 @@ img{
   z-index:7;
   padding:8px 12px;
   border-radius:999px;
-  background:rgba(14,12,24,.58);
+  background:rgba(25,20,42,.54);
   border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  box-shadow:0 6px 16px rgba(0,0,0,.14);
   backdrop-filter:blur(8px);
   font-size:12px;
   font-weight:900;
@@ -314,7 +314,7 @@ img{
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.42));
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.36));
 }
 .seed-player.left{ transform:scaleX(-1); }
 .seed-stage.resting .seed-player{ filter:brightness(.78); }
@@ -342,16 +342,16 @@ img{
 
 .seed-bubble{
   position:absolute;
-  z-index:4;
+  z-index:6;
   max-width:220px;
   min-width:160px;
   padding:10px 12px;
   border-radius:16px;
-  background:rgba(255,255,255,.92);
+  background:rgba(255,255,255,.94);
   color:#453b62;
   font-size:12px;
   line-height:1.45;
-  box-shadow:0 8px 20px rgba(0,0,0,.18);
+  box-shadow:0 8px 20px rgba(0,0,0,.14);
   border:1px solid rgba(120,100,180,.14);
   transition:left .2s ease, top .2s ease;
 }
@@ -362,7 +362,7 @@ img{
   bottom:-10px;
   width:16px;
   height:16px;
-  background:rgba(255,255,255,.92);
+  background:rgba(255,255,255,.94);
   border-right:1px solid rgba(120,100,180,.14);
   border-bottom:1px solid rgba(120,100,180,.14);
   transform:translateX(-50%) rotate(45deg);
@@ -375,12 +375,12 @@ img{
   text-align:center;
   padding:4px 8px;
   border-radius:999px;
-  background:rgba(0,0,0,.62);
+  background:rgba(0,0,0,.58);
   color:#fff;
   font-size:12px;
   font-weight:900;
   letter-spacing:.04em;
-  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  box-shadow:0 4px 12px rgba(0,0,0,.16);
   pointer-events:none;
   opacity:0;
   transform:translateY(0);
@@ -405,19 +405,19 @@ img{
 .seed-label .name{
   font-size:18px;
   font-weight:900;
-  text-shadow:0 2px 10px rgba(0,0,0,.25);
+  text-shadow:0 2px 10px rgba(0,0,0,.22);
 }
 .seed-label .desc{
   margin-top:4px;
-  color:#ddd6f5;
+  color:#e4dcf8;
   font-size:12px;
-  text-shadow:0 2px 10px rgba(0,0,0,.3);
+  text-shadow:0 2px 10px rgba(0,0,0,.26);
 }
 
 .stage-energy-box{
   position:absolute;
-  z-index:6;
-  width:100px;
+  z-index:4;
+  width:50px;
   height:10px;
   left:0;
   top:0;
@@ -430,9 +430,9 @@ img{
   height:100%;
   border-radius:999px;
   overflow:hidden;
-  background:rgba(0,0,0,.42);
+  background:rgba(0,0,0,.38);
   border:1px solid rgba(255,255,255,.18);
-  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
 }
 .stage-energy-fill{
   height:100%;
@@ -444,9 +444,9 @@ img{
 .seed-side-status{
   padding:12px;
   border-radius:18px;
-  background:rgba(26,22,42,.76);
+  background:rgba(42,36,68,.74);
   border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 8px 20px rgba(0,0,0,.20);
+  box-shadow:0 8px 20px rgba(0,0,0,.16);
   backdrop-filter:blur(8px);
   display:flex;
   flex-direction:column;
@@ -468,7 +468,7 @@ img{
   align-items:center;
   margin-bottom:8px;
   font-size:9px;
-  color:#d8d1f0;
+  color:#e1daf5;
 }
 .seed-mini-row strong{
   font-size:9px;
@@ -480,7 +480,7 @@ img{
 .bar{
   height:10px;
   border-radius:999px;
-  background:rgba(255,255,255,.06);
+  background:rgba(255,255,255,.07);
   overflow:hidden;
   border:1px solid rgba(255,255,255,.05);
 }
@@ -510,7 +510,7 @@ img{
   padding:12px 10px;
   min-height:54px;
   border-radius:14px;
-  background:rgba(255,255,255,.04);
+  background:rgba(255,255,255,.05);
   border:1px solid var(--line);
   transition:.18s ease;
   display:flex;
@@ -539,7 +539,7 @@ img{
 }
 .schedule-btn:hover:not(:disabled){
   transform:translateY(-1px);
-  background:rgba(255,255,255,.07);
+  background:rgba(255,255,255,.09);
 }
 .schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
@@ -628,14 +628,14 @@ img{
   border-radius:18px;
   border:1px solid var(--line);
   overflow:hidden;
-  background:#222;
+  background:#2f2a4a;
 }
 .room-map{
   position:absolute;
   inset:0;
   background:
-    linear-gradient(rgba(20,19,32,.18), rgba(20,19,32,.22)),
-    url("img/room_default.png") center center / cover no-repeat;
+    linear-gradient(rgba(20,19,32,.14), rgba(20,19,32,.18)),
+    url("img/room_default.png") center center / 108% 108% no-repeat;
 }
 .room-help{
   position:absolute;
@@ -644,7 +644,7 @@ img{
   z-index:6;
   padding:8px 10px;
   border-radius:12px;
-  background:rgba(0,0,0,.28);
+  background:rgba(0,0,0,.24);
   border:1px solid rgba(255,255,255,.08);
   font-size:12px;
   color:#f0ebff;
@@ -665,7 +665,7 @@ img{
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.42));
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.34));
 }
 .room-player.left{ transform:scaleX(-1); }
 .room-marker{
@@ -688,12 +688,12 @@ img{
   white-space:nowrap;
   font-size:11px;
   color:#eee8ff;
-  text-shadow:0 2px 6px rgba(0,0,0,.45);
+  text-shadow:0 2px 6px rgba(0,0,0,.40);
 }
 .hint-box{
   padding:12px;
   border-radius:14px;
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.06);
   border:1px solid var(--line);
   color:var(--sub);
   line-height:1.6;
@@ -708,7 +708,7 @@ img{
 .badge{
   padding:8px 12px;
   border-radius:999px;
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.06);
   border:1px solid var(--line);
   color:var(--sub);
   font-size:12px;
@@ -753,7 +753,7 @@ body.resizing .seed-awaken-anchor{
   }
 
   .stage-energy-box{
-    width:100px;
+    width:50px;
     height:9px;
   }
 
@@ -1290,7 +1290,8 @@ function updateSeedPlayerScale(){
   const rect = seedStage.getBoundingClientRect();
   const stageSize = Math.min(rect.width, rect.height);
 
-  const scaledW = clamp(stageSize * 0.13, 42, 78);
+  const baseScaledW = clamp(stageSize * 0.13, 42, 78);
+  const scaledW = baseScaledW * 1.05;
   const scaledH = scaledW * (state.seedPlayer.baseH / state.seedPlayer.baseW);
 
   state.seedPlayer.w = scaledW;
@@ -1304,7 +1305,7 @@ function positionSeedBubble(){
   const bubbleWidth = seedBubble.offsetWidth || 180;
   const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
   const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
-  const bubbleTop = Math.max(8, state.seedPlayer.y - 74);
+  const bubbleTop = Math.max(8, state.seedPlayer.y - 112);
 
   seedBubble.style.left = `${bubbleLeft}px`;
   seedBubble.style.top = `${bubbleTop}px`;
@@ -1313,15 +1314,15 @@ function positionSeedBubble(){
 function positionSeedStatus(){
   const statusWidth = seedStatus.offsetWidth || 40;
   const x = state.seedPlayer.x + state.seedPlayer.w / 2 - statusWidth / 2;
-  const y = state.seedPlayer.y - 22;
+  const y = state.seedPlayer.y - 48;
   seedStatus.style.left = `${clamp(x, 8, seedStage.clientWidth - statusWidth - 8)}px`;
   seedStatus.style.top = `${Math.max(8, y)}px`;
 }
 
 function positionStageEnergyBar(){
   const x = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const y = state.seedPlayer.y - 14;
-  const halfBar = 50;
+  const y = state.seedPlayer.y - 20;
+  const halfBar = 25;
   const minX = halfBar + 8;
   const maxX = seedStage.clientWidth - halfBar - 8;
   const finalX = clamp(x, minX, maxX);
@@ -1374,11 +1375,11 @@ function placeSeedPlayerInitial(){
 
   state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
 
-  const targetCenterY = rect.height * (3 / 5);
+  const targetCenterY = rect.height * (3 / 4);
   state.seedPlayer.y = clamp(
     targetCenterY - state.seedPlayer.h / 2,
-    88,
-    rect.height - state.seedPlayer.h - 16
+    110,
+    rect.height - state.seedPlayer.h - 12
   );
 
   positionSeedBubble();
