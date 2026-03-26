@@ -541,36 +541,79 @@ img{
   padding:12px 10px;
   min-height:54px;
   border-radius:14px;
+
+  /* 기존 밝은 색 유지 */
   background:rgba(255,255,255,.72);
-  border:1px solid var(--line);
+
+  border:1px solid rgba(120,104,87,.14);
   transition:.18s ease;
+
   display:flex;
   align-items:center;
   justify-content:center;
 }
+
+/* 진행 오버레이 */
 .schedule-btn::before{
   content:"";
   position:absolute;
   inset:0 auto 0 0;
   width:0%;
-  background:linear-gradient(90deg, rgba(241,167,200,.26), rgba(201,195,232,.26));
+
+  background:linear-gradient(
+    90deg,
+    rgba(241,167,200,.6),
+    rgba(201,195,232,.7)
+  );
+
   pointer-events:none;
   z-index:0;
 }
+
+/* 하이라이트 */
+.schedule-btn::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.35),
+    rgba(255,255,255,0)
+  );
+  pointer-events:none;
+  z-index:0;
+}
+
 .schedule-btn > *{
   position:relative;
   z-index:1;
 }
+
+/* ⭐ 핵심: 진행중 효과 */
+.schedule-btn.is-running{
+  animation:btnPulse 1.2s ease-in-out infinite;
+  transform:scale(.96);
+
+  box-shadow:
+    inset 0 3px 8px rgba(120,104,87,.2),
+    0 6px 14px rgba(120,104,87,.12);
+}
+
+/* 진행 바 */
 .schedule-btn.is-running::before{
   animation:actionFill var(--fill-duration, 1700ms) linear forwards;
 }
+
+/* 애니메이션 */
 @keyframes actionFill{
   from{ width:0%; }
   to{ width:100%; }
 }
-.schedule-btn:hover:not(:disabled){
-  transform:translateY(-1px);
-  background:#fffefb;
+
+@keyframes btnPulse{
+  0%,100%{ transform:scale(.96); }
+  50%{ transform:scale(.99); }
+}
 }
 .schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
