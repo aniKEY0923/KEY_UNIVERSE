@@ -819,6 +819,10 @@ img{
     radial-gradient(circle at top, rgba(255,255,255,.16), transparent 32%),
     url("img/keyland.jpg") center center / cover no-repeat;
   border:1px solid rgba(255,255,255,.10);
+  transform-origin:50% 56%;
+}
+.mini-rhythm-stage.perfect-pulse{
+  animation:miniStagePerfectPulse .26s ease-out;
 }
 .mini-rhythm-lanes{
   position:absolute;
@@ -886,7 +890,78 @@ img{
 }
 .mini-feedback.show{
   opacity:1;
-  transform:translateX(-50%) translateY(-6px);
+  transform:translateX(-50%) translateY(-10px) scale(1.08);
+}
+.mini-feedback.perfect{
+  background:rgba(255,240,248,.22);
+  border-color:rgba(255,255,255,.34);
+  box-shadow:0 0 28px rgba(255,194,220,.26);
+}
+.mini-feedback.cool{
+  background:rgba(232,244,255,.18);
+  border-color:rgba(255,255,255,.26);
+  box-shadow:0 0 24px rgba(168,216,199,.18);
+}
+.mini-feedback.miss{
+  background:rgba(255,120,120,.18);
+  border-color:rgba(255,160,160,.28);
+}
+.mini-hit-fx{
+  position:absolute;
+  width:118px;
+  height:118px;
+  border-radius:999px;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(.52);
+  opacity:0;
+}
+.mini-hit-fx::before,
+.mini-hit-fx::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+}
+.mini-hit-fx::before{
+  border:4px solid rgba(255,255,255,.72);
+}
+.mini-hit-fx::after{
+  inset:18px;
+  border:2px solid rgba(255,255,255,.36);
+}
+.mini-hit-fx.perfect{
+  background:radial-gradient(circle, rgba(255,232,242,.36) 0%, rgba(255,206,226,.18) 34%, rgba(255,255,255,0) 70%);
+  animation:miniHitBurst .36s ease-out forwards;
+}
+.mini-hit-fx.cool{
+  background:radial-gradient(circle, rgba(225,246,255,.28) 0%, rgba(194,225,255,.16) 34%, rgba(255,255,255,0) 70%);
+  animation:miniHitBurst .34s ease-out forwards;
+}
+.mini-hit-fx.miss{
+  background:radial-gradient(circle, rgba(255,140,140,.22) 0%, rgba(255,110,110,.12) 34%, rgba(255,255,255,0) 70%);
+  animation:miniHitBurst .28s ease-out forwards;
+}
+.mini-lane.flash::after{
+  content:"";
+  position:absolute;
+  left:10%;
+  right:10%;
+  bottom:72px;
+  height:88px;
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.18));
+  animation:miniLaneFlash .20s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes miniHitBurst{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(.42); }
+  20%{ opacity:1; }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.12); }
+}
+@keyframes miniLaneFlash{
+  0%{ opacity:0; transform:translateY(12px); }
+  30%{ opacity:1; }
+  100%{ opacity:0; transform:translateY(-8px); }
 }
 .mini-hit-buttons{
   position:absolute;
@@ -1287,6 +1362,8 @@ body.resizing .seed-awaken-anchor{
 
                     <div class="submenu" id="giftFoodSubmenu">
                       <button type="button" data-food="샐러드">샐러드</button>
+                      <button type="button" data-food="고수샐러드">고수샐러드</button>
+                      <button type="button" data-food="당근카레">당근카레</button>
                       <button type="button" data-food="두릅튀김">두릅튀김</button>
                       <button type="button" data-food="파스타">파스타</button>
                     </div>
@@ -1464,7 +1541,7 @@ body.resizing .seed-awaken-anchor{
       <div class="mini-game-top">
         <div>
           <div class="mini-game-title">CONCERT RHYTHM</div>
-          <div class="mini-game-sub">A / S / D / F 키 또는 화면 버튼으로 박자를 맞춰주세요.</div>
+          <div class="mini-game-sub">A / S / D / F 키 또는 화면 버튼으로 천천히 내려오는 노트에 박자를 맞춰주세요.</div>
         </div>
         <div class="mini-game-stats">
           <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
@@ -1497,7 +1574,7 @@ body.resizing .seed-awaken-anchor{
               <div class="mini-result-grid">
                 <div class="mini-result-chip"><strong id="miniResultScore">0</strong>점수</div>
                 <div class="mini-result-chip"><strong id="miniResultPerfect">0</strong>Perfect</div>
-                <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Good</div>
+                <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Cool</div>
               </div>
               <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
             </div>
@@ -1619,6 +1696,8 @@ const dialogues = {
   nextDay: '하루가 지나고 새로운 아침이 밝았어.',
   ready: '오늘은… 각성의 날이 온 것 같아.',
   giftSalad: '샐러드 맛있었다. 고마워.',
+  giftCorianderSalad: '고수샐러드...? 미안, 이건 조금 어려울지도. 그래도 챙겨준 마음은 고마워.',
+  giftCarrotCurry: '당근카레는... 오늘은 조금 용기가 필요할 것 같아. 그래도 신경 써줘서 고마워.',
   giftFried: '두릅튀김이라니, 맛있게 잘 먹었어. 고마워.',
   giftPasta: '파스타 정말 맛있었다. 챙겨줘서 고마워.',
   giftFlower: '지중해풍 꽃이라니, 방 안 공기까지 달라진 것 같아. 고마워.',
@@ -1758,6 +1837,8 @@ giftFoodSubmenu.querySelectorAll('[data-food]').forEach(btn => {
   btn.addEventListener('click', async () => {
     const food = btn.dataset.food;
     if (food === '샐러드') setSeedMessage(dialogues.giftSalad);
+    if (food === '고수샐러드') setSeedMessage(dialogues.giftCorianderSalad);
+    if (food === '당근카레') setSeedMessage(dialogues.giftCarrotCurry);
     if (food === '두릅튀김') setSeedMessage(dialogues.giftFried);
     if (food === '파스타') setSeedMessage(dialogues.giftPasta);
     closeGiftMenus();
@@ -2033,13 +2114,28 @@ function updateMiniGameHUD(){
   miniTimeEl.textContent = remain.toFixed(1);
 }
 
-function showMiniFeedback(text){
+function spawnMiniHitFX(lane, type){
+  const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
+  if (!laneEl) return;
+  laneEl.classList.add('flash');
+  setTimeout(() => laneEl.classList.remove('flash'), 180);
+
+  const fx = document.createElement('div');
+  fx.className = `mini-hit-fx ${type}`;
+  fx.style.left = '50%';
+  fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 86}px`;
+  laneEl.appendChild(fx);
+  setTimeout(() => fx.remove(), 420);
+}
+
+function showMiniFeedback(text, type='perfect'){
   miniFeedback.textContent = text;
-  miniFeedback.classList.add('show');
+  miniFeedback.classList.remove('perfect','cool','miss');
+  miniFeedback.classList.add(type, 'show');
   clearTimeout(miniGame.feedbackTimer);
   miniGame.feedbackTimer = setTimeout(() => {
-    miniFeedback.classList.remove('show');
-  }, 160);
+    miniFeedback.classList.remove('show','perfect','cool','miss');
+  }, 420);
 }
 
 function clearMiniNotes(){
@@ -2061,7 +2157,7 @@ function spawnMiniNote(){
     id: ++miniGame.noteSeq,
     lane,
     y: -28,
-    speed: (miniRhythmStage.clientHeight || 420) * (0.00110 + Math.random() * 0.00022),
+    speed: (miniRhythmStage.clientHeight || 420) * (0.00042 + Math.random() * 0.00008),
     el: note
   });
 }
@@ -2083,7 +2179,8 @@ function pressMiniLane(lane){
   if (!candidates.length) {
     miniGame.combo = 0;
     miniGame.miss += 1;
-    showMiniFeedback('MISS');
+    showMiniFeedback('MISS', 'miss');
+    spawnMiniHitFX(lane, 'miss');
     updateMiniGameHUD();
     return;
   }
@@ -2091,22 +2188,26 @@ function pressMiniLane(lane){
   const target = candidates[0];
   const distance = Math.abs(target.y - hitLine);
 
-  if (distance <= 20) {
+  if (distance <= 34) {
     miniGame.score += 120 + Math.min(60, miniGame.combo * 2);
     miniGame.combo += 1;
     miniGame.perfect += 1;
     target.el.classList.add('hit');
-    showMiniFeedback('PERFECT');
-  } else if (distance <= 42) {
-    miniGame.score += 70;
+    showMiniFeedback('PERFECT', 'perfect');
+    spawnMiniHitFX(lane, 'perfect');
+    triggerMiniStagePulse();
+  } else if (distance <= 72) {
+    miniGame.score += 80;
     miniGame.combo += 1;
     miniGame.good += 1;
     target.el.classList.add('hit');
-    showMiniFeedback('GOOD');
+    showMiniFeedback('COOL', 'cool');
+    spawnMiniHitFX(lane, 'cool');
   } else {
     miniGame.combo = 0;
     miniGame.miss += 1;
-    showMiniFeedback('MISS');
+    showMiniFeedback('MISS', 'miss');
+    spawnMiniHitFX(lane, 'miss');
     updateMiniGameHUD();
     return;
   }
@@ -2129,6 +2230,7 @@ function tickMiniGame(now){
       note.el.remove();
       miniGame.combo = 0;
       miniGame.miss += 1;
+      showMiniFeedback('MISS', 'miss');
       return false;
     }
 
@@ -2149,10 +2251,10 @@ function beginMiniGameSpawns(){
   spawnMiniNote();
   miniGame.spawnTimer = setInterval(() => {
     spawnMiniNote();
-    if (Math.random() < 0.3) {
-      setTimeout(spawnMiniNote, 320);
+    if (Math.random() < 0.12) {
+      setTimeout(spawnMiniNote, 920);
     }
-  }, 860);
+  }, 1640);
 }
 
 function startConcertMiniGame(){
@@ -2170,7 +2272,7 @@ function startConcertMiniGame(){
   miniGameResult.classList.remove('show');
   miniGameLayer.classList.add('active');
   updateMiniGameHUD();
-  showMiniFeedback('START');
+  showMiniFeedback('START', 'cool');
 
   beginMiniGameSpawns();
   miniGame.rafId = requestAnimationFrame(tickMiniGame);
