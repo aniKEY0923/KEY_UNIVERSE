@@ -326,12 +326,14 @@ img{
   z-index:3;
   width:54px;
   height:78px;
-  left:50%;
-  top:50%;
+  left:0;
+  top:0;
+  opacity:0;
   pointer-events:none;
   will-change:left, top, transform, filter, width, height;
-  transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease, width .2s ease, height .2s ease;
+  transition:left .75s ease, top .75s ease, transform .2s ease, filter .35s ease, width .2s ease, height .2s ease, opacity .12s ease;
 }
+.seed-stage.layout-ready .seed-player.placed{ opacity:1; }
 .seed-player.no-motion{
   transition:none !important;
 }
@@ -349,10 +351,12 @@ img{
   z-index:8;
   left:0;
   top:0;
+  opacity:0;
   transform:translate(-50%, 0);
   pointer-events:none;
-  transition:left .2s ease, top .2s ease;
+  transition:left .2s ease, top .2s ease, opacity .12s ease;
 }
+.seed-stage.layout-ready .seed-awaken-anchor.placed{ opacity:1; }
 .seed-awaken-btn{
   pointer-events:auto;
   padding:10px 14px;
@@ -377,10 +381,12 @@ img{
   color:#5a4a3f;
   font-size:12px;
   line-height:1.45;
+  opacity:0;
   box-shadow:0 8px 20px rgba(122,104,85,.12);
   border:1px solid rgba(182,160,137,.16);
-  transition:left .2s ease, top .2s ease;
+  transition:left .2s ease, top .2s ease, opacity .12s ease;
 }
+.seed-stage.layout-ready .seed-bubble.placed{ opacity:1; }
 .seed-bubble.no-motion,
 .seed-status.no-motion,
 .stage-energy-box.no-motion{
@@ -389,14 +395,14 @@ img{
 .seed-bubble:after{
   content:"";
   position:absolute;
-  left:26px;
+  left:var(--tail-x, 50%);
   bottom:-10px;
   width:16px;
   height:16px;
   background:rgba(255,255,255,.96);
   border-right:1px solid rgba(182,160,137,.16);
   border-bottom:1px solid rgba(182,160,137,.16);
-  transform:rotate(45deg);
+  transform:translateX(-50%) rotate(45deg);
 }
 
 .seed-status{
@@ -415,7 +421,7 @@ img{
   pointer-events:none;
   opacity:0;
   transform:translateY(0);
-  transition:left .2s ease, top .2s ease;
+  transition:left .2s ease, top .2s ease, opacity .12s ease;
 }
 .seed-status.show{
   opacity:1;
@@ -447,10 +453,12 @@ img{
   height:11px;
   left:0;
   top:0;
+  opacity:0;
   transform:translateX(-50%);
   pointer-events:none;
-  transition:left .2s ease, top .2s ease;
+  transition:left .2s ease, top .2s ease, opacity .12s ease;
 }
+.seed-stage.layout-ready .stage-energy-box.placed{ opacity:1; }
 .stage-energy-bar{
   width:100%;
   height:100%;
@@ -750,8 +758,9 @@ img{
   justify-content:center;
   padding:16px;
   background:
+    linear-gradient(180deg, rgba(17,14,20,.48), rgba(10,9,14,.76)),
     radial-gradient(circle at 50% 24%, rgba(241,167,200,.24), transparent 22%),
-    linear-gradient(180deg, rgba(30,26,34,.94), rgba(18,16,22,.98));
+    url("img/keyland.jpg") center center / cover no-repeat;
 }
 .mini-game-layer.active{ display:flex; }
 .mini-game-shell{
@@ -806,9 +815,10 @@ img{
   border-radius:24px;
   overflow:hidden;
   background:
+    linear-gradient(180deg, rgba(28,23,36,.46), rgba(19,16,26,.70)),
     radial-gradient(circle at top, rgba(255,255,255,.16), transparent 32%),
-    linear-gradient(180deg, rgba(64,52,77,.94), rgba(27,23,33,.98));
-  border:1px solid rgba(255,255,255,.08);
+    url("img/keyland.jpg") center center / cover no-repeat;
+  border:1px solid rgba(255,255,255,.10);
 }
 .mini-rhythm-lanes{
   position:absolute;
@@ -1450,7 +1460,7 @@ body.resizing .seed-awaken-anchor{
   </section>
 
   <div class="mini-game-layer" id="miniGameLayer">
-    <div class="mini-game-card">
+    <div class="mini-game-shell">
       <div class="mini-game-top">
         <div>
           <div class="mini-game-title">CONCERT RHYTHM</div>
@@ -1926,6 +1936,7 @@ function updateSeedPlayerScale(){
 
 function getStageStackPositions(){
   const stageHeight = seedStage.clientHeight || 360;
+  const stageWidth = seedStage.clientWidth || 360;
   const bubbleWidth = seedBubble.offsetWidth || 180;
   const bubbleHeight = seedBubble.offsetHeight || 56;
   const statusWidth = seedStatus.offsetWidth || 40;
@@ -1933,7 +1944,7 @@ function getStageStackPositions(){
   const energyHeight = stageEnergyBox.offsetHeight || 11;
 
   const playerCenterX = state.seedPlayer.x + state.seedPlayer.w / 2;
-  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, seedStage.clientWidth - bubbleWidth - 8);
+  const bubbleLeft = clamp(playerCenterX - bubbleWidth / 2, 8, stageWidth - bubbleWidth - 8);
 
   const energyGap = clamp(stageHeight * 0.018, 6, 12);
   const statusGap = clamp(stageHeight * 0.022, 8, 16);
@@ -1949,8 +1960,9 @@ function getStageStackPositions(){
   bubbleTop += shiftDown;
 
   const halfBar = (stageEnergyBox.offsetWidth || 56) / 2;
-  const energyX = clamp(playerCenterX, halfBar + 8, seedStage.clientWidth - halfBar - 8);
-  const statusLeft = clamp(playerCenterX - statusWidth / 2, 8, seedStage.clientWidth - statusWidth - 8);
+  const energyX = clamp(playerCenterX, halfBar + 8, stageWidth - halfBar - 8);
+  const statusLeft = clamp(playerCenterX - statusWidth / 2, 8, stageWidth - statusWidth - 8);
+  const tailX = clamp(playerCenterX - bubbleLeft, 34, bubbleWidth - 34);
 
   return {
     bubbleLeft,
@@ -1958,7 +1970,8 @@ function getStageStackPositions(){
     statusLeft,
     statusTop,
     energyX,
-    energyTop
+    energyTop,
+    tailX
   };
 }
 
@@ -1966,18 +1979,22 @@ function positionSeedBubble(){
   const pos = getStageStackPositions();
   seedBubble.style.left = `${pos.bubbleLeft}px`;
   seedBubble.style.top = `${pos.bubbleTop}px`;
+  seedBubble.style.setProperty('--tail-x', `${pos.tailX}px`);
+  seedBubble.classList.add('placed');
 }
 
 function positionSeedStatus(){
   const pos = getStageStackPositions();
   seedStatus.style.left = `${pos.statusLeft}px`;
   seedStatus.style.top = `${pos.statusTop}px`;
+  seedStatus.classList.add('placed');
 }
 
 function positionStageEnergyBar(){
   const pos = getStageStackPositions();
   stageEnergyBox.style.left = `${pos.energyX}px`;
   stageEnergyBox.style.top = `${pos.energyTop}px`;
+  stageEnergyBox.classList.add('placed');
 }
 
 function positionAwakenButton(){
@@ -1991,6 +2008,7 @@ function positionAwakenButton(){
 
   seedAwakenAnchor.style.left = `${finalX}px`;
   seedAwakenAnchor.style.top = `${y}px`;
+  seedAwakenAnchor.classList.add('placed');
 }
 
 function updateAwakenButtonUI(){
@@ -2043,7 +2061,7 @@ function spawnMiniNote(){
     id: ++miniGame.noteSeq,
     lane,
     y: -28,
-    speed: (miniRhythmStage.clientHeight || 420) * (0.00215 + Math.random() * 0.00045),
+    speed: (miniRhythmStage.clientHeight || 420) * (0.00110 + Math.random() * 0.00022),
     el: note
   });
 }
@@ -2132,9 +2150,9 @@ function beginMiniGameSpawns(){
   miniGame.spawnTimer = setInterval(() => {
     spawnMiniNote();
     if (Math.random() < 0.3) {
-      setTimeout(spawnMiniNote, 170);
+      setTimeout(spawnMiniNote, 320);
     }
-  }, 520);
+  }, 860);
 }
 
 function startConcertMiniGame(){
@@ -2255,11 +2273,17 @@ function syncSeedStageLayout(options = {}){
   const immediate = options.immediate !== false;
   const rect = seedStage.getBoundingClientRect();
 
-  if (rect.width < 40 || rect.height < 40) {
+  if (rect.width < 40 || rect.height < 40 || !seedPlayerImg.complete || !seedPlayerImg.naturalWidth) {
     seedStage.classList.remove('layout-ready');
     requestAnimationFrame(() => syncSeedStageLayout({ immediate:true }));
     return;
   }
+
+  seedPlayer.classList.remove('placed');
+  seedBubble.classList.remove('placed');
+  seedStatus.classList.remove('placed');
+  stageEnergyBox.classList.remove('placed');
+  seedAwakenAnchor.classList.remove('placed');
 
   placeSeedPlayerInitial();
   renderSeedPlayer({ immediate });
@@ -2269,17 +2293,22 @@ function syncSeedStageLayout(options = {}){
 }
 
 function placeSeedPlayerInitial(){
-  const rect = seedStage.getBoundingClientRect();
+  const stageWidth = seedStage.clientWidth || seedStage.getBoundingClientRect().width || 360;
+  const stageHeight = seedStage.clientHeight || seedStage.getBoundingClientRect().height || 360;
 
   updateSeedPlayerScale();
 
-  state.seedPlayer.x = Math.max(8, rect.width / 2 - state.seedPlayer.w / 2);
+  state.seedPlayer.x = clamp(
+    (stageWidth - state.seedPlayer.w) / 2,
+    8,
+    stageWidth - state.seedPlayer.w - 8
+  );
 
-  const targetCenterY = rect.height * (3 / 4);
+  const targetCenterY = stageHeight * 0.74;
   state.seedPlayer.y = clamp(
     targetCenterY - state.seedPlayer.h / 2,
-    Math.max(84, rect.height * 0.25),
-    rect.height - state.seedPlayer.h - 12
+    Math.max(84, stageHeight * 0.25),
+    stageHeight - state.seedPlayer.h - 12
   );
 
   positionSeedBubble();
@@ -2301,6 +2330,7 @@ function renderSeedPlayer(options = {}){
   seedPlayer.style.left = `${state.seedPlayer.x}px`;
   seedPlayer.style.top = `${state.seedPlayer.y}px`;
   seedPlayer.classList.toggle('left', state.seedPlayer.facing === 'left');
+  seedPlayer.classList.add('placed');
   positionSeedBubble();
   positionSeedStatus();
   positionStageEnergyBar();
