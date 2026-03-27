@@ -23,7 +23,7 @@
   --radius:20px;
   --shadow:0 12px 28px rgba(120,104,87,.10);
   --top-h:108px;
-  --app-max:480px;
+  --app-max:576px;
 }
 
 *{box-sizing:border-box}
@@ -716,7 +716,8 @@ img{
   box-shadow:0 10px 20px rgba(120,104,87,.12);
 }
 .popup-menu{
-  min-width:164px;
+  min-width:112px;
+  width:112px;
   padding:8px;
   border-radius:16px;
   background:rgba(255,255,255,.98);
@@ -728,11 +729,13 @@ img{
 .popup-menu button{
   width:100%;
   text-align:left;
-  padding:10px 12px;
+  padding:9px 10px;
   border-radius:12px;
   background:transparent;
   font-size:12px;
   font-weight:800;
+  white-space:normal;
+  word-break:keep-all;
 }
 .popup-menu button:hover{
   background:rgba(241,167,200,.12);
@@ -2822,7 +2825,7 @@ function applyStatDelta(deltaMap){
 
 function finishAction(type){
   let message = dialogues.intro;
-  const passed = advanceGameTime(actionMeta[type].hours);
+  const passed = advanceGameTime(actionMeta[type].minutes);
 
   switch(type){
     case 'practice':
@@ -2877,7 +2880,7 @@ function finishAction(type){
 
   if (!state.awakened && state.day >= 3) {
     message = dialogues.ready;
-  } else if (type !== 'sleep' && timeInfo.touchedMidnight) {
+  } else if (type !== 'sleep' && passed.touchedMidnight) {
     message = dialogues.sleepy;
   } else if (passed.reachedMorningSeven && type === 'sleep') {
     message = dialogues.sleep;
