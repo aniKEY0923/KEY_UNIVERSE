@@ -392,6 +392,7 @@ img{
   transition:left .2s ease, top .2s ease, opacity .12s ease;
 }
 .seed-stage.layout-ready .seed-bubble.placed{ opacity:1; }
+.seed-bubble.hidden{ opacity:0 !important; }
 .seed-bubble.no-motion,
 .seed-status.no-motion,
 .stage-energy-box.no-motion{
@@ -755,8 +756,11 @@ img{
 
 .mini-game-layer{
   position:absolute;
-  inset:0;
-  z-index:40;
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  z-index:18;
   display:none;
   align-items:stretch;
   justify-content:stretch;
@@ -778,12 +782,50 @@ img{
   display:flex;
   flex-direction:column;
 }
+.mini-talkbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 68px;
+  align-items:end;
+  gap:12px;
+  padding:14px 18px 6px;
+}
+.mini-talkbox{
+  position:relative;
+  min-height:64px;
+  padding:14px 18px;
+  border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,244,248,.88));
+  color:#5b4d42;
+  font-size:13px;
+  line-height:1.5;
+  font-weight:800;
+  box-shadow:0 10px 24px rgba(0,0,0,.16);
+}
+.mini-talkbox::after{
+  content:"";
+  position:absolute;
+  right:18px;
+  bottom:-8px;
+  width:14px;
+  height:14px;
+  background:rgba(255,247,250,.92);
+  transform:rotate(45deg);
+  border-radius:2px;
+}
+.mini-talk-char{
+  align-self:end;
+  width:68px;
+  height:94px;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.22));
+}
 .mini-game-top{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  padding:16px 18px 12px;
+  padding:10px 18px 12px;
   color:#fff8fd;
 }
 .mini-game-title{
@@ -1049,6 +1091,20 @@ img{
   color:#4f4250;
 }
 @media (max-width: 640px){
+  .mini-talkbar{
+    grid-template-columns:minmax(0,1fr) 56px;
+    gap:8px;
+    padding:10px 12px 4px;
+  }
+  .mini-talkbox{
+    min-height:56px;
+    padding:12px 14px;
+    font-size:12px;
+  }
+  .mini-talk-char{
+    width:56px;
+    height:78px;
+  }
   .event-card{
     inset:50px 10px 58px 10px;
     padding:16px;
@@ -1467,6 +1523,10 @@ body.resizing .seed-awaken-anchor{
 
   <div class="mini-game-layer" id="miniGameLayer">
     <div class="mini-game-shell">
+      <div class="mini-talkbar">
+        <div class="mini-talkbox" id="miniTalkBox">리듬을 타볼까? 너무 급하게 누르지 말고, 선이 닿을 때 맞춰봐.</div>
+        <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
+      </div>
       <div class="mini-game-top">
         <div>
           <div class="mini-game-title">CONCERT RHYTHM</div>
@@ -1643,7 +1703,8 @@ const miniGame = {
   rafId:null,
   spawnTimer:null,
   noteSeq:0,
-  notes:[]
+  notes:[],
+  talkTimer:null
 };
 
 const state = {
@@ -1721,6 +1782,17 @@ const dialogues = {
   concertOkay: '조금 떨리긴 했지만, 그래도 끝까지 해냈어.'
 };
 
+const miniTalkLines = {
+  ready: '리듬을 타볼까? 너무 급하게 누르지 말고, 선이 닿을 때 맞춰봐.',
+  start: '좋아, 시작이야. 박자를 믿고 가보자.',
+  perfect: ['좋아, 완벽했어!', '지금 흐름 정말 좋아!', '퍼펙트! 이대로 가보자.'],
+  cool: ['좋아, 꽤 괜찮았어.', '좋아, 감이 오고 있어.', '괜찮아. 조금만 더 맞춰보자.'],
+  miss: ['앗, 실수를 해버렸어.', '괜찮아, 다음 박자에 다시 맞추자.', '조금 빨랐어. 다시 집중해보자!'],
+  finishGreat: '와, 오늘 무대 감각 최고였어.',
+  finishGood: '좋았어. 점점 더 무대에 익숙해지고 있어.',
+  finishOkay: '끝까지 해낸 것만으로도 충분히 좋았어.'
+};
+
 const actionMeta = {
   practice: { text: '♪', duration: 1700, hours: 2 },
   shoot:    { text: 'REC', duration: 1700, hours: 2 },
@@ -1769,6 +1841,8 @@ const concertNoBtn = document.getElementById('concertNoBtn');
 
 const miniGameLayer = document.getElementById('miniGameLayer');
 const miniRhythmStage = document.getElementById('miniRhythmStage');
+const miniTalkBox = document.getElementById('miniTalkBox');
+const miniTalkChar = document.getElementById('miniTalkChar');
 const miniFeedback = document.getElementById('miniFeedback');
 const miniGameResult = document.getElementById('miniGameResult');
 const miniScoreEl = document.getElementById('miniScore');
@@ -1952,9 +2026,42 @@ function closeGiftMenus(){
   giftItemSubmenu.classList.remove('show');
 }
 
-function setSeedMessage(text){
+let seedBubbleClearTimer = null;
+
+function cancelSeedBubbleAutoClear(){
+  clearTimeout(seedBubbleClearTimer);
+  seedBubbleClearTimer = null;
+}
+
+function hideSeedMessage(){
+  cancelSeedBubbleAutoClear();
+  seedBubble.classList.add('hidden');
+}
+
+function setSeedMessage(text, options = {}){
+  const { autoClearMs = 0 } = options;
+  cancelSeedBubbleAutoClear();
   seedBubble.textContent = text;
+  seedBubble.classList.remove('hidden');
   positionSeedBubble();
+
+  if (autoClearMs > 0) {
+    seedBubbleClearTimer = setTimeout(() => {
+      seedBubble.classList.add('hidden');
+    }, autoClearMs);
+  }
+}
+
+function setMiniTalk(text){
+  if (!miniTalkBox) return;
+  miniTalkBox.textContent = text;
+}
+
+function speakMiniTalk(kind){
+  const pool = miniTalkLines[kind];
+  if (!pool) return;
+  const text = Array.isArray(pool) ? pool[Math.floor(Math.random() * pool.length)] : pool;
+  setMiniTalk(text);
 }
 
 function setScheduleButtonsDisabled(disabled){
@@ -2139,6 +2246,9 @@ function spawnMiniHitFX(lane, type){
 }
 
 function showMiniFeedback(text, type='perfect'){
+  if (type === 'perfect') speakMiniTalk('perfect');
+  else if (type === 'cool') speakMiniTalk('cool');
+  else if (type === 'miss') speakMiniTalk('miss');
   miniFeedback.textContent = text;
   miniFeedback.classList.remove('perfect','cool','miss');
   miniFeedback.classList.add(type, 'show');
@@ -2281,8 +2391,11 @@ function startConcertMiniGame(){
   clearMiniNotes();
   miniGameResult.classList.remove('show');
   miniGameLayer.classList.add('active');
+  if (miniTalkChar) miniTalkChar.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
+  setMiniTalk(miniTalkLines.ready);
   updateMiniGameHUD();
   showMiniFeedback('START', 'cool');
+  setTimeout(() => { if (miniGame.active) speakMiniTalk('start'); }, 260);
 
   beginMiniGameSpawns();
   miniGame.rafId = requestAnimationFrame(tickMiniGame);
@@ -2303,6 +2416,10 @@ function finishConcertMiniGame(){
     title = '성공적인 공연!';
     desc = dialogues.concertGreat;
   }
+
+  if (miniGame.score >= 2400 || miniGame.perfect >= 14) speakMiniTalk('finishGreat');
+  else if (miniGame.score >= 1500 || miniGame.perfect >= 8) speakMiniTalk('finishGood');
+  else speakMiniTalk('finishOkay');
 
   miniResultTitle.textContent = title;
   miniResultDesc.textContent = desc;
@@ -2503,6 +2620,7 @@ function advanceGameTime(hours){
 
 function startAction(type){
   if (state.awakened || state.isActing) return;
+  hideSeedMessage();
   if (type !== 'sleep' && state.energy < 12){
     setSeedMessage(dialogues.lowEnergy);
     return;
@@ -2514,6 +2632,22 @@ function startAction(type){
 
   const meta = actionMeta[type];
   startActionProgress(type, meta.duration);
+
+  const halfwayDuration = Math.max(280, Math.floor(meta.duration * 0.52));
+  setTimeout(() => {
+    if (!state.isActing) return;
+    const halfLineMap = {
+      practice:'리듬을 맞추듯, 조금씩 감이 살아나고 있어.',
+      shoot:'지금 표정 좋아. 카메라가 분위기를 잘 잡고 있어.',
+      walk:'조용히 걷다 보니 생각도 같이 정리돼.',
+      bath:'따뜻한 물에 몸을 맡기니 긴장이 풀리는 것 같아.',
+      exhibit:'이 장면, 이상하게 오래 마음에 남을 것 같아.',
+      netflix:'오, 이 장면은 다시 보고 싶을 정도인데?',
+      meeting:'아이디어 조각들이 하나씩 연결되고 있어.',
+      sleep:'조금씩 깊게 잠들고 있어…'
+    };
+    setSeedMessage(halfLineMap[type] || dialogues.intro);
+  }, halfwayDuration);
 
   if (type === 'walk') {
     updateSeedStageBackground('walk');
@@ -2606,7 +2740,7 @@ function finishAction(type){
     message = dialogues.nextDay;
   }
 
-  setSeedMessage(message);
+  setSeedMessage(message, { autoClearMs:5000 });
   updateSeedStageBackground('default');
 }
 
