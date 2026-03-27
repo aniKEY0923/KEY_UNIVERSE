@@ -1825,7 +1825,13 @@ const state = {
     w: 42,
     h: 60,
     facing: 'right'
-  }
+  },
+  actionClockTimer: null,
+  actionFinishTimer: null,
+  actionMinutesApplied: 0,
+  debugMode: false,
+  debugInputBuffer: '',
+  debugInputTimer: null
 };
 
 const imageSet = {
@@ -1912,6 +1918,49 @@ const scheduleGrid = document.getElementById('scheduleGrid');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const saveBtn = document.getElementById('saveBtn');
+
+const debugOverlay = document.createElement('div');
+debugOverlay.id = 'debugOverlay';
+debugOverlay.style.cssText = [
+  'position:fixed',
+  'right:16px',
+  'bottom:16px',
+  'z-index:9999',
+  'display:none',
+  'max-width:min(360px, calc(100vw - 32px))',
+  'padding:12px 14px',
+  'border-radius:16px',
+  'background:rgba(255,255,255,.96)',
+  'border:1px solid rgba(120,104,87,.16)',
+  'box-shadow:0 18px 38px rgba(0,0,0,.16)',
+  'backdrop-filter:blur(10px)',
+  'font-size:12px',
+  'line-height:1.55',
+  'color:#5b4d42',
+  'white-space:pre-line'
+].join(';');
+document.body.appendChild(debugOverlay);
+
+const debugEndingPresets = [
+  { key:'practice:social', name:'가솔린 키' },
+  { key:'practice:mystery', name:'배드러브 키' },
+  { key:'practice:humor', name:'프릭키' },
+  { key:'mystery:practice', name:'언릴키' },
+  { key:'mystery:cute', name:'오컬트키' },
+  { key:'cute:mystery', name:'왹져공주 키' },
+  { key:'scary:practice', name:'헌터 키' },
+  { key:'social:practice', name:'굿앤그 인턴 키' },
+  { key:'social:cute', name:'꼼가 아빠 키' },
+  { key:'scary:mystery', name:'헌터 검정키' },
+  { key:'cute:social', name:'천사 키' },
+  { key:'humor:cute', name:'잇범 키' },
+  { key:'mystery:social', name:'백작 키' },
+  { key:'mystery:scary', name:'크리쳐 키' },
+  { key:'scary:humor', name:'킬러 키' },
+  { key:'scary:social', name:'빌런 키' },
+  { key:'social:humor', name:'범동이 키' },
+  { key:'cute:humor', name:'말랑콩떡 키' }
+];
 
 const giftBtn = document.getElementById('giftBtn');
 const giftMenu = document.getElementById('giftMenu');
@@ -2075,6 +2124,9 @@ miniStartBtn.addEventListener('click', (e) => {
 
 window.addEventListener('keydown', (e) => {
   registerUserActivity();
+
+  if (handleDebugShortcut(e)) return;
+
   if (!miniGame.active) return;
   if (!miniGame.playing && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
@@ -2627,7 +2679,7 @@ function maybeTriggerConcertEvent(){
 
 function updateScheduleUI(){
   seedDayBadge.textContent = `DAY${state.day}`;
-  seedClockBadge.textContent = formatGameTime(state.gameHour);
+  seedClockBadge.textContent = formatGameTime(state.gameHour, state.gameMinute);
   stageEnergyFill.style.width = `${clamp((state.energy / state.maxEnergy) * 100, 0, 100)}%`;
 
   Object.keys(state.stats).forEach(key => {
@@ -2734,8 +2786,8 @@ function renderRoomPlayer(){
   roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
 }
 
-function advanceGameTime(totalMinutes){
-  let remaining = Math.max(0, Math.round(totalMinutes));
+function advanceGameTimeStep(stepMinutes = 1){
+  let remaining = Math.max(0, Math.round(stepMinutes));
   let crossedMidnight = false;
   let reachedMorningSeven = false;
   let touchedMidnight = false;
@@ -2761,14 +2813,160 @@ function advanceGameTime(totalMinutes){
     }
   }
 
-  updateSeedStageBackground('default');
-
   return {
     crossedMidnight,
     reachedMorningSeven,
     touchedMidnight
   };
 }
+
+function advanceGameTime(totalMinutes){
+  const summary = {
+    crossedMidnight: false,
+    reachedMorningSeven: false,
+    touchedMidnight: false
+  };
+
+  let remaining = Math.max(0, Math.round(totalMinutes));
+  while (remaining > 0) {
+    const step = advanceGameTimeStep(1);
+    summary.crossedMidnight = summary.crossedMidnight || step.crossedMidnight;
+    summary.reachedMorningSeven = summary.reachedMorningSeven || step.reachedMorningSeven;
+    summary.touchedMidnight = summary.touchedMidnight || step.touchedMidnight;
+    remaining -= 1;
+  }
+
+  return summary;
+}
+
+
+function clearRunningActionTimers(){
+  clearInterval(state.actionClockTimer);
+  clearTimeout(state.actionFinishTimer);
+  state.actionClockTimer = null;
+  state.actionFinishTimer = null;
+  state.actionMinutesApplied = 0;
+}
+
+function runActionClock(type){
+  const meta = actionMeta[type];
+  clearRunningActionTimers();
+
+  const totalMinutes = Math.max(0, Math.round(meta.minutes || 0));
+  const totalDuration = Math.max(1, Math.round(meta.duration || 1));
+  const startedAt = performance.now();
+
+  if (totalMinutes <= 0) return;
+
+  state.actionClockTimer = setInterval(() => {
+    const elapsed = performance.now() - startedAt;
+    const expectedMinutes = Math.min(
+      totalMinutes,
+      Math.floor((elapsed / totalDuration) * totalMinutes)
+    );
+
+    while (state.actionMinutesApplied < expectedMinutes) {
+      advanceGameTimeStep(1);
+      state.actionMinutesApplied += 1;
+    }
+
+    updateScheduleUI();
+
+    if (state.actionMinutesApplied >= totalMinutes) {
+      clearInterval(state.actionClockTimer);
+      state.actionClockTimer = null;
+    }
+  }, 100);
+}
+
+function finalizeActionClock(type){
+  const totalMinutes = Math.max(0, Math.round(actionMeta[type]?.minutes || 0));
+
+  while (state.actionMinutesApplied < totalMinutes) {
+    advanceGameTimeStep(1);
+    state.actionMinutesApplied += 1;
+  }
+
+  clearRunningActionTimers();
+}
+
+function updateDebugOverlay(message){
+  if (!state.debugMode) {
+    debugOverlay.style.display = 'none';
+    return;
+  }
+
+  debugOverlay.style.display = 'block';
+  debugOverlay.textContent = message || [
+    '디버그 모드 ON',
+    'Shift + D : 디버그 모드 종료',
+    'Shift + 숫자 : 엔딩 번호 입력',
+    '예) 1번 = Shift+1 / 18번 = Shift+1 다음 Shift+8',
+    '',
+    debugEndingPresets.map((item, idx) => `${idx + 1}. ${item.name}`).join('\n')
+  ].join('\n');
+}
+
+function setDebugMode(isOn){
+  state.debugMode = !!isOn;
+  state.debugInputBuffer = '';
+  clearTimeout(state.debugInputTimer);
+  state.debugInputTimer = null;
+  updateDebugOverlay();
+}
+
+function applyDebugEnding(index){
+  const preset = debugEndingPresets[index - 1];
+  if (!preset) {
+    updateDebugOverlay(`디버그 모드 ON\n\n${index}번 엔딩은 없어요.\n1~18 사이 번호를 입력해줘.`);
+    return;
+  }
+
+  const [top, second] = preset.key.split(':');
+  const base = { practice: 0, mystery: 0, social: 0, cute: 0, scary: 0, humor: 0 };
+  base[top] = 10;
+  if (second && base[second] < 9) base[second] = 9;
+  state.stats = base;
+  state.awakened = detectIdentity();
+  syncAwakenUI();
+  syncRoomUI();
+  showScreen('awaken');
+  updateScheduleUI();
+  updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n다른 번호도 계속 입력할 수 있어요.`);
+}
+
+function handleDebugShortcut(e){
+  if (!e.shiftKey) return false;
+
+  if (e.code === 'KeyD') {
+    e.preventDefault();
+    setDebugMode(!state.debugMode);
+    return true;
+  }
+
+  if (!state.debugMode) return false;
+
+  if (/^Digit\d$/.test(e.code)) {
+    e.preventDefault();
+    const digit = e.code.replace('Digit', '');
+    state.debugInputBuffer += digit;
+    clearTimeout(state.debugInputTimer);
+    state.debugInputTimer = setTimeout(() => {
+      const nextIndex = Number(state.debugInputBuffer);
+      state.debugInputBuffer = '';
+      if (Number.isFinite(nextIndex) && nextIndex > 0) {
+        applyDebugEnding(nextIndex);
+      } else {
+        updateDebugOverlay();
+      }
+    }, 650);
+    updateDebugOverlay(`디버그 모드 ON\n\n입력 중: ${state.debugInputBuffer}\n숫자를 이어서 누르면 두 자리 번호도 열 수 있어요.`);
+    return true;
+  }
+
+  return false;
+}
+
 
 function startAction(type){
   if (state.awakened || state.isActing) return;
@@ -2806,7 +3004,10 @@ function startAction(type){
   syncSeedStageLayout({ immediate:true });
   showSeedStatus(meta.text);
 
-  setTimeout(async () => {
+  runActionClock(type);
+
+  state.actionFinishTimer = setTimeout(async () => {
+    finalizeActionClock(type);
     finishAction(type);
     hideSeedStatus();
     clearActionProgress();
@@ -2825,7 +3026,6 @@ function applyStatDelta(deltaMap){
 
 function finishAction(type){
   let message = dialogues.intro;
-  const passed = advanceGameTime(actionMeta[type].minutes);
 
   switch(type){
     case 'practice':
@@ -2842,13 +3042,13 @@ function finishAction(type){
 
     case 'walk':
       applyStatDelta({ mystery: +2, scary: +1 });
-      state.energy -= 16;
+      state.energy += 16;
       message = dialogues.walk;
       break;
 
     case 'bath':
       applyStatDelta({ cute: +2, mystery: +1 });
-      state.energy -= 12;
+      state.energy += 12;
       message = dialogues.bath;
       break;
 
@@ -2880,12 +3080,8 @@ function finishAction(type){
 
   if (!state.awakened && state.day >= 3) {
     message = dialogues.ready;
-  } else if (type !== 'sleep' && passed.touchedMidnight) {
-    message = dialogues.sleepy;
-  } else if (passed.reachedMorningSeven && type === 'sleep') {
+  } else if (type === 'sleep') {
     message = dialogues.sleep;
-  } else if (passed.crossedMidnight && type !== 'sleep') {
-    message = dialogues.nextDay;
   }
 
   setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
@@ -3007,6 +3203,7 @@ function syncRoomUI(){
 }
 
 function resetAll(){
+  clearRunningActionTimers();
   state.day = 1;
   state.gameHour = 7;
   state.gameMinute = 0;
