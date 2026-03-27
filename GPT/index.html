@@ -1784,13 +1784,13 @@ const dialogues = {
 
 const miniTalkLines = {
   ready: '리듬을 타볼까? 너무 급하게 누르지 말고, 선이 닿을 때 맞춰봐.',
-  start: '좋아, 시작이야. 박자를 믿고 가보자.',
-  perfect: ['좋아, 완벽했어!', '지금 흐름 정말 좋아!', '퍼펙트! 이대로 가보자.'],
-  cool: ['좋아, 꽤 괜찮았어.', '좋아, 감이 오고 있어.', '괜찮아. 조금만 더 맞춰보자.'],
-  miss: ['앗, 실수를 해버렸어.', '괜찮아, 다음 박자에 다시 맞추자.', '조금 빨랐어. 다시 집중해보자!'],
-  finishGreat: '와, 오늘 무대 감각 최고였어.',
-  finishGood: '좋았어. 점점 더 무대에 익숙해지고 있어.',
-  finishOkay: '끝까지 해낸 것만으로도 충분히 좋았어.'
+  start: '좋아, 시작이야. 내 박자를 믿고 가보자.',
+  perfect: ['오, 좀 멋있었던 듯?', '좋아, 방금 감각 꽤 좋았어.', '이 박자, 내가 봐도 잘 맞았는데?'],
+  cool: ['좋아, 흐름은 나쁘지 않아.', '오, 조금씩 감이 붙고 있어.', '방금은 꽤 괜찮았어.'],
+  miss: ['앗, 실수를 해버렸어.', '조금 빨랐나 봐. 다시 맞춰보자.', '이건 살짝 어긋났네. 다음 박자엔 더 정확하게.'],
+  finishGreat: '와, 오늘 무대 감각 진짜 좋았어.',
+  finishGood: '좋았어. 조금만 더 다듬으면 더 멋있어질 것 같아.',
+  finishOkay: '조금 아쉽긴 했지만, 끝까지 해낸 건 좋았어.'
 };
 
 const actionMeta = {
@@ -1978,10 +1978,11 @@ miniLaneButtons.forEach(btn => {
     e.preventDefault();
     pressMiniLane(Number(btn.dataset.lane));
   };
-  btn.addEventListener('pointerdown', handler);
+  btn.addEventListener('pointerdown', (e) => { registerUserActivity(); handler(e); });
 });
 
 window.addEventListener('keydown', (e) => {
+  registerUserActivity();
   if (!miniGame.active) return;
   const laneMap = { a:0, s:1, d:2, f:3, A:0, S:1, D:2, F:3 };
   if (typeof laneMap[e.key] === 'number') {
@@ -2027,20 +2028,48 @@ function closeGiftMenus(){
 }
 
 let seedBubbleClearTimer = null;
+let seedIdleTimer = null;
+const SEED_IDLE_MS = 180000;
+const seedIdleLine = '뭘 해볼까~?';
 
 function cancelSeedBubbleAutoClear(){
   clearTimeout(seedBubbleClearTimer);
   seedBubbleClearTimer = null;
 }
 
-function hideSeedMessage(){
+function cancelSeedIdleMessage(){
+  clearTimeout(seedIdleTimer);
+  seedIdleTimer = null;
+}
+
+function scheduleSeedIdleMessage(delay = SEED_IDLE_MS){
+  cancelSeedIdleMessage();
+  seedIdleTimer = setTimeout(() => {
+    if (state.isActing || miniGame.active) return;
+    setSeedMessage(seedIdleLine);
+  }, delay);
+}
+
+function clearSeedSpeechTimers(){
   cancelSeedBubbleAutoClear();
+  cancelSeedIdleMessage();
+}
+
+function registerUserActivity(){
+  cancelSeedIdleMessage();
+  if (!state.isActing && !miniGame.active) {
+    scheduleSeedIdleMessage();
+  }
+}
+
+function hideSeedMessage(){
+  clearSeedSpeechTimers();
   seedBubble.classList.add('hidden');
 }
 
 function setSeedMessage(text, options = {}){
-  const { autoClearMs = 0 } = options;
-  cancelSeedBubbleAutoClear();
+  const { autoClearMs = 0, idleAfterMs = null } = options;
+  clearSeedSpeechTimers();
   seedBubble.textContent = text;
   seedBubble.classList.remove('hidden');
   positionSeedBubble();
@@ -2048,7 +2077,17 @@ function setSeedMessage(text, options = {}){
   if (autoClearMs > 0) {
     seedBubbleClearTimer = setTimeout(() => {
       seedBubble.classList.add('hidden');
+      const nextIdleDelay = typeof idleAfterMs === 'number' ? idleAfterMs : SEED_IDLE_MS;
+      if (!state.isActing && !miniGame.active) {
+        scheduleSeedIdleMessage(nextIdleDelay);
+      }
     }, autoClearMs);
+    return;
+  }
+
+  if (!state.isActing && !miniGame.active) {
+    const nextIdleDelay = typeof idleAfterMs === 'number' ? idleAfterMs : SEED_IDLE_MS;
+    scheduleSeedIdleMessage(nextIdleDelay);
   }
 }
 
@@ -2489,7 +2528,7 @@ function updateScheduleUI(){
   });
 
   if (canAwaken() && !state.awakened && !state.isActing) {
-    setSeedMessage(dialogues.ready);
+    setSeedMessage(dialogues.ready, { idleAfterMs:SEED_IDLE_MS });
   }
 
   updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
@@ -2633,21 +2672,17 @@ function startAction(type){
   const meta = actionMeta[type];
   startActionProgress(type, meta.duration);
 
-  const halfwayDuration = Math.max(280, Math.floor(meta.duration * 0.52));
-  setTimeout(() => {
-    if (!state.isActing) return;
-    const halfLineMap = {
-      practice:'리듬을 맞추듯, 조금씩 감이 살아나고 있어.',
-      shoot:'지금 표정 좋아. 카메라가 분위기를 잘 잡고 있어.',
-      walk:'조용히 걷다 보니 생각도 같이 정리돼.',
-      bath:'따뜻한 물에 몸을 맡기니 긴장이 풀리는 것 같아.',
-      exhibit:'이 장면, 이상하게 오래 마음에 남을 것 같아.',
-      netflix:'오, 이 장면은 다시 보고 싶을 정도인데?',
-      meeting:'아이디어 조각들이 하나씩 연결되고 있어.',
-      sleep:'조금씩 깊게 잠들고 있어…'
-    };
-    setSeedMessage(halfLineMap[type] || dialogues.intro);
-  }, halfwayDuration);
+  const actionStartLineMap = {
+    practice:'좋아, 연습부터 시작해볼게.',
+    shoot:'지금부터 촬영 들어간다. 분위기 잘 잡아볼게.',
+    walk:'잠깐 바람 쐬고 올게.',
+    bath:'따뜻하게 몸부터 풀어볼게.',
+    exhibit:'전시를 천천히 둘러보고 올게.',
+    netflix:'뭐 볼지 골랐어. 시작해볼게.',
+    meeting:'좋아, 아이디어를 좀 모아보자.',
+    sleep:'이제 푹 자고 올게…'
+  };
+  setSeedMessage(actionStartLineMap[type] || dialogues.intro);
 
   if (type === 'walk') {
     updateSeedStageBackground('walk');
@@ -2740,7 +2775,7 @@ function finishAction(type){
     message = dialogues.nextDay;
   }
 
-  setSeedMessage(message, { autoClearMs:5000 });
+  setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
   updateSeedStageBackground('default');
 }
 
@@ -2866,7 +2901,7 @@ function resetAll(){
   roomPlayerImg.src = imageSet.defaultRoom;
 
   updateSeedStageBackground('default');
-  setSeedMessage(dialogues.intro);
+  setSeedMessage(dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
 
@@ -2880,6 +2915,7 @@ function resetAll(){
 
   updateScheduleUI();
   showScreen('schedule');
+  scheduleSeedIdleMessage();
 }
 
 function deepClone(obj){
@@ -2993,7 +3029,7 @@ function applySaveToState(save){
     : 'schedule';
   showScreen(nextScreen);
 
-  setSeedMessage(state.day >= 3 && !state.awakened ? dialogues.ready : dialogues.intro);
+  setSeedMessage(state.day >= 3 && !state.awakened ? dialogues.ready : dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
   return true;
 }
 
