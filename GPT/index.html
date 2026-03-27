@@ -277,7 +277,7 @@ img{
 .seed-stage{
   position:relative;
   width:100%;
-  aspect-ratio:1 / 1;
+  aspect-ratio:3 / 2;
   border-radius:18px;
   overflow:hidden;
   border:1px solid var(--line);
@@ -517,6 +517,25 @@ img{
   letter-spacing:.05em;
   color:#6a584a;
 }
+
+.stage-clock-row{
+  position:absolute;
+  left:12px;
+  right:12px;
+  top:12px;
+  z-index:7;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  pointer-events:none;
+}
+.stage-clock-row .day-badge,
+.stage-clock-row .clock-badge{
+  background:rgba(255,255,255,.88);
+  box-shadow:0 6px 16px rgba(120,104,87,.10);
+  backdrop-filter:blur(6px);
+}
 .seed-mini-title{
   grid-column:1 / -1;
   font-size:11px;
@@ -567,8 +586,12 @@ img{
   margin-top:12px;
   overflow-x:auto;
   overflow-y:hidden;
-  padding-bottom:6px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding:2px 2px 8px;
   -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
   scrollbar-width:thin;
 }
 .schedule-grid::-webkit-scrollbar{
@@ -724,7 +747,8 @@ img{
 
 .schedule-panel{
   position:relative;
-  overflow:hidden;
+  overflow:visible;
+  min-width:0;
 }
 .event-card{
   position:absolute;
@@ -1382,9 +1406,27 @@ body.resizing .seed-awaken-anchor{
     font-size:8px;
   }
 
+  .stage-clock-row{
+    left:10px;
+    right:10px;
+    top:10px;
+  }
+  .stage-clock-row .day-badge,
+  .stage-clock-row .clock-badge{
+    font-size:10px;
+    padding:7px 9px;
+  }
+
+  .schedule-panel{
+    overflow:visible;
+  }
   .schedule-grid{
+    display:flex;
     gap:8px;
     margin-top:10px;
+    width:calc(100% + 4px);
+    margin-right:-4px;
+    padding-bottom:8px;
   }
   .schedule-btn{
     width:76px;
@@ -1393,6 +1435,7 @@ body.resizing .seed-awaken-anchor{
     min-height:76px;
     padding:8px;
     border-radius:14px;
+    flex:0 0 auto;
   }
   .schedule-btn .title{
     font-size:10px;
@@ -1436,11 +1479,6 @@ body.resizing .seed-awaken-anchor{
         <div class="card panel stage-card-sticky">
           <div class="stage-status-wrap">
             <div class="seed-side-status">
-              <div class="day-clock-row">
-                <div class="day-badge" id="seedDayBadge">DAY1</div>
-                <div class="clock-badge" id="seedClockBadge">오전 7시</div>
-              </div>
-
               <div class="seed-mini-title">오늘의 상태</div>
 
               <div class="seed-mini-row">
@@ -1482,6 +1520,11 @@ body.resizing .seed-awaken-anchor{
 
             <div class="seed-stage-wrap">
               <div class="seed-stage bg-default" id="seedStage">
+
+                <div class="stage-clock-row">
+                  <div class="day-badge" id="seedDayBadge">DAY1</div>
+                  <div class="clock-badge" id="seedClockBadge">07:00</div>
+                </div>
 
                 <div class="seed-player" id="seedPlayer">
                   <img id="seedPlayerImg" src="img/KEY_default.png" alt="이동 캐릭터" />
@@ -1748,6 +1791,7 @@ const miniGame = {
 const state = {
   day: 1,
   gameHour: 7,
+  gameMinute: 0,
   energy: 100,
   maxEnergy: 100,
   stats: {
@@ -1832,14 +1876,14 @@ const miniTalkLines = {
 };
 
 const actionMeta = {
-  practice: { text: '♪', duration: 1700, hours: 2 },
-  shoot:    { text: 'REC', duration: 1700, hours: 2 },
-  walk:     { text: '…', duration: 1700, hours: 2 },
-  bath:     { text: '…', duration: 1700, hours: 2 },
-  exhibit:  { text: '…', duration: 1700, hours: 2 },
-  netflix:  { text: '▶', duration: 1700, hours: 2 },
-  meeting:  { text: '?!', duration: 1700, hours: 2 },
-  sleep:    { text: 'ZZZ', duration: 1700, hours: 7 }
+  practice: { text: '♪', duration: 1700, minutes: 134 },
+  shoot:    { text: 'REC', duration: 1700, minutes: 128 },
+  walk:     { text: '…', duration: 1700, minutes: 74 },
+  bath:     { text: '…', duration: 1700, minutes: 52 },
+  exhibit:  { text: '…', duration: 1700, minutes: 116 },
+  netflix:  { text: '▶', duration: 1700, minutes: 103 },
+  meeting:  { text: '?!', duration: 1700, minutes: 91 },
+  sleep:    { text: 'ZZZ', duration: 1700, minutes: 420 }
 };
 
 const seedDayBadge = document.getElementById('seedDayBadge');
@@ -2304,11 +2348,10 @@ function updateAwakenButtonUI(){
   if (visible) positionAwakenButton();
 }
 
-function formatGameTime(hour){
-  const period = hour < 12 ? '오전' : '오후';
-  let displayHour = hour % 12;
-  if (displayHour === 0) displayHour = 12;
-  return `${period} ${displayHour}시`;
+function formatGameTime(hour = state.gameHour, minute = state.gameMinute || 0){
+  const safeHour = ((hour % 24) + 24) % 24;
+  const safeMinute = ((minute % 60) + 60) % 60;
+  return `${String(safeHour).padStart(2,'0')}:${String(safeMinute).padStart(2,'0')}`;
 }
 
 
@@ -2688,24 +2731,29 @@ function renderRoomPlayer(){
   roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
 }
 
-function advanceGameTime(hours){
-  let remaining = hours;
+function advanceGameTime(totalMinutes){
+  let remaining = Math.max(0, Math.round(totalMinutes));
   let crossedMidnight = false;
   let reachedMorningSeven = false;
   let touchedMidnight = false;
 
   while (remaining > 0) {
-    state.gameHour += 1;
+    state.gameMinute += 1;
     remaining -= 1;
 
-    if (state.gameHour >= 24) {
-      state.gameHour = 0;
-      state.day += 1;
-      crossedMidnight = true;
-      touchedMidnight = true;
+    if (state.gameMinute >= 60) {
+      state.gameMinute = 0;
+      state.gameHour += 1;
+
+      if (state.gameHour >= 24) {
+        state.gameHour = 0;
+        state.day += 1;
+        crossedMidnight = true;
+        touchedMidnight = true;
+      }
     }
 
-    if (state.gameHour === 7) {
+    if (state.gameHour === 7 && state.gameMinute === 0) {
       reachedMorningSeven = true;
     }
   }
@@ -2829,7 +2877,7 @@ function finishAction(type){
 
   if (!state.awakened && state.day >= 3) {
     message = dialogues.ready;
-  } else if (type !== 'sleep' && state.gameHour === 0) {
+  } else if (type !== 'sleep' && timeInfo.touchedMidnight) {
     message = dialogues.sleepy;
   } else if (passed.reachedMorningSeven && type === 'sleep') {
     message = dialogues.sleep;
@@ -2847,12 +2895,12 @@ function canAwaken(){
 
 function getTopStatName(){
   const labels = {
-    practice: 'Practice',
-    mystery: 'Mystery',
-    social: 'Social',
-    cute: 'Cute',
-    scary: 'Scary',
-    humor: 'Humor'
+    practice: '연습',
+    mystery: '신비',
+    social: '사교성',
+    cute: '귀여움',
+    scary: '스캐어리',
+    humor: '유머'
   };
   const top = Object.entries(state.stats).sort((a,b) => b[1] - a[1])[0];
   return labels[top[0]];
@@ -2860,43 +2908,63 @@ function getTopStatName(){
 
 function detectIdentity(){
   const s = state.stats;
+  const sorted = Object.entries(s).sort((a,b) => b[1] - a[1]);
+  const top = sorted[0][0];
+  const second = sorted[1][0];
+  const combo = `${top}:${second}`;
 
-  const builds = [
-    {
-      name:'Idol KEY',
-      score:s.practice * 1.2 + s.social + s.cute,
-      largeImg:imageSet.defaultLarge,
-      roomImg:imageSet.defaultRoom,
-      desc:'연습과 무대 감각이 응집되어, 사랑받는 무드의 KEY로 각성했습니다.',
-      badges:[['코어', 'Practice + Social'], ['상징', 'Idol Aura'], ['대표 스탯', getTopStatName()]]
-    },
-    {
-      name:'Dream KEY',
-      score:s.mystery * 1.3 + s.cute,
-      largeImg:imageSet.badloveLarge,
-      roomImg:imageSet.badloveRoom,
-      desc:'신비로움과 여운이 겹쳐져, 몽환적인 분위기의 KEY로 각성했습니다.',
-      badges:[['코어', 'Mystery + Cute'], ['상징', 'Dream Aura'], ['대표 스탯', getTopStatName()]]
-    },
-    {
-      name:'Villain KEY',
-      score:s.scary * 1.25 + s.mystery,
-      largeImg:imageSet.gasolineLarge,
-      roomImg:imageSet.gasolineRoom,
-      desc:'차갑고 강한 잔상이 응집되어, 압도적인 분위기의 KEY가 되었습니다.',
-      badges:[['코어', 'Scary + Mystery'], ['상징', 'Villain Aura'], ['대표 스탯', getTopStatName()]]
-    },
-    {
-      name:'Trickster KEY',
-      score:s.humor * 1.25 + s.social,
-      largeImg:imageSet.badloveLarge,
-      roomImg:imageSet.badloveRoom,
-      desc:'유머와 센스가 살아나, 예측 불가의 매력을 지닌 KEY가 되었습니다.',
-      badges:[['코어', 'Humor + Social'], ['상징', 'Trickster Aura'], ['대표 스탯', getTopStatName()]]
-    }
-  ];
+  const imageByTheme = {
+    practice: { largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom },
+    social:   { largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom },
+    mystery:  { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom },
+    cute:     { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom },
+    scary:    { largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom },
+    humor:    { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom }
+  };
 
-  return builds.sort((a,b)=>b.score-a.score)[0];
+  const endingMap = {
+    'practice:social': ['가솔린 키', '연습과 무대 에너지가 폭발해 강렬한 퍼포먼스형 KEY로 각성했습니다.'],
+    'practice:mystery': ['배드러브 키', '연습의 정교함 위에 몽환적인 잔상이 얹혀 배드러브 무드의 KEY가 되었습니다.'],
+    'practice:humor': ['프릭키', '무대 센스와 장난기가 만나 예측 불가한 프릭키로 각성했습니다.'],
+    'mystery:practice': ['언릴키', '신비로운 분위기와 단단한 기본기가 결합되어 언릴키가 되었습니다.'],
+    'mystery:cute': ['오컬트키', '몽환과 사랑스러움이 겹쳐 기묘하게 끌리는 오컬트키가 탄생했습니다.'],
+    'cute:mystery': ['왹져공주 키', '귀여움 속에 기묘한 무드가 피어나 왹져공주 키로 각성했습니다.'],
+    'scary:practice': ['헌터 키', '차가운 집중력과 훈련의 누적이 만나 날카로운 헌터 키가 되었습니다.'],
+    'social:practice': ['굿앤그 인턴 키', '사람을 끌어당기는 친화력과 성실함이 만나 굿앤그 인턴 키가 되었습니다.'],
+    'social:cute': ['꼼가 아빠 키', '푸근한 다정함과 친근함이 겹쳐 꼼가 아빠 키로 각성했습니다.'],
+    'scary:mystery': ['헌터 검정키', '어둡고 신비한 기운이 응집되어 헌터 검정키가 되었습니다.'],
+    'cute:social': ['천사 키', '사랑스러움과 사람 좋은 분위기가 극대화되어 천사 키가 되었습니다.'],
+    'humor:cute': ['잇범 키', '유머와 귀여움이 터져나와 시선을 사로잡는 잇범 키가 되었습니다.'],
+    'mystery:social': ['백작 키', '우아한 신비와 사교성이 만나 백작 키의 분위기로 각성했습니다.'],
+    'mystery:scary': ['크리쳐 키', '기묘한 여운과 위압감이 섞여 크리쳐 키가 탄생했습니다.'],
+    'scary:humor': ['킬러 키', '서늘한 존재감 속에 장난기까지 살아 있는 킬러 키가 되었습니다.'],
+    'scary:social': ['빌런 키', '대중을 압도하는 카리스마가 짙어져 빌런 키로 각성했습니다.'],
+    'social:humor': ['범동이 키', '친화력과 입담이 폭발해 범동이 키가 되었습니다.'],
+    'cute:humor': ['말랑콩떡 키', '보들보들한 귀여움과 유쾌함이 만나 말랑콩떡 키로 각성했습니다.']
+  };
+
+  const fallbackByTop = {
+    practice: ['가솔린 키', '연습으로 다져진 에너지가 한 방향으로 응집되어 가솔린 키가 되었습니다.'],
+    mystery: ['오컬트키', '신비로운 잔상이 깊게 쌓여 오컬트키로 각성했습니다.'],
+    social: ['범동이 키', '사람을 끌어당기는 힘이 짙어져 범동이 키가 되었습니다.'],
+    cute: ['천사 키', '사랑스러운 무드가 가장 강하게 피어나 천사 키가 되었습니다.'],
+    scary: ['빌런 키', '차갑고 선명한 존재감이 응집되어 빌런 키가 되었습니다.'],
+    humor: ['프릭키', '유머와 엉뚱한 매력이 한데 모여 프릭키가 되었습니다.']
+  };
+
+  const [name, desc] = endingMap[combo] || fallbackByTop[top];
+  const imgSet = imageByTheme[top] || imageByTheme.practice;
+
+  return {
+    name,
+    score: sorted[0][1] * 1.4 + sorted[1][1],
+    largeImg: imgSet.largeImg,
+    roomImg: imgSet.roomImg,
+    desc,
+    badges: [['메인 성향', getTopStatName()], ['보조 성향', ({
+      practice:'연습', mystery:'신비', social:'사교성', cute:'귀여움', scary:'스캐어리', humor:'유머'
+    })[second]], ['조합', `${getTopStatName()} 중심 각성`]]
+  };
 }
 
 function doAwaken(){
@@ -2938,6 +3006,7 @@ function syncRoomUI(){
 function resetAll(){
   state.day = 1;
   state.gameHour = 7;
+  state.gameMinute = 0;
   state.energy = 100;
   state.maxEnergy = 100;
   state.stats = {
@@ -2993,6 +3062,7 @@ function serializeGameState(){
     progress: {
       day: state.day,
       gameHour: state.gameHour,
+      gameMinute: state.gameMinute ?? 0,
       energy: state.energy,
       maxEnergy: state.maxEnergy,
       stats: { ...state.stats },
@@ -3018,6 +3088,7 @@ function migrateSave(save){
   if (!p.currentScreen) p.currentScreen = 'schedule';
   if (!p.currentStageBg) p.currentStageBg = 'default';
   if (typeof p.gameHour !== 'number') p.gameHour = 7;
+  if (typeof p.gameMinute !== 'number') p.gameMinute = 0;
   if (typeof p.concertEventOffered !== 'boolean') p.concertEventOffered = false;
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
 
@@ -3046,6 +3117,7 @@ function applySaveToState(save){
 
   state.day = p.day ?? 1;
   state.gameHour = p.gameHour ?? 7;
+  state.gameMinute = p.gameMinute ?? 0;
   state.energy = p.energy ?? 100;
   state.maxEnergy = p.maxEnergy ?? 100;
   state.stats = {
