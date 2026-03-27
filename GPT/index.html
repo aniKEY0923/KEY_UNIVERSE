@@ -22,13 +22,16 @@
   --mint-2:#d9f0e7;
   --radius:20px;
   --shadow:0 12px 28px rgba(120,104,87,.10);
-  --top-h:122px;
+  --top-h:108px;
+  --app-max:480px;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
+  display:flex;
+  justify-content:center;
   color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:
@@ -55,8 +58,9 @@ img{
 
 .app{
   position:relative;
-  width:100%;
-  height:100%;
+  width:min(100%, var(--app-max));
+  max-width:var(--app-max);
+  height:100dvh;
   overflow:hidden;
 }
 
@@ -142,10 +146,10 @@ img{
 }
 
 .schedule-subline{
-  margin-top:7px;
+  margin-top:4px;
   font-size:12px;
   color:var(--sub);
-  line-height:1.5;
+  line-height:1.45;
 }
 
 .pill{
@@ -182,7 +186,7 @@ img{
 .main{
   position:absolute;
   inset:var(--top-h) 0 0 0;
-  padding:8px 16px 16px;
+  padding:6px 12px 12px;
   overflow:auto;
 }
 
@@ -247,10 +251,11 @@ img{
 }
 
 .layout{
+  position:relative;
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
-  max-width:980px;
+  max-width:100%;
   margin:0 auto;
 }
 
@@ -639,7 +644,6 @@ img{
   0%,100%{ transform:scale(.96); }
   50%{ transform:scale(.99); }
 }
-}
 .schedule-btn:disabled{ opacity:.45; }
 .schedule-btn .title{
   display:block;
@@ -750,27 +754,29 @@ img{
 }
 
 .mini-game-layer{
-  position:fixed;
+  position:absolute;
   inset:0;
-  z-index:9999;
+  z-index:40;
   display:none;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  background:
-    linear-gradient(180deg, rgba(17,14,20,.48), rgba(10,9,14,.76)),
-    radial-gradient(circle at 50% 24%, rgba(241,167,200,.24), transparent 22%),
-    url("img/keyland.jpg") center center / cover no-repeat;
+  align-items:stretch;
+  justify-content:stretch;
+  padding:6px;
+  border-radius:24px;
+  background:rgba(24,20,31,.34);
+  backdrop-filter:blur(4px);
 }
 .mini-game-layer.active{ display:flex; }
 .mini-game-shell{
-  width:min(880px, 100%);
-  border-radius:28px;
+  width:100%;
+  height:100%;
+  border-radius:24px;
   border:1px solid rgba(255,255,255,.10);
-  background:linear-gradient(180deg, rgba(255,250,252,.10), rgba(255,255,255,.05));
-  box-shadow:0 22px 60px rgba(0,0,0,.34);
+  background:linear-gradient(180deg, rgba(40,31,49,.94), rgba(23,19,31,.96));
+  box-shadow:0 22px 60px rgba(0,0,0,.30);
   overflow:hidden;
   backdrop-filter:blur(14px);
+  display:flex;
+  flex-direction:column;
 }
 .mini-game-top{
   display:flex;
@@ -806,12 +812,14 @@ img{
   font-weight:900;
 }
 .mini-game-body{
-  padding:0 16px 16px;
+  padding:0 12px 12px;
+  flex:1;
+  min-height:0;
 }
 .mini-rhythm-stage{
   position:relative;
-  height:min(62vh, 560px);
-  min-height:420px;
+  height:100%;
+  min-height:440px;
   border-radius:24px;
   overflow:hidden;
   background:
@@ -1045,7 +1053,7 @@ img{
     inset:50px 10px 58px 10px;
     padding:16px;
   }
-  .mini-game-layer{ padding:10px; }
+  .mini-game-layer{ padding:4px; }
   .mini-game-top{
     padding:14px 14px 10px;
     flex-direction:column;
@@ -1053,8 +1061,8 @@ img{
   }
   .mini-game-stats{ justify-content:flex-start; }
   .mini-rhythm-stage{
-    min-height:380px;
-    height:min(58vh, 480px);
+    min-height:360px;
+    height:100%;
   }
   .mini-hit-btn{
     height:58px;
@@ -1229,12 +1237,12 @@ body.resizing .seed-awaken-anchor{
 }
 
 @media (max-width: 640px){
-  :root{ --top-h:128px; }
+  :root{ --top-h:116px; }
 
   .topbar{ padding:10px 12px 6px; }
   .schedule-topbar{ padding:10px 12px 6px; }
   .brand-title-only .title{ font-size:30px; }
-  .main{ padding:6px 12px 12px; }
+  .main{ padding:6px 10px 10px; }
   .action-row{ grid-template-columns:1fr; }
   .awaken-title{ font-size:28px; }
 
@@ -1453,9 +1461,57 @@ body.resizing .seed-awaken-anchor{
           </div>
 
           <div class="action-row">
-            <button class="secondary-btn" id="resetBtn">처음부터</button>
+            <button class="secondary-btn" id="resetBtn">새로 시작</button>
           </div>
         </div>
+
+  <div class="mini-game-layer" id="miniGameLayer">
+    <div class="mini-game-shell">
+      <div class="mini-game-top">
+        <div>
+          <div class="mini-game-title">CONCERT RHYTHM</div>
+          <div class="mini-game-sub">A / S / D / F 키 또는 화면 버튼으로 천천히 내려오는 노트에 박자를 맞춰주세요.</div>
+        </div>
+        <div class="mini-game-stats">
+          <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
+          <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
+          <div class="mini-pill">TIME <strong id="miniTime">20.0</strong></div>
+        </div>
+      </div>
+
+      <div class="mini-game-body">
+        <div class="mini-rhythm-stage" id="miniRhythmStage">
+          <div class="mini-rhythm-lanes">
+            <div class="mini-lane" data-lane="0"></div>
+            <div class="mini-lane" data-lane="1"></div>
+            <div class="mini-lane" data-lane="2"></div>
+            <div class="mini-lane" data-lane="3"></div>
+          </div>
+          <div class="mini-feedback" id="miniFeedback">START</div>
+          <div class="mini-hit-line"></div>
+          <div class="mini-hit-buttons">
+            <button type="button" class="mini-hit-btn" data-lane="0">A</button>
+            <button type="button" class="mini-hit-btn" data-lane="1">S</button>
+            <button type="button" class="mini-hit-btn" data-lane="2">D</button>
+            <button type="button" class="mini-hit-btn" data-lane="3">F</button>
+          </div>
+
+          <div class="mini-game-result" id="miniGameResult">
+            <div class="mini-result-card">
+              <div class="mini-result-title" id="miniResultTitle">좋은 무대였어요</div>
+              <div class="mini-result-desc" id="miniResultDesc">오늘 무대, 진짜 뜨거웠어.</div>
+              <div class="mini-result-grid">
+                <div class="mini-result-chip"><strong id="miniResultScore">0</strong>점수</div>
+                <div class="mini-result-chip"><strong id="miniResultPerfect">0</strong>Perfect</div>
+                <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Cool</div>
+              </div>
+              <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
       </div>
     </div>
   </section>
@@ -1536,53 +1592,7 @@ body.resizing .seed-awaken-anchor{
     </div>
   </section>
 
-  <div class="mini-game-layer" id="miniGameLayer">
-    <div class="mini-game-shell">
-      <div class="mini-game-top">
-        <div>
-          <div class="mini-game-title">CONCERT RHYTHM</div>
-          <div class="mini-game-sub">A / S / D / F 키 또는 화면 버튼으로 천천히 내려오는 노트에 박자를 맞춰주세요.</div>
-        </div>
-        <div class="mini-game-stats">
-          <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
-          <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
-          <div class="mini-pill">TIME <strong id="miniTime">20.0</strong></div>
-        </div>
-      </div>
 
-      <div class="mini-game-body">
-        <div class="mini-rhythm-stage" id="miniRhythmStage">
-          <div class="mini-rhythm-lanes">
-            <div class="mini-lane" data-lane="0"></div>
-            <div class="mini-lane" data-lane="1"></div>
-            <div class="mini-lane" data-lane="2"></div>
-            <div class="mini-lane" data-lane="3"></div>
-          </div>
-          <div class="mini-feedback" id="miniFeedback">START</div>
-          <div class="mini-hit-line"></div>
-          <div class="mini-hit-buttons">
-            <button type="button" class="mini-hit-btn" data-lane="0">A</button>
-            <button type="button" class="mini-hit-btn" data-lane="1">S</button>
-            <button type="button" class="mini-hit-btn" data-lane="2">D</button>
-            <button type="button" class="mini-hit-btn" data-lane="3">F</button>
-          </div>
-
-          <div class="mini-game-result" id="miniGameResult">
-            <div class="mini-result-card">
-              <div class="mini-result-title" id="miniResultTitle">좋은 무대였어요</div>
-              <div class="mini-result-desc" id="miniResultDesc">오늘 무대, 진짜 뜨거웠어.</div>
-              <div class="mini-result-grid">
-                <div class="mini-result-chip"><strong id="miniResultScore">0</strong>점수</div>
-                <div class="mini-result-chip"><strong id="miniResultPerfect">0</strong>Perfect</div>
-                <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Cool</div>
-              </div>
-              <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
 </div>
