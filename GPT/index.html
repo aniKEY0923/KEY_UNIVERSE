@@ -2240,6 +2240,7 @@ body.resizing .seed-awaken-anchor{
                 <div class="room-action-buttons">
                   <button class="gift-btn" id="roomGiftBtn">선물</button>
                   <button class="gift-btn" id="friendBtn">친구</button>
+                  <button class="gift-btn" id="endingBtn">엔딩</button>
                 </div>
               </div>
             </div>
@@ -2391,7 +2392,10 @@ const state = {
     birdCage: false
   },
   activeRoomVisitor: null,
-  roomSeenFriendEvents: []
+  roomSeenFriendEvents: [],
+  affection: {},
+  unlockedEndings: [],
+  endingFlags: {}
 };
 
 const imageSet = {
@@ -2409,6 +2413,126 @@ const roomDecorConfig = {
   birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.' }
 };
 
+const FRIEND_PROFILES = {
+  '배드러브 키': { intro:'...혼자 있는 줄 알았는데.', enjoy:'오늘은 이 공기가 꽤 좋네.', leave:'오늘은 이만 갈게.', likes:'LP플레이어', trait:'몽환 / 감성' },
+  '굿앤그 인턴 키': { intro:'안녕하세요. 잠깐 보고드릴 게 있어서 왔어요.', enjoy:'같이 있으니 의외로 마음이 편해지네요.', leave:'다음에도 일정 맞으면 또 올게요.', likes:'업무용 책상', trait:'성실 / 현실' },
+  '천사 키': { intro:'안녕~ 반짝이는 기운이 보여서 와봤어!', enjoy:'같이 있으니까 정말 따뜻하다.', leave:'다음에 또 놀러 올게!', likes:'작은 새장', trait:'상냥 / 밝음' },
+  '무대감독 KEY': { intro:'리허설 체크하러 왔어.', enjoy:'준비된 시간이 헛되지 않았네.', leave:'다음 무대도 기대할게.', trait:'든든 / 실전형' },
+  '드럼소년 KEY': { intro:'합주 감각이 좋아 보여서 와봤어.', enjoy:'이 리듬, 꽤 잘 맞는다.', leave:'다음엔 더 크게 놀아보자.', trait:'박자 / 열정' },
+  '새벽산책 KEY': { intro:'이 시간 공기가 좋아서 들렀어.', enjoy:'조용해서 더 좋네.', leave:'다음 새벽에도 마주치자.', trait:'야행성 / 감성' },
+  '장난꾸러기 KEY': { intro:'재밌는 냄새가 나서 왔지!', enjoy:'역시 너랑 있으면 안 심심해.', leave:'다음엔 더 재밌게 놀자!', trait:'유쾌 / 장난' },
+  '필름노트 KEY': { intro:'장면 하나가 떠올라서 찾아왔어.', enjoy:'이 분위기, 기억해둘래.', leave:'다음엔 다른 컷으로 보자.', trait:'기록 / 몽환' },
+  '심야서점 KEY': { intro:'밤에만 펼쳐지는 이야기가 있잖아.', enjoy:'오늘 페이지는 꽤 좋았어.', leave:'다음 장도 기대할게.', trait:'서늘 / 고요' },
+  '리본요정 KEY': { intro:'반짝이는 리본 따라 왔어!', enjoy:'너랑 있으면 세상이 더 귀여워져.', leave:'다음에 또 예쁜 거 보러 오자!', trait:'러블리 / 기묘' },
+  '블랙트랙 KEY': { intro:'집중력이 좋은 것 같아서 와봤어.', enjoy:'정적이 잘 어울리는 시간이네.', leave:'다음엔 더 날카롭게 만나자.', trait:'집중 / 차가움' },
+  '기획팀 KEY': { intro:'회의 전에 잠깐 들렀어요.', enjoy:'같이 있으면 아이디어가 잘 떠오르네요.', leave:'자료 정리해서 다시 올게요.', trait:'현실 / 팀워크' },
+  '포근친구 KEY': { intro:'따뜻한 기운이 나서 왔어.', enjoy:'이런 시간, 좋아.', leave:'푹 쉬고 또 보자.', trait:'다정 / 포근' },
+  '그림자 KEY': { intro:'조용히 와봤어.', enjoy:'말이 없어도 괜찮네.', leave:'다음엔 더 깊은 밤에.', trait:'그늘 / 신비' },
+  '햇살 KEY': { intro:'햇빛 같은 기운이 보여서 왔어!', enjoy:'정말 기분 좋은 시간이야.', leave:'미소 잊지 말기!', trait:'밝음 / 다정' },
+  '스마일 KEY': { intro:'웃는 소리가 들려서 왔지!', enjoy:'오늘 꽤 즐거웠어.', leave:'다음에도 웃게 해줘!', trait:'미소 / 센스' },
+  '로즈홀 KEY': { intro:'장미 향 같은 기분이 나서 들렀어.', enjoy:'꽤 우아한 시간이었다.', leave:'다음엔 더 근사하게.', trait:'고풍 / 품위' },
+  '문틈친구 KEY': { intro:'문틈 너머에서 기척을 느꼈어.', enjoy:'이상하게 편안하네.', leave:'또 올 수도 있어.', trait:'기묘 / 매혹' },
+  '적막 KEY': { intro:'조용한 농담이 필요해서 왔어.', enjoy:'이런 서늘한 웃음도 나쁘지 않네.', leave:'오늘은 충분해.', trait:'서늘 / 유머' },
+  '레드카펫 KEY': { intro:'주인공의 기운이 보여서 왔어.', enjoy:'역시 시선이 쏠리는 시간이지.', leave:'다음에도 화려하게 불러줘.', trait:'카리스마 / 화려함' },
+  '수다친구 KEY': { intro:'얘기하고 싶어져서 바로 왔어!', enjoy:'시간 가는 줄 몰랐다.', leave:'다음엔 더 긴 얘기 하자!', trait:'친화 / 수다' },
+  '솜구름 KEY': { intro:'말랑한 분위기에 이끌려 왔어.', enjoy:'포근해서 좋다.', leave:'다음에도 포근하게 맞아줘.', trait:'폭신 / 귀여움' }
+};
+
+const MAIN_ENDINGS = [
+  { name:'가솔린 키', group:'메인', summary:'연습과 무대 에너지가 폭발한 퍼포먼스 각성.' },
+  { name:'배드러브 키', group:'메인', summary:'몽환적인 잔상이 깊게 남는 감성 각성.' },
+  { name:'프릭키', group:'메인', summary:'장난기와 무대 센스가 살아난 프릭키 각성.' },
+  { name:'언릴키', group:'메인', summary:'신비와 기본기가 결합된 언릴키 각성.' },
+  { name:'오컬트키', group:'메인', summary:'기묘하게 끌리는 오컬트 무드 각성.' },
+  { name:'왹져공주 키', group:'메인', summary:'귀엽고도 낯선 분위기의 왹져공주 각성.' },
+  { name:'헌터 키', group:'메인', summary:'집중력과 훈련이 날카롭게 응집된 각성.' },
+  { name:'굿앤그 인턴 키', group:'메인', summary:'친화력과 성실함이 만난 현실형 각성.' },
+  { name:'꼼가 아빠 키', group:'메인', summary:'푸근하고 든든한 분위기의 각성.' },
+  { name:'헌터 검정키', group:'메인', summary:'어둡고 신비한 공기가 짙어진 각성.' },
+  { name:'천사 키', group:'메인', summary:'사랑스럽고 사람 좋은 기운이 극대화된 각성.' },
+  { name:'잇범 키', group:'메인', summary:'귀여움과 센스가 함께 터지는 각성.' },
+  { name:'백작 키', group:'메인', summary:'우아하고 고풍스러운 무드의 각성.' },
+  { name:'크리쳐 키', group:'메인', summary:'기묘한 매혹과 위압감이 공존하는 각성.' },
+  { name:'킬러 키', group:'메인', summary:'서늘한 존재감 속 장난기가 번뜩이는 각성.' },
+  { name:'빌런 키', group:'메인', summary:'대중을 압도하는 카리스마형 각성.' },
+  { name:'범동이 키', group:'메인', summary:'친화력과 입담이 폭발하는 각성.' },
+  { name:'말랑콩떡 키', group:'메인', summary:'폭신한 귀여움과 유쾌함이 만난 각성.' }
+];
+
+const SPECIAL_ENDINGS = [
+  { name:'심야 LP 엔딩', group:'스페셜', summary:'배드러브 키와 100 호감도, LP플레이어 설치.', when:() => state.awakened?.name === '배드러브 키' && getAffection('배드러브 키') >= 100 && !!state.roomDecor?.lpPlayer },
+  { name:'오피스 애프터 엔딩', group:'스페셜', summary:'굿앤그 인턴 키와 100 호감도, 업무용 책상 설치.', when:() => state.awakened?.name === '굿앤그 인턴 키' && getAffection('굿앤그 인턴 키') >= 100 && !!state.roomDecor?.desk },
+  { name:'천사의 휴식 엔딩', group:'스페셜', summary:'천사 키와 100 호감도, 작은 새장 설치.', when:() => state.awakened?.name === '천사 키' && getAffection('천사 키') >= 100 && !!state.roomDecor?.birdCage },
+  { name:'그림자 파트너 엔딩', group:'스페셜', summary:'헌터 검정키 상태에서 그림자 KEY 호감도 80 달성.', when:() => state.awakened?.name === '헌터 검정키' && getAffection('그림자 KEY') >= 80 },
+  { name:'스테이지 메이트 엔딩', group:'스페셜', summary:'가솔린 키 상태에서 무대감독 KEY 또는 드럼소년 KEY 호감도 합계 140 달성.', when:() => state.awakened?.name === '가솔린 키' && (getAffection('무대감독 KEY') + getAffection('드럼소년 KEY')) >= 140 },
+  { name:'말랑한 하루 엔딩', group:'스페셜', summary:'말랑콩떡 키 상태에서 솜구름 KEY 호감도 100 달성.', when:() => state.awakened?.name === '말랑콩떡 키' && getAffection('솜구름 KEY') >= 100 }
+];
+
+const ENDING_LIBRARY = [...MAIN_ENDINGS, ...SPECIAL_ENDINGS];
+
+
+
+function ensureAffectionShape(){
+  if (!state.affection || typeof state.affection !== 'object') state.affection = {};
+  if (!Array.isArray(state.unlockedEndings)) state.unlockedEndings = [];
+  if (!state.endingFlags || typeof state.endingFlags !== 'object') state.endingFlags = {};
+}
+
+function getAffection(name){
+  ensureAffectionShape();
+  return Number(state.affection[name] || 0);
+}
+
+function getAffectionTier(value){
+  if (value >= 100) return '최애';
+  if (value >= 70) return '친밀';
+  if (value >= 30) return '친함';
+  return '관심';
+}
+
+function addAffection(name, amount){
+  if (!name) return 0;
+  ensureAffectionShape();
+  const next = clamp(getAffection(name) + amount, 0, 100);
+  state.affection[name] = next;
+  unlockSpecialEndings();
+  renderFriendMenu();
+  renderEndingMenu();
+  return next;
+}
+
+function getFriendProfile(name){
+  return FRIEND_PROFILES[name] || {
+    intro:`안녕~ ${name}야.`,
+    enjoy:'같이 있으니까 생각보다 즐겁다.',
+    leave:'다음에 또 올게.',
+    likes:'이 방 분위기',
+    trait:'친구'
+  };
+}
+
+function unlockEndingByName(name){
+  if (!name) return false;
+  ensureAffectionShape();
+  if (!state.unlockedEndings.includes(name)) {
+    state.unlockedEndings.push(name);
+    return true;
+  }
+  return false;
+}
+
+function unlockSpecialEndings(){
+  let unlocked = false;
+  SPECIAL_ENDINGS.forEach(ending => {
+    try {
+      if (ending.when && ending.when() && unlockEndingByName(ending.name)) unlocked = true;
+    } catch (err) {}
+  });
+  if (unlocked && roomHint) {
+    roomHint.textContent = '새로운 엔딩이 도감에 기록되었어!';
+  }
+  return unlocked;
+}
 
 const dialogues = {
   intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
@@ -2784,12 +2908,7 @@ function startRoomFriendVisitFlow(friendName){
 }
 
 function getFriendGreeting(name){
-  const special = {
-    '배드러브 키':'안녕, 잠깐 같이 있어도 될까?',
-    '굿앤그 인턴 키':'안녕하세요! 들를 일이 있어서 왔어요.',
-    '천사 키':'안녕~ 잠깐 놀러 와봤어.'
-  };
-  return special[name] || `안녕~ ${name}야.`;
+  return getFriendProfile(name).intro;
 }
 
 function enterRoomVisitor(friendName){
@@ -2831,33 +2950,41 @@ function finishRoomVisitorLeave(){
 
 function sendRoomVisitorAway(){
   if (!state.activeRoomVisitor) return finishRoomVisitorLeave();
+  const friendName = state.activeRoomVisitor;
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'leaving';
   hideRoomChoicePanel();
   hideRoomOwnerBubble();
-  hideRoomVisitorBubble();
+  showRoomVisitorBubble(getFriendProfile(friendName).leave);
   const rect = roomScene.getBoundingClientRect();
   roomVisitor.style.transition = 'opacity .22s ease, left .8s ease, top .22s ease';
-  roomVisitor.style.left = `${rect.width + 30}px`;
-  queueRoomVisitTimer(() => finishRoomVisitorLeave(), 850);
+  queueRoomVisitTimer(() => {
+    roomVisitor.style.left = `${rect.width + 30}px`;
+  }, 260);
+  queueRoomVisitTimer(() => finishRoomVisitorLeave(), 1120);
 }
 
 function spendTimeWithVisitor(){
   if (!state.activeRoomVisitor) return;
+  const friendName = state.activeRoomVisitor;
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'together';
   hideRoomChoicePanel();
   showRoomOwnerBubble('^ㅂ^');
   showRoomVisitorBubble('^ㅂ^');
-  roomHint.textContent = `${state.activeRoomVisitor}와 즐거운 시간을 보내는 중이에요.`;
+  roomHint.textContent = `${friendName}와 즐거운 시간을 보내는 중이에요.`;
   queueRoomVisitTimer(() => {
     advanceGameTime(120);
+    const nextAffection = addAffection(friendName, 10);
     syncRoomUI();
-    showRoomVisitorBubble('즐거웠어~');
+    showRoomVisitorBubble(getFriendProfile(friendName).enjoy);
     hideRoomOwnerBubble();
-    roomHint.textContent = `${state.activeRoomVisitor}와 두 시간을 함께 보냈어요.`;
+    roomHint.textContent = `${friendName}와 두 시간을 함께 보냈어요. 호감도 ${nextAffection}`;
     saveLocal(serializeGameState());
-    queueRoomVisitTimer(() => sendRoomVisitorAway(), 1500);
+    queueRoomVisitTimer(() => {
+      showRoomVisitorBubble('즐거웠어~');
+      queueRoomVisitTimer(() => sendRoomVisitorAway(), 900);
+    }, 900);
   }, 1800);
 }
 
@@ -2869,7 +2996,9 @@ function installDecorItem(decorKey){
   roomHint.textContent = `${info.label}을(를) 놓아두었어. ${info.friendName}가 마음에 들어할지도 몰라.`;
   renderRoomDecorButtons();
   renderFriendMenu();
+  unlockSpecialEndings();
   syncRoomUI();
+  renderEndingMenu();
   saveLocal(serializeGameState());
   maybeStartRoomFriendVisit();
 }
@@ -2915,6 +3044,33 @@ debugOverlay.innerHTML = `
 `;
 document.body.appendChild(debugOverlay);
 
+const endingModal = document.createElement('div');
+endingModal.id = 'endingModal';
+endingModal.className = 'ending-modal';
+endingModal.innerHTML = `
+  <div class="ending-card" role="dialog" aria-modal="true" aria-labelledby="endingModalTitle">
+    <div class="ending-head">
+      <h3 id="endingModalTitle">엔딩 도감</h3>
+      <button type="button" class="ending-close" id="endingCloseBtn">✕</button>
+    </div>
+    <div class="ending-summary" id="endingSummaryText">해금한 엔딩을 확인할 수 있어요.</div>
+    <div class="ending-section">
+      <div class="ending-section-title">메인 엔딩</div>
+      <div class="ending-grid" id="endingMainList"></div>
+    </div>
+    <div class="ending-section">
+      <div class="ending-section-title">스페셜 엔딩</div>
+      <div class="ending-grid" id="endingSpecialList"></div>
+    </div>
+  </div>
+`;
+document.body.appendChild(endingModal);
+
+const endingCloseBtn = document.getElementById('endingCloseBtn');
+const endingMainList = document.getElementById('endingMainList');
+const endingSpecialList = document.getElementById('endingSpecialList');
+const endingSummaryText = document.getElementById('endingSummaryText');
+
 const debugCloseBtn = document.getElementById('debugCloseBtn');
 const debugStatusText = document.getElementById('debugStatusText');
 const debugEndingList = document.getElementById('debugEndingList');
@@ -2954,6 +3110,7 @@ const roomGiftItemSubmenu = document.getElementById('roomGiftItemSubmenu');
 const friendBtn = document.getElementById('friendBtn');
 const friendMenu = document.getElementById('friendMenu');
 const friendListWrap = document.getElementById('friendListWrap');
+const endingBtn = document.getElementById('endingBtn');
 
 const concertEventCard = document.getElementById('concertEventCard');
 const concertYesBtn = document.getElementById('concertYesBtn');
@@ -3273,8 +3430,45 @@ function renderFriendMenu(){
     return;
   }
   friendListWrap.innerHTML = `<div class="friend-list">${
-    friends.map(friend => `<div class="friend-item"><strong>${friend.name}</strong><span>${friend.desc}</span></div>`).join('')
+    friends.map(friend => {
+      const affection = getAffection(friend.name);
+      const profile = getFriendProfile(friend.name);
+      return `<div class="friend-item">
+        <strong>${friend.name}</strong>
+        <span>${friend.desc}</span>
+        <div class="friend-meta">
+          <span class="friend-chip">호감도 ${affection}</span>
+          <span class="friend-chip">${getAffectionTier(affection)}</span>
+          <span class="friend-chip">${profile.trait}</span>
+        </div>
+      </div>`;
+    }).join('')
   }</div>`;
+}
+
+function renderEndingMenu(){
+  if (!endingMainList || !endingSpecialList || !endingSummaryText) return;
+  ensureAffectionShape();
+  const unlocked = new Set(state.unlockedEndings || []);
+  const renderItems = (items) => items.map(item => {
+    const isUnlocked = unlocked.has(item.name);
+    return `<div class="ending-item ${isUnlocked ? '' : 'locked'}">
+      <strong>${isUnlocked ? item.name : '???'}</strong>
+      <span>${isUnlocked ? item.summary : '아직 잠겨 있는 엔딩이야.'}</span>
+    </div>`;
+  }).join('');
+  endingMainList.innerHTML = renderItems(MAIN_ENDINGS);
+  endingSpecialList.innerHTML = renderItems(SPECIAL_ENDINGS);
+  endingSummaryText.textContent = `해금 ${unlocked.size} / ${ENDING_LIBRARY.length}`;
+}
+
+function openEndingModal(){
+  renderEndingMenu();
+  endingModal.classList.add('show');
+}
+
+function closeEndingModal(){
+  endingModal.classList.remove('show');
 }
 
 let seedBubbleClearTimer = null;
@@ -4037,8 +4231,11 @@ function applyDebugEnding(index){
   if (second && base[second] < 9) base[second] = 9;
   state.stats = base;
   state.awakened = detectIdentity();
+  unlockEndingByName(state.awakened?.name);
+  unlockSpecialEndings();
   syncAwakenUI();
   syncRoomUI();
+  renderEndingMenu();
   showScreen('awaken');
   updateScheduleUI();
   updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n목록에서 다른 엔딩도 바로 선택할 수 있어요.`);
@@ -4269,9 +4466,12 @@ function detectIdentity(){
 function doAwaken(){
   if(!canAwaken() || state.isActing) return;
   state.awakened = detectIdentity();
+  unlockEndingByName(state.awakened?.name);
+  unlockSpecialEndings();
   updateAwakenButtonUI();
   syncAwakenUI();
   syncRoomUI();
+  renderEndingMenu();
   showScreen('awaken');
 }
 
@@ -4356,6 +4556,9 @@ function resetAll(){
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false };
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
+  state.affection = {};
+  state.unlockedEndings = [];
+  state.endingFlags = {};
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
@@ -4386,6 +4589,7 @@ function resetAll(){
     `;
   }
   renderFriendMenu();
+  renderEndingMenu();
   hideRoomDoorbell();
   hideRoomOwnerBubble();
   hideRoomVisitorBubble();
@@ -4426,6 +4630,9 @@ function serializeGameState(){
       roomDecor: { ...state.roomDecor },
       activeRoomVisitor: state.activeRoomVisitor ?? null,
       roomSeenFriendEvents: [...(state.roomSeenFriendEvents || [])],
+      affection: { ...(state.affection || {}) },
+      unlockedEndings: [...(state.unlockedEndings || [])],
+      endingFlags: { ...(state.endingFlags || {}) },
       currentScreen: getCurrentScreenName()
     }
   };
@@ -4448,6 +4655,9 @@ function migrateSave(save){
   if (!p.roomDecor) p.roomDecor = { lpPlayer:false, desk:false, birdCage:false };
   if (typeof p.activeRoomVisitor === 'undefined') p.activeRoomVisitor = null;
   if (!Array.isArray(p.roomSeenFriendEvents)) p.roomSeenFriendEvents = [];
+  if (!p.affection || typeof p.affection !== 'object') p.affection = {};
+  if (!Array.isArray(p.unlockedEndings)) p.unlockedEndings = [];
+  if (!p.endingFlags || typeof p.endingFlags !== 'object') p.endingFlags = {};
 
   p.stats = {
     practice: oldStats.practice ?? 0,
