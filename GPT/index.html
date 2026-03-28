@@ -23,7 +23,7 @@
   --radius:20px;
   --shadow:0 12px 28px rgba(120,104,87,.10);
   --top-h:108px;
-  --app-max:576px;
+  --app-max:480px;
 }
 
 *{box-sizing:border-box}
@@ -1447,6 +1447,28 @@ img{
 }
 .room-player.left{ transform:scaleX(-1); }
 
+.room-visitor{
+  position:absolute;
+  z-index:10;
+  width:54px;
+  height:78px;
+  left:168px;
+  top:332px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease, left .22s ease, top .22s ease;
+  will-change:left, top, transform;
+}
+.room-visitor.show{ opacity:1; }
+.room-visitor img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(109,94,79,.24));
+}
+.room-visitor.left{ transform:scaleX(-1); }
+
 .room-action-anchor{
   position:absolute;
   right:12px;
@@ -1504,6 +1526,44 @@ img{
   font-size:11px;
   color:#8c7d71;
   line-height:1.45;
+}
+
+.room-decor-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.decor-btn{
+  width:100%;
+  min-height:92px;
+  padding:12px 10px;
+  border-radius:16px;
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(120,104,87,.14);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(120,104,87,.08);
+}
+.decor-btn strong{
+  font-size:12px;
+  line-height:1.35;
+}
+.decor-btn span{
+  font-size:10px;
+  color:var(--sub);
+  line-height:1.4;
+}
+.decor-btn.installed{
+  background:linear-gradient(135deg, rgba(241,167,200,.24), rgba(201,195,232,.24));
+  border-color:rgba(160,132,160,.24);
+}
+.decor-btn:disabled{
+  opacity:1;
+  cursor:default;
 }
 
 .hint-box{
@@ -1925,54 +1985,79 @@ body.resizing .seed-awaken-anchor{
 
     <div class="main">
       <div class="room-layout room-layout-awakened">
-        <div class="card panel">
-          <div class="room-scene" id="roomScene">
-            <div class="room-map" id="roomMap"></div>
+        <div class="room-side-column">
+          <div class="card panel">
+            <div class="room-scene" id="roomScene">
+              <div class="room-map" id="roomMap"></div>
 
-            <div class="stage-clock-row room-stage-clock">
-              <div class="day-badge" id="roomDayBadge">DAY1</div>
-              <div class="clock-badge" id="roomClockBadge">07:00</div>
-            </div>
-
-            <div class="room-player" id="roomPlayer">
-              <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
-            </div>
-
-            <div class="room-stage-label">
-              <div class="name" id="roomStageName">각성한 KEY의 방</div>
-            </div>
-
-            <div class="room-action-anchor">
-              <div class="popup-menu compact-menu" id="roomGiftMenu">
-                <button type="button" id="roomGiftFoodBtn">음식</button>
-                <button type="button" id="roomGiftItemBtn">아이템</button>
-
-                <div class="submenu" id="roomGiftFoodSubmenu">
-                  <button type="button" data-room-food="샐러드">샐러드</button>
-                  <button type="button" data-room-food="고수샐러드">고수샐러드</button>
-                  <button type="button" data-room-food="당근카레">당근카레</button>
-                  <button type="button" data-room-food="두릅튀김">두릅튀김</button>
-                  <button type="button" data-room-food="파스타">파스타</button>
-                </div>
-
-                <div class="submenu" id="roomGiftItemSubmenu">
-                  <button type="button" data-room-item="지중해풍 꽃">지중해풍 꽃</button>
-                  <button type="button" data-room-item="핑크색 털뭉치 키링">핑크색 털뭉치 키링</button>
-                  <button type="button" data-room-item="고양이 비니">고양이 비니</button>
-                </div>
+              <div class="stage-clock-row room-stage-clock">
+                <div class="day-badge" id="roomDayBadge">DAY1</div>
+                <div class="clock-badge" id="roomClockBadge">07:00</div>
               </div>
 
-              <div class="popup-menu compact-menu friend-menu" id="friendMenu">
-                <div class="friend-menu-title">친구 목록</div>
-                <div id="friendListWrap">
-                  <div class="friend-empty">아직 등장한 친구가 없어요.</div>
-                </div>
+              <div class="room-player" id="roomPlayer">
+                <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
               </div>
 
-              <div class="room-action-buttons">
-                <button class="gift-btn" id="roomGiftBtn">선물</button>
-                <button class="gift-btn" id="friendBtn">친구</button>
+              <div class="room-visitor" id="roomVisitor">
+                <img id="roomVisitorImg" src="img/KEY_default_s.png" alt="방문 친구" />
               </div>
+
+              <div class="room-stage-label">
+                <div class="name" id="roomStageName">각성한 KEY의 방</div>
+              </div>
+
+              <div class="room-action-anchor">
+                <div class="popup-menu compact-menu" id="roomGiftMenu">
+                  <button type="button" id="roomGiftFoodBtn">음식</button>
+                  <button type="button" id="roomGiftItemBtn">아이템</button>
+
+                  <div class="submenu" id="roomGiftFoodSubmenu">
+                    <button type="button" data-room-food="샐러드">샐러드</button>
+                    <button type="button" data-room-food="고수샐러드">고수샐러드</button>
+                    <button type="button" data-room-food="당근카레">당근카레</button>
+                    <button type="button" data-room-food="두릅튀김">두릅튀김</button>
+                    <button type="button" data-room-food="파스타">파스타</button>
+                  </div>
+
+                  <div class="submenu" id="roomGiftItemSubmenu">
+                    <button type="button" data-room-item="지중해풍 꽃">지중해풍 꽃</button>
+                    <button type="button" data-room-item="핑크색 털뭉치 키링">핑크색 털뭉치 키링</button>
+                    <button type="button" data-room-item="고양이 비니">고양이 비니</button>
+                  </div>
+                </div>
+
+                <div class="popup-menu compact-menu friend-menu" id="friendMenu">
+                  <div class="friend-menu-title">친구 목록</div>
+                  <div id="friendListWrap">
+                    <div class="friend-empty">아직 등장한 친구가 없어요.</div>
+                  </div>
+                </div>
+
+                <div class="room-action-buttons">
+                  <button class="gift-btn" id="roomGiftBtn">선물</button>
+                  <button class="gift-btn" id="friendBtn">친구</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title" style="margin-bottom:12px;">방꾸미기</h3>
+            <div class="small" style="margin-bottom:12px;">가구를 추가하면 누가 찾아올지도 몰라요.</div>
+            <div class="room-decor-grid" id="roomDecorGrid">
+              <button class="decor-btn" type="button" data-decor="lpPlayer">
+                <strong>LP플레이어</strong>
+                <span>배드러브 키 방문</span>
+              </button>
+              <button class="decor-btn" type="button" data-decor="desk">
+                <strong>업무용 책상</strong>
+                <span>굿앤그 인턴 키 방문</span>
+              </button>
+              <button class="decor-btn" type="button" data-decor="birdCage">
+                <strong>작은 새장</strong>
+                <span>천사 키 방문</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2096,7 +2181,13 @@ const state = {
   actionMinutesApplied: 0,
   debugMode: false,
   debugInputBuffer: '',
-  debugInputTimer: null
+  debugInputTimer: null,
+  roomDecor: {
+    lpPlayer: false,
+    desk: false,
+    birdCage: false
+  },
+  activeRoomVisitor: null
 };
 
 const imageSet = {
@@ -2107,6 +2198,13 @@ const imageSet = {
   gasolineRoom: 'img/KEY_gasoline_s.png',
   badloveRoom: 'img/KEY_badlove_s.png'
 };
+
+const roomDecorConfig = {
+  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.' },
+  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.' },
+  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.' }
+};
+
 
 const dialogues = {
   intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
@@ -2178,7 +2276,10 @@ const roomScene = document.getElementById('roomScene');
 const roomMap = document.getElementById('roomMap');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
+const roomVisitor = document.getElementById('roomVisitor');
+const roomVisitorImg = document.getElementById('roomVisitorImg');
 const roomHint = document.getElementById('roomHint');
+const roomDecorGrid = document.getElementById('roomDecorGrid');
 const roomDayBadge = document.getElementById('roomDayBadge');
 const roomClockBadge = document.getElementById('roomClockBadge');
 const roomStageName = document.getElementById('roomStageName');
@@ -2257,13 +2358,96 @@ const friendUnlockRules = {
 
 function getUnlockedFriends(identityName){
   const rules = friendUnlockRules[identityName] || [];
-  return rules.filter(rule => {
+  const unlocked = rules.filter(rule => {
     try {
       return typeof rule.when === 'function' ? rule.when(state) : false;
     } catch (err) {
       return false;
     }
+  }).map(rule => ({ name:rule.name, desc:rule.desc, source:'rule' }));
+
+  Object.entries(roomDecorConfig).forEach(([key, info]) => {
+    if (state.roomDecor?.[key]) {
+      unlocked.push({ name:info.friendName, desc:`${info.label}을(를) 보고 방문함`, source:'decor', decorKey:key });
+    }
   });
+
+  const dedup = new Map();
+  unlocked.forEach(friend => { if (!dedup.has(friend.name)) dedup.set(friend.name, friend); });
+  return Array.from(dedup.values());
+}
+
+function getRoomFriendImage(name){
+  const roomMap = {
+    '배드러브 키': imageSet.badloveRoom,
+    '굿앤그 인턴 키': imageSet.defaultRoom,
+    '천사 키': imageSet.defaultRoom,
+    '헌터 키': imageSet.gasolineRoom,
+    '헌터 검정키': imageSet.gasolineRoom,
+    '킬러 키': imageSet.gasolineRoom,
+    '빌런 키': imageSet.gasolineRoom,
+    '오컬트키': imageSet.badloveRoom,
+    '왹져공주 키': imageSet.badloveRoom,
+    '언릴키': imageSet.badloveRoom,
+    '백작 키': imageSet.badloveRoom,
+    '크리쳐 키': imageSet.gasolineRoom
+  };
+  return roomMap[name] || imageSet.defaultRoom;
+}
+
+function renderRoomVisitor(){
+  if (!roomVisitor || !roomScene) return;
+  const visitorName = state.activeRoomVisitor;
+  if (!visitorName) {
+    roomVisitor.classList.remove('show');
+    return;
+  }
+  const visitorW = parseFloat(getComputedStyle(roomVisitor).width) || 54;
+  const visitorH = parseFloat(getComputedStyle(roomVisitor).height) || 78;
+  const rect = roomScene.getBoundingClientRect();
+  const spacing = 18;
+  let left = (state.roomPlayer.x || 0) + (state.roomPlayer.w || 54) + spacing;
+  if (left + visitorW > rect.width - 14) {
+    left = Math.max(14, (state.roomPlayer.x || 0) - visitorW - spacing);
+    roomVisitor.classList.add('left');
+  } else {
+    roomVisitor.classList.remove('left');
+  }
+  const top = Math.max(92, (state.roomPlayer.y || 0) + ((state.roomPlayer.h || 78) - visitorH));
+  roomVisitor.style.left = `${left}px`;
+  roomVisitor.style.top = `${top}px`;
+  roomVisitorImg.src = getRoomFriendImage(visitorName);
+  roomVisitorImg.alt = `${visitorName} 방문 친구`;
+  roomVisitor.classList.add('show');
+}
+
+function renderRoomDecorButtons(){
+  if (!roomDecorGrid) return;
+  roomDecorGrid.querySelectorAll('[data-decor]').forEach(btn => {
+    const key = btn.dataset.decor;
+    const installed = !!state.roomDecor?.[key];
+    btn.classList.toggle('installed', installed);
+    btn.disabled = installed;
+    const info = roomDecorConfig[key];
+    const label = btn.querySelector('strong');
+    const desc = btn.querySelector('span');
+    if (label && info) label.textContent = info.label;
+    if (desc && info) desc.textContent = installed ? `${info.friendName} 방문 중` : `${info.friendName} 방문`;
+  });
+}
+
+function installDecorItem(decorKey){
+  const info = roomDecorConfig[decorKey];
+  if (!info) return;
+  if (state.roomDecor?.[decorKey]) return;
+  state.roomDecor[decorKey] = true;
+  state.activeRoomVisitor = info.friendName;
+  roomHint.textContent = `누가 찾아온 것 같아... ${info.desc}`;
+  renderRoomDecorButtons();
+  renderRoomVisitor();
+  renderFriendMenu();
+  syncRoomUI();
+  saveLocal(serializeGameState());
 }
 
 const debugEndingPresets = [
@@ -2514,6 +2698,12 @@ if (friendBtn) {
       renderFriendMenu();
       friendMenu.classList.add('show');
     }
+  });
+}
+
+if (roomDecorGrid) {
+  roomDecorGrid.querySelectorAll('[data-decor]').forEach(btn => {
+    btn.addEventListener('click', () => installDecorItem(btn.dataset.decor));
   });
 }
 
@@ -3270,6 +3460,7 @@ function renderRoomPlayer(){
   roomPlayer.style.left = `${state.roomPlayer.x}px`;
   roomPlayer.style.top = `${state.roomPlayer.y}px`;
   roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
+  renderRoomVisitor();
 }
 
 function advanceGameTimeStep(stepMinutes = 1){
@@ -3665,7 +3856,9 @@ function syncRoomUI(){
 
   document.getElementById('roomIdentity').textContent = id.name;
   roomPlayerImg.src = id.roomImg;
-  roomHint.textContent = `${id.name}로 각성했어요. 친구는 조건을 만족하면 하나씩 나타나요.`;
+  roomHint.textContent = state.activeRoomVisitor
+    ? `누가 찾아온 것 같아... ${state.activeRoomVisitor}가 방에 와 있어요.`
+    : `${id.name}로 각성했어요. 방꾸미기를 하면 새로운 친구가 찾아올 수 있어요.`;
   roomStageName.textContent = `${id.name}의 방`;
   roomDayBadge.textContent = `DAY${state.day}`;
   roomClockBadge.textContent = `${String(state.gameHour).padStart(2,'0')}:${String(state.gameMinute).padStart(2,'0')}`;
@@ -3691,6 +3884,13 @@ function syncRoomUI(){
   friendBadge.innerHTML = `<strong>친구</strong> ${unlockedFriends.length}명`;
   badgeWrap.appendChild(friendBadge);
 
+  const decorCountBadge = document.createElement('div');
+  decorCountBadge.className = 'badge';
+  decorCountBadge.innerHTML = `<strong>방꾸미기</strong> ${Object.values(state.roomDecor || {}).filter(Boolean).length}개`;
+  badgeWrap.appendChild(decorCountBadge);
+
+  renderRoomDecorButtons();
+  renderRoomVisitor();
   renderFriendMenu();
 }
 
@@ -3714,6 +3914,8 @@ function resetAll(){
   state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
+  state.roomDecor = { lpPlayer:false, desk:false, birdCage:false };
+  state.activeRoomVisitor = null;
 
   clearActionProgress();
   closeGiftMenus();
@@ -3774,6 +3976,8 @@ function serializeGameState(){
       concertEventResolved: state.concertEventResolved,
       seedPlayer: { ...state.seedPlayer },
       roomPlayer: { ...state.roomPlayer },
+      roomDecor: { ...state.roomDecor },
+      activeRoomVisitor: state.activeRoomVisitor ?? null,
       currentScreen: getCurrentScreenName()
     }
   };
@@ -3793,6 +3997,8 @@ function migrateSave(save){
   if (typeof p.gameMinute !== 'number') p.gameMinute = 0;
   if (typeof p.concertEventOffered !== 'boolean') p.concertEventOffered = false;
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
+  if (!p.roomDecor) p.roomDecor = { lpPlayer:false, desk:false, birdCage:false };
+  if (typeof p.activeRoomVisitor === 'undefined') p.activeRoomVisitor = null;
 
   p.stats = {
     practice: oldStats.practice ?? 0,
@@ -3835,6 +4041,8 @@ function applySaveToState(save){
   state.currentStageBg = p.currentStageBg ?? 'default';
   state.concertEventOffered = p.concertEventOffered ?? false;
   state.concertEventResolved = p.concertEventResolved ?? false;
+  state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, ...(p.roomDecor || {}) };
+  state.activeRoomVisitor = p.activeRoomVisitor ?? null;
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
@@ -3853,6 +4061,8 @@ function applySaveToState(save){
     document.getElementById('roomIdentity').textContent = '-';
     document.getElementById('roomBadges').innerHTML = '';
     roomHint.textContent = '방 안으로 들어왔어요.';
+    renderRoomDecorButtons();
+    renderRoomVisitor();
   }
 
   clearActionProgress();
