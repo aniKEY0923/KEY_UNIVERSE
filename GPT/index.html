@@ -30,6 +30,9 @@
 html,body{height:100%}
 body{
   margin:0;
+  width:100%;
+  max-width:100vw;
+  overflow-x:hidden;
   display:flex;
   justify-content:center;
   color:var(--text);
@@ -1379,7 +1382,12 @@ img{
   grid-template-columns:1.18fr .82fr;
   gap:14px;
   min-height:calc(100vh - var(--top-h) - 30px);
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  align-items:start;
 }
+.room-layout > *{min-width:0;}
 .room-layout-awakened{
   align-items:start;
 }
@@ -1387,6 +1395,9 @@ img{
   display:flex;
   flex-direction:column;
   gap:14px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
 }
 .room-scene{
   position:relative;
@@ -1532,6 +1543,8 @@ img{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:10px;
+  width:100%;
+  max-width:100%;
 }
 .decor-btn{
   width:100%;
@@ -1600,12 +1613,40 @@ body.resizing .seed-awaken-anchor{
 }
 
 @media (max-width: 980px){
-  .room-layout{ grid-template-columns:1fr; }
-  .room-scene{ min-height:420px; }
+  .room-layout{
+    grid-template-columns:1fr;
+    width:100%;
+    max-width:100%;
+  }
+  .room-side-column{ width:100%; }
+  .room-scene{ min-height:auto; }
 }
 
 @media (max-width: 640px){
   :root{ --top-h:116px; }
+
+  .app{
+    width:100%;
+    max-width:100%;
+  }
+
+  .room-layout,
+  .room-side-column,
+  .room-decor-grid,
+  .awaken-card{
+    width:100%;
+    max-width:100%;
+  }
+
+  .room-decor-grid{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:8px;
+  }
+
+  .decor-btn{
+    min-height:84px;
+    padding:10px 8px;
+  }
 
   .topbar{ padding:10px 12px 6px; }
   .schedule-topbar{ padding:10px 12px 6px; }
