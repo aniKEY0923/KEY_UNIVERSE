@@ -230,6 +230,112 @@ img{
   margin-top:12px;
 }
 
+.schedule-panel > .action-row{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+.debug-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(31,25,38,.42);
+  backdrop-filter:blur(6px);
+}
+.debug-overlay.show{
+  display:flex;
+}
+.debug-modal{
+  width:min(560px, 100%);
+  max-height:min(82vh, 760px);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.97), rgba(255,247,250,.95));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 22px 54px rgba(0,0,0,.20);
+}
+.debug-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 18px 12px;
+  border-bottom:1px solid rgba(120,104,87,.08);
+}
+.debug-title-wrap{
+  min-width:0;
+}
+.debug-title{
+  margin:0;
+  font-size:18px;
+  font-weight:950;
+}
+.debug-sub{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--sub);
+  line-height:1.45;
+}
+.debug-close-btn{
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  background:rgba(255,255,255,.9);
+  border:1px solid rgba(120,104,87,.12);
+  font-size:20px;
+  font-weight:900;
+  line-height:1;
+}
+.debug-body{
+  padding:14px 18px 18px;
+  overflow:auto;
+}
+.debug-status-text{
+  margin:0 0 14px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.8);
+  border:1px solid rgba(120,104,87,.10);
+  font-size:12px;
+  line-height:1.55;
+  color:#5b4d42;
+  white-space:pre-line;
+}
+.debug-ending-list{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+}
+.debug-ending-btn{
+  width:100%;
+  text-align:left;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(120,104,87,.10);
+  font-size:12px;
+  line-height:1.45;
+  font-weight:800;
+  transition:.16s ease;
+}
+.debug-ending-btn:hover{
+  transform:translateY(-1px);
+  background:rgba(255,247,250,.96);
+  box-shadow:0 10px 18px rgba(120,104,87,.10);
+}
+.debug-ending-btn .num{
+  display:inline-block;
+  min-width:22px;
+  margin-right:6px;
+  color:var(--sub);
+}
+
 .primary-btn,
 .secondary-btn{
   width:100%;
@@ -1274,9 +1380,19 @@ img{
   gap:14px;
   min-height:calc(100vh - var(--top-h) - 30px);
 }
+.room-layout-awakened{
+  align-items:start;
+}
+.room-side-column{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
 .room-scene{
   position:relative;
-  min-height:560px;
+  width:100%;
+  aspect-ratio:3 / 2;
+  min-height:auto;
   border-radius:18px;
   border:1px solid var(--line);
   overflow:hidden;
@@ -1289,24 +1405,34 @@ img{
     linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
     url("img/room_default.png") center center / 108% 108% no-repeat;
 }
-.room-help{
+.room-stage-clock{
   position:absolute;
   left:12px;
+  right:12px;
   top:12px;
+  z-index:8;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+.room-stage-label{
+  position:absolute;
+  left:14px;
+  bottom:12px;
   z-index:6;
-  padding:8px 10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.84);
-  border:1px solid rgba(120,104,87,.08);
-  font-size:12px;
-  color:#6a584a;
-  backdrop-filter:blur(8px);
+  text-align:left;
+}
+.room-stage-label .name{
+  font-size:18px;
+  font-weight:900;
+  color:#fffdf9;
+  text-shadow:0 2px 10px rgba(102,88,74,.26);
 }
 .room-player{
   position:absolute;
   z-index:10;
-  width:42px;
-  height:60px;
+  width:54px;
+  height:78px;
   left:100px;
   top:340px;
   pointer-events:none;
@@ -1317,9 +1443,68 @@ img{
   height:100%;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 3px 6px rgba(109,94,79,.24));
+  filter:drop-shadow(0 4px 8px rgba(109,94,79,.24));
 }
 .room-player.left{ transform:scaleX(-1); }
+
+.room-action-anchor{
+  position:absolute;
+  right:12px;
+  bottom:12px;
+  z-index:12;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+.room-action-buttons{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.compact-menu{
+  min-width:120px;
+}
+.friend-menu{
+  min-width:180px;
+  max-width:220px;
+}
+.friend-menu-title{
+  padding:6px 8px 8px;
+  font-size:12px;
+  font-weight:900;
+  color:#6a584a;
+}
+.friend-empty{
+  padding:8px;
+  border-radius:12px;
+  background:rgba(255,255,255,.72);
+  color:#8c7d71;
+  font-size:12px;
+  line-height:1.5;
+}
+.friend-list{
+  display:grid;
+  gap:8px;
+}
+.friend-item{
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(120,104,87,.08);
+}
+.friend-item strong{
+  display:block;
+  font-size:12px;
+  color:#5b4d42;
+  margin-bottom:2px;
+}
+.friend-item span{
+  display:block;
+  font-size:11px;
+  color:#8c7d71;
+  line-height:1.45;
+}
 
 .hint-box{
   padding:12px;
@@ -1367,6 +1552,13 @@ body.resizing .seed-awaken-anchor{
   .brand-title-only .title{ font-size:30px; }
   .main{ padding:6px 10px 10px; }
   .action-row{ grid-template-columns:1fr; }
+  .schedule-panel > .action-row{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .debug-overlay{ padding:14px; }
+  .debug-modal{ width:min(100%, 100%); max-height:86vh; border-radius:20px; }
+  .debug-head{ padding:16px 16px 10px; }
+  .debug-body{ padding:12px 16px 16px; }
+  .debug-ending-list{ grid-template-columns:1fr; gap:8px; }
+  .debug-ending-btn{ padding:12px; font-size:12px; }
   .awaken-title{ font-size:28px; }
 
   .seed-side-status{
@@ -1445,8 +1637,19 @@ body.resizing .seed-awaken-anchor{
   }
 
   .room-player{
-    width:39px;
-    height:57px;
+    width:54px;
+    height:78px;
+  }
+  .room-action-anchor{
+    right:10px;
+    bottom:10px;
+  }
+  .room-action-buttons{
+    gap:6px;
+  }
+  .friend-menu{
+    min-width:168px;
+    max-width:200px;
   }
 
   .seed-awaken-btn{
@@ -1607,6 +1810,7 @@ body.resizing .seed-awaken-anchor{
 
           <div class="action-row">
             <button class="secondary-btn" id="resetBtn">새로 시작</button>
+            <button class="primary-btn" id="debugModeBtn">디버그 모드</button>
           </div>
         </div>
 
@@ -1660,15 +1864,24 @@ body.resizing .seed-awaken-anchor{
   </section>
 
   <section class="screen" id="screen-awaken">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">Awakening</div>
-        <div class="subtitle">짧은 테스트 루프에서도 각성 결과를 확인할 수 있어요</div>
+    <div class="topbar schedule-topbar">
+      <div class="schedule-topbar-row">
+        <div class="brand-title-only">
+          <div class="title">KEY:VERSE</div>
+        </div>
+        <div class="topbar-right">
+          <div class="top-auth-row">
+            <button class="mini-btn primary" id="awakenLoginBtn">로그인</button>
+            <button class="mini-btn" id="awakenLogoutBtn" style="display:none;">로그아웃</button>
+            <button class="mini-btn" id="awakenSaveBtn">저장</button>
+          </div>
+          <div class="pill">
+            <span>Result</span>
+            <strong id="awakenTopName">Idol KEY</strong>
+          </div>
+        </div>
       </div>
-      <div class="pill">
-        <span>Result</span>
-        <strong id="awakenTopName">Idol KEY</strong>
-      </div>
+      <div class="schedule-subline">각성 결과를 확인하고 나의 방으로 이동할 수 있어요</div>
     </div>
 
     <div class="main center-wrap">
@@ -1690,31 +1903,81 @@ body.resizing .seed-awaken-anchor{
   </section>
 
   <section class="screen" id="screen-room">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">My Room</div>
-        <div class="subtitle">정체성에 따라 다른 생활이 열립니다</div>
+    <div class="topbar schedule-topbar">
+      <div class="schedule-topbar-row">
+        <div class="brand-title-only">
+          <div class="title">KEY:VERSE</div>
+        </div>
+        <div class="topbar-right">
+          <div class="top-auth-row">
+            <button class="mini-btn primary" id="roomLoginBtn">로그인</button>
+            <button class="mini-btn" id="roomLogoutBtn" style="display:none;">로그아웃</button>
+            <button class="mini-btn" id="roomSaveBtn">저장</button>
+          </div>
+          <div class="pill">
+            <span>Identity</span>
+            <strong id="roomIdentity">-</strong>
+          </div>
+        </div>
       </div>
-      <div class="pill">
-        <span>Identity</span>
-        <strong id="roomIdentity">-</strong>
-      </div>
+      <div class="schedule-subline">각성 후에는 전용 배경과 친구 목록이 열립니다</div>
     </div>
 
     <div class="main">
-      <div class="room-layout">
+      <div class="room-layout room-layout-awakened">
         <div class="card panel">
           <div class="room-scene" id="roomScene">
-            <div class="room-map"></div>
-            <div class="room-help">다음 단계에서 각성 타입별 전용 방 연출을 더 붙일 수 있어요</div>
+            <div class="room-map" id="roomMap"></div>
+
+            <div class="stage-clock-row room-stage-clock">
+              <div class="day-badge" id="roomDayBadge">DAY1</div>
+              <div class="clock-badge" id="roomClockBadge">07:00</div>
+            </div>
 
             <div class="room-player" id="roomPlayer">
               <img id="roomPlayerImg" src="img/KEY_default_s.png" alt="플레이어" />
             </div>
+
+            <div class="room-stage-label">
+              <div class="name" id="roomStageName">각성한 KEY의 방</div>
+            </div>
+
+            <div class="room-action-anchor">
+              <div class="popup-menu compact-menu" id="roomGiftMenu">
+                <button type="button" id="roomGiftFoodBtn">음식</button>
+                <button type="button" id="roomGiftItemBtn">아이템</button>
+
+                <div class="submenu" id="roomGiftFoodSubmenu">
+                  <button type="button" data-room-food="샐러드">샐러드</button>
+                  <button type="button" data-room-food="고수샐러드">고수샐러드</button>
+                  <button type="button" data-room-food="당근카레">당근카레</button>
+                  <button type="button" data-room-food="두릅튀김">두릅튀김</button>
+                  <button type="button" data-room-food="파스타">파스타</button>
+                </div>
+
+                <div class="submenu" id="roomGiftItemSubmenu">
+                  <button type="button" data-room-item="지중해풍 꽃">지중해풍 꽃</button>
+                  <button type="button" data-room-item="핑크색 털뭉치 키링">핑크색 털뭉치 키링</button>
+                  <button type="button" data-room-item="고양이 비니">고양이 비니</button>
+                </div>
+              </div>
+
+              <div class="popup-menu compact-menu friend-menu" id="friendMenu">
+                <div class="friend-menu-title">친구 목록</div>
+                <div id="friendListWrap">
+                  <div class="friend-empty">아직 등장한 친구가 없어요.</div>
+                </div>
+              </div>
+
+              <div class="room-action-buttons">
+                <button class="gift-btn" id="roomGiftBtn">선물</button>
+                <button class="gift-btn" id="friendBtn">친구</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="room-side-column">
           <div class="card panel">
             <h3 class="section-title" style="margin-bottom:12px;">현재 상태</h3>
             <div class="hint-box" id="roomHint">방 안으로 들어왔어요.</div>
@@ -1723,7 +1986,7 @@ body.resizing .seed-awaken-anchor{
 
           <div class="card panel">
             <h3 class="section-title" style="margin-bottom:12px;">다음 단계</h3>
-            <div class="small">각성 후 생활, 전용 대사, 이벤트를 여기에 확장할 수 있어요.</div>
+            <div class="small">배경 이미지는 각 각성 결과별로 교체할 수 있도록 연결만 해두었어요. 이미지 파일만 바꿔 넣으면 됩니다.</div>
 
             <div class="action-row">
               <button class="secondary-btn" id="restartAllBtn">처음으로</button>
@@ -1822,8 +2085,10 @@ const state = {
   roomPlayer: {
     x: 100,
     y: 340,
-    w: 42,
-    h: 60,
+    w: 54,
+    h: 78,
+    baseW: 54,
+    baseH: 78,
     facing: 'right'
   },
   actionClockTimer: null,
@@ -1910,36 +2175,96 @@ const seedStatus = document.getElementById('seedStatus');
 const seedAwakenAnchor = document.getElementById('seedAwakenAnchor');
 
 const roomScene = document.getElementById('roomScene');
+const roomMap = document.getElementById('roomMap');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomHint = document.getElementById('roomHint');
+const roomDayBadge = document.getElementById('roomDayBadge');
+const roomClockBadge = document.getElementById('roomClockBadge');
+const roomStageName = document.getElementById('roomStageName');
 const scheduleGrid = document.getElementById('scheduleGrid');
 
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const saveBtn = document.getElementById('saveBtn');
+const awakenLoginBtn = document.getElementById('awakenLoginBtn');
+const awakenLogoutBtn = document.getElementById('awakenLogoutBtn');
+const awakenSaveBtn = document.getElementById('awakenSaveBtn');
+const roomLoginBtn = document.getElementById('roomLoginBtn');
+const roomLogoutBtn = document.getElementById('roomLogoutBtn');
+const roomSaveBtn = document.getElementById('roomSaveBtn');
 
-const debugOverlay = document.createElement('div');
-debugOverlay.id = 'debugOverlay';
-debugOverlay.style.cssText = [
-  'position:fixed',
-  'right:16px',
-  'bottom:16px',
-  'z-index:9999',
-  'display:none',
-  'max-width:min(360px, calc(100vw - 32px))',
-  'padding:12px 14px',
-  'border-radius:16px',
-  'background:rgba(255,255,255,.96)',
-  'border:1px solid rgba(120,104,87,.16)',
-  'box-shadow:0 18px 38px rgba(0,0,0,.16)',
-  'backdrop-filter:blur(10px)',
-  'font-size:12px',
-  'line-height:1.55',
-  'color:#5b4d42',
-  'white-space:pre-line'
-].join(';');
-document.body.appendChild(debugOverlay);
+const debugModeBtn = document.getElementById('debugModeBtn');
+
+
+const friendUnlockRules = {
+  '가솔린 키': [
+    { name:'무대감독 KEY', desc:'리허설을 챙겨주는 든든한 친구', when:({day}) => day >= 4 },
+    { name:'드럼소년 KEY', desc:'연습량이 충분할 때 합주하러 와요', when:({stats}) => (stats.practice || 0) >= 55 }
+  ],
+  '배드러브 키': [
+    { name:'새벽산책 KEY', desc:'늦은 밤 감성에 반응해 나타나요', when:({day, stats}) => day >= 4 && (stats.mystery || 0) >= 30 }
+  ],
+  '프릭키': [
+    { name:'장난꾸러기 KEY', desc:'유머가 높아지면 같이 놀러 옵니다', when:({stats}) => (stats.humor || 0) >= 35 }
+  ],
+  '언릴키': [
+    { name:'필름노트 KEY', desc:'연습과 신비가 쌓일수록 가까워져요', when:({stats}) => (stats.practice || 0) + (stats.mystery || 0) >= 70 }
+  ],
+  '오컬트키': [
+    { name:'심야서점 KEY', desc:'밤의 분위기를 좋아하는 친구', when:({day}) => day >= 5 }
+  ],
+  '왹져공주 키': [
+    { name:'리본요정 KEY', desc:'귀엽고 기묘한 취향이 맞는 친구', when:({stats}) => (stats.cute || 0) >= 35 }
+  ],
+  '헌터 키': [
+    { name:'블랙트랙 KEY', desc:'날카로운 집중력을 알아보는 친구', when:({stats}) => (stats.scary || 0) >= 35 }
+  ],
+  '굿앤그 인턴 키': [
+    { name:'기획팀 KEY', desc:'사교성과 연습이 쌓이면 찾아옵니다', when:({stats}) => (stats.social || 0) + (stats.practice || 0) >= 75 }
+  ],
+  '꼼가 아빠 키': [
+    { name:'포근친구 KEY', desc:'다정한 분위기에 끌려 와요', when:({day}) => day >= 4 }
+  ],
+  '헌터 검정키': [
+    { name:'그림자 KEY', desc:'깊은 밤의 공기를 공유하는 친구', when:({stats}) => (stats.mystery || 0) + (stats.scary || 0) >= 75 }
+  ],
+  '천사 키': [
+    { name:'햇살 KEY', desc:'상냥한 무드에 반응하는 친구', when:({stats}) => (stats.cute || 0) + (stats.social || 0) >= 70 }
+  ],
+  '잇범 키': [
+    { name:'스마일 KEY', desc:'귀여움과 유쾌함이 올라가면 등장', when:({stats}) => (stats.humor || 0) + (stats.cute || 0) >= 65 }
+  ],
+  '백작 키': [
+    { name:'로즈홀 KEY', desc:'고풍스러운 무드에 이끌려 옵니다', when:({day}) => day >= 5 }
+  ],
+  '크리쳐 키': [
+    { name:'문틈친구 KEY', desc:'기묘한 분위기가 짙어질 때 등장', when:({stats}) => (stats.mystery || 0) + (stats.scary || 0) >= 70 }
+  ],
+  '킬러 키': [
+    { name:'적막 KEY', desc:'서늘한 농담을 알아듣는 친구', when:({stats}) => (stats.scary || 0) + (stats.humor || 0) >= 70 }
+  ],
+  '빌런 키': [
+    { name:'레드카펫 KEY', desc:'카리스마가 충분할 때 합류해요', when:({day, stats}) => day >= 4 && (stats.scary || 0) >= 40 }
+  ],
+  '범동이 키': [
+    { name:'수다친구 KEY', desc:'사교성과 유머가 쌓이면 나타나요', when:({stats}) => (stats.social || 0) + (stats.humor || 0) >= 70 }
+  ],
+  '말랑콩떡 키': [
+    { name:'솜구름 KEY', desc:'말랑한 무드가 높아지면 찾아와요', when:({stats}) => (stats.cute || 0) + (stats.humor || 0) >= 70 }
+  ]
+};
+
+function getUnlockedFriends(identityName){
+  const rules = friendUnlockRules[identityName] || [];
+  return rules.filter(rule => {
+    try {
+      return typeof rule.when === 'function' ? rule.when(state) : false;
+    } catch (err) {
+      return false;
+    }
+  });
+}
 
 const debugEndingPresets = [
   { key:'practice:social', name:'가솔린 키' },
@@ -1962,12 +2287,65 @@ const debugEndingPresets = [
   { key:'cute:humor', name:'말랑콩떡 키' }
 ];
 
+const debugOverlay = document.createElement('div');
+debugOverlay.id = 'debugOverlay';
+debugOverlay.className = 'debug-overlay';
+debugOverlay.innerHTML = `
+  <div class="debug-modal" role="dialog" aria-modal="true" aria-labelledby="debugModalTitle">
+    <div class="debug-head">
+      <div class="debug-title-wrap">
+        <h3 class="debug-title" id="debugModalTitle">디버그 모드</h3>
+        <div class="debug-sub">엔딩 미리보기를 바로 열 수 있어요.</div>
+      </div>
+      <button type="button" class="debug-close-btn" id="debugCloseBtn" aria-label="디버그 모드 닫기">×</button>
+    </div>
+    <div class="debug-body">
+      <div class="debug-status-text" id="debugStatusText"></div>
+      <div class="debug-ending-list" id="debugEndingList"></div>
+    </div>
+  </div>
+`;
+document.body.appendChild(debugOverlay);
+
+const debugCloseBtn = document.getElementById('debugCloseBtn');
+const debugStatusText = document.getElementById('debugStatusText');
+const debugEndingList = document.getElementById('debugEndingList');
+
+debugEndingList.innerHTML = debugEndingPresets.map((item, idx) => `
+  <button type="button" class="debug-ending-btn" data-debug-ending="${idx + 1}">
+    <span class="num">${idx + 1}.</span>${item.name}
+  </button>
+`).join('');
+
+debugEndingList.querySelectorAll('[data-debug-ending]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const index = Number(btn.dataset.debugEnding);
+    if (Number.isFinite(index)) applyDebugEnding(index);
+  });
+});
+
+debugCloseBtn.addEventListener('click', () => setDebugMode(false));
+debugOverlay.addEventListener('click', (e) => {
+  if (e.target === debugOverlay) setDebugMode(false);
+});
+
 const giftBtn = document.getElementById('giftBtn');
 const giftMenu = document.getElementById('giftMenu');
 const giftFoodBtn = document.getElementById('giftFoodBtn');
 const giftItemBtn = document.getElementById('giftItemBtn');
 const giftFoodSubmenu = document.getElementById('giftFoodSubmenu');
 const giftItemSubmenu = document.getElementById('giftItemSubmenu');
+
+const roomGiftBtn = document.getElementById('roomGiftBtn');
+const roomGiftMenu = document.getElementById('roomGiftMenu');
+const roomGiftFoodBtn = document.getElementById('roomGiftFoodBtn');
+const roomGiftItemBtn = document.getElementById('roomGiftItemBtn');
+const roomGiftFoodSubmenu = document.getElementById('roomGiftFoodSubmenu');
+const roomGiftItemSubmenu = document.getElementById('roomGiftItemSubmenu');
+
+const friendBtn = document.getElementById('friendBtn');
+const friendMenu = document.getElementById('friendMenu');
+const friendListWrap = document.getElementById('friendListWrap');
 
 const concertEventCard = document.getElementById('concertEventCard');
 const concertYesBtn = document.getElementById('concertYesBtn');
@@ -2008,6 +2386,13 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
   resetAll();
   await triggerSaveNow();
 });
+
+if (debugModeBtn) {
+  debugModeBtn.addEventListener('click', () => {
+    registerUserActivity();
+    setDebugMode(true);
+  });
+}
 
 document.getElementById('awakenBtn').addEventListener('click', async () => {
   doAwaken();
@@ -2076,6 +2461,62 @@ giftItemSubmenu.querySelectorAll('[data-item]').forEach(btn => {
   });
 });
 
+if (roomGiftBtn) {
+  roomGiftBtn.addEventListener('click', () => {
+    const willOpen = !roomGiftMenu.classList.contains('show');
+    closeRoomMenus();
+    if (willOpen) roomGiftMenu.classList.add('show');
+  });
+}
+if (roomGiftFoodBtn) {
+  roomGiftFoodBtn.addEventListener('click', () => {
+    roomGiftItemSubmenu.classList.remove('show');
+    roomGiftFoodSubmenu.classList.toggle('show');
+  });
+}
+if (roomGiftItemBtn) {
+  roomGiftItemBtn.addEventListener('click', () => {
+    roomGiftFoodSubmenu.classList.remove('show');
+    roomGiftItemSubmenu.classList.toggle('show');
+  });
+}
+if (roomGiftFoodSubmenu) {
+  roomGiftFoodSubmenu.querySelectorAll('[data-room-food]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const food = btn.dataset.roomFood;
+      if (food === '샐러드') roomHint.textContent = dialogues.giftSalad;
+      if (food === '고수샐러드') roomHint.textContent = dialogues.giftCorianderSalad;
+      if (food === '당근카레') roomHint.textContent = dialogues.giftCarrotCurry;
+      if (food === '두릅튀김') roomHint.textContent = dialogues.giftFried;
+      if (food === '파스타') roomHint.textContent = dialogues.giftPasta;
+      closeRoomMenus();
+      await triggerSaveNow();
+    });
+  });
+}
+if (roomGiftItemSubmenu) {
+  roomGiftItemSubmenu.querySelectorAll('[data-room-item]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = btn.dataset.roomItem;
+      if (item === '지중해풍 꽃') roomHint.textContent = dialogues.giftFlower;
+      if (item === '핑크색 털뭉치 키링') roomHint.textContent = dialogues.giftKeyring;
+      if (item === '고양이 비니') roomHint.textContent = dialogues.giftBeanie;
+      closeRoomMenus();
+      await triggerSaveNow();
+    });
+  });
+}
+if (friendBtn) {
+  friendBtn.addEventListener('click', () => {
+    const willOpen = !friendMenu.classList.contains('show');
+    closeRoomMenus();
+    if (willOpen) {
+      renderFriendMenu();
+      friendMenu.classList.add('show');
+    }
+  });
+}
+
 concertYesBtn.addEventListener('click', async () => {
   state.concertEventResolved = true;
   hideConcertEvent();
@@ -2096,16 +2537,33 @@ document.addEventListener('click', (e) => {
   if (!giftMenu.contains(e.target) && e.target !== giftBtn) {
     closeGiftMenus();
   }
+  const clickedInsideRoomGift = roomGiftMenu && roomGiftMenu.contains(e.target);
+  const clickedInsideFriend = friendMenu && friendMenu.contains(e.target);
+  if (
+    roomGiftMenu && friendMenu &&
+    !clickedInsideRoomGift &&
+    !clickedInsideFriend &&
+    e.target !== roomGiftBtn &&
+    e.target !== friendBtn
+  ) {
+    closeRoomMenus();
+  }
 });
 
-if (loginBtn) loginBtn.addEventListener('click', signInWithGoogle);
-if (logoutBtn) logoutBtn.addEventListener('click', signOut);
-if (saveBtn) {
-  saveBtn.addEventListener('click', async () => {
-    await triggerSaveNow();
-    alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
-  });
-}
+[loginBtn, awakenLoginBtn, roomLoginBtn].forEach(btn => {
+  if (btn) btn.addEventListener('click', signInWithGoogle);
+});
+[logoutBtn, awakenLogoutBtn, roomLogoutBtn].forEach(btn => {
+  if (btn) btn.addEventListener('click', signOut);
+});
+[saveBtn, awakenSaveBtn, roomSaveBtn].forEach(btn => {
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      await triggerSaveNow();
+      alert(currentUser ? '클라우드에 저장했어요.' : '이 기기에 저장했어요. 로그인하면 클라우드에도 저장돼요.');
+    });
+  }
+});
 
 
 miniLaneButtons.forEach(btn => {
@@ -2174,6 +2632,26 @@ function closeGiftMenus(){
   giftMenu.classList.remove('show');
   giftFoodSubmenu.classList.remove('show');
   giftItemSubmenu.classList.remove('show');
+}
+
+function closeRoomMenus(){
+  if (roomGiftMenu) roomGiftMenu.classList.remove('show');
+  if (roomGiftFoodSubmenu) roomGiftFoodSubmenu.classList.remove('show');
+  if (roomGiftItemSubmenu) roomGiftItemSubmenu.classList.remove('show');
+  if (friendMenu) friendMenu.classList.remove('show');
+}
+
+function renderFriendMenu(){
+  if (!friendListWrap) return;
+  const awakenedName = state.awakened?.name;
+  const friends = awakenedName ? getUnlockedFriends(awakenedName) : [];
+  if (!friends.length) {
+    friendListWrap.innerHTML = '<div class="friend-empty">아직 등장한 친구가 없어요.</div>';
+    return;
+  }
+  friendListWrap.innerHTML = `<div class="friend-list">${
+    friends.map(friend => `<div class="friend-item"><strong>${friend.name}</strong><span>${friend.desc}</span></div>`).join('')
+  }</div>`;
 }
 
 let seedBubbleClearTimer = null;
@@ -2680,12 +3158,18 @@ function maybeTriggerConcertEvent(){
 function updateScheduleUI(){
   seedDayBadge.textContent = `DAY${state.day}`;
   seedClockBadge.textContent = formatGameTime(state.gameHour, state.gameMinute);
+  if (roomDayBadge) roomDayBadge.textContent = `DAY${state.day}`;
+  if (roomClockBadge) roomClockBadge.textContent = formatGameTime(state.gameHour, state.gameMinute);
   stageEnergyFill.style.width = `${clamp((state.energy / state.maxEnergy) * 100, 0, 100)}%`;
 
   Object.keys(state.stats).forEach(key => {
     statEls[key].val.textContent = state.stats[key];
     statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
   });
+
+  if (state.awakened) {
+    renderFriendMenu();
+  }
 
   if (canAwaken() && !state.awakened && !state.isActing) {
     setSeedMessage(dialogues.ready, { idleAfterMs:SEED_IDLE_MS });
@@ -2776,11 +3260,13 @@ function renderSeedPlayer(options = {}){
 
 function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
-  state.roomPlayer.x = Math.max(12, rect.width * 0.18);
-  state.roomPlayer.y = Math.max(110, rect.height * 0.72);
+  state.roomPlayer.x = Math.max(18, rect.width * 0.50 - (state.roomPlayer.w || 54) * 0.5);
+  state.roomPlayer.y = Math.max(92, rect.height * 0.68 - (state.roomPlayer.h || 78));
 }
 
 function renderRoomPlayer(){
+  roomPlayer.style.width = `${state.roomPlayer.w || 54}px`;
+  roomPlayer.style.height = `${state.roomPlayer.h || 78}px`;
   roomPlayer.style.left = `${state.roomPlayer.x}px`;
   roomPlayer.style.top = `${state.roomPlayer.y}px`;
   roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
@@ -2892,18 +3378,16 @@ function finalizeActionClock(type){
 
 function updateDebugOverlay(message){
   if (!state.debugMode) {
-    debugOverlay.style.display = 'none';
+    debugOverlay.classList.remove('show');
     return;
   }
 
-  debugOverlay.style.display = 'block';
-  debugOverlay.textContent = message || [
+  debugOverlay.classList.add('show');
+  debugStatusText.textContent = message || [
     '디버그 모드 ON',
-    'Shift + D : 디버그 모드 종료',
-    'Shift + 숫자 : 엔딩 번호 입력',
-    '예) 1번 = Shift+1 / 18번 = Shift+1 다음 Shift+8',
-    '',
-    debugEndingPresets.map((item, idx) => `${idx + 1}. ${item.name}`).join('\n')
+    '모바일에서는 아래 목록을 눌러서 엔딩을 바로 볼 수 있어요.',
+    'PC에서는 Shift + D 로 열고, Shift + 숫자로도 엔딩을 열 수 있어요.',
+    '예) 1번 = Shift+1 / 18번 = Shift+1 다음 Shift+8'
   ].join('\n');
 }
 
@@ -2932,7 +3416,7 @@ function applyDebugEnding(index){
   syncRoomUI();
   showScreen('awaken');
   updateScheduleUI();
-  updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n다른 번호도 계속 입력할 수 있어요.`);
+  updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n목록에서 다른 엔딩도 바로 선택할 수 있어요.`);
 }
 
 function handleDebugShortcut(e){
@@ -3112,54 +3596,45 @@ function detectIdentity(){
   const second = sorted[1][0];
   const combo = `${top}:${second}`;
 
-  const imageByTheme = {
-    practice: { largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom },
-    social:   { largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom },
-    mystery:  { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom },
-    cute:     { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom },
-    scary:    { largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom },
-    humor:    { largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom }
-  };
-
-  const endingMap = {
-    'practice:social': ['가솔린 키', '연습과 무대 에너지가 폭발해 강렬한 퍼포먼스형 KEY로 각성했습니다.'],
-    'practice:mystery': ['배드러브 키', '연습의 정교함 위에 몽환적인 잔상이 얹혀 배드러브 무드의 KEY가 되었습니다.'],
-    'practice:humor': ['프릭키', '무대 센스와 장난기가 만나 예측 불가한 프릭키로 각성했습니다.'],
-    'mystery:practice': ['언릴키', '신비로운 분위기와 단단한 기본기가 결합되어 언릴키가 되었습니다.'],
-    'mystery:cute': ['오컬트키', '몽환과 사랑스러움이 겹쳐 기묘하게 끌리는 오컬트키가 탄생했습니다.'],
-    'cute:mystery': ['왹져공주 키', '귀여움 속에 기묘한 무드가 피어나 왹져공주 키로 각성했습니다.'],
-    'scary:practice': ['헌터 키', '차가운 집중력과 훈련의 누적이 만나 날카로운 헌터 키가 되었습니다.'],
-    'social:practice': ['굿앤그 인턴 키', '사람을 끌어당기는 친화력과 성실함이 만나 굿앤그 인턴 키가 되었습니다.'],
-    'social:cute': ['꼼가 아빠 키', '푸근한 다정함과 친근함이 겹쳐 꼼가 아빠 키로 각성했습니다.'],
-    'scary:mystery': ['헌터 검정키', '어둡고 신비한 기운이 응집되어 헌터 검정키가 되었습니다.'],
-    'cute:social': ['천사 키', '사랑스러움과 사람 좋은 분위기가 극대화되어 천사 키가 되었습니다.'],
-    'humor:cute': ['잇범 키', '유머와 귀여움이 터져나와 시선을 사로잡는 잇범 키가 되었습니다.'],
-    'mystery:social': ['백작 키', '우아한 신비와 사교성이 만나 백작 키의 분위기로 각성했습니다.'],
-    'mystery:scary': ['크리쳐 키', '기묘한 여운과 위압감이 섞여 크리쳐 키가 탄생했습니다.'],
-    'scary:humor': ['킬러 키', '서늘한 존재감 속에 장난기까지 살아 있는 킬러 키가 되었습니다.'],
-    'scary:social': ['빌런 키', '대중을 압도하는 카리스마가 짙어져 빌런 키로 각성했습니다.'],
-    'social:humor': ['범동이 키', '친화력과 입담이 폭발해 범동이 키가 되었습니다.'],
-    'cute:humor': ['말랑콩떡 키', '보들보들한 귀여움과 유쾌함이 만나 말랑콩떡 키로 각성했습니다.']
+  const endingDefs = {
+    'practice:social': { name:'가솔린 키', desc:'연습과 무대 에너지가 폭발해 강렬한 퍼포먼스형 KEY로 각성했습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_gasoline.png' },
+    'practice:mystery': { name:'배드러브 키', desc:'연습의 정교함 위에 몽환적인 잔상이 얹혀 배드러브 무드의 KEY가 되었습니다.', largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom, bgImg:'img/bg_awaken_badlove.png' },
+    'practice:humor': { name:'프릭키', desc:'무대 센스와 장난기가 만나 예측 불가한 프릭키로 각성했습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_freaky.png' },
+    'mystery:practice': { name:'언릴키', desc:'신비로운 분위기와 단단한 기본기가 결합되어 언릴키가 되었습니다.', largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom, bgImg:'img/bg_awaken_unreal.png' },
+    'mystery:cute': { name:'오컬트키', desc:'몽환과 사랑스러움이 겹쳐 기묘하게 끌리는 오컬트키가 탄생했습니다.', largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom, bgImg:'img/bg_awaken_occult.png' },
+    'cute:mystery': { name:'왹져공주 키', desc:'귀여움 속에 기묘한 무드가 피어나 왹져공주 키로 각성했습니다.', largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom, bgImg:'img/bg_awaken_princess.png' },
+    'scary:practice': { name:'헌터 키', desc:'차가운 집중력과 훈련의 누적이 만나 날카로운 헌터 키가 되었습니다.', largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom, bgImg:'img/bg_awaken_hunter.png' },
+    'social:practice': { name:'굿앤그 인턴 키', desc:'사람을 끌어당기는 친화력과 성실함이 만나 굿앤그 인턴 키가 되었습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_goodng.png' },
+    'social:cute': { name:'꼼가 아빠 키', desc:'푸근한 다정함과 친근함이 겹쳐 꼼가 아빠 키로 각성했습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_kkomga.png' },
+    'scary:mystery': { name:'헌터 검정키', desc:'어둡고 신비한 기운이 응집되어 헌터 검정키가 되었습니다.', largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom, bgImg:'img/bg_awaken_blackhunter.png' },
+    'cute:social': { name:'천사 키', desc:'사랑스러움과 사람 좋은 분위기가 극대화되어 천사 키가 되었습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_angel.png' },
+    'humor:cute': { name:'잇범 키', desc:'유머와 귀여움이 터져나와 시선을 사로잡는 잇범 키가 되었습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_itbeom.png' },
+    'mystery:social': { name:'백작 키', desc:'우아한 신비와 사교성이 만나 백작 키의 분위기로 각성했습니다.', largeImg:imageSet.badloveLarge, roomImg:imageSet.badloveRoom, bgImg:'img/bg_awaken_count.png' },
+    'mystery:scary': { name:'크리쳐 키', desc:'기묘한 여운과 위압감이 섞여 크리쳐 키가 탄생했습니다.', largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom, bgImg:'img/bg_awaken_creature.png' },
+    'scary:humor': { name:'킬러 키', desc:'서늘한 존재감 속에 장난기까지 살아 있는 킬러 키가 되었습니다.', largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom, bgImg:'img/bg_awaken_killer.png' },
+    'scary:social': { name:'빌런 키', desc:'대중을 압도하는 카리스마가 짙어져 빌런 키로 각성했습니다.', largeImg:imageSet.gasolineLarge, roomImg:imageSet.gasolineRoom, bgImg:'img/bg_awaken_villain.png' },
+    'social:humor': { name:'범동이 키', desc:'친화력과 입담이 폭발해 범동이 키가 되었습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_beomdong.png' },
+    'cute:humor': { name:'말랑콩떡 키', desc:'보들보들한 귀여움과 유쾌함이 만나 말랑콩떡 키로 각성했습니다.', largeImg:imageSet.defaultLarge, roomImg:imageSet.defaultRoom, bgImg:'img/bg_awaken_softrice.png' }
   };
 
   const fallbackByTop = {
-    practice: ['가솔린 키', '연습으로 다져진 에너지가 한 방향으로 응집되어 가솔린 키가 되었습니다.'],
-    mystery: ['오컬트키', '신비로운 잔상이 깊게 쌓여 오컬트키로 각성했습니다.'],
-    social: ['범동이 키', '사람을 끌어당기는 힘이 짙어져 범동이 키가 되었습니다.'],
-    cute: ['천사 키', '사랑스러운 무드가 가장 강하게 피어나 천사 키가 되었습니다.'],
-    scary: ['빌런 키', '차갑고 선명한 존재감이 응집되어 빌런 키가 되었습니다.'],
-    humor: ['프릭키', '유머와 엉뚱한 매력이 한데 모여 프릭키가 되었습니다.']
+    practice: endingDefs['practice:social'],
+    mystery: endingDefs['mystery:cute'],
+    social: endingDefs['social:humor'],
+    cute: endingDefs['cute:social'],
+    scary: endingDefs['scary:social'],
+    humor: endingDefs['practice:humor']
   };
 
-  const [name, desc] = endingMap[combo] || fallbackByTop[top];
-  const imgSet = imageByTheme[top] || imageByTheme.practice;
+  const def = endingDefs[combo] || fallbackByTop[top] || endingDefs['practice:social'];
 
   return {
-    name,
+    name: def.name,
     score: sorted[0][1] * 1.4 + sorted[1][1],
-    largeImg: imgSet.largeImg,
-    roomImg: imgSet.roomImg,
-    desc,
+    largeImg: def.largeImg,
+    roomImg: def.roomImg,
+    bgImg: def.bgImg,
+    desc: def.desc,
     badges: [['메인 성향', getTopStatName()], ['보조 성향', ({
       practice:'연습', mystery:'신비', social:'사교성', cute:'귀여움', scary:'스캐어리', humor:'유머'
     })[second]], ['조합', `${getTopStatName()} 중심 각성`]]
@@ -3190,7 +3665,16 @@ function syncRoomUI(){
 
   document.getElementById('roomIdentity').textContent = id.name;
   roomPlayerImg.src = id.roomImg;
-  roomHint.textContent = `${id.name}로 각성했어요. 이제 이 정체성을 바탕으로 다음 생활이 시작됩니다.`;
+  roomHint.textContent = `${id.name}로 각성했어요. 친구는 조건을 만족하면 하나씩 나타나요.`;
+  roomStageName.textContent = `${id.name}의 방`;
+  roomDayBadge.textContent = `DAY${state.day}`;
+  roomClockBadge.textContent = `${String(state.gameHour).padStart(2,'0')}:${String(state.gameMinute).padStart(2,'0')}`;
+
+  roomMap.style.background = `
+    linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
+    url("${id.bgImg || 'img/room_default.png'}") center center / 108% 108% no-repeat,
+    url("img/room_default.png") center center / 108% 108% no-repeat
+  `;
 
   const badgeWrap = document.getElementById('roomBadges');
   badgeWrap.innerHTML = '';
@@ -3200,6 +3684,14 @@ function syncRoomUI(){
     el.innerHTML = `<strong>${k}</strong> ${v}`;
     badgeWrap.appendChild(el);
   });
+
+  const unlockedFriends = getUnlockedFriends(id.name);
+  const friendBadge = document.createElement('div');
+  friendBadge.className = 'badge';
+  friendBadge.innerHTML = `<strong>친구</strong> ${unlockedFriends.length}명`;
+  badgeWrap.appendChild(friendBadge);
+
+  renderFriendMenu();
 }
 
 function resetAll(){
@@ -3239,6 +3731,16 @@ function resetAll(){
   document.getElementById('roomIdentity').textContent = '-';
   document.getElementById('roomBadges').innerHTML = '';
   roomHint.textContent = '방 안으로 들어왔어요.';
+  if (roomStageName) roomStageName.textContent = '각성한 KEY의 방';
+  if (roomDayBadge) roomDayBadge.textContent = 'DAY1';
+  if (roomClockBadge) roomClockBadge.textContent = '07:00';
+  if (roomMap) {
+    roomMap.style.background = `
+      linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
+      url("img/room_default.png") center center / 108% 108% no-repeat
+    `;
+  }
+  renderFriendMenu();
 
   syncSeedStageLayout({ immediate:true });
   placeRoomPlayerInitial();
@@ -3521,12 +4023,15 @@ async function signOut(){
 function updateAuthUI(user){
   currentUser = user;
 
+  const loginButtons = [loginBtn, awakenLoginBtn, roomLoginBtn].filter(Boolean);
+  const logoutButtons = [logoutBtn, awakenLogoutBtn, roomLogoutBtn].filter(Boolean);
+
   if (user) {
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = '';
+    loginButtons.forEach(btn => btn.style.display = 'none');
+    logoutButtons.forEach(btn => btn.style.display = '');
   } else {
-    loginBtn.style.display = '';
-    logoutBtn.style.display = 'none';
+    loginButtons.forEach(btn => btn.style.display = '');
+    logoutButtons.forEach(btn => btn.style.display = 'none');
   }
 }
 
