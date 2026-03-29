@@ -1554,6 +1554,129 @@ img{
   transform:translateX(-50%) rotate(45deg);
 }
 
+.room-visitor-affection-box{
+  position:absolute;
+  z-index:13;
+  width:72px;
+  height:12px;
+  left:0;
+  top:0;
+  opacity:0;
+  transform:translateX(-50%);
+  pointer-events:none;
+  transition:left .2s ease, top .2s ease, opacity .16s ease;
+}
+.room-visitor-affection-box.show{
+  opacity:1;
+}
+.room-visitor-affection-bar{
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  overflow:hidden;
+  background:linear-gradient(90deg, rgba(236,223,213,.95), rgba(208,192,182,.95));
+  border:2px solid rgba(79,58,49,.62);
+  box-shadow:
+    0 2px 8px rgba(120,104,87,.12),
+    inset 0 1px 2px rgba(255,255,255,.20);
+}
+.room-visitor-affection-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, rgba(241,167,200,.96), rgba(247,191,215,.98));
+  transition:width .5s ease;
+}
+
+.friend-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.friend-panel-head .small{
+  margin:0;
+}
+.friend-shelf{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  width:100%;
+  padding:2px 2px 8px;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+  scrollbar-width:thin;
+}
+.friend-shelf::-webkit-scrollbar{
+  height:8px;
+}
+.friend-shelf::-webkit-scrollbar-thumb{
+  background:rgba(120,104,87,.18);
+  border-radius:999px;
+}
+.friend-card{
+  flex:0 0 auto;
+  width:142px;
+  min-height:170px;
+  padding:12px 10px;
+  border-radius:18px;
+  background:rgba(255,255,255,.80);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 8px 18px rgba(120,104,87,.08);
+  text-align:center;
+}
+.friend-card img{
+  width:58px;
+  height:84px;
+  margin:0 auto 8px;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(109,94,79,.20));
+}
+.friend-card strong{
+  display:block;
+  font-size:12px;
+  line-height:1.35;
+  margin-bottom:4px;
+}
+.friend-card p{
+  margin:0 0 8px;
+  font-size:10px;
+  color:var(--sub);
+  line-height:1.45;
+  min-height:42px;
+}
+.friend-meta{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:6px;
+}
+.friend-chip{
+  padding:5px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(120,104,87,.10);
+  font-size:10px;
+  color:#6a584a;
+}
+.friend-empty-card{
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(120,104,87,.10);
+  color:#8c7d71;
+  font-size:12px;
+  line-height:1.6;
+}
+.friend-panel-actions{
+  margin-top:12px;
+}
+.friend-panel-actions .primary-btn{
+  width:100%;
+}
+
 .room-choice-panel{
   position:absolute;
   left:50%;
@@ -1901,6 +2024,16 @@ body.resizing .seed-awaken-anchor{
   .room-choice-buttons button{
     min-height:44px;
     font-size:11px;
+  }
+
+  .friend-card{
+    width:132px;
+    min-height:160px;
+    padding:10px 8px;
+  }
+  .friend-card img{
+    width:52px;
+    height:76px;
   }
 
   .seed-awaken-btn{
@@ -2326,10 +2459,6 @@ body.ending-modal-open{
             <button class="mini-btn" id="roomLogoutBtn" style="display:none;">로그아웃</button>
             <button class="mini-btn" id="roomSaveBtn">저장</button>
           </div>
-          <div class="pill">
-            <span>Identity</span>
-            <strong id="roomIdentity">-</strong>
-          </div>
         </div>
       </div>
       <div class="schedule-subline">각성 후에는 전용 배경과 친구 목록이 열립니다</div>
@@ -2358,6 +2487,11 @@ body.ending-modal-open{
               <div class="room-doorbell" id="roomDoorbellBubble">딩동!</div>
               <div class="room-owner-bubble" id="roomOwnerBubble">누군가 찾아온 것 같아!</div>
               <div class="room-visitor-bubble" id="roomVisitorBubble">안녕~</div>
+              <div class="room-visitor-affection-box" id="roomVisitorAffectionBox">
+                <div class="room-visitor-affection-bar">
+                  <div class="room-visitor-affection-fill" id="roomVisitorAffectionFill"></div>
+                </div>
+              </div>
 
               <div class="room-choice-panel" id="roomChoicePanel">
                 <div class="room-choice-title">손님이 찾아왔어</div>
@@ -2391,17 +2525,8 @@ body.ending-modal-open{
                   </div>
                 </div>
 
-                <div class="popup-menu compact-menu friend-menu" id="friendMenu">
-                  <div class="friend-menu-title">친구 목록</div>
-                  <div id="friendListWrap">
-                    <div class="friend-empty">아직 등장한 친구가 없어요.</div>
-                  </div>
-                </div>
-
                 <div class="room-action-buttons">
                   <button class="gift-btn" id="roomGiftBtn">선물</button>
-                  <button class="gift-btn" id="friendBtn">친구</button>
-                  <button class="gift-btn" id="endingBtn">엔딩</button>
                 </div>
               </div>
             </div>
@@ -2429,9 +2554,16 @@ body.ending-modal-open{
 
         <div class="room-side-column">
           <div class="card panel">
-            <h3 class="section-title" style="margin-bottom:12px;">현재 상태</h3>
-            <div class="hint-box" id="roomHint">방 안으로 들어왔어요.</div>
-            <div class="badge-row" id="roomBadges"></div>
+            <div class="friend-panel-head">
+              <h3 class="section-title">친구</h3>
+              <div class="small" id="roomHint">방 안으로 들어왔어요.</div>
+            </div>
+            <div class="friend-shelf" id="friendListWrap">
+              <div class="friend-empty-card">아직 등장한 친구가 없어요.</div>
+            </div>
+            <div class="friend-panel-actions">
+              <button class="primary-btn" id="endingBtn">엔딩 도감</button>
+            </div>
           </div>
 
           <div class="card panel">
@@ -2770,6 +2902,8 @@ const roomVisitorImg = document.getElementById('roomVisitorImg');
 const roomDoorbellBubble = document.getElementById('roomDoorbellBubble');
 const roomOwnerBubble = document.getElementById('roomOwnerBubble');
 const roomVisitorBubble = document.getElementById('roomVisitorBubble');
+const roomVisitorAffectionBox = document.getElementById('roomVisitorAffectionBox');
+const roomVisitorAffectionFill = document.getElementById('roomVisitorAffectionFill');
 const roomChoicePanel = document.getElementById('roomChoicePanel');
 const roomSpendTimeBtn = document.getElementById('roomSpendTimeBtn');
 const roomSendAwayBtn = document.getElementById('roomSendAwayBtn');
@@ -2797,6 +2931,8 @@ const roomVisitFlow = {
   candidate:null,
   timers:[]
 };
+
+let roomPlayTalkInterval = null;
 
 function clearRoomVisitTimers(){
   roomVisitFlow.timers.forEach(id => clearTimeout(id));
@@ -2951,6 +3087,32 @@ function positionRoomVisitorBubble(){
   roomVisitorBubble.style.top = `${top}px`;
   roomVisitorBubble.style.setProperty('--tail-x', `${clamp(charCenter - left, 18, bubbleW - 18)}px`);
 }
+function positionRoomVisitorAffection(){
+  if (!roomVisitorAffectionBox || !roomScene || !state.activeRoomVisitor) return;
+  const layout = getRoomVisitorLayout();
+  const charCenter = layout.left + layout.visitorW * 0.5;
+  roomVisitorAffectionBox.style.left = `${charCenter}px`;
+  roomVisitorAffectionBox.style.top = `${Math.max(46, layout.top - 18)}px`;
+}
+function showRoomVisitorAffection(value = 0){
+  if (!roomVisitorAffectionBox || !roomVisitorAffectionFill) return;
+  positionRoomVisitorAffection();
+  roomVisitorAffectionFill.style.width = `${clamp(value, 0, 100)}%`;
+  roomVisitorAffectionBox.classList.add('show');
+}
+function updateRoomVisitorAffection(value = 0){
+  if (!roomVisitorAffectionFill) return;
+  roomVisitorAffectionFill.style.width = `${clamp(value, 0, 100)}%`;
+}
+function hideRoomVisitorAffection(){
+  if (!roomVisitorAffectionBox || !roomVisitorAffectionFill) return;
+  roomVisitorAffectionBox.classList.remove('show');
+  roomVisitorAffectionFill.style.width = '0%';
+}
+function clearRoomPlayTalk(){
+  clearInterval(roomPlayTalkInterval);
+  roomPlayTalkInterval = null;
+}
 function hideRoomOwnerBubble(){
   roomOwnerBubble.classList.remove('show');
 }
@@ -2990,6 +3152,7 @@ function renderRoomVisitOverlays(){
   positionRoomDoorbell();
   if (roomOwnerBubble.classList.contains('show')) positionRoomOwnerBubble();
   if (roomVisitorBubble.classList.contains('show')) positionRoomVisitorBubble();
+  if (roomVisitorAffectionBox && roomVisitorAffectionBox.classList.contains('show')) positionRoomVisitorAffection();
 }
 
 function renderRoomVisitor(opts = {}){
@@ -2998,6 +3161,7 @@ function renderRoomVisitor(opts = {}){
   if (!visitorName) {
     roomVisitor.classList.remove('show');
     hideRoomVisitorBubble();
+    hideRoomVisitorAffection();
     return;
   }
   const layout = getRoomVisitorLayout();
@@ -3050,11 +3214,13 @@ function maybeStartRoomFriendVisit(){
 function startRoomFriendVisitFlow(friendName){
   if (!friendName || state.activeRoomVisitor || roomVisitFlow.phase !== 'idle') return;
   clearRoomVisitTimers();
+  clearRoomPlayTalk();
   roomVisitFlow.phase = 'dingdong';
   roomVisitFlow.candidate = friendName;
   showRoomDoorbell();
   hideRoomOwnerBubble();
   hideRoomVisitorBubble();
+  hideRoomVisitorAffection();
   hideRoomChoicePanel();
   roomHint.textContent = `${friendName}가 찾아오려는 것 같아요.`;
   queueRoomVisitTimer(() => {
@@ -3064,8 +3230,8 @@ function startRoomFriendVisitFlow(friendName){
     roomHint.textContent = '누군가 찾아온 것 같아!';
     queueRoomVisitTimer(() => {
       enterRoomVisitor(friendName);
-    }, 20000);
-  }, 2200);
+    }, 700);
+  }, 1200);
 }
 
 function getFriendGreeting(name){
@@ -3089,17 +3255,19 @@ function enterRoomVisitor(friendName){
     roomHint.textContent = `${friendName}가 방에 찾아왔어요.`;
     syncRoomUI();
     saveLocal(serializeGameState());
-  }, 1100);
+  }, 650);
 }
 
 function finishRoomVisitorLeave(){
   clearRoomVisitTimers();
+  clearRoomPlayTalk();
   state.activeRoomVisitor = null;
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
   roomVisitor.classList.remove('show');
   hideRoomOwnerBubble();
   hideRoomVisitorBubble();
+  hideRoomVisitorAffection();
   hideRoomChoicePanel();
   roomHint.textContent = state.awakened
     ? `${state.awakened.name}의 방이 다시 조용해졌어요.`
@@ -3109,44 +3277,91 @@ function finishRoomVisitorLeave(){
   queueRoomVisitTimer(() => maybeStartRoomFriendVisit(), 400);
 }
 
-function sendRoomVisitorAway(){
+function sendRoomVisitorAway(options = {}){
   if (!state.activeRoomVisitor) return finishRoomVisitorLeave();
+  const { skipLine = false, lineText = null, preDelay = 0, holdMs = 2600 } = options;
   const friendName = state.activeRoomVisitor;
   clearRoomVisitTimers();
+  clearRoomPlayTalk();
   roomVisitFlow.phase = 'leaving';
   hideRoomChoicePanel();
   hideRoomOwnerBubble();
-  showRoomVisitorBubble(getFriendProfile(friendName).leave);
-  const rect = roomScene.getBoundingClientRect();
-  roomVisitor.style.transition = 'opacity .22s ease, left .8s ease, top .22s ease';
-  queueRoomVisitTimer(() => {
-    roomVisitor.style.left = `${rect.width + 30}px`;
-  }, 260);
-  queueRoomVisitTimer(() => finishRoomVisitorLeave(), 1120);
+  hideRoomVisitorAffection();
+  const startExit = () => {
+    if (!skipLine) {
+      showRoomVisitorBubble(lineText || getFriendProfile(friendName).leave);
+    } else {
+      hideRoomVisitorBubble();
+    }
+    queueRoomVisitTimer(() => {
+      const rect = roomScene.getBoundingClientRect();
+      roomVisitor.style.transition = 'opacity .22s ease, left .9s ease, top .22s ease';
+      roomVisitor.style.left = `${rect.width + 30}px`;
+      queueRoomVisitTimer(() => finishRoomVisitorLeave(), 1200);
+    }, holdMs);
+  };
+  if (preDelay > 0) {
+    hideRoomVisitorBubble();
+    queueRoomVisitTimer(startExit, preDelay);
+  } else {
+    startExit();
+  }
 }
 
 function spendTimeWithVisitor(){
   if (!state.activeRoomVisitor) return;
   const friendName = state.activeRoomVisitor;
+  const profile = getFriendProfile(friendName);
+  const startAffection = getAffection(friendName);
+  const endAffection = clamp(startAffection + 10, 0, 100);
+
   clearRoomVisitTimers();
+  clearRoomPlayTalk();
   roomVisitFlow.phase = 'together';
   hideRoomChoicePanel();
-  showRoomOwnerBubble('^ㅂ^');
-  showRoomVisitorBubble('^ㅂ^');
   roomHint.textContent = `${friendName}와 즐거운 시간을 보내는 중이에요.`;
+  showRoomVisitorAffection(startAffection);
+
+  const exchanges = [
+    { owner:'같이 있으니까 왠지 금방 친해질 것 같아.', visitor:profile.enjoy },
+    { owner:'오늘은 뭐 하고 놀까?', visitor:'너랑 있으면 그냥 시간이 잘 가.' },
+    { owner:'이 분위기, 꽤 마음에 들어.', visitor:'나도. 다음에도 또 오고 싶어.' },
+    { owner:'조금 더 같이 있고 싶다.', visitor:'응, 나도 아직 좋다.' }
+  ];
+  let idx = 0;
+  const stepDuration = 900;
+  const totalDuration = stepDuration * exchanges.length + 700;
+
+  const applyExchange = () => {
+    const pair = exchanges[Math.min(idx, exchanges.length - 1)];
+    showRoomOwnerBubble(pair.owner);
+    showRoomVisitorBubble(pair.visitor);
+    const progress = (idx + 1) / exchanges.length;
+    updateRoomVisitorAffection(startAffection + (endAffection - startAffection) * progress);
+    idx += 1;
+    if (idx >= exchanges.length) {
+      clearRoomPlayTalk();
+    }
+  };
+
+  applyExchange();
+  roomPlayTalkInterval = setInterval(applyExchange, stepDuration);
+
   queueRoomVisitTimer(() => {
-    advanceGameTime(120);
+    advanceGameTime(240);
     const nextAffection = addAffection(friendName, 10);
     syncRoomUI();
-    showRoomVisitorBubble(getFriendProfile(friendName).enjoy);
-    hideRoomOwnerBubble();
-    roomHint.textContent = `${friendName}와 두 시간을 함께 보냈어요. 호감도 ${nextAffection}`;
+    roomHint.textContent = `${friendName}와 네 시간을 함께 보냈어요. 호감도 ${nextAffection}`;
     saveLocal(serializeGameState());
+    hideRoomOwnerBubble();
+    hideRoomVisitorBubble();
     queueRoomVisitTimer(() => {
-      showRoomVisitorBubble('즐거웠어~');
-      queueRoomVisitTimer(() => sendRoomVisitorAway(), 900);
-    }, 900);
-  }, 1800);
+      showRoomVisitorBubble('이제 슬슬 돌아가볼게. 오늘 정말 즐거웠어.');
+      queueRoomVisitTimer(() => {
+        sendRoomVisitorAway({ skipLine:true });
+      }, 2600);
+    }, 2000);
+  }, totalDuration);
 }
 
 function installDecorItem(decorKey){
@@ -3526,12 +3741,13 @@ document.addEventListener('click', (e) => {
   }
   const clickedInsideRoomGift = roomGiftMenu && roomGiftMenu.contains(e.target);
   const clickedInsideFriend = friendMenu && friendMenu.contains(e.target);
+  const clickedFriendButton = friendBtn && e.target === friendBtn;
   if (
-    roomGiftMenu && friendMenu &&
+    roomGiftMenu &&
     !clickedInsideRoomGift &&
     !clickedInsideFriend &&
     e.target !== roomGiftBtn &&
-    e.target !== friendBtn
+    !clickedFriendButton
   ) {
     closeRoomMenus();
   }
@@ -3635,24 +3851,23 @@ function renderFriendMenu(){
   const awakenedName = state.awakened?.name;
   const friends = awakenedName ? getUnlockedFriends(awakenedName) : [];
   if (!friends.length) {
-    friendListWrap.innerHTML = '<div class="friend-empty">아직 등장한 친구가 없어요.</div>';
+    friendListWrap.innerHTML = '<div class="friend-empty-card">아직 등장한 친구가 없어요. 방꾸미기와 각성 결과에 따라 새로운 친구가 찾아올 거예요.</div>';
     return;
   }
-  friendListWrap.innerHTML = `<div class="friend-list">${
-    friends.map(friend => {
-      const affection = getAffection(friend.name);
-      const profile = getFriendProfile(friend.name);
-      return `<div class="friend-item">
-        <strong>${friend.name}</strong>
-        <span>${friend.desc}</span>
-        <div class="friend-meta">
-          <span class="friend-chip">호감도 ${affection}</span>
-          <span class="friend-chip">${getAffectionTier(affection)}</span>
-          <span class="friend-chip">${profile.trait}</span>
-        </div>
-      </div>`;
-    }).join('')
-  }</div>`;
+  friendListWrap.innerHTML = friends.map(friend => {
+    const affection = getAffection(friend.name);
+    const profile = getFriendProfile(friend.name);
+    return `<div class="friend-card">
+      <img src="${getRoomFriendImage(friend.name)}" alt="${friend.name}">
+      <strong>${friend.name}</strong>
+      <p>${friend.desc}</p>
+      <div class="friend-meta">
+        <span class="friend-chip">호감도 ${affection}</span>
+        <span class="friend-chip">${getAffectionTier(affection)}</span>
+        <span class="friend-chip">${profile.trait}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderEndingMenu(){
@@ -4700,14 +4915,15 @@ function syncRoomUI(){
   const id = state.awakened;
   if(!id) return;
 
-  document.getElementById('roomIdentity').textContent = id.name;
   roomPlayerImg.src = id.roomImg;
-  if (roomVisitFlow.phase === 'notice' || roomVisitFlow.phase === 'dingdong') {
-    roomHint.textContent = '누군가 찾아오는 기척이 느껴져요.';
-  } else if (state.activeRoomVisitor) {
-    roomHint.textContent = `${state.activeRoomVisitor}가 방에 와 있어요.`;
-  } else {
-    roomHint.textContent = `${id.name}로 각성했어요. 방꾸미기를 하면 새로운 친구가 찾아올 수 있어요.`;
+  if (roomHint) {
+    if (roomVisitFlow.phase === 'notice' || roomVisitFlow.phase === 'dingdong') {
+      roomHint.textContent = '누군가 찾아오는 기척이 느껴져요.';
+    } else if (state.activeRoomVisitor) {
+      roomHint.textContent = `${state.activeRoomVisitor}가 방에 와 있어요.`;
+    } else {
+      roomHint.textContent = `${id.name}의 방에 친구들이 찾아올 수 있어요.`;
+    }
   }
   roomStageName.textContent = `${id.name}의 방`;
   roomDayBadge.textContent = `DAY${state.day}`;
@@ -4718,26 +4934,6 @@ function syncRoomUI(){
     url("${id.bgImg || 'img/room_default.png'}") center center / 108% 108% no-repeat,
     url("img/room_default.png") center center / 108% 108% no-repeat
   `;
-
-  const badgeWrap = document.getElementById('roomBadges');
-  badgeWrap.innerHTML = '';
-  id.badges.forEach(([k, v]) => {
-    const el = document.createElement('div');
-    el.className = 'badge';
-    el.innerHTML = `<strong>${k}</strong> ${v}`;
-    badgeWrap.appendChild(el);
-  });
-
-  const unlockedFriends = getUnlockedFriends(id.name);
-  const friendBadge = document.createElement('div');
-  friendBadge.className = 'badge';
-  friendBadge.innerHTML = `<strong>친구</strong> ${unlockedFriends.length}명`;
-  badgeWrap.appendChild(friendBadge);
-
-  const decorCountBadge = document.createElement('div');
-  decorCountBadge.className = 'badge';
-  decorCountBadge.innerHTML = `<strong>방꾸미기</strong> ${Object.values(state.roomDecor || {}).filter(Boolean).length}개`;
-  badgeWrap.appendChild(decorCountBadge);
 
   renderRoomDecorButtons();
   renderRoomVisitor();
@@ -4788,9 +4984,7 @@ function resetAll(){
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
 
-  document.getElementById('roomIdentity').textContent = '-';
-  document.getElementById('roomBadges').innerHTML = '';
-  roomHint.textContent = '방 안으로 들어왔어요.';
+  if (roomHint) roomHint.textContent = '방 안으로 들어왔어요.';
   if (roomStageName) roomStageName.textContent = '각성한 KEY의 방';
   if (roomDayBadge) roomDayBadge.textContent = 'DAY1';
   if (roomClockBadge) roomClockBadge.textContent = '07:00';
@@ -4933,9 +5127,7 @@ function applySaveToState(save){
     syncAwakenUI();
     syncRoomUI();
   } else {
-    document.getElementById('roomIdentity').textContent = '-';
-    document.getElementById('roomBadges').innerHTML = '';
-    roomHint.textContent = '방 안으로 들어왔어요.';
+    if (roomHint) roomHint.textContent = '방 안으로 들어왔어요.';
     hideRoomDoorbell();
     hideRoomOwnerBubble();
     hideRoomVisitorBubble();
