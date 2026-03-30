@@ -1317,10 +1317,36 @@ img{
   align-items:center;
   justify-content:center;
 }
+.awaken-overlay{
+  position:absolute;
+  inset:0;
+  z-index:70;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:calc(var(--top-h) + 12px) 12px 18px;
+  background:rgba(31,25,38,.28);
+  backdrop-filter:blur(8px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .28s ease;
+}
+.awaken-overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.awaken-overlay-main{
+  max-height:calc(100dvh - var(--top-h) - 30px);
+  overflow:auto;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 .awaken-card{
   width:min(760px,100%);
   padding:26px;
-  text-align:center;
+  text-align:left;
   position:relative;
   overflow:hidden;
 }
@@ -1329,8 +1355,8 @@ img{
   position:absolute;
   inset:-20%;
   background:
-    radial-gradient(circle at 50% 40%, rgba(241,167,200,.16), transparent 18%),
-    radial-gradient(circle at 50% 52%, rgba(201,195,232,.18), transparent 28%);
+    radial-gradient(circle at 50% 40%, rgba(241,167,200,.18), transparent 18%),
+    radial-gradient(circle at 50% 52%, rgba(201,195,232,.22), transparent 28%);
   filter:blur(16px);
   animation:pulse 2.8s ease-in-out infinite;
 }
@@ -1338,24 +1364,14 @@ img{
   position:relative;
   z-index:1;
 }
-.awaken-badge{
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.72);
-  color:var(--sub);
-  font-size:12px;
-  font-weight:800;
-  margin-bottom:14px;
-}
 .awaken-figure{
+  position:relative;
   width:220px;
   height:300px;
-  margin:10px auto 18px;
+  margin:4px auto 18px;
   border-radius:96px 96px 48px 48px;
   background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.18) 0 12%, transparent 13%),
+    radial-gradient(circle at 50% 24%, rgba(255,255,255,.22) 0 12%, transparent 13%),
     linear-gradient(180deg,#fff2f7,#f7c8dd 38%, #d7d1ef 100%);
   box-shadow:
     0 0 36px rgba(241,167,200,.18),
@@ -1365,16 +1381,96 @@ img{
   justify-content:center;
   padding:18px;
 }
+.awaken-figure::before{
+  content:"";
+  position:absolute;
+  inset:-14px;
+  border-radius:108px 108px 64px 64px;
+  border:1px solid rgba(255,255,255,.55);
+  opacity:.8;
+  animation:awakenHalo 1.9s ease-in-out infinite;
+}
+.awaken-figure img{
+  position:relative;
+  z-index:2;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 10px 22px rgba(120,104,87,.22));
+}
+.awaken-figure.playing img{
+  animation:awakenReveal 1.2s cubic-bezier(.18,.88,.24,1.18) both;
+}
+.awaken-figure.playing::before{
+  animation:awakenHalo 1.2s ease-out both;
+}
+.awaken-fx{
+  position:absolute;
+  inset:-8px;
+  pointer-events:none;
+}
+.awaken-sparkle{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:14px;
+  height:14px;
+  margin-left:-7px;
+  margin-top:-7px;
+  opacity:0;
+}
+.awaken-sparkle::before,
+.awaken-sparkle::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,237,170,.92));
+  box-shadow:0 0 14px rgba(255,255,255,.9);
+}
+.awaken-sparkle::before{ width:2px; height:14px; }
+.awaken-sparkle::after{ width:14px; height:2px; }
+.awaken-figure.playing .awaken-sparkle{
+  animation:awakenSparkle 1.1s ease-out forwards;
+  animation-delay:var(--delay, 0s);
+}
 .awaken-title{
   margin:0 0 10px;
   font-size:34px;
   font-weight:900;
+  text-align:center;
 }
 .awaken-desc{
   max-width:520px;
-  margin:0 auto 18px;
+  margin:0 0 18px;
   color:var(--sub);
   line-height:1.7;
+  text-align:left;
+}
+.awaken-actions{
+  max-width:360px;
+  margin:0 auto;
+  display:grid;
+  gap:10px;
+}
+@keyframes awakenReveal{
+  0%{ transform:scale(.36) rotate(-240deg); opacity:0; filter:blur(6px) drop-shadow(0 0 0 rgba(120,104,87,0)); }
+  56%{ transform:scale(1.14) rotate(14deg); opacity:1; filter:blur(0) drop-shadow(0 12px 26px rgba(120,104,87,.26)); }
+  74%{ transform:scale(.96) rotate(-6deg); }
+  100%{ transform:scale(1) rotate(0deg); opacity:1; filter:blur(0) drop-shadow(0 10px 22px rgba(120,104,87,.22)); }
+}
+@keyframes awakenHalo{
+  0%{ transform:scale(.72); opacity:0; }
+  55%{ transform:scale(1.08); opacity:.95; }
+  100%{ transform:scale(1); opacity:.45; }
+}
+@keyframes awakenSparkle{
+  0%{ transform:translate(0,0) scale(.2) rotate(0deg); opacity:0; }
+  18%{ opacity:1; }
+  100%{ transform:translate(var(--tx), var(--ty)) scale(1.18) rotate(90deg); opacity:0; }
 }
 
 .room-layout{
@@ -1907,6 +2003,9 @@ body.resizing .seed-awaken-anchor{
   .debug-ending-list{ grid-template-columns:1fr; gap:8px; }
   .debug-ending-btn{ padding:12px; font-size:12px; }
   .awaken-title{ font-size:28px; }
+  .awaken-overlay{ padding:calc(var(--top-h) + 8px) 10px 14px; }
+  .awaken-card{ padding:18px; }
+  .awaken-figure{ width:188px; height:256px; }
 
   .seed-side-status{
     grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -2408,44 +2507,35 @@ body.ending-modal-open{
     </div>
   </section>
 
-  <section class="screen" id="screen-awaken">
-    <div class="topbar schedule-topbar">
-      <div class="schedule-topbar-row">
-        <div class="brand-title-only">
-          <div class="title">KEY:VERSE</div>
-        </div>
-        <div class="topbar-right">
-          <div class="top-auth-row">
-            <button class="mini-btn primary" id="awakenLoginBtn">로그인</button>
-            <button class="mini-btn" id="awakenLogoutBtn" style="display:none;">로그아웃</button>
-            <button class="mini-btn" id="awakenSaveBtn">저장</button>
-          </div>
-          <div class="pill">
-            <span>Result</span>
-            <strong id="awakenTopName">Idol KEY</strong>
-          </div>
-        </div>
-      </div>
-      <div class="schedule-subline">각성 결과를 확인하고 나의 방으로 이동할 수 있어요</div>
-    </div>
+  <section class="screen" id="screen-awaken" aria-hidden="true" style="display:none;"></section>
 
-    <div class="main center-wrap">
+  <div class="awaken-overlay" id="awakenOverlay">
+    <div class="awaken-overlay-main">
       <div class="card awaken-card">
         <div class="awaken-inner">
-          <div class="awaken-badge">AWAKENING DAY</div>
-          <div class="awaken-figure">
+          <div class="awaken-figure" id="awakenFigure">
+            <div class="awaken-fx" aria-hidden="true">
+              <span class="awaken-sparkle" style="--tx:-88px;--ty:-90px;--delay:.02s"></span>
+              <span class="awaken-sparkle" style="--tx:-30px;--ty:-112px;--delay:.12s"></span>
+              <span class="awaken-sparkle" style="--tx:42px;--ty:-104px;--delay:.18s"></span>
+              <span class="awaken-sparkle" style="--tx:94px;--ty:-52px;--delay:.08s"></span>
+              <span class="awaken-sparkle" style="--tx:108px;--ty:14px;--delay:.2s"></span>
+              <span class="awaken-sparkle" style="--tx:64px;--ty:92px;--delay:.28s"></span>
+              <span class="awaken-sparkle" style="--tx:-12px;--ty:116px;--delay:.16s"></span>
+              <span class="awaken-sparkle" style="--tx:-92px;--ty:70px;--delay:.24s"></span>
+              <span class="awaken-sparkle" style="--tx:-110px;--ty:-6px;--delay:.3s"></span>
+            </div>
             <img id="awakenImg" src="img/KEY_default.png" alt="각성한 키" />
           </div>
           <h1 class="awaken-title" id="awakenName">Idol KEY</h1>
           <p class="awaken-desc" id="awakenDesc">쌓여온 하루들이 하나의 정체성으로 응결되었습니다.</p>
-          <div style="max-width:360px;margin:0 auto;display:grid;gap:10px;">
-            <button class="primary-btn" id="toRoomBtn">나의 방으로 이동</button>
-            <button class="secondary-btn" id="backScheduleBtn">스케줄 화면으로 돌아가기</button>
+          <div class="awaken-actions">
+            <button class="primary-btn" id="toRoomBtn">이 캐릭터로 진행</button>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <section class="screen" id="screen-room">
     <div class="topbar schedule-topbar">
@@ -2885,6 +2975,8 @@ const stageEnergyBox = document.getElementById('stageEnergyBox');
 const stageEnergyFill = document.getElementById('stageEnergyFill');
 
 const awakenImg = document.getElementById('awakenImg');
+const awakenOverlay = document.getElementById('awakenOverlay');
+const awakenFigure = document.getElementById('awakenFigure');
 
 const seedStage = document.getElementById('seedStage');
 const seedPlayer = document.getElementById('seedPlayer');
@@ -3589,14 +3681,10 @@ document.getElementById('awakenBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('toRoomBtn').addEventListener('click', async () => {
+  closeAwakenOverlay();
   showScreen('room');
   placeRoomPlayerInitial();
   renderRoomPlayer();
-  await triggerSaveNow();
-});
-
-document.getElementById('backScheduleBtn').addEventListener('click', async () => {
-  showScreen('schedule');
   await triggerSaveNow();
 });
 
@@ -3606,7 +3694,7 @@ document.getElementById('restartAllBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('backAwakenBtn').addEventListener('click', async () => {
-  showScreen('awaken');
+  openAwakenOverlay();
   await triggerSaveNow();
 });
 
@@ -3807,8 +3895,14 @@ miniFinishBtn.addEventListener('click', () => {
 
 
 function showScreen(name){
-  Object.values(screens).forEach(s => s.classList.remove('active'));
-  screens[name].classList.add('active');
+  Object.values(screens).forEach(s => {
+    if (s) s.classList.remove('active');
+  });
+  if (screens[name]) screens[name].classList.add('active');
+
+  const activeMain = screens[name] ? screens[name].querySelector('.main') : null;
+  if (activeMain) activeMain.scrollTop = 0;
+  if (name !== 'awaken') closeAwakenOverlay({ keepAnimationState:true });
 
   if (name === 'schedule') {
     requestAnimationFrame(() => syncSeedStageLayout({ immediate:true }));
@@ -3818,13 +3912,34 @@ function showScreen(name){
       renderRoomPlayer();
       syncRoomUI();
       maybeStartRoomFriendVisit();
+      const roomMain = screens.room ? screens.room.querySelector('.main') : null;
+      if (roomMain) roomMain.scrollTop = 0;
     });
   }
 }
 
+function restartAwakenFigureAnimation(){
+  if (!awakenFigure) return;
+  awakenFigure.classList.remove('playing');
+  void awakenFigure.offsetWidth;
+  awakenFigure.classList.add('playing');
+}
+
+function openAwakenOverlay(){
+  if (!state.awakened || !awakenOverlay) return;
+  syncAwakenUI();
+  awakenOverlay.classList.add('show');
+  restartAwakenFigureAnimation();
+}
+
+function closeAwakenOverlay(options = {}){
+  if (!awakenOverlay) return;
+  awakenOverlay.classList.remove('show');
+  if (!options.keepAnimationState && awakenFigure) awakenFigure.classList.remove('playing');
+}
+
 function getCurrentScreenName(){
   if (screens.schedule.classList.contains('active')) return 'schedule';
-  if (screens.awaken.classList.contains('active')) return 'awaken';
   if (screens.room.classList.contains('active')) return 'room';
   return 'schedule';
 }
@@ -4505,7 +4620,12 @@ function renderSeedPlayer(options = {}){
 function placeRoomPlayerInitial(){
   const rect = roomScene.getBoundingClientRect();
   state.roomPlayer.x = Math.max(18, rect.width * 0.50 - (state.roomPlayer.w || 54) * 0.5);
-  state.roomPlayer.y = Math.max(92, rect.height * 0.68 - (state.roomPlayer.h || 78));
+  const targetCenterY = rect.height * 0.74;
+  state.roomPlayer.y = clamp(
+    targetCenterY - (state.roomPlayer.h || 78) * 0.5,
+    Math.max(92, rect.height * 0.25),
+    rect.height - (state.roomPlayer.h || 78) - 12
+  );
 }
 
 function renderRoomPlayer(){
@@ -4899,15 +5019,16 @@ function doAwaken(){
   syncAwakenUI();
   syncRoomUI();
   renderEndingMenu();
-  showScreen('awaken');
+  openAwakenOverlay();
 }
 
 function syncAwakenUI(){
   const id = state.awakened;
   if(!id) return;
-  document.getElementById('awakenTopName').textContent = id.name;
   document.getElementById('awakenName').textContent = id.name;
   document.getElementById('awakenDesc').textContent = id.desc;
+  const progressBtn = document.getElementById('toRoomBtn');
+  if (progressBtn) progressBtn.textContent = `${id.name}(으)로 진행`;
   awakenImg.src = id.largeImg;
 }
 
