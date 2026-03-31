@@ -1540,6 +1540,83 @@ img{
     linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
     url("img/room_default.png") center center / 108% 108% no-repeat;
 }
+
+.room-furniture-layer{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.room-furniture-back{ z-index:6; }
+.room-furniture-front{ z-index:11; }
+
+.room-furniture{
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  border-radius:14px;
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 8px 18px rgba(120,104,87,.12);
+  color:#5b4d42;
+  font-weight:900;
+  user-select:none;
+  pointer-events:auto;
+  touch-action:none;
+  cursor:grab;
+  padding:4px;
+  text-align:center;
+}
+.room-furniture.dragging{
+  cursor:grabbing;
+  box-shadow:0 14px 24px rgba(120,104,87,.18);
+}
+.room-furniture .emoji{
+  font-size:18px;
+  line-height:1;
+}
+.room-furniture .label{
+  font-size:10px;
+  line-height:1.1;
+  word-break:keep-all;
+}
+.room-furniture .layer-badge{
+  position:absolute;
+  right:-6px;
+  top:-6px;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.95);
+  border:1px solid rgba(120,104,87,.14);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  color:#6a584a;
+  box-shadow:0 6px 12px rgba(120,104,87,.12);
+}
+.room-furniture-tip{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(120,104,87,.10);
+  color:#8c7d71;
+  font-size:11px;
+  line-height:1.55;
+}
+.room-schedule-grid{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 2px 8px;
+}
+.room-restart-card{
+  margin-top:14px;
+}
 .room-stage-clock{
   position:absolute;
   left:12px;
@@ -2630,6 +2707,7 @@ body.ending-modal-open{
           <div class="card panel">
             <div class="room-scene" id="roomScene">
               <div class="room-map" id="roomMap"></div>
+              <div class="room-furniture-layer room-furniture-back" id="roomFurnitureBack"></div>
 
               <div class="stage-clock-row room-stage-clock">
                 <div class="day-badge" id="roomDayBadge">DAY1</div>
@@ -2661,6 +2739,8 @@ body.ending-modal-open{
                   <button type="button" class="room-choice-no" id="roomSendAwayBtn">지금은 바쁘니 돌려보낸다</button>
                 </div>
               </div>
+
+              <div class="room-furniture-layer room-furniture-front" id="roomFurnitureFront"></div>
 
               <div class="room-stage-label">
                 <div class="name" id="roomStageName">각성한 KEY의 방</div>
@@ -2695,49 +2775,50 @@ body.ending-modal-open{
 
           <div class="card panel">
             <h3 class="section-title" style="margin-bottom:12px;">방꾸미기</h3>
-            <div class="small" style="margin-bottom:12px;">가구를 추가하면 누가 찾아올지도 몰라요.</div>
+            <div class="small" style="margin-bottom:12px;">코인을 모아 가구를 구매하면 방에 바로 배치할 수 있어요.</div>
             <div class="room-decor-grid" id="roomDecorGrid">
               <button class="decor-btn" type="button" data-decor="lpPlayer">
                 <strong>LP</strong>
                 <span>배드러브 키</span>
-                <div class="decor-meta">80C · DAY3</div>
+                <div class="decor-meta">80C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="desk">
                 <strong>책상</strong>
                 <span>굿앤그 인턴</span>
-                <div class="decor-meta">70C · Social 3</div>
+                <div class="decor-meta">70C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="birdCage">
                 <strong>새장</strong>
                 <span>천사 키</span>
-                <div class="decor-meta">90C · Cute 3</div>
+                <div class="decor-meta">90C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="mirrorBall">
                 <strong>미러볼</strong>
                 <span>무대감독 KEY</span>
-                <div class="decor-meta">120C · Practice 5</div>
+                <div class="decor-meta">120C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="vinylRack">
                 <strong>바이닐랙</strong>
                 <span>새벽산책 KEY</span>
-                <div class="decor-meta">110C · Mystery 4</div>
+                <div class="decor-meta">110C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="plushSofa">
                 <strong>소파</strong>
                 <span>솜구름 KEY</span>
-                <div class="decor-meta">100C · Cute 4</div>
+                <div class="decor-meta">100C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="neonSign">
                 <strong>네온</strong>
                 <span>장난꾸러기</span>
-                <div class="decor-meta">95C · Humor 4</div>
+                <div class="decor-meta">95C</div>
               </button>
               <button class="decor-btn" type="button" data-decor="bookshelf">
                 <strong>책장</strong>
                 <span>심야서점 KEY</span>
-                <div class="decor-meta">85C · DAY4</div>
+                <div class="decor-meta">85C</div>
               </button>
             </div>
+            <div class="room-furniture-tip">가구는 드래그해서 옮길 수 있고, 짧게 탭하면 앞/뒤 레이어가 바뀌어요. 위치와 레이어는 저장돼요.</div>
           </div>
         </div>
 
@@ -2753,6 +2834,25 @@ body.ending-modal-open{
             <div class="friend-panel-actions">
               <button class="primary-btn" id="endingBtn">엔딩 도감</button>
             </div>
+          </div>
+
+          <div class="card panel">
+            <h3 class="section-title" style="margin-bottom:12px;">각성 후 스케줄</h3>
+            <div class="small" style="margin-bottom:12px;">각성 후에도 스케줄을 이어갈 수 있어요. 녹화는 코인을 더 벌 수 있어요.</div>
+            <div class="schedule-grid room-schedule-grid" id="roomScheduleGrid">
+              <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
+              <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
+              <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
+              <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
+              <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
+              <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
+              <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
+              <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
+            </div>
+          </div>
+
+          <div class="card panel room-restart-card">
+            <button class="secondary-btn" id="restartAllBtn">처음부터 다시 시작</button>
           </div>
 
         </div>
@@ -2772,8 +2872,8 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd
 
 const GAME_ID = 'keyverse-prelude';
 const SLOT_ID = 'main';
-const SCHEMA_VERSION = 5;
-const LOCAL_SAVE_KEY = 'keyverse_save_v7';
+const SCHEMA_VERSION = 6;
+const LOCAL_SAVE_KEY = 'keyverse_save_v8';
 
 let supabaseClient = null;
 
@@ -2874,7 +2974,8 @@ const state = {
   affection: {},
   unlockedEndings: [],
   endingFlags: {},
-  money: 0
+  money: 0,
+  furnitureLayout: {}
 };
 
 const imageSet = {
@@ -2887,14 +2988,25 @@ const imageSet = {
 };
 
 const roomDecorConfig = {
-  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:80, requirementText:'DAY 3 달성', isUnlocked:() => state.day >= 3 },
-  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:70, requirementText:'Social 3', isUnlocked:() => (state.stats.social || 0) >= 3 },
-  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:90, requirementText:'Cute 3', isUnlocked:() => (state.stats.cute || 0) >= 3 },
-  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:120, requirementText:'Practice 5', isUnlocked:() => (state.stats.practice || 0) >= 5 },
-  vinylRack: { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:110, requirementText:'Mystery 4', isUnlocked:() => (state.stats.mystery || 0) >= 4 },
-  plushSofa: { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:100, requirementText:'Cute 4', isUnlocked:() => (state.stats.cute || 0) >= 4 },
-  neonSign: { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:95, requirementText:'Humor 4', isUnlocked:() => (state.stats.humor || 0) >= 4 },
-  bookshelf: { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:85, requirementText:'DAY 4 달성', isUnlocked:() => state.day >= 4 }
+  lpPlayer:   { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:80 },
+  desk:       { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:70 },
+  birdCage:   { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:90 },
+  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:120 },
+  vinylRack:  { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:110 },
+  plushSofa:  { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:100 },
+  neonSign:   { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:95 },
+  bookshelf:  { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:85 }
+};
+
+const roomFurnitureConfig = {
+  lpPlayer:   { emoji:'🎵', short:'LP',   w:48, h:52, x:34,  y:164, layer:'back',  color:'linear-gradient(180deg,#fff5f9,#f5c6da)' },
+  desk:       { emoji:'🪑', short:'책상', w:72, h:46, x:234, y:172, layer:'back',  color:'linear-gradient(180deg,#f3eadf,#dcc3aa)' },
+  birdCage:   { emoji:'🕊️', short:'새장', w:42, h:58, x:288, y:110, layer:'front', color:'linear-gradient(180deg,#fff9e8,#f2dea0)' },
+  mirrorBall: { emoji:'✨', short:'볼',   w:42, h:42, x:144, y:46,  layer:'front', color:'linear-gradient(180deg,#f8f3ff,#d8d0fa)' },
+  vinylRack:  { emoji:'💿', short:'랙',   w:58, h:54, x:70,  y:156, layer:'back',  color:'linear-gradient(180deg,#f6f0ff,#d1c6f2)' },
+  plushSofa:  { emoji:'🛋️', short:'소파', w:82, h:48, x:150, y:176, layer:'back',  color:'linear-gradient(180deg,#ffeef4,#f3bfd0)' },
+  neonSign:   { emoji:'💡', short:'네온', w:64, h:34, x:228, y:58,  layer:'front', color:'linear-gradient(180deg,#f7f1ff,#cfd0ff)' },
+  bookshelf:  { emoji:'📚', short:'책장', w:56, h:74, x:20,  y:118, layer:'back',  color:'linear-gradient(180deg,#efe7dc,#d2b89d)' }
 };
 
 const FRIEND_PROFILES = {
@@ -2957,12 +3069,7 @@ const ENDING_LIBRARY = [...MAIN_ENDINGS, ...SPECIAL_ENDINGS];
 
 
 function getDecorRequirementMet(info){
-  if (!info) return false;
-  try {
-    return !!(info.isUnlocked ? info.isUnlocked() : true);
-  } catch (err) {
-    return false;
-  }
+  return !!info;
 }
 
 function addMoney(amount){
@@ -2998,6 +3105,7 @@ function addAffection(name, amount){
   unlockSpecialEndings();
   updateMoneyUI();
   renderFriendMenu();
+  renderRoomFurniture();
   renderEndingMenu();
   return next;
 }
@@ -3116,6 +3224,8 @@ const seedAwakenAnchor = document.getElementById('seedAwakenAnchor');
 
 const roomScene = document.getElementById('roomScene');
 const roomMap = document.getElementById('roomMap');
+const roomFurnitureBack = document.getElementById('roomFurnitureBack');
+const roomFurnitureFront = document.getElementById('roomFurnitureFront');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomVisitor = document.getElementById('roomVisitor');
@@ -3434,11 +3544,10 @@ function renderRoomDecorButtons(){
     const key = btn.dataset.decor;
     const installed = !!state.roomDecor?.[key];
     const info = roomDecorConfig[key];
-    const unlocked = getDecorRequirementMet(info);
     const affordable = (state.money || 0) >= Number(info?.cost || 0);
     btn.classList.toggle('installed', installed);
-    btn.classList.toggle('locked', !installed && !unlocked);
-    btn.classList.toggle('affordable', !installed && unlocked && affordable);
+    btn.classList.toggle('locked', !installed && !affordable);
+    btn.classList.toggle('affordable', !installed && affordable);
     btn.disabled = installed;
     const label = btn.querySelector('strong');
     const desc = btn.querySelector('span');
@@ -3446,16 +3555,14 @@ function renderRoomDecorButtons(){
     if (label && info) label.textContent = info.label;
     if (desc && info) {
       if (installed) desc.textContent = `${info.friendName} 방문 가능`;
-      else if (!unlocked) desc.textContent = `잠금 · ${info.requirementText}`;
       else if (!affordable) desc.textContent = `${info.friendName} · 코인 부족`;
       else desc.textContent = `${info.friendName} 방문`;
     }
     if (meta && info) {
-      meta.textContent = installed ? '설치 완료' : `${info.cost}C · ${info.requirementText}`;
+      meta.textContent = installed ? '설치 완료' : `${info.cost}C`;
     }
   });
 }
-
 
 function getPendingFriendCandidate(){
   if (!state.awakened) return null;
@@ -3647,11 +3754,6 @@ function installDecorItem(decorKey){
   const info = roomDecorConfig[decorKey];
   if (!info) return;
   if (state.roomDecor?.[decorKey]) return;
-  if (!getDecorRequirementMet(info)) {
-    roomHint.textContent = `${info.label}은(는) 아직 잠겨 있어요. 조건: ${info.requirementText}`;
-    renderRoomDecorButtons();
-    return;
-  }
   if ((state.money || 0) < Number(info.cost || 0)) {
     roomHint.textContent = `${info.label}을(를) 두려면 코인 ${info.cost}이 필요해요.`;
     renderRoomDecorButtons();
@@ -3659,8 +3761,10 @@ function installDecorItem(decorKey){
   }
   addMoney(-Number(info.cost || 0));
   state.roomDecor[decorKey] = true;
-  roomHint.textContent = `${info.label}을(를) 구매해 두었어. ${info.friendName}가 마음에 들어할지도 몰라. (-${info.cost}C)`;
+  ensureFurnitureLayoutEntry(decorKey);
+  roomHint.textContent = `${info.label}을(를) 구매했어요. 방 안에서 드래그해서 배치해보세요. (-${info.cost}C)`;
   renderRoomDecorButtons();
+  renderRoomFurniture();
   renderFriendMenu();
   unlockSpecialEndings();
   syncRoomUI();
@@ -3668,7 +3772,6 @@ function installDecorItem(decorKey){
   saveLocal(serializeGameState());
   maybeStartRoomFriendVisit();
 }
-
 
 const debugEndingPresets = [
   { key:'practice:social', name:'가솔린 키' },
@@ -3859,7 +3962,7 @@ const statEls = {
 };
 
 document.querySelectorAll('.schedule-btn').forEach(btn => {
-  btn.addEventListener('click', () => startAction(btn.dataset.act));
+  btn.addEventListener('click', () => startAction(btn.dataset.act, btn));
 });
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
@@ -4293,21 +4396,21 @@ function speakMiniTalk(kind){
 }
 
 function setScheduleButtonsDisabled(disabled){
-  scheduleGrid.querySelectorAll('button').forEach(btn => {
+  document.querySelectorAll('.schedule-btn').forEach(btn => {
     btn.disabled = disabled;
   });
 }
 
 function clearActionProgress(){
-  scheduleGrid.querySelectorAll('.schedule-btn').forEach(btn => {
+  document.querySelectorAll('.schedule-btn').forEach(btn => {
     btn.classList.remove('is-running');
     btn.style.removeProperty('--fill-duration');
   });
 }
 
-function startActionProgress(type, duration){
+function startActionProgress(sourceBtn, type, duration){
   clearActionProgress();
-  const btn = scheduleGrid.querySelector(`.schedule-btn[data-act="${type}"]`);
+  const btn = sourceBtn || document.querySelector(`.schedule-btn[data-act="${type}"]`);
   if (!btn) return;
   btn.style.setProperty('--fill-duration', `${duration}ms`);
   void btn.offsetWidth;
@@ -4846,6 +4949,128 @@ function renderRoomPlayer(){
   renderRoomVisitOverlays();
 }
 
+
+function getDefaultFurnitureLayout(decorKey){
+  const cfg = roomFurnitureConfig[decorKey];
+  if (!cfg || !roomScene) return { x:40, y:140, layer:'back' };
+  const maxX = Math.max(8, (roomScene.clientWidth || 360) - cfg.w - 8);
+  const maxY = Math.max(48, (roomScene.clientHeight || 240) - cfg.h - 8);
+  return {
+    x: clamp(cfg.x, 8, maxX),
+    y: clamp(cfg.y, 40, maxY),
+    layer: cfg.layer || 'back'
+  };
+}
+
+function ensureFurnitureLayoutShape(){
+  if (!state.furnitureLayout || typeof state.furnitureLayout !== 'object') state.furnitureLayout = {};
+}
+
+function ensureFurnitureLayoutEntry(decorKey){
+  ensureFurnitureLayoutShape();
+  if (!state.furnitureLayout[decorKey]) {
+    state.furnitureLayout[decorKey] = getDefaultFurnitureLayout(decorKey);
+  }
+  return state.furnitureLayout[decorKey];
+}
+
+function setFurnitureLayer(decorKey, layer){
+  ensureFurnitureLayoutEntry(decorKey);
+  state.furnitureLayout[decorKey].layer = layer === 'front' ? 'front' : 'back';
+}
+
+function renderRoomFurniture(){
+  if (!roomFurnitureBack || !roomFurnitureFront) return;
+  roomFurnitureBack.innerHTML = '';
+  roomFurnitureFront.innerHTML = '';
+  if (!state.awakened) return;
+  ensureFurnitureLayoutShape();
+
+  Object.keys(roomDecorConfig).forEach(key => {
+    if (!state.roomDecor?.[key]) return;
+    const cfg = roomFurnitureConfig[key];
+    if (!cfg) return;
+    const layout = ensureFurnitureLayoutEntry(key);
+    const parent = (layout.layer === 'front') ? roomFurnitureFront : roomFurnitureBack;
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'room-furniture';
+    el.dataset.decor = key;
+    el.dataset.layer = layout.layer || 'back';
+    el.style.left = `${layout.x}px`;
+    el.style.top = `${layout.y}px`;
+    el.style.width = `${cfg.w}px`;
+    el.style.height = `${cfg.h}px`;
+    el.style.background = cfg.color;
+    el.innerHTML = `<span class="emoji">${cfg.emoji}</span><span class="label">${cfg.short}</span><span class="layer-badge">${layout.layer === 'front' ? '앞' : '뒤'}</span>`;
+    parent.appendChild(el);
+  });
+
+  attachRoomFurnitureInteractions();
+}
+
+let roomFurnitureDrag = null;
+
+function attachRoomFurnitureInteractions(){
+  document.querySelectorAll('.room-furniture').forEach(el => {
+    el.onmousedown = (e) => {
+      if (getCurrentScreenName() !== 'room') return;
+      const decorKey = el.dataset.decor;
+      const cfg = roomFurnitureConfig[decorKey];
+      if (!cfg) return;
+      const layout = ensureFurnitureLayoutEntry(decorKey);
+      roomFurnitureDrag = {
+        key: decorKey,
+        el,
+        startX: e.clientX,
+        startY: e.clientY,
+        originX: layout.x,
+        originY: layout.y,
+        moved: false
+      };
+      el.classList.add('dragging');
+      e.preventDefault();
+    };
+  });
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (!roomFurnitureDrag || !roomScene) return;
+  const cfg = roomFurnitureConfig[roomFurnitureDrag.key];
+  const dx = e.clientX - roomFurnitureDrag.startX;
+  const dy = e.clientY - roomFurnitureDrag.startY;
+  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) roomFurnitureDrag.moved = true;
+  const maxX = Math.max(8, roomScene.clientWidth - cfg.w - 8);
+  const maxY = Math.max(40, roomScene.clientHeight - cfg.h - 8);
+  const nextX = clamp(roomFurnitureDrag.originX + dx, 8, maxX);
+  const nextY = clamp(roomFurnitureDrag.originY + dy, 36, maxY);
+  const layout = ensureFurnitureLayoutEntry(roomFurnitureDrag.key);
+  layout.x = nextX;
+  layout.y = nextY;
+  roomFurnitureDrag.el.style.left = `${nextX}px`;
+  roomFurnitureDrag.el.style.top = `${nextY}px`;
+});
+
+document.addEventListener('mouseup', async () => {
+  if (!roomFurnitureDrag) return;
+  const drag = roomFurnitureDrag;
+  const key = drag.key;
+  const layout = ensureFurnitureLayoutEntry(key);
+  drag.el.classList.remove('dragging');
+  if (!drag.moved) {
+    setFurnitureLayer(key, layout.layer === 'front' ? 'back' : 'front');
+    renderRoomFurniture();
+    if (roomHint) roomHint.textContent = `${roomDecorConfig[key].label} 레이어를 ${state.furnitureLayout[key].layer === 'front' ? '앞' : '뒤'}으로 바꿨어요.`;
+  } else {
+    renderRoomFurniture();
+    if (roomHint) roomHint.textContent = `${roomDecorConfig[key].label} 위치를 저장했어요.`;
+  }
+  roomFurnitureDrag = null;
+  saveLocal(serializeGameState());
+  await triggerSaveNow();
+}
+);
+
 function advanceGameTimeStep(stepMinutes = 1){
   let remaining = Math.max(0, Math.round(stepMinutes));
   let crossedMidnight = false;
@@ -5029,8 +5254,9 @@ function handleDebugShortcut(e){
 }
 
 
-function startAction(type){
-  if (state.awakened || state.isActing) return;
+function startAction(type, sourceBtn){
+  if (state.isActing) return;
+  if (state.awakened && getCurrentScreenName() !== 'room') return;
   hideSeedMessage();
   if (type !== 'sleep' && state.energy < 12){
     setSeedMessage(dialogues.lowEnergy);
@@ -5042,7 +5268,7 @@ function startAction(type){
   updateAwakenButtonUI();
 
   const meta = actionMeta[type];
-  startActionProgress(type, meta.duration);
+  startActionProgress(sourceBtn, type, meta.duration);
 
   const actionStartLineMap = {
     practice:'좋아, 연습부터 시작해볼게.',
@@ -5054,7 +5280,11 @@ function startAction(type){
     meeting:'좋아, 아이디어를 좀 모아보자.',
     sleep:'이제 푹 자고 올게…'
   };
-  setSeedMessage(actionStartLineMap[type] || dialogues.intro);
+  const actionLine = actionStartLineMap[type] || dialogues.intro;
+  if (state.awakened && getCurrentScreenName() === 'room') {
+    if (roomHint) roomHint.textContent = actionLine;
+  }
+  setSeedMessage(actionLine);
 
   if (type === 'walk') {
     updateSeedStageBackground('walk');
@@ -5148,6 +5378,10 @@ function finishAction(type){
   }
 
   if (earnedCoins) message += ` (+${earnedCoins}코인)`;
+  if (state.awakened && getCurrentScreenName() === 'room' && roomHint) {
+    roomHint.textContent = message;
+    syncRoomUI();
+  }
   setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
   updateSeedStageBackground('default');
 }
@@ -5268,6 +5502,7 @@ function syncRoomUI(){
   `;
 
   renderRoomDecorButtons();
+  renderRoomFurniture();
   renderRoomVisitor();
   renderFriendMenu();
   renderRoomVisitOverlays();
@@ -5294,12 +5529,14 @@ function resetAll(){
   state.concertEventOffered = false;
   state.concertEventResolved = false;
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false };
+  state.furnitureLayout = {};
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
   state.affection = {};
   state.unlockedEndings = [];
   state.endingFlags = {};
   state.money = 0;
+  state.furnitureLayout = {};
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
@@ -5328,6 +5565,7 @@ function resetAll(){
     `;
   }
   renderFriendMenu();
+  renderRoomFurniture();
   renderEndingMenu();
   hideRoomDoorbell();
   hideRoomOwnerBubble();
@@ -5373,6 +5611,7 @@ function serializeGameState(){
       unlockedEndings: [...(state.unlockedEndings || [])],
       endingFlags: { ...(state.endingFlags || {}) },
       money: state.money || 0,
+      furnitureLayout: deepClone(state.furnitureLayout || {}),
       currentScreen: getCurrentScreenName()
     }
   };
@@ -5399,6 +5638,7 @@ function migrateSave(save){
   if (!Array.isArray(p.unlockedEndings)) p.unlockedEndings = [];
   if (!p.endingFlags || typeof p.endingFlags !== 'object') p.endingFlags = {};
   if (typeof p.money !== 'number') p.money = 0;
+  if (!p.furnitureLayout || typeof p.furnitureLayout !== 'object') p.furnitureLayout = {};
 
   p.stats = {
     practice: oldStats.practice ?? 0,
@@ -5445,6 +5685,7 @@ function applySaveToState(save){
   state.activeRoomVisitor = p.activeRoomVisitor ?? null;
   state.roomSeenFriendEvents = Array.isArray(p.roomSeenFriendEvents) ? [...p.roomSeenFriendEvents] : [];
   state.money = p.money ?? 0;
+  state.furnitureLayout = p.furnitureLayout && typeof p.furnitureLayout === 'object' ? { ...p.furnitureLayout } : {};
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
