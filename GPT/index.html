@@ -1827,9 +1827,118 @@ img{
 .friend-panel-actions{
   margin-top:12px;
 }
-.friend-panel-actions .primary-btn{
+.friend-panel-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.friend-panel-actions .primary-btn,
+.friend-panel-actions .secondary-btn{
   width:100%;
 }
+
+.key-select-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9997;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:12px 10px max(12px, env(safe-area-inset-bottom));
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease;
+}
+.key-select-overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.key-select-overlay::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(31,25,38,.38);
+  backdrop-filter:blur(6px);
+}
+.key-select-sheet{
+  position:relative;
+  width:min(480px, calc(100vw - 20px));
+  max-height:min(78vh, 760px);
+  overflow:auto;
+  border-radius:24px 24px 18px 18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 24px 60px rgba(0,0,0,.24);
+  transform:translateY(32px);
+  transition:transform .24s ease;
+}
+.key-select-overlay.show .key-select-sheet{
+  transform:translateY(0);
+}
+.key-select-handle{
+  width:54px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(120,104,87,.18);
+  margin:12px auto 4px;
+}
+.key-select-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 16px 10px;
+}
+.key-select-head h3{ margin:0; font-size:20px; font-weight:950; }
+.key-select-head .small{ margin-top:4px; }
+.key-select-close{
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  background:rgba(255,255,255,.9);
+  border:1px solid rgba(120,104,87,.12);
+  font-size:18px;
+  font-weight:900;
+}
+.key-select-list{
+  padding:0 16px 16px;
+  display:grid;
+  gap:10px;
+}
+.key-select-card{
+  display:grid;
+  grid-template-columns:72px 1fr;
+  gap:12px;
+  padding:12px;
+  border-radius:18px;
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(120,104,87,.10);
+  box-shadow:0 8px 18px rgba(120,104,87,.06);
+}
+.key-select-card.active{
+  background:linear-gradient(135deg, rgba(241,167,200,.18), rgba(201,195,232,.18));
+  border-color:rgba(160,132,160,.24);
+}
+.key-select-thumb{
+  width:72px;
+  height:98px;
+  border-radius:22px;
+  background:linear-gradient(180deg,#fff2f7,#f7c8dd 38%, #d7d1ef 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px;
+}
+.key-select-thumb img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+.key-select-meta strong{ display:block; font-size:14px; margin-bottom:4px; }
+.key-select-meta p{ margin:0; font-size:11px; color:var(--sub); line-height:1.55; }
+.key-select-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.key-select-tag{ padding:5px 8px; border-radius:999px; background:rgba(255,255,255,.86); border:1px solid rgba(120,104,87,.10); font-size:10px; color:#6a584a; }
+.key-select-actions{ display:flex; gap:8px; margin-top:10px; }
+.key-select-actions button{ flex:1 1 0; padding:10px 12px; border-radius:14px; font-size:12px; font-weight:900; }
+.key-select-empty{ padding:14px; border-radius:16px; background:rgba(255,255,255,.72); border:1px solid rgba(120,104,87,.10); color:#8c7d71; font-size:12px; line-height:1.6; }
+.awaken-actions{ display:grid; gap:10px; max-width:360px; margin:0 auto; }
+
 
 .room-choice-panel{
   position:absolute;
@@ -2350,6 +2459,12 @@ body.ending-modal-open{
 }
 
 @media (max-width: 640px){
+  .friend-panel-actions{ grid-template-columns:1fr; }
+  .key-select-sheet{ width:min(100vw - 16px, 100%); }
+  .key-select-head{ padding:8px 14px 10px; }
+  .key-select-list{ padding:0 14px 14px; }
+  .key-select-card{ grid-template-columns:64px 1fr; gap:10px; }
+  .key-select-thumb{ width:64px; height:88px; }
   .ending-modal{
     padding:10px 8px max(10px, env(safe-area-inset-bottom));
   }
@@ -2748,6 +2863,7 @@ body.ending-modal-open{
           <p class="awaken-desc" id="awakenDesc">쌓여온 하루들이 하나의 정체성으로 응결되었습니다.</p>
           <div class="awaken-actions">
             <button class="primary-btn" id="toRoomBtn">이 캐릭터로 진행</button>
+            <button class="secondary-btn" id="newRunBtn">다른 KEY 키워보기</button>
           </div>
         </div>
       </div>
@@ -2900,6 +3016,7 @@ body.ending-modal-open{
             </div>
             <div class="friend-panel-actions">
               <button class="primary-btn" id="endingBtn">엔딩 도감</button>
+              <button class="secondary-btn" id="keySelectBtn">KEY 선택 / 교체</button>
             </div>
           </div>
 
@@ -2909,8 +3026,21 @@ body.ending-modal-open{
   </section>
 
 
-
-
+  <div class="key-select-overlay" id="keySelectOverlay">
+    <div class="key-select-sheet" role="dialog" aria-modal="true" aria-labelledby="keySelectTitle">
+      <div class="key-select-handle"></div>
+      <div class="key-select-head">
+        <div>
+          <h3 id="keySelectTitle">보관된 KEY</h3>
+          <div class="small">각성해둔 KEY를 다시 선택해 방의 주인공으로 바꿀 수 있어요.</div>
+        </div>
+        <button type="button" class="key-select-close" id="keySelectCloseBtn">×</button>
+      </div>
+      <div class="key-select-list" id="keySelectList">
+        <div class="key-select-empty">아직 보관된 KEY가 없어요.</div>
+      </div>
+    </div>
+  </div>
 
   <div class="gift-shop-overlay" id="giftShopOverlay">
     <div class="gift-shop-sheet" role="dialog" aria-modal="true" aria-labelledby="giftShopTitle">
@@ -3049,7 +3179,9 @@ const state = {
   endingFlags: {},
   money: 0,
   equippedGiftWearables: { beanie:false, keyring:false, flower:false },
-  giftInventory: { beanie:false, keyring:false, flower:false }
+  giftInventory: { beanie:false, keyring:false, flower:false },
+  keyCollection: [],
+  currentKeyName: null
 };
 
 const imageSet = {
@@ -3917,6 +4049,10 @@ const endingSpecialList = document.getElementById('endingSpecialList');
 const endingSummaryText = document.getElementById('endingSummaryText');
 const endingCard = endingModal.querySelector('.ending-card');
 const endingBtn = document.getElementById('endingBtn');
+const keySelectBtn = document.getElementById('keySelectBtn');
+const keySelectOverlay = document.getElementById('keySelectOverlay');
+const keySelectList = document.getElementById('keySelectList');
+const keySelectCloseBtn = document.getElementById('keySelectCloseBtn');
 let endingSheetTouchStartY = 0;
 let endingSheetTouchCurrentY = 0;
 let endingSheetDragging = false;
@@ -3947,6 +4083,17 @@ debugOverlay.addEventListener('click', (e) => {
 if (endingBtn) {
   endingBtn.addEventListener('click', openEndingModal);
 }
+if (keySelectBtn) {
+  keySelectBtn.addEventListener('click', openKeySelectOverlay);
+}
+if (keySelectCloseBtn) {
+  keySelectCloseBtn.addEventListener('click', closeKeySelectOverlay);
+}
+if (keySelectOverlay) {
+  keySelectOverlay.addEventListener('click', (e) => {
+    if (e.target === keySelectOverlay) closeKeySelectOverlay();
+  });
+}
 if (endingCloseBtn) {
   endingCloseBtn.addEventListener('click', closeEndingModal);
 }
@@ -3958,6 +4105,9 @@ if (endingModal) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && endingModal.classList.contains('show')) {
     closeEndingModal();
+  }
+  if (e.key === 'Escape' && keySelectOverlay && keySelectOverlay.classList.contains('show')) {
+    closeKeySelectOverlay();
   }
 });
 if (endingCard) {
@@ -4295,6 +4445,14 @@ document.getElementById('toRoomBtn').addEventListener('click', async () => {
   renderRoomPlayer();
   await triggerSaveNow();
 });
+
+const newRunBtn = document.getElementById('newRunBtn');
+if (newRunBtn) {
+  newRunBtn.addEventListener('click', async () => {
+    beginNewSeedRun();
+    await triggerSaveNow();
+  });
+}
 
 const restartAllBtn = document.getElementById('restartAllBtn');
 if (restartAllBtn) {
@@ -5323,6 +5481,7 @@ function applyDebugEnding(index){
   if (second && base[second] < 9) base[second] = 9;
   state.stats = base;
   state.awakened = detectIdentity();
+  addKeyToCollection(state.awakened);
   unlockEndingByName(state.awakened?.name);
   unlockSpecialEndings();
   syncAwakenUI();
@@ -5561,6 +5720,7 @@ function detectIdentity(){
 function doAwaken(){
   if(!canAwaken() || state.isActing) return;
   state.awakened = detectIdentity();
+  addKeyToCollection(state.awakened);
   unlockEndingByName(state.awakened?.name);
   unlockSpecialEndings();
   updateAwakenButtonUI();
@@ -5568,6 +5728,124 @@ function doAwaken(){
   syncRoomUI();
   renderEndingMenu();
   openAwakenOverlay();
+}
+
+
+function ensureKeyCollectionShape(){
+  if (!Array.isArray(state.keyCollection)) state.keyCollection = [];
+  if (typeof state.currentKeyName !== 'string' && state.currentKeyName !== null) state.currentKeyName = null;
+}
+
+function cloneIdentity(identity){
+  return identity ? JSON.parse(JSON.stringify(identity)) : null;
+}
+
+function addKeyToCollection(identity){
+  if (!identity || !identity.name) return;
+  ensureKeyCollectionShape();
+  const existing = state.keyCollection.find(item => item && item.name === identity.name);
+  if (existing) {
+    Object.assign(existing, cloneIdentity(identity));
+  } else {
+    state.keyCollection.push(cloneIdentity(identity));
+  }
+  state.currentKeyName = identity.name;
+}
+
+function getCollectedKeyByName(name){
+  ensureKeyCollectionShape();
+  return state.keyCollection.find(item => item && item.name === name) || null;
+}
+
+function applySelectedKey(name){
+  const picked = getCollectedKeyByName(name);
+  if (!picked) return false;
+  state.awakened = cloneIdentity(picked);
+  state.currentKeyName = picked.name;
+  syncAwakenUI();
+  syncRoomUI();
+  renderFriendMenu();
+  renderEndingMenu();
+  return true;
+}
+
+function renderKeySelectList(){
+  if (!keySelectList) return;
+  ensureKeyCollectionShape();
+  if (!state.keyCollection.length) {
+    keySelectList.innerHTML = '<div class="key-select-empty">아직 보관된 KEY가 없어요. 먼저 한 번 각성해보세요.</div>';
+    return;
+  }
+  const activeName = state.awakened?.name || state.currentKeyName || '';
+  keySelectList.innerHTML = state.keyCollection.map(item => {
+    const active = item.name === activeName;
+    const badges = Array.isArray(item.badges) ? item.badges.slice(0,3) : [];
+    return `
+      <div class="key-select-card${active ? ' active' : ''}" data-key-card="${item.name}">
+        <div class="key-select-thumb"><img src="${item.roomImg || item.largeImg}" alt="${item.name}"></div>
+        <div class="key-select-meta">
+          <strong>${item.name}</strong>
+          <p>${item.desc || '보관된 KEY입니다.'}</p>
+          <div class="key-select-tags">
+            ${badges.map(b => `<span class="key-select-tag">${Array.isArray(b) ? `${b[0]} · ${b[1]}` : b}</span>`).join('')}
+            ${active ? '<span class="key-select-tag">현재 선택중</span>' : ''}
+          </div>
+          <div class="key-select-actions">
+            <button type="button" class="${active ? 'secondary-btn' : 'primary-btn'}" data-key-switch="${item.name}">${active ? '지금 사용중' : '이 KEY로 교체'}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  keySelectList.querySelectorAll('[data-key-switch]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetName = btn.dataset.keySwitch;
+      if (!targetName) return;
+      applySelectedKey(targetName);
+      closeKeySelectOverlay();
+      showScreen('room');
+      await triggerSaveNow();
+    });
+  });
+}
+
+function openKeySelectOverlay(){
+  renderKeySelectList();
+  if (keySelectOverlay) keySelectOverlay.classList.add('show');
+}
+
+function closeKeySelectOverlay(){
+  if (keySelectOverlay) keySelectOverlay.classList.remove('show');
+}
+
+function beginNewSeedRun(){
+  ensureKeyCollectionShape();
+  if (state.awakened) addKeyToCollection(state.awakened);
+  closeAwakenOverlay();
+  hideConcertEvent();
+  clearRunningActionTimers();
+  state.day = 1;
+  state.gameHour = 7;
+  state.gameMinute = 0;
+  state.energy = 100;
+  state.maxEnergy = 100;
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0 };
+  state.awakened = null;
+  state.isActing = false;
+  state.currentStageBg = 'default';
+  state.concertEventOffered = false;
+  state.concertEventResolved = false;
+  state.activeRoomVisitor = null;
+  state.seedPlayer.facing = 'right';
+  state.roomPlayer.facing = 'right';
+  setScheduleButtonsDisabled(false);
+  updateScheduleUI();
+  updateAwakenButtonUI();
+  syncSeedStageLayout({ immediate:true });
+  placeRoomPlayerInitial();
+  renderRoomPlayer();
+  setSeedMessage('새로운 미지의 KEY와 다시 시작해볼까? 이번엔 다른 결말을 모아보자.');
+  showScreen('schedule');
 }
 
 function syncAwakenUI(){
@@ -5584,6 +5862,7 @@ function syncAwakenUI(){
 function syncRoomUI(){
   const id = state.awakened;
   if(!id) return;
+  state.currentKeyName = id.name || state.currentKeyName;
 
   roomPlayerImg.src = id.roomImg;
   if (roomHint) {
@@ -5641,6 +5920,8 @@ function resetAll(){
   state.money = 0;
   state.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
   state.giftInventory = { beanie:false, keyring:false, flower:false };
+  state.keyCollection = [];
+  state.currentKeyName = null;
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
@@ -5717,6 +5998,8 @@ function serializeGameState(){
       money: state.money || 0,
       equippedGiftWearables: { ...(state.equippedGiftWearables || {}) },
       giftInventory: { ...(state.giftInventory || {}) },
+      keyCollection: (state.keyCollection || []).map(item => deepClone(item)),
+      currentKeyName: state.currentKeyName || null,
       currentScreen: getCurrentScreenName()
     }
   };
@@ -5745,6 +6028,8 @@ function migrateSave(save){
   if (typeof p.money !== 'number') p.money = 0;
   if (!p.equippedGiftWearables || typeof p.equippedGiftWearables !== 'object') p.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
   if (!p.giftInventory || typeof p.giftInventory !== 'object') p.giftInventory = { beanie:false, keyring:false, flower:false };
+  if (!Array.isArray(p.keyCollection)) p.keyCollection = [];
+  if (typeof p.currentKeyName !== 'string' && p.currentKeyName !== null) p.currentKeyName = null;
 
   p.stats = {
     practice: oldStats.practice ?? 0,
@@ -5793,6 +6078,14 @@ function applySaveToState(save){
   state.money = p.money ?? 0;
   state.equippedGiftWearables = { beanie:false, keyring:false, flower:false, ...(p.equippedGiftWearables || {}) };
   state.giftInventory = { beanie:false, keyring:false, flower:false, ...(p.giftInventory || {}) };
+  state.keyCollection = Array.isArray(p.keyCollection) ? p.keyCollection.map(item => deepClone(item)).filter(Boolean) : [];
+  state.currentKeyName = p.currentKeyName ?? null;
+  ensureKeyCollectionShape();
+  if (state.awakened) addKeyToCollection(state.awakened);
+  if (!state.awakened && state.currentKeyName) {
+    const restoredKey = getCollectedKeyByName(state.currentKeyName);
+    if (restoredKey && p.currentScreen === 'room') state.awakened = cloneIdentity(restoredKey);
+  }
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
