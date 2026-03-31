@@ -1547,8 +1547,21 @@ img{
   top:12px;
   z-index:8;
   display:flex;
+  align-items:flex-start;
   justify-content:space-between;
   gap:10px;
+}
+.room-stage-left{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+.room-stage-coin{
+  flex:0 0 auto;
+  background:rgba(255,255,255,.88);
+  box-shadow:0 6px 16px rgba(120,104,87,.10);
+  backdrop-filter:blur(6px);
 }
 .room-stage-label{
   position:absolute;
@@ -2282,6 +2295,12 @@ body.resizing .seed-awaken-anchor{
     padding:6px 8px;
     font-size:11px;
   }
+  .room-stage-left{
+    gap:4px;
+  }
+  .room-stage-coin{
+    padding:8px 10px;
+  }
   .room-owner-bubble,
   .room-visitor-bubble{
     max-width:132px;
@@ -2882,7 +2901,6 @@ body.ending-modal-open{
             <button class="mini-btn" id="roomLogoutBtn" style="display:none;">로그아웃</button>
             <button class="mini-btn" id="roomSaveBtn">저장</button>
           </div>
-          <div class="coin-pill"><span class="coin-icon">🪙</span><strong id="roomMoneyValue">0</strong></div>
         </div>
       </div>
       <div class="schedule-subline">스케줄을 통해 코인을 모으고, 방 아이템을 구매해 친구 방문과 엔딩을 늘려보세요</div>
@@ -2896,8 +2914,11 @@ body.ending-modal-open{
               <div class="room-map" id="roomMap"></div>
 
               <div class="stage-clock-row room-stage-clock">
-                <div class="day-badge" id="roomDayBadge">DAY1</div>
-                <div class="clock-badge" id="roomClockBadge">07:00</div>
+                <div class="room-stage-left">
+                  <div class="day-badge" id="roomDayBadge">DAY1</div>
+                  <div class="clock-badge" id="roomClockBadge">07:00</div>
+                </div>
+                <div class="coin-pill room-stage-coin"><span class="coin-icon">🪙</span><strong id="roomMoneyValue">0</strong></div>
               </div>
 
               <div class="room-player" id="roomPlayer">
@@ -3020,6 +3041,14 @@ body.ending-modal-open{
             </div>
           </div>
 
+        </div>
+
+        <div class="room-side-column">
+          <div class="card panel">
+            <div class="action-row">
+              <button class="secondary-btn" id="restartAllBtn">처음부터 다시 시작</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
