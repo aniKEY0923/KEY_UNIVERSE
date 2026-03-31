@@ -1540,83 +1540,6 @@ img{
     linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
     url("img/room_default.png") center center / 108% 108% no-repeat;
 }
-
-.room-furniture-layer{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-.room-furniture-back{ z-index:6; }
-.room-furniture-front{ z-index:11; }
-
-.room-furniture{
-  position:absolute;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:2px;
-  border-radius:14px;
-  border:1px solid rgba(120,104,87,.14);
-  box-shadow:0 8px 18px rgba(120,104,87,.12);
-  color:#5b4d42;
-  font-weight:900;
-  user-select:none;
-  pointer-events:auto;
-  touch-action:none;
-  cursor:grab;
-  padding:4px;
-  text-align:center;
-}
-.room-furniture.dragging{
-  cursor:grabbing;
-  box-shadow:0 14px 24px rgba(120,104,87,.18);
-}
-.room-furniture .emoji{
-  font-size:18px;
-  line-height:1;
-}
-.room-furniture .label{
-  font-size:10px;
-  line-height:1.1;
-  word-break:keep-all;
-}
-.room-furniture .layer-badge{
-  position:absolute;
-  right:-6px;
-  top:-6px;
-  min-width:20px;
-  height:20px;
-  padding:0 6px;
-  border-radius:999px;
-  background:rgba(255,255,255,.95);
-  border:1px solid rgba(120,104,87,.14);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:9px;
-  color:#6a584a;
-  box-shadow:0 6px 12px rgba(120,104,87,.12);
-}
-.room-furniture-tip{
-  margin-top:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.76);
-  border:1px solid rgba(120,104,87,.10);
-  color:#8c7d71;
-  font-size:11px;
-  line-height:1.55;
-}
-.room-schedule-grid{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  padding:2px 2px 8px;
-}
-.room-restart-card{
-  margin-top:14px;
-}
 .room-stage-clock{
   position:absolute;
   left:12px;
@@ -2447,6 +2370,154 @@ body.ending-modal-open{
   }
 }
 
+
+.gift-accessory,
+.gift-accessory-room{
+  position:absolute;
+  z-index:11;
+  pointer-events:none;
+  opacity:0;
+  transition:left .2s ease, top .2s ease, opacity .16s ease, transform .18s ease;
+}
+.gift-accessory.show,
+.gift-accessory-room.show{ opacity:1; }
+.gift-accessory.hat,
+.gift-accessory-room.hat{
+  font-size:18px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));
+}
+.gift-accessory.keyring,
+.gift-accessory-room.keyring{
+  width:16px;
+  height:16px;
+  border-radius:999px;
+  background:radial-gradient(circle at 35% 35%, #fff7fb 0 18%, #ffd5ea 19% 48%, #f59ac6 49% 100%);
+  box-shadow:0 0 0 2px rgba(255,255,255,.82), 0 4px 8px rgba(0,0,0,.12);
+}
+.gift-accessory.keyring::after,
+.gift-accessory-room.keyring::after{
+  content:"";
+  position:absolute;
+  left:3px;
+  top:-5px;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  border:2px solid rgba(210,180,70,.95);
+  box-sizing:border-box;
+}
+.gift-accessory.flower,
+.gift-accessory-room.flower{
+  font-size:16px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.16));
+}
+.gift-gain-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.84);
+  border:1px solid rgba(120,104,87,.10);
+  color:#6a584a;
+  font-size:11px;
+  font-weight:900;
+}
+
+
+/* Gift shop tabs */
+.gift-shop-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9997;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:16px 12px max(16px, env(safe-area-inset-bottom));
+  background:rgba(31,25,38,.40);
+  backdrop-filter:blur(6px);
+}
+.gift-shop-overlay.show{ display:flex; }
+.gift-shop-sheet{
+  width:min(520px, calc(100vw - 24px));
+  max-height:min(82vh, 860px);
+  overflow:hidden;
+  border-radius:24px 24px 18px 18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 24px 60px rgba(0,0,0,.24);
+  display:flex;
+  flex-direction:column;
+}
+.gift-shop-handle{
+  width:54px;height:6px;border-radius:999px;background:rgba(120,104,87,.18);
+  margin:12px auto 2px;
+}
+.gift-shop-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 16px 12px;
+}
+.gift-shop-head-left{display:flex;flex-direction:column;gap:4px;}
+.gift-shop-title{margin:0;font-size:20px;font-weight:950;}
+.gift-shop-sub{font-size:12px;color:var(--sub);}
+.gift-shop-close{
+  width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.9);
+  border:1px solid rgba(120,104,87,.12);font-size:18px;font-weight:900;line-height:1;
+}
+.gift-shop-tabs{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+  padding:0 16px 12px;
+}
+.gift-shop-tab{
+  min-height:42px;padding:10px 8px;border-radius:14px;background:rgba(255,255,255,.82);
+  border:1px solid rgba(120,104,87,.10);font-size:12px;font-weight:900;
+}
+.gift-shop-tab.active{
+  background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;
+}
+.gift-shop-body{
+  padding:0 16px 16px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+.gift-shop-card{
+  padding:12px;border-radius:18px;background:rgba(255,255,255,.90);
+  border:1px solid rgba(120,104,87,.10);box-shadow:0 8px 18px rgba(120,104,87,.06);
+  display:flex;flex-direction:column;gap:8px;min-height:156px;
+}
+.gift-shop-card.locked{ background:rgba(244,240,235,.92); }
+.gift-shop-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.gift-shop-emoji{font-size:22px;line-height:1.1;}
+.gift-shop-name{font-size:13px;font-weight:900;color:#5b4d42;line-height:1.35;}
+.gift-shop-type{font-size:10px;color:#8c7d71;}
+.gift-shop-desc{font-size:11px;color:#7f7064;line-height:1.5;min-height:34px;}
+.gift-shop-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;}
+.gift-shop-price{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;
+  background:rgba(255,248,231,.95);border:1px solid rgba(239,201,110,.34);font-size:11px;font-weight:900;color:#7a6540;
+}
+.gift-shop-action{
+  min-width:84px;padding:9px 10px;border-radius:12px;font-size:12px;font-weight:900;
+  background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;
+}
+.gift-shop-action[disabled]{background:rgba(232,226,220,.92);color:#9a8d82;cursor:not-allowed;}
+.gift-shop-lock{font-size:10px;color:#9a8d82;line-height:1.45;}
+.gift-gain-chip{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 10px;border-radius:999px;
+  background:rgba(255,255,255,.88);border:1px solid rgba(120,104,87,.10);font-size:11px;font-weight:900;color:#6a584a;
+}
+.gift-anchor .popup-menu,
+.room-action-anchor .popup-menu{ display:none !important; }
+
+@media (max-width:640px){
+  .gift-shop-overlay{ padding:10px 8px max(10px, env(safe-area-inset-bottom)); }
+  .gift-shop-sheet{ width:min(100vw - 16px, 100%); max-height:min(84vh, 860px); }
+  .gift-shop-head{ padding:10px 14px 10px; }
+  .gift-shop-tabs{ padding:0 14px 10px; gap:6px; }
+  .gift-shop-tab{ min-height:40px; font-size:11px; padding:9px 6px; }
+  .gift-shop-body{ padding:0 14px 14px; gap:8px; }
+  .gift-shop-card{ min-height:148px; padding:10px; }
+}
+
 </style>
 </head>
 <body>
@@ -2707,7 +2778,6 @@ body.ending-modal-open{
           <div class="card panel">
             <div class="room-scene" id="roomScene">
               <div class="room-map" id="roomMap"></div>
-              <div class="room-furniture-layer room-furniture-back" id="roomFurnitureBack"></div>
 
               <div class="stage-clock-row room-stage-clock">
                 <div class="day-badge" id="roomDayBadge">DAY1</div>
@@ -2739,8 +2809,6 @@ body.ending-modal-open{
                   <button type="button" class="room-choice-no" id="roomSendAwayBtn">지금은 바쁘니 돌려보낸다</button>
                 </div>
               </div>
-
-              <div class="room-furniture-layer room-furniture-front" id="roomFurnitureFront"></div>
 
               <div class="room-stage-label">
                 <div class="name" id="roomStageName">각성한 KEY의 방</div>
@@ -2775,50 +2843,49 @@ body.ending-modal-open{
 
           <div class="card panel">
             <h3 class="section-title" style="margin-bottom:12px;">방꾸미기</h3>
-            <div class="small" style="margin-bottom:12px;">코인을 모아 가구를 구매하면 방에 바로 배치할 수 있어요.</div>
+            <div class="small" style="margin-bottom:12px;">가구를 추가하면 누가 찾아올지도 몰라요.</div>
             <div class="room-decor-grid" id="roomDecorGrid">
               <button class="decor-btn" type="button" data-decor="lpPlayer">
                 <strong>LP</strong>
                 <span>배드러브 키</span>
-                <div class="decor-meta">80C</div>
+                <div class="decor-meta">80C · DAY3</div>
               </button>
               <button class="decor-btn" type="button" data-decor="desk">
                 <strong>책상</strong>
                 <span>굿앤그 인턴</span>
-                <div class="decor-meta">70C</div>
+                <div class="decor-meta">70C · Social 3</div>
               </button>
               <button class="decor-btn" type="button" data-decor="birdCage">
                 <strong>새장</strong>
                 <span>천사 키</span>
-                <div class="decor-meta">90C</div>
+                <div class="decor-meta">90C · Cute 3</div>
               </button>
               <button class="decor-btn" type="button" data-decor="mirrorBall">
                 <strong>미러볼</strong>
                 <span>무대감독 KEY</span>
-                <div class="decor-meta">120C</div>
+                <div class="decor-meta">120C · Practice 5</div>
               </button>
               <button class="decor-btn" type="button" data-decor="vinylRack">
                 <strong>바이닐랙</strong>
                 <span>새벽산책 KEY</span>
-                <div class="decor-meta">110C</div>
+                <div class="decor-meta">110C · Mystery 4</div>
               </button>
               <button class="decor-btn" type="button" data-decor="plushSofa">
                 <strong>소파</strong>
                 <span>솜구름 KEY</span>
-                <div class="decor-meta">100C</div>
+                <div class="decor-meta">100C · Cute 4</div>
               </button>
               <button class="decor-btn" type="button" data-decor="neonSign">
                 <strong>네온</strong>
                 <span>장난꾸러기</span>
-                <div class="decor-meta">95C</div>
+                <div class="decor-meta">95C · Humor 4</div>
               </button>
               <button class="decor-btn" type="button" data-decor="bookshelf">
                 <strong>책장</strong>
                 <span>심야서점 KEY</span>
-                <div class="decor-meta">85C</div>
+                <div class="decor-meta">85C · DAY4</div>
               </button>
             </div>
-            <div class="room-furniture-tip">가구는 드래그해서 옮길 수 있고, 짧게 탭하면 앞/뒤 레이어가 바뀌어요. 위치와 레이어는 저장돼요.</div>
           </div>
         </div>
 
@@ -2836,31 +2903,37 @@ body.ending-modal-open{
             </div>
           </div>
 
-          <div class="card panel">
-            <h3 class="section-title" style="margin-bottom:12px;">각성 후 스케줄</h3>
-            <div class="small" style="margin-bottom:12px;">각성 후에도 스케줄을 이어갈 수 있어요. 녹화는 코인을 더 벌 수 있어요.</div>
-            <div class="schedule-grid room-schedule-grid" id="roomScheduleGrid">
-              <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
-              <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
-              <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
-              <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
-              <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
-              <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
-              <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
-              <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
-            </div>
-          </div>
-
-          <div class="card panel room-restart-card">
-            <button class="secondary-btn" id="restartAllBtn">처음부터 다시 시작</button>
-          </div>
-
         </div>
       </div>
     </div>
   </section>
 
 
+
+
+
+  <div class="gift-shop-overlay" id="giftShopOverlay">
+    <div class="gift-shop-sheet" role="dialog" aria-modal="true" aria-labelledby="giftShopTitle">
+      <div class="gift-shop-handle"></div>
+      <div class="gift-shop-head">
+        <div class="gift-shop-head-left">
+          <h3 class="gift-shop-title" id="giftShopTitle">선물 상점</h3>
+          <div class="gift-shop-sub">탭을 눌러 종류별로 골라보세요.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="coin-pill"><span class="coin-icon">🪙</span><strong id="giftShopMoneyValue">0</strong></div>
+          <button class="gift-shop-close" id="giftShopCloseBtn" aria-label="닫기">×</button>
+        </div>
+      </div>
+      <div class="gift-shop-tabs" id="giftShopTabs">
+        <button class="gift-shop-tab active" type="button" data-tab="food">음식</button>
+        <button class="gift-shop-tab" type="button" data-tab="item">소품</button>
+        <button class="gift-shop-tab" type="button" data-tab="style">착장</button>
+        <button class="gift-shop-tab" type="button" data-tab="rare">레어</button>
+      </div>
+      <div class="gift-shop-body" id="giftShopBody"></div>
+    </div>
+  </div>
 
 
 </div>
@@ -2872,8 +2945,8 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd
 
 const GAME_ID = 'keyverse-prelude';
 const SLOT_ID = 'main';
-const SCHEMA_VERSION = 6;
-const LOCAL_SAVE_KEY = 'keyverse_save_v8';
+const SCHEMA_VERSION = 5;
+const LOCAL_SAVE_KEY = 'keyverse_save_v7';
 
 let supabaseClient = null;
 
@@ -2975,7 +3048,8 @@ const state = {
   unlockedEndings: [],
   endingFlags: {},
   money: 0,
-  furnitureLayout: {}
+  equippedGiftWearables: { beanie:false, keyring:false, flower:false },
+  giftInventory: { beanie:false, keyring:false, flower:false }
 };
 
 const imageSet = {
@@ -2988,25 +3062,14 @@ const imageSet = {
 };
 
 const roomDecorConfig = {
-  lpPlayer:   { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:80 },
-  desk:       { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:70 },
-  birdCage:   { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:90 },
-  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:120 },
-  vinylRack:  { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:110 },
-  plushSofa:  { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:100 },
-  neonSign:   { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:95 },
-  bookshelf:  { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:85 }
-};
-
-const roomFurnitureConfig = {
-  lpPlayer:   { emoji:'🎵', short:'LP',   w:48, h:52, x:34,  y:164, layer:'back',  color:'linear-gradient(180deg,#fff5f9,#f5c6da)' },
-  desk:       { emoji:'🪑', short:'책상', w:72, h:46, x:234, y:172, layer:'back',  color:'linear-gradient(180deg,#f3eadf,#dcc3aa)' },
-  birdCage:   { emoji:'🕊️', short:'새장', w:42, h:58, x:288, y:110, layer:'front', color:'linear-gradient(180deg,#fff9e8,#f2dea0)' },
-  mirrorBall: { emoji:'✨', short:'볼',   w:42, h:42, x:144, y:46,  layer:'front', color:'linear-gradient(180deg,#f8f3ff,#d8d0fa)' },
-  vinylRack:  { emoji:'💿', short:'랙',   w:58, h:54, x:70,  y:156, layer:'back',  color:'linear-gradient(180deg,#f6f0ff,#d1c6f2)' },
-  plushSofa:  { emoji:'🛋️', short:'소파', w:82, h:48, x:150, y:176, layer:'back',  color:'linear-gradient(180deg,#ffeef4,#f3bfd0)' },
-  neonSign:   { emoji:'💡', short:'네온', w:64, h:34, x:228, y:58,  layer:'front', color:'linear-gradient(180deg,#f7f1ff,#cfd0ff)' },
-  bookshelf:  { emoji:'📚', short:'책장', w:56, h:74, x:20,  y:118, layer:'back',  color:'linear-gradient(180deg,#efe7dc,#d2b89d)' }
+  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:80, requirementText:'DAY 3 달성', isUnlocked:() => state.day >= 3 },
+  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:70, requirementText:'Social 3', isUnlocked:() => (state.stats.social || 0) >= 3 },
+  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:90, requirementText:'Cute 3', isUnlocked:() => (state.stats.cute || 0) >= 3 },
+  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:120, requirementText:'Practice 5', isUnlocked:() => (state.stats.practice || 0) >= 5 },
+  vinylRack: { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:110, requirementText:'Mystery 4', isUnlocked:() => (state.stats.mystery || 0) >= 4 },
+  plushSofa: { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:100, requirementText:'Cute 4', isUnlocked:() => (state.stats.cute || 0) >= 4 },
+  neonSign: { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:95, requirementText:'Humor 4', isUnlocked:() => (state.stats.humor || 0) >= 4 },
+  bookshelf: { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:85, requirementText:'DAY 4 달성', isUnlocked:() => state.day >= 4 }
 };
 
 const FRIEND_PROFILES = {
@@ -3069,7 +3132,12 @@ const ENDING_LIBRARY = [...MAIN_ENDINGS, ...SPECIAL_ENDINGS];
 
 
 function getDecorRequirementMet(info){
-  return !!info;
+  if (!info) return false;
+  try {
+    return !!(info.isUnlocked ? info.isUnlocked() : true);
+  } catch (err) {
+    return false;
+  }
 }
 
 function addMoney(amount){
@@ -3105,7 +3173,6 @@ function addAffection(name, amount){
   unlockSpecialEndings();
   updateMoneyUI();
   renderFriendMenu();
-  renderRoomFurniture();
   renderEndingMenu();
   return next;
 }
@@ -3224,8 +3291,6 @@ const seedAwakenAnchor = document.getElementById('seedAwakenAnchor');
 
 const roomScene = document.getElementById('roomScene');
 const roomMap = document.getElementById('roomMap');
-const roomFurnitureBack = document.getElementById('roomFurnitureBack');
-const roomFurnitureFront = document.getElementById('roomFurnitureFront');
 const roomPlayer = document.getElementById('roomPlayer');
 const roomPlayerImg = document.getElementById('roomPlayerImg');
 const roomVisitor = document.getElementById('roomVisitor');
@@ -3492,6 +3557,7 @@ function renderRoomVisitOverlays(){
 
 function updateMoneyUI(){
   if (roomMoneyValue) roomMoneyValue.textContent = String(state.money || 0);
+  updateGiftShopMoney();
 }
 
 function positionRoomRejectFx(){
@@ -3536,6 +3602,7 @@ function renderRoomVisitor(opts = {}){
     });
   }
   renderRoomVisitOverlays();
+  renderGiftWearables();
 }
 
 function renderRoomDecorButtons(){
@@ -3544,10 +3611,11 @@ function renderRoomDecorButtons(){
     const key = btn.dataset.decor;
     const installed = !!state.roomDecor?.[key];
     const info = roomDecorConfig[key];
+    const unlocked = getDecorRequirementMet(info);
     const affordable = (state.money || 0) >= Number(info?.cost || 0);
     btn.classList.toggle('installed', installed);
-    btn.classList.toggle('locked', !installed && !affordable);
-    btn.classList.toggle('affordable', !installed && affordable);
+    btn.classList.toggle('locked', !installed && !unlocked);
+    btn.classList.toggle('affordable', !installed && unlocked && affordable);
     btn.disabled = installed;
     const label = btn.querySelector('strong');
     const desc = btn.querySelector('span');
@@ -3555,14 +3623,16 @@ function renderRoomDecorButtons(){
     if (label && info) label.textContent = info.label;
     if (desc && info) {
       if (installed) desc.textContent = `${info.friendName} 방문 가능`;
+      else if (!unlocked) desc.textContent = `잠금 · ${info.requirementText}`;
       else if (!affordable) desc.textContent = `${info.friendName} · 코인 부족`;
       else desc.textContent = `${info.friendName} 방문`;
     }
     if (meta && info) {
-      meta.textContent = installed ? '설치 완료' : `${info.cost}C`;
+      meta.textContent = installed ? '설치 완료' : `${info.cost}C · ${info.requirementText}`;
     }
   });
 }
+
 
 function getPendingFriendCandidate(){
   if (!state.awakened) return null;
@@ -3754,6 +3824,11 @@ function installDecorItem(decorKey){
   const info = roomDecorConfig[decorKey];
   if (!info) return;
   if (state.roomDecor?.[decorKey]) return;
+  if (!getDecorRequirementMet(info)) {
+    roomHint.textContent = `${info.label}은(는) 아직 잠겨 있어요. 조건: ${info.requirementText}`;
+    renderRoomDecorButtons();
+    return;
+  }
   if ((state.money || 0) < Number(info.cost || 0)) {
     roomHint.textContent = `${info.label}을(를) 두려면 코인 ${info.cost}이 필요해요.`;
     renderRoomDecorButtons();
@@ -3761,10 +3836,8 @@ function installDecorItem(decorKey){
   }
   addMoney(-Number(info.cost || 0));
   state.roomDecor[decorKey] = true;
-  ensureFurnitureLayoutEntry(decorKey);
-  roomHint.textContent = `${info.label}을(를) 구매했어요. 방 안에서 드래그해서 배치해보세요. (-${info.cost}C)`;
+  roomHint.textContent = `${info.label}을(를) 구매해 두었어. ${info.friendName}가 마음에 들어할지도 몰라. (-${info.cost}C)`;
   renderRoomDecorButtons();
-  renderRoomFurniture();
   renderFriendMenu();
   unlockSpecialEndings();
   syncRoomUI();
@@ -3772,6 +3845,7 @@ function installDecorItem(decorKey){
   saveLocal(serializeGameState());
   maybeStartRoomFriendVisit();
 }
+
 
 const debugEndingPresets = [
   { key:'practice:social', name:'가솔린 키' },
@@ -3961,8 +4035,240 @@ const statEls = {
   humor:    { fill: document.getElementById('fill-humor'),    val: document.getElementById('val-humor') }
 };
 
+const GIFT_EFFECTS = {
+  food: {
+    '샐러드': { stats:{ social:1 }, energy:6, messageKey:'giftSalad', bonus:'Social +1 · 에너지 +6' },
+    '고수샐러드': { stats:{ mystery:2 }, energy:3, messageKey:'giftCorianderSalad', bonus:'Mystery +2 · 에너지 +3' },
+    '당근카레': { stats:{ practice:1, cute:1 }, energy:8, messageKey:'giftCarrotCurry', bonus:'Practice +1 · Cute +1 · 에너지 +8' },
+    '두릅튀김': { stats:{ scary:1, mystery:1 }, energy:4, messageKey:'giftFried', bonus:'Scary +1 · Mystery +1 · 에너지 +4' },
+    '파스타': { stats:{ social:1, humor:1 }, energy:7, messageKey:'giftPasta', bonus:'Social +1 · Humor +1 · 에너지 +7' }
+  },
+  item: {
+    '지중해풍 꽃': { stats:{ cute:1, mystery:1 }, wearable:'flower', messageKey:'giftFlower', bonus:'Cute +1 · Mystery +1 · 꽃 장식 착용' },
+    '핑크색 털뭉치 키링': { stats:{ cute:2, humor:1 }, wearable:'keyring', messageKey:'giftKeyring', bonus:'Cute +2 · Humor +1 · 키링 장착' },
+    '고양이 비니': { stats:{ cute:1, humor:2 }, wearable:'beanie', messageKey:'giftBeanie', bonus:'Cute +1 · Humor +2 · 비니 착용' }
+  }
+
+};
+
+const GIFT_SHOP_ITEMS = {
+  food: [
+    { name:'샐러드', emoji:'🥗', kind:'food', cost:24, desc:'가볍게 기분 전환. Social +1 · 에너지 +6' },
+    { name:'고수샐러드', emoji:'🌿', kind:'food', cost:28, desc:'호불호 있지만 신비로운 취향. Mystery +2 · 에너지 +3' },
+    { name:'당근카레', emoji:'🍛', kind:'food', cost:36, desc:'든든한 한 끼. Practice +1 · Cute +1 · 에너지 +8' },
+    { name:'두릅튀김', emoji:'🍤', kind:'food', cost:34, desc:'기묘한 매력이 있어. Scary +1 · Mystery +1 · 에너지 +4' },
+    { name:'파스타', emoji:'🍝', kind:'food', cost:32, desc:'기분 좋은 한 접시. Social +1 · Humor +1 · 에너지 +7' }
+  ],
+  item: [
+    { name:'지중해풍 꽃', emoji:'🌼', kind:'item', cost:42, desc:'방 분위기를 부드럽게 바꾸는 꽃 선물.' },
+    { name:'핑크색 털뭉치 키링', emoji:'🩷', kind:'item', cost:48, desc:'귀여운 포인트가 되는 키링.' },
+    { name:'향초', emoji:'🕯️', kind:'item', cost:40, desc:'차분한 공기를 더해줘. Mystery +1 · Social +1' },
+    { name:'폴라로이드 필름', emoji:'📸', kind:'item', cost:44, desc:'순간을 더 특별하게 기억해. Cute +1 · Humor +1' }
+  ],
+  style: [
+    { name:'고양이 비니', emoji:'🧢', kind:'item', cost:58, desc:'착용 가능한 포인트 아이템. Cute +1 · Humor +2' }
+  ],
+  rare: [
+    { name:'장미꽃다발', emoji:'🌹', kind:'item', cost:95, desc:'강한 인상을 남기는 레어 선물. Cute +2 · Mystery +2', unlockText:'각성 이후 구매 가능', isUnlocked:() => !!state.awakened },
+    { name:'빈티지 마이크', emoji:'🎙️', kind:'item', cost:120, desc:'무대 무드를 살리는 특별 선물. Practice +2 · Social +1', unlockText:'가솔린 키 또는 DAY 5', isUnlocked:() => state.awakened?.name === '가솔린 키' || state.day >= 5 }
+  ]
+};
+
+const seedAccessoryLayer = document.createElement('div');
+seedAccessoryLayer.className = 'gift-accessory';
+seedStage.appendChild(seedAccessoryLayer);
+const roomAccessoryLayer = document.createElement('div');
+roomAccessoryLayer.className = 'gift-accessory-room';
+roomScene.appendChild(roomAccessoryLayer);
+
+function getGiftAccessorySpec(){
+  const equipped = state.equippedGiftWearables || {};
+  if (equipped.beanie) return { kind:'hat', text:'🧢' };
+  if (equipped.flower) return { kind:'flower', text:'🌼' };
+  if (equipped.keyring) return { kind:'keyring', text:'' };
+  return null;
+}
+
+function renderGiftWearables(){
+  const spec = getGiftAccessorySpec();
+  [seedAccessoryLayer, roomAccessoryLayer].forEach(el => {
+    if (!el) return;
+    el.className = el.className.split(' ').slice(0,1).join(' ');
+    el.innerHTML = '';
+    el.classList.remove('show','hat','flower','keyring');
+  });
+  if (!spec) return;
+
+  if (seedAccessoryLayer) {
+    seedAccessoryLayer.classList.add(spec.kind, 'show');
+    if (spec.text) seedAccessoryLayer.textContent = spec.text;
+    const left = (state.seedPlayer.x || 0) + (state.seedPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.44);
+    const top = (state.seedPlayer.y || 0) + (spec.kind === 'keyring' ? (state.seedPlayer.h || 78) * 0.5 : -6);
+    seedAccessoryLayer.style.left = `${left}px`;
+    seedAccessoryLayer.style.top = `${top}px`;
+  }
+  if (roomAccessoryLayer) {
+    roomAccessoryLayer.classList.add(spec.kind, 'show');
+    if (spec.text) roomAccessoryLayer.textContent = spec.text;
+    const left = (state.roomPlayer.x || 0) + (state.roomPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.44);
+    const top = (state.roomPlayer.y || 0) + (spec.kind === 'keyring' ? (state.roomPlayer.h || 78) * 0.5 : -6);
+    roomAccessoryLayer.style.left = `${left}px`;
+    roomAccessoryLayer.style.top = `${top}px`;
+  }
+}
+
+function applyStatDelta(delta = {}){
+  Object.entries(delta).forEach(([key, value]) => {
+    if (typeof state.stats[key] !== 'number') return;
+    state.stats[key] = clamp((state.stats[key] || 0) + Number(value || 0), 0, 100);
+  });
+}
+
+function formatGiftBonusText(effect){
+  return effect?.bonus || '기분이 좋아진 것 같아.';
+}
+
+function buildGiftFeedbackHtml(text){
+  return `<span>${text}</span>`;
+}
+
+function handleGift(kind, itemName, inRoom = false){
+  const effect = GIFT_EFFECTS[kind]?.[itemName];
+  if (!effect) return;
+  registerUserActivity();
+  applyStatDelta(effect.stats || {});
+  if (effect.energy) state.energy = clamp((state.energy || 0) + effect.energy, 0, state.maxEnergy || 100);
+  if (effect.wearable) {
+    state.giftInventory[effect.wearable] = true;
+    state.equippedGiftWearables.beanie = false;
+    state.equippedGiftWearables.keyring = false;
+    state.equippedGiftWearables.flower = false;
+    state.equippedGiftWearables[effect.wearable] = true;
+  }
+  updateScheduleUI();
+  syncRoomUI();
+  renderGiftWearables();
+
+  const baseText = dialogues[effect.messageKey] || `${itemName} 선물을 받았어.`;
+  const bonusText = formatGiftBonusText(effect);
+  if (inRoom) {
+    if (roomHint) roomHint.innerHTML = `${baseText}<div class="gift-gain-chip">${bonusText}</div>`;
+  } else {
+    setSeedMessage(`${baseText} (${bonusText})`, { idleAfterMs:SEED_IDLE_MS });
+  }
+}
+
+
+
+const giftShopOverlay = document.getElementById('giftShopOverlay');
+const giftShopBody = document.getElementById('giftShopBody');
+const giftShopTabs = document.getElementById('giftShopTabs');
+const giftShopCloseBtn = document.getElementById('giftShopCloseBtn');
+const giftShopMoneyValue = document.getElementById('giftShopMoneyValue');
+
+let giftShopTab = 'food';
+let giftShopContext = 'schedule';
+
+function getGiftItemsForTab(tab){
+  return Array.isArray(GIFT_SHOP_ITEMS[tab]) ? GIFT_SHOP_ITEMS[tab] : [];
+}
+
+function updateGiftShopMoney(){
+  if (giftShopMoneyValue) giftShopMoneyValue.textContent = String(state.money || 0);
+}
+
+function openGiftShop(context = 'schedule', initialTab = null){
+  giftShopContext = context;
+  if (initialTab) giftShopTab = initialTab;
+  closeGiftMenus();
+  closeRoomMenus();
+  renderGiftShop();
+  updateGiftShopMoney();
+  if (giftShopOverlay) giftShopOverlay.classList.add('show');
+}
+
+function closeGiftShop(){
+  if (giftShopOverlay) giftShopOverlay.classList.remove('show');
+}
+
+function renderGiftShop(){
+  if (!giftShopBody || !giftShopTabs) return;
+  giftShopTabs.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === giftShopTab);
+  });
+  const items = getGiftItemsForTab(giftShopTab);
+  giftShopBody.innerHTML = items.map(item => {
+    const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+    const affordable = (state.money || 0) >= Number(item.cost || 0);
+    const disabled = !unlocked || !affordable;
+    const actionLabel = !unlocked ? '잠김' : (affordable ? '선물' : '부족');
+    return `
+      <div class="gift-shop-card ${unlocked ? '' : 'locked'}">
+        <div class="gift-shop-card-top">
+          <div>
+            <div class="gift-shop-emoji">${item.emoji || '🎁'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="gift-shop-type">${giftShopTab === 'food' ? 'FOOD' : giftShopTab === 'item' ? 'PROP' : giftShopTab === 'style' ? 'STYLE' : 'RARE'}</div>
+          </div>
+        </div>
+        <div class="gift-shop-name">${item.name}</div>
+        <div class="gift-shop-desc">${item.desc || ''}</div>
+        ${unlocked ? '' : `<div class="gift-shop-lock">${item.unlockText || '아직 구매할 수 없어요.'}</div>`}
+        <div class="gift-shop-meta">
+          <div class="gift-shop-price">🪙 ${Number(item.cost || 0)}</div>
+          <button type="button" class="gift-shop-action" data-shop-buy="${item.name}" ${disabled ? 'disabled' : ''}>${actionLabel}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function purchaseGiftFromShop(itemName){
+  const allItems = Object.values(GIFT_SHOP_ITEMS).flat();
+  const item = allItems.find(v => v.name === itemName);
+  if (!item) return;
+  const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+  if (!unlocked) return;
+  const cost = Number(item.cost || 0);
+  if ((state.money || 0) < cost) {
+    if (giftShopContext === 'room' && roomHint) roomHint.textContent = '코인이 부족해요.';
+    else setSeedMessage('코인이 부족해요.', { idleAfterMs:SEED_IDLE_MS });
+    renderGiftShop();
+    return;
+  }
+  addMoney(-cost);
+  handleGift(item.kind, item.name, giftShopContext === 'room');
+  renderGiftShop();
+  updateGiftShopMoney();
+  await triggerSaveNow();
+}
+
+if (giftShopTabs) {
+  giftShopTabs.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      giftShopTab = btn.dataset.tab;
+      renderGiftShop();
+    });
+  });
+}
+if (giftShopBody) {
+  giftShopBody.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-shop-buy]');
+    if (!btn) return;
+    purchaseGiftFromShop(btn.dataset.shopBuy);
+  });
+}
+if (giftShopCloseBtn) giftShopCloseBtn.addEventListener('click', closeGiftShop);
+if (giftShopOverlay) {
+  giftShopOverlay.addEventListener('click', (e) => {
+    if (e.target === giftShopOverlay) closeGiftShop();
+  });
+}
+
+
 document.querySelectorAll('.schedule-btn').forEach(btn => {
-  btn.addEventListener('click', () => startAction(btn.dataset.act, btn));
+  btn.addEventListener('click', () => startAction(btn.dataset.act));
 });
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
@@ -4000,90 +4306,15 @@ if (restartAllBtn) {
 
 
 giftBtn.addEventListener('click', () => {
-  const willOpen = !giftMenu.classList.contains('show');
-  closeGiftMenus();
-  if (willOpen) giftMenu.classList.add('show');
-});
-
-giftFoodBtn.addEventListener('click', () => {
-  giftItemSubmenu.classList.remove('show');
-  giftFoodSubmenu.classList.toggle('show');
-});
-
-giftItemBtn.addEventListener('click', () => {
-  giftFoodSubmenu.classList.remove('show');
-  giftItemSubmenu.classList.toggle('show');
-});
-
-giftFoodSubmenu.querySelectorAll('[data-food]').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const food = btn.dataset.food;
-    if (food === '샐러드') setSeedMessage(dialogues.giftSalad);
-    if (food === '고수샐러드') setSeedMessage(dialogues.giftCorianderSalad);
-    if (food === '당근카레') setSeedMessage(dialogues.giftCarrotCurry);
-    if (food === '두릅튀김') setSeedMessage(dialogues.giftFried);
-    if (food === '파스타') setSeedMessage(dialogues.giftPasta);
-    closeGiftMenus();
-    await triggerSaveNow();
-  });
-});
-
-giftItemSubmenu.querySelectorAll('[data-item]').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const item = btn.dataset.item;
-    if (item === '지중해풍 꽃') setSeedMessage(dialogues.giftFlower);
-    if (item === '핑크색 털뭉치 키링') setSeedMessage(dialogues.giftKeyring);
-    if (item === '고양이 비니') setSeedMessage(dialogues.giftBeanie);
-    closeGiftMenus();
-    await triggerSaveNow();
-  });
+  openGiftShop('schedule', 'food');
 });
 
 if (roomGiftBtn) {
   roomGiftBtn.addEventListener('click', () => {
-    const willOpen = !roomGiftMenu.classList.contains('show');
-    closeRoomMenus();
-    if (willOpen) roomGiftMenu.classList.add('show');
+    openGiftShop('room', 'food');
   });
 }
-if (roomGiftFoodBtn) {
-  roomGiftFoodBtn.addEventListener('click', () => {
-    roomGiftItemSubmenu.classList.remove('show');
-    roomGiftFoodSubmenu.classList.toggle('show');
-  });
-}
-if (roomGiftItemBtn) {
-  roomGiftItemBtn.addEventListener('click', () => {
-    roomGiftFoodSubmenu.classList.remove('show');
-    roomGiftItemSubmenu.classList.toggle('show');
-  });
-}
-if (roomGiftFoodSubmenu) {
-  roomGiftFoodSubmenu.querySelectorAll('[data-room-food]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const food = btn.dataset.roomFood;
-      if (food === '샐러드') roomHint.textContent = dialogues.giftSalad;
-      if (food === '고수샐러드') roomHint.textContent = dialogues.giftCorianderSalad;
-      if (food === '당근카레') roomHint.textContent = dialogues.giftCarrotCurry;
-      if (food === '두릅튀김') roomHint.textContent = dialogues.giftFried;
-      if (food === '파스타') roomHint.textContent = dialogues.giftPasta;
-      closeRoomMenus();
-      await triggerSaveNow();
-    });
-  });
-}
-if (roomGiftItemSubmenu) {
-  roomGiftItemSubmenu.querySelectorAll('[data-room-item]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const item = btn.dataset.roomItem;
-      if (item === '지중해풍 꽃') roomHint.textContent = dialogues.giftFlower;
-      if (item === '핑크색 털뭉치 키링') roomHint.textContent = dialogues.giftKeyring;
-      if (item === '고양이 비니') roomHint.textContent = dialogues.giftBeanie;
-      closeRoomMenus();
-      await triggerSaveNow();
-    });
-  });
-}
+
 if (friendBtn) {
   friendBtn.addEventListener('click', () => {
     const willOpen = !friendMenu.classList.contains('show');
@@ -4396,21 +4627,21 @@ function speakMiniTalk(kind){
 }
 
 function setScheduleButtonsDisabled(disabled){
-  document.querySelectorAll('.schedule-btn').forEach(btn => {
+  scheduleGrid.querySelectorAll('button').forEach(btn => {
     btn.disabled = disabled;
   });
 }
 
 function clearActionProgress(){
-  document.querySelectorAll('.schedule-btn').forEach(btn => {
+  scheduleGrid.querySelectorAll('.schedule-btn').forEach(btn => {
     btn.classList.remove('is-running');
     btn.style.removeProperty('--fill-duration');
   });
 }
 
-function startActionProgress(sourceBtn, type, duration){
+function startActionProgress(type, duration){
   clearActionProgress();
-  const btn = sourceBtn || document.querySelector(`.schedule-btn[data-act="${type}"]`);
+  const btn = scheduleGrid.querySelector(`.schedule-btn[data-act="${type}"]`);
   if (!btn) return;
   btn.style.setProperty('--fill-duration', `${duration}ms`);
   void btn.offsetWidth;
@@ -4912,6 +5143,7 @@ function renderSeedPlayer(options = {}){
   positionSeedStatus();
   positionStageEnergyBar();
   positionAwakenButton();
+  renderGiftWearables();
 
   if (immediate) {
     requestAnimationFrame(() => {
@@ -4945,131 +5177,11 @@ function renderRoomPlayer(){
     roomPlayerImg.src = imageSet.defaultRoom;
   }
   roomPlayer.classList.toggle('left', state.roomPlayer.facing === 'left');
+  renderGiftWearables();
   renderRoomVisitor();
   renderRoomVisitOverlays();
+  renderGiftWearables();
 }
-
-
-function getDefaultFurnitureLayout(decorKey){
-  const cfg = roomFurnitureConfig[decorKey];
-  if (!cfg || !roomScene) return { x:40, y:140, layer:'back' };
-  const maxX = Math.max(8, (roomScene.clientWidth || 360) - cfg.w - 8);
-  const maxY = Math.max(48, (roomScene.clientHeight || 240) - cfg.h - 8);
-  return {
-    x: clamp(cfg.x, 8, maxX),
-    y: clamp(cfg.y, 40, maxY),
-    layer: cfg.layer || 'back'
-  };
-}
-
-function ensureFurnitureLayoutShape(){
-  if (!state.furnitureLayout || typeof state.furnitureLayout !== 'object') state.furnitureLayout = {};
-}
-
-function ensureFurnitureLayoutEntry(decorKey){
-  ensureFurnitureLayoutShape();
-  if (!state.furnitureLayout[decorKey]) {
-    state.furnitureLayout[decorKey] = getDefaultFurnitureLayout(decorKey);
-  }
-  return state.furnitureLayout[decorKey];
-}
-
-function setFurnitureLayer(decorKey, layer){
-  ensureFurnitureLayoutEntry(decorKey);
-  state.furnitureLayout[decorKey].layer = layer === 'front' ? 'front' : 'back';
-}
-
-function renderRoomFurniture(){
-  if (!roomFurnitureBack || !roomFurnitureFront) return;
-  roomFurnitureBack.innerHTML = '';
-  roomFurnitureFront.innerHTML = '';
-  if (!state.awakened) return;
-  ensureFurnitureLayoutShape();
-
-  Object.keys(roomDecorConfig).forEach(key => {
-    if (!state.roomDecor?.[key]) return;
-    const cfg = roomFurnitureConfig[key];
-    if (!cfg) return;
-    const layout = ensureFurnitureLayoutEntry(key);
-    const parent = (layout.layer === 'front') ? roomFurnitureFront : roomFurnitureBack;
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'room-furniture';
-    el.dataset.decor = key;
-    el.dataset.layer = layout.layer || 'back';
-    el.style.left = `${layout.x}px`;
-    el.style.top = `${layout.y}px`;
-    el.style.width = `${cfg.w}px`;
-    el.style.height = `${cfg.h}px`;
-    el.style.background = cfg.color;
-    el.innerHTML = `<span class="emoji">${cfg.emoji}</span><span class="label">${cfg.short}</span><span class="layer-badge">${layout.layer === 'front' ? '앞' : '뒤'}</span>`;
-    parent.appendChild(el);
-  });
-
-  attachRoomFurnitureInteractions();
-}
-
-let roomFurnitureDrag = null;
-
-function attachRoomFurnitureInteractions(){
-  document.querySelectorAll('.room-furniture').forEach(el => {
-    el.onmousedown = (e) => {
-      if (getCurrentScreenName() !== 'room') return;
-      const decorKey = el.dataset.decor;
-      const cfg = roomFurnitureConfig[decorKey];
-      if (!cfg) return;
-      const layout = ensureFurnitureLayoutEntry(decorKey);
-      roomFurnitureDrag = {
-        key: decorKey,
-        el,
-        startX: e.clientX,
-        startY: e.clientY,
-        originX: layout.x,
-        originY: layout.y,
-        moved: false
-      };
-      el.classList.add('dragging');
-      e.preventDefault();
-    };
-  });
-}
-
-document.addEventListener('mousemove', (e) => {
-  if (!roomFurnitureDrag || !roomScene) return;
-  const cfg = roomFurnitureConfig[roomFurnitureDrag.key];
-  const dx = e.clientX - roomFurnitureDrag.startX;
-  const dy = e.clientY - roomFurnitureDrag.startY;
-  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) roomFurnitureDrag.moved = true;
-  const maxX = Math.max(8, roomScene.clientWidth - cfg.w - 8);
-  const maxY = Math.max(40, roomScene.clientHeight - cfg.h - 8);
-  const nextX = clamp(roomFurnitureDrag.originX + dx, 8, maxX);
-  const nextY = clamp(roomFurnitureDrag.originY + dy, 36, maxY);
-  const layout = ensureFurnitureLayoutEntry(roomFurnitureDrag.key);
-  layout.x = nextX;
-  layout.y = nextY;
-  roomFurnitureDrag.el.style.left = `${nextX}px`;
-  roomFurnitureDrag.el.style.top = `${nextY}px`;
-});
-
-document.addEventListener('mouseup', async () => {
-  if (!roomFurnitureDrag) return;
-  const drag = roomFurnitureDrag;
-  const key = drag.key;
-  const layout = ensureFurnitureLayoutEntry(key);
-  drag.el.classList.remove('dragging');
-  if (!drag.moved) {
-    setFurnitureLayer(key, layout.layer === 'front' ? 'back' : 'front');
-    renderRoomFurniture();
-    if (roomHint) roomHint.textContent = `${roomDecorConfig[key].label} 레이어를 ${state.furnitureLayout[key].layer === 'front' ? '앞' : '뒤'}으로 바꿨어요.`;
-  } else {
-    renderRoomFurniture();
-    if (roomHint) roomHint.textContent = `${roomDecorConfig[key].label} 위치를 저장했어요.`;
-  }
-  roomFurnitureDrag = null;
-  saveLocal(serializeGameState());
-  await triggerSaveNow();
-}
-);
 
 function advanceGameTimeStep(stepMinutes = 1){
   let remaining = Math.max(0, Math.round(stepMinutes));
@@ -5254,9 +5366,8 @@ function handleDebugShortcut(e){
 }
 
 
-function startAction(type, sourceBtn){
-  if (state.isActing) return;
-  if (state.awakened && getCurrentScreenName() !== 'room') return;
+function startAction(type){
+  if (state.awakened || state.isActing) return;
   hideSeedMessage();
   if (type !== 'sleep' && state.energy < 12){
     setSeedMessage(dialogues.lowEnergy);
@@ -5268,7 +5379,7 @@ function startAction(type, sourceBtn){
   updateAwakenButtonUI();
 
   const meta = actionMeta[type];
-  startActionProgress(sourceBtn, type, meta.duration);
+  startActionProgress(type, meta.duration);
 
   const actionStartLineMap = {
     practice:'좋아, 연습부터 시작해볼게.',
@@ -5280,11 +5391,7 @@ function startAction(type, sourceBtn){
     meeting:'좋아, 아이디어를 좀 모아보자.',
     sleep:'이제 푹 자고 올게…'
   };
-  const actionLine = actionStartLineMap[type] || dialogues.intro;
-  if (state.awakened && getCurrentScreenName() === 'room') {
-    if (roomHint) roomHint.textContent = actionLine;
-  }
-  setSeedMessage(actionLine);
+  setSeedMessage(actionStartLineMap[type] || dialogues.intro);
 
   if (type === 'walk') {
     updateSeedStageBackground('walk');
@@ -5378,10 +5485,6 @@ function finishAction(type){
   }
 
   if (earnedCoins) message += ` (+${earnedCoins}코인)`;
-  if (state.awakened && getCurrentScreenName() === 'room' && roomHint) {
-    roomHint.textContent = message;
-    syncRoomUI();
-  }
   setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
   updateSeedStageBackground('default');
 }
@@ -5475,6 +5578,7 @@ function syncAwakenUI(){
   const progressBtn = document.getElementById('toRoomBtn');
   if (progressBtn) progressBtn.textContent = `${id.name}(으)로 진행`;
   awakenImg.src = id.largeImg;
+  renderGiftWearables();
 }
 
 function syncRoomUI(){
@@ -5502,10 +5606,10 @@ function syncRoomUI(){
   `;
 
   renderRoomDecorButtons();
-  renderRoomFurniture();
   renderRoomVisitor();
   renderFriendMenu();
   renderRoomVisitOverlays();
+  renderGiftWearables();
 }
 
 function resetAll(){
@@ -5529,14 +5633,14 @@ function resetAll(){
   state.concertEventOffered = false;
   state.concertEventResolved = false;
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false };
-  state.furnitureLayout = {};
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
   state.affection = {};
   state.unlockedEndings = [];
   state.endingFlags = {};
   state.money = 0;
-  state.furnitureLayout = {};
+  state.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
+  state.giftInventory = { beanie:false, keyring:false, flower:false };
   clearRoomVisitTimers();
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
@@ -5548,6 +5652,7 @@ function resetAll(){
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
   roomPlayerImg.src = imageSet.defaultRoom;
+  renderGiftWearables();
 
   updateSeedStageBackground('default');
   setSeedMessage(dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
@@ -5565,7 +5670,6 @@ function resetAll(){
     `;
   }
   renderFriendMenu();
-  renderRoomFurniture();
   renderEndingMenu();
   hideRoomDoorbell();
   hideRoomOwnerBubble();
@@ -5611,7 +5715,8 @@ function serializeGameState(){
       unlockedEndings: [...(state.unlockedEndings || [])],
       endingFlags: { ...(state.endingFlags || {}) },
       money: state.money || 0,
-      furnitureLayout: deepClone(state.furnitureLayout || {}),
+      equippedGiftWearables: { ...(state.equippedGiftWearables || {}) },
+      giftInventory: { ...(state.giftInventory || {}) },
       currentScreen: getCurrentScreenName()
     }
   };
@@ -5638,7 +5743,8 @@ function migrateSave(save){
   if (!Array.isArray(p.unlockedEndings)) p.unlockedEndings = [];
   if (!p.endingFlags || typeof p.endingFlags !== 'object') p.endingFlags = {};
   if (typeof p.money !== 'number') p.money = 0;
-  if (!p.furnitureLayout || typeof p.furnitureLayout !== 'object') p.furnitureLayout = {};
+  if (!p.equippedGiftWearables || typeof p.equippedGiftWearables !== 'object') p.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
+  if (!p.giftInventory || typeof p.giftInventory !== 'object') p.giftInventory = { beanie:false, keyring:false, flower:false };
 
   p.stats = {
     practice: oldStats.practice ?? 0,
@@ -5685,7 +5791,8 @@ function applySaveToState(save){
   state.activeRoomVisitor = p.activeRoomVisitor ?? null;
   state.roomSeenFriendEvents = Array.isArray(p.roomSeenFriendEvents) ? [...p.roomSeenFriendEvents] : [];
   state.money = p.money ?? 0;
-  state.furnitureLayout = p.furnitureLayout && typeof p.furnitureLayout === 'object' ? { ...p.furnitureLayout } : {};
+  state.equippedGiftWearables = { beanie:false, keyring:false, flower:false, ...(p.equippedGiftWearables || {}) };
+  state.giftInventory = { beanie:false, keyring:false, flower:false, ...(p.giftInventory || {}) };
 
   if (p.seedPlayer) state.seedPlayer = { ...state.seedPlayer, ...p.seedPlayer };
   if (p.roomPlayer) state.roomPlayer = { ...state.roomPlayer, ...p.roomPlayer };
@@ -5696,6 +5803,7 @@ function applySaveToState(save){
   seedPlayerImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
   roomPlayerImg.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
   awakenImg.src = state.awakened ? (state.awakened.largeImg || imageSet.defaultLarge) : imageSet.defaultLarge;
+  renderGiftWearables();
 
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
