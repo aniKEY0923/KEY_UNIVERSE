@@ -2181,6 +2181,44 @@ img{
   margin-top:0;
   padding-bottom:4px;
 }
+.room-schedule-grid{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  width:100%;
+  padding:2px 2px 8px;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+  scrollbar-width:thin;
+}
+.room-schedule-grid::-webkit-scrollbar{
+  height:8px;
+}
+.room-schedule-grid::-webkit-scrollbar-thumb{
+  background:rgba(120,104,87,.18);
+  border-radius:999px;
+}
+.room-schedule-grid .schedule-btn,
+#seedPaneSchedule .schedule-btn{
+  flex:0 0 auto;
+  width:72px;
+  min-width:72px;
+  height:72px;
+  min-height:72px;
+  padding:8px 6px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.room-schedule-grid .schedule-btn .title,
+#seedPaneSchedule .schedule-btn .title{
+  font-size:10px;
+  line-height:1.35;
+}
+
 .room-decor-grid,
 .room-gift-grid{
   display:flex;
@@ -2934,7 +2972,7 @@ body.ending-modal-open{
             <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
           </div>
 
-          <div class="schedule-grid" id="scheduleGrid">
+          <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
             <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
             <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
             <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
@@ -3114,6 +3152,7 @@ body.ending-modal-open{
           <div class="card panel room-bottom-card">
             <div class="room-bottom-tabs" id="roomBottomTabs">
               <button type="button" class="room-bottom-tab active" data-room-tab="schedule">스케쥴</button>
+              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기</button>
               <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
             </div>
 
@@ -3129,6 +3168,19 @@ body.ending-modal-open{
                 <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
               </div>
             </div>
+            <div class="room-bottom-pane" id="roomPaneDecor">
+              <div class="room-decor-grid" id="roomDecorGrid">
+                <button class="decor-btn" type="button" data-decor="lpPlayer"><div class="emoji">🎵</div><strong>LP플레이어</strong></button>
+                <button class="decor-btn" type="button" data-decor="desk"><div class="emoji">🪑</div><strong>업무용 책상</strong></button>
+                <button class="decor-btn" type="button" data-decor="birdCage"><div class="emoji">🕊️</div><strong>작은 새장</strong></button>
+                <button class="decor-btn" type="button" data-decor="mirrorBall"><div class="emoji">🪩</div><strong>미러볼</strong></button>
+                <button class="decor-btn" type="button" data-decor="vinylRack"><div class="emoji">💿</div><strong>바이닐 랙</strong></button>
+                <button class="decor-btn" type="button" data-decor="plushSofa"><div class="emoji">🛋️</div><strong>폭신 소파</strong></button>
+                <button class="decor-btn" type="button" data-decor="neonSign"><div class="emoji">💡</div><strong>네온사인</strong></button>
+                <button class="decor-btn" type="button" data-decor="bookshelf"><div class="emoji">📚</div><strong>심야 책장</strong></button>
+              </div>
+            </div>
+
             <div class="room-bottom-pane" id="roomPaneGift">
               <div class="room-gift-grid" id="roomGiftGrid"></div>
             </div>
@@ -4901,6 +4953,11 @@ function showScreen(name){
       const roomMain = screens.room ? screens.room.querySelector('.main') : null;
       if (roomMain) roomMain.scrollTop = 0;
     });
+  } else if (name === 'awaken') {
+    requestAnimationFrame(() => {
+      syncAwakenUI();
+      openAwakenOverlay();
+    });
   }
 }
 
@@ -5788,6 +5845,7 @@ function applyDebugEnding(index){
   syncRoomUI();
   renderEndingMenu();
   showScreen('awaken');
+  openAwakenOverlay();
   updateScheduleUI();
   updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n목록에서 다른 엔딩도 바로 선택할 수 있어요.`);
 }
