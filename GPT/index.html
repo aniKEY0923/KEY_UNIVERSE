@@ -2002,7 +2002,8 @@ img{
   border:1px solid rgba(120,104,87,.12);
 }
 
-.room-action-anchor{
+.room-action-anchor{ display:none;
+
   position:absolute;
   right:12px;
   bottom:12px;
@@ -2107,6 +2108,131 @@ img{
 .decor-btn.affordable:not(.installed):not(.locked){
   box-shadow:0 8px 18px rgba(120,104,87,.08), 0 0 0 2px rgba(239,201,110,.24) inset;
 }
+.decor-btn:disabled{
+  opacity:1;
+  cursor:default;
+}
+
+
+.room-float-feedback{
+  position:absolute;
+  z-index:16;
+  left:0;
+  top:0;
+  transform:translate(-50%,0);
+  padding:5px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 8px 16px rgba(120,104,87,.12);
+  font-size:11px;
+  font-weight:900;
+  color:#6a584a;
+  opacity:0;
+  pointer-events:none;
+}
+.room-float-feedback.show{
+  animation:roomFloatToast 1.5s ease forwards;
+}
+@keyframes roomFloatToast{
+  0%{ opacity:0; transform:translate(-50%,8px) scale(.92);}
+  15%{ opacity:1; transform:translate(-50%,0) scale(1);}
+  80%{ opacity:1; transform:translate(-50%,-16px) scale(1);}
+  100%{ opacity:0; transform:translate(-50%,-26px) scale(.98);}
+}
+
+.room-bottom-card{
+  overflow:hidden;
+}
+.room-bottom-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:12px;
+}
+.room-bottom-tab{
+  min-height:42px;
+  padding:10px 8px;
+  border-radius:14px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(120,104,87,.12);
+  font-size:12px;
+  font-weight:900;
+}
+.room-bottom-tab.active{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
+.room-bottom-pane{ display:none; }
+.room-bottom-pane.active{ display:block; }
+.room-schedule-grid{
+  margin-top:0;
+  padding-bottom:4px;
+}
+.room-decor-grid,
+.room-gift-grid{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  width:100%;
+  padding:2px 2px 8px;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+  scrollbar-width:thin;
+}
+.room-decor-grid::-webkit-scrollbar,
+.room-gift-grid::-webkit-scrollbar{
+  height:8px;
+}
+.room-decor-grid::-webkit-scrollbar-thumb,
+.room-gift-grid::-webkit-scrollbar-thumb{
+  background:rgba(120,104,87,.18);
+  border-radius:999px;
+}
+.decor-btn,
+.room-gift-btn{
+  flex:0 0 auto;
+  width:72px;
+  min-width:72px;
+  height:72px;
+  min-height:72px;
+  padding:8px 6px;
+  border-radius:14px;
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(120,104,87,.14);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:4px;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(120,104,87,.08);
+}
+.decor-btn strong,
+.room-gift-btn strong{
+  font-size:10px;
+  line-height:1.2;
+}
+.room-gift-btn .emoji{
+  font-size:18px;
+  line-height:1;
+}
+.room-gift-btn .price,
+.decor-btn .price{
+  font-size:9px;
+  color:#8c7d71;
+}
+.room-gift-btn.affordable,
+.decor-btn.affordable:not(.installed):not(.locked){
+  box-shadow:0 8px 18px rgba(120,104,87,.08), 0 0 0 2px rgba(239,201,110,.24) inset;
+}
+.room-gift-btn.locked,
+.decor-btn.locked{
+  background:rgba(246,241,235,.92);
+  border-style:dashed;
+}
+.room-gift-btn:disabled,
 .decor-btn:disabled{
   opacity:1;
   cursor:default;
@@ -2295,6 +2421,24 @@ body.resizing .seed-awaken-anchor{
     padding:6px 8px;
     font-size:11px;
   }
+
+  .room-bottom-tabs{
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .room-bottom-tab{
+    min-height:38px;
+    font-size:11px;
+    padding:8px 6px;
+  }
+  .decor-btn,
+  .room-gift-btn{
+    width:68px;
+    min-width:68px;
+    height:68px;
+    min-height:68px;
+  }
+
   .room-stage-left{
     gap:4px;
   }
@@ -2938,6 +3082,7 @@ body.ending-modal-open{
                 </div>
               </div>
               <div class="room-reject-fx" id="roomRejectFx">💔</div>
+              <div class="room-float-feedback" id="roomFloatFeedback">+1</div>
 
               <div class="room-choice-panel" id="roomChoicePanel">
                 <div class="room-choice-title">손님이 찾아왔어</div>
@@ -2950,80 +3095,48 @@ body.ending-modal-open{
               <div class="room-stage-label">
                 <div class="name" id="roomStageName">각성한 KEY의 방</div>
               </div>
+              <!-- room action anchor removed in favor of bottom tab panel -->
+            </div>
+          </div>
 
-              <div class="room-action-anchor">
-                <div class="popup-menu compact-menu" id="roomGiftMenu">
-                  <button type="button" id="roomGiftFoodBtn">음식</button>
-                  <button type="button" id="roomGiftItemBtn">아이템</button>
+          <div class="card panel room-bottom-card">
+            <div class="room-bottom-tabs" id="roomBottomTabs">
+              <button type="button" class="room-bottom-tab active" data-room-tab="schedule">스케쥴</button>
+              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기</button>
+              <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
+            </div>
 
-                  <div class="submenu" id="roomGiftFoodSubmenu">
-                    <button type="button" data-room-food="샐러드">샐러드</button>
-                    <button type="button" data-room-food="고수샐러드">고수샐러드</button>
-                    <button type="button" data-room-food="당근카레">당근카레</button>
-                    <button type="button" data-room-food="두릅튀김">두릅튀김</button>
-                    <button type="button" data-room-food="파스타">파스타</button>
-                  </div>
-
-                  <div class="submenu" id="roomGiftItemSubmenu">
-                    <button type="button" data-room-item="지중해풍 꽃">지중해풍 꽃</button>
-                    <button type="button" data-room-item="핑크색 털뭉치 키링">핑크색 털뭉치 키링</button>
-                    <button type="button" data-room-item="고양이 비니">고양이 비니</button>
-                  </div>
-                </div>
-
-                <div class="room-action-buttons">
-                  <button class="gift-btn" id="roomGiftBtn">선물</button>
-                </div>
+            <div class="room-bottom-pane active" id="roomPaneSchedule">
+              <div class="schedule-grid room-schedule-grid">
+                <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
+                <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
+                <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
+                <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
+                <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회</span></button>
+                <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스</span></button>
+                <button class="schedule-btn" data-act="meeting"><span class="title">💡 회의</span></button>
+                <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
               </div>
             </div>
-          </div>
 
-          <div class="card panel">
-            <h3 class="section-title" style="margin-bottom:12px;">방꾸미기</h3>
-            <div class="small" style="margin-bottom:12px;">가구를 추가하면 누가 찾아올지도 몰라요.</div>
-            <div class="room-decor-grid" id="roomDecorGrid">
-              <button class="decor-btn" type="button" data-decor="lpPlayer">
-                <strong>LP</strong>
-                <span>배드러브 키</span>
-                <div class="decor-meta">80C · DAY3</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="desk">
-                <strong>책상</strong>
-                <span>굿앤그 인턴</span>
-                <div class="decor-meta">70C · Social 3</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="birdCage">
-                <strong>새장</strong>
-                <span>천사 키</span>
-                <div class="decor-meta">90C · Cute 3</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="mirrorBall">
-                <strong>미러볼</strong>
-                <span>무대감독 KEY</span>
-                <div class="decor-meta">120C · Practice 5</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="vinylRack">
-                <strong>바이닐랙</strong>
-                <span>새벽산책 KEY</span>
-                <div class="decor-meta">110C · Mystery 4</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="plushSofa">
-                <strong>소파</strong>
-                <span>솜구름 KEY</span>
-                <div class="decor-meta">100C · Cute 4</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="neonSign">
-                <strong>네온</strong>
-                <span>장난꾸러기</span>
-                <div class="decor-meta">95C · Humor 4</div>
-              </button>
-              <button class="decor-btn" type="button" data-decor="bookshelf">
-                <strong>책장</strong>
-                <span>심야서점 KEY</span>
-                <div class="decor-meta">85C · DAY4</div>
-              </button>
+            <div class="room-bottom-pane" id="roomPaneDecor">
+              <div class="room-decor-grid" id="roomDecorGrid">
+                <button class="decor-btn" type="button" data-decor="lpPlayer"><strong>LP</strong></button>
+                <button class="decor-btn" type="button" data-decor="desk"><strong>책상</strong></button>
+                <button class="decor-btn" type="button" data-decor="birdCage"><strong>새장</strong></button>
+                <button class="decor-btn" type="button" data-decor="mirrorBall"><strong>미러볼</strong></button>
+                <button class="decor-btn" type="button" data-decor="vinylRack"><strong>바이닐</strong></button>
+                <button class="decor-btn" type="button" data-decor="plushSofa"><strong>소파</strong></button>
+                <button class="decor-btn" type="button" data-decor="neonSign"><strong>네온</strong></button>
+                <button class="decor-btn" type="button" data-decor="bookshelf"><strong>책장</strong></button>
+              </div>
+            </div>
+
+            <div class="room-bottom-pane" id="roomPaneGift">
+              <div class="room-gift-grid" id="roomGiftGrid"></div>
             </div>
           </div>
+
         </div>
 
         <div class="room-side-column">
@@ -3223,14 +3336,14 @@ const imageSet = {
 };
 
 const roomDecorConfig = {
-  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:80, requirementText:'DAY 3 달성', isUnlocked:() => state.day >= 3 },
-  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:70, requirementText:'Social 3', isUnlocked:() => (state.stats.social || 0) >= 3 },
-  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:90, requirementText:'Cute 3', isUnlocked:() => (state.stats.cute || 0) >= 3 },
-  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:120, requirementText:'Practice 5', isUnlocked:() => (state.stats.practice || 0) >= 5 },
-  vinylRack: { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:110, requirementText:'Mystery 4', isUnlocked:() => (state.stats.mystery || 0) >= 4 },
-  plushSofa: { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:100, requirementText:'Cute 4', isUnlocked:() => (state.stats.cute || 0) >= 4 },
-  neonSign: { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:95, requirementText:'Humor 4', isUnlocked:() => (state.stats.humor || 0) >= 4 },
-  bookshelf: { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:85, requirementText:'DAY 4 달성', isUnlocked:() => state.day >= 4 }
+  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1 } },
+  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ social:1 } },
+  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ cute:1 } },
+  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ practice:1 } },
+  vinylRack: { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1, humor:1 } },
+  plushSofa: { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ cute:1, social:1 } },
+  neonSign: { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ humor:1 } },
+  bookshelf: { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1, scary:1 } }
 };
 
 const FRIEND_PROFILES = {
@@ -3779,18 +3892,14 @@ function renderRoomDecorButtons(){
     btn.classList.toggle('affordable', !installed && unlocked && affordable);
     btn.disabled = installed;
     const label = btn.querySelector('strong');
-    const desc = btn.querySelector('span');
-    const meta = btn.querySelector('.decor-meta');
     if (label && info) label.textContent = info.label;
-    if (desc && info) {
-      if (installed) desc.textContent = `${info.friendName} 방문 가능`;
-      else if (!unlocked) desc.textContent = `잠금 · ${info.requirementText}`;
-      else if (!affordable) desc.textContent = `${info.friendName} · 코인 부족`;
-      else desc.textContent = `${info.friendName} 방문`;
+    let price = btn.querySelector('.price');
+    if (!price) {
+      price = document.createElement('div');
+      price.className = 'price';
+      btn.appendChild(price);
     }
-    if (meta && info) {
-      meta.textContent = installed ? '설치 완료' : `${info.cost}C · ${info.requirementText}`;
-    }
+    price.textContent = installed ? '설치완료' : `${Number(info?.cost || 0)}C`;
   });
 }
 
@@ -3986,18 +4095,21 @@ function installDecorItem(decorKey){
   if (!info) return;
   if (state.roomDecor?.[decorKey]) return;
   if (!getDecorRequirementMet(info)) {
-    roomHint.textContent = `${info.label}은(는) 아직 잠겨 있어요. 조건: ${info.requirementText}`;
+    roomHint.textContent = `${info.label}은(는) 아직 잠겨 있어요.`;
     renderRoomDecorButtons();
     return;
   }
   if ((state.money || 0) < Number(info.cost || 0)) {
-    roomHint.textContent = `${info.label}을(를) 두려면 코인 ${info.cost}이 필요해요.`;
+    roomHint.textContent = `${info.label}을(를) 두려면 코인이 더 필요해요.`;
     renderRoomDecorButtons();
     return;
   }
   addMoney(-Number(info.cost || 0));
   state.roomDecor[decorKey] = true;
-  roomHint.textContent = `${info.label}을(를) 구매해 두었어. ${info.friendName}가 마음에 들어할지도 몰라. (-${info.cost}C)`;
+  applyStatDelta(info.stats || {});
+  const statText = Object.entries(info.stats || {}).map(([k,v]) => `${k[0].toUpperCase()+k.slice(1)} +${v}`).join(' · ') || '방 분위기 +1';
+  showRoomFloatFeedback(statText);
+  roomHint.textContent = `${info.label}을(를) 배치했어.`;
   renderRoomDecorButtons();
   renderFriendMenu();
   unlockSpecialEndings();
@@ -4223,33 +4335,37 @@ const GIFT_EFFECTS = {
     '파스타': { stats:{ social:1, humor:1 }, energy:7, messageKey:'giftPasta', bonus:'Social +1 · Humor +1 · 에너지 +7' }
   },
   item: {
-    '지중해풍 꽃': { stats:{ cute:1, mystery:1 }, wearable:'flower', messageKey:'giftFlower', bonus:'Cute +1 · Mystery +1 · 꽃 장식 착용' },
-    '핑크색 털뭉치 키링': { stats:{ cute:2, humor:1 }, wearable:'keyring', messageKey:'giftKeyring', bonus:'Cute +2 · Humor +1 · 키링 장착' },
-    '고양이 비니': { stats:{ cute:1, humor:2 }, wearable:'beanie', messageKey:'giftBeanie', bonus:'Cute +1 · Humor +2 · 비니 착용' }
+    '지중해풍 꽃': { stats:{ cute:1, mystery:1 }, wearable:'flower', messageKey:'giftFlower', bonus:'Cute +1 · Mystery +1' },
+    '핑크색 털뭉치 키링': { stats:{ cute:2, humor:1 }, wearable:'keyring', messageKey:'giftKeyring', bonus:'Cute +2 · Humor +1' },
+    '고양이 비니': { stats:{ cute:1, humor:2 }, wearable:'beanie', messageKey:'giftBeanie', bonus:'Cute +1 · Humor +2' },
+    '향초': { stats:{ mystery:1, social:1 }, bonus:'Mystery +1 · Social +1' },
+    '폴라로이드 필름': { stats:{ cute:1, humor:1 }, bonus:'Cute +1 · Humor +1' },
+    '장미꽃다발': { stats:{ cute:2, mystery:2 }, wearable:'flower', bonus:'Cute +2 · Mystery +2' },
+    '빈티지 마이크': { stats:{ practice:2, social:1 }, bonus:'Practice +2 · Social +1' }
   }
 
 };
 
 const GIFT_SHOP_ITEMS = {
   food: [
-    { name:'샐러드', emoji:'🥗', kind:'food', cost:24, desc:'가볍게 기분 전환. Social +1 · 에너지 +6' },
-    { name:'고수샐러드', emoji:'🌿', kind:'food', cost:28, desc:'호불호 있지만 신비로운 취향. Mystery +2 · 에너지 +3' },
-    { name:'당근카레', emoji:'🍛', kind:'food', cost:36, desc:'든든한 한 끼. Practice +1 · Cute +1 · 에너지 +8' },
-    { name:'두릅튀김', emoji:'🍤', kind:'food', cost:34, desc:'기묘한 매력이 있어. Scary +1 · Mystery +1 · 에너지 +4' },
-    { name:'파스타', emoji:'🍝', kind:'food', cost:32, desc:'기분 좋은 한 접시. Social +1 · Humor +1 · 에너지 +7' }
+    { name:'샐러드', emoji:'🥗', kind:'food', cost:0, desc:'가볍게 즐기기 좋은 음식.' },
+    { name:'고수샐러드', emoji:'🌿', kind:'food', cost:0, desc:'향이 강한 취향 음식.' },
+    { name:'당근카레', emoji:'🍛', kind:'food', cost:0, desc:'든든하게 챙길 수 있는 음식.' },
+    { name:'두릅튀김', emoji:'🍤', kind:'food', cost:0, desc:'조금 특별한 느낌의 음식.' },
+    { name:'파스타', emoji:'🍝', kind:'food', cost:0, desc:'무난하게 좋아할 만한 음식.' }
   ],
   item: [
-    { name:'지중해풍 꽃', emoji:'🌼', kind:'item', cost:42, desc:'방 분위기를 부드럽게 바꾸는 꽃 선물.' },
-    { name:'핑크색 털뭉치 키링', emoji:'🩷', kind:'item', cost:48, desc:'귀여운 포인트가 되는 키링.' },
-    { name:'향초', emoji:'🕯️', kind:'item', cost:40, desc:'차분한 공기를 더해줘. Mystery +1 · Social +1' },
-    { name:'폴라로이드 필름', emoji:'📸', kind:'item', cost:44, desc:'순간을 더 특별하게 기억해. Cute +1 · Humor +1' }
+    { name:'지중해풍 꽃', emoji:'🌼', kind:'item', cost:0, desc:'방 분위기를 바꿔주는 선물.' },
+    { name:'핑크색 털뭉치 키링', emoji:'🩷', kind:'item', cost:0, desc:'귀여운 포인트 선물.' },
+    { name:'향초', emoji:'🕯️', kind:'item', cost:0, desc:'은은한 향이 남는 소품.' },
+    { name:'폴라로이드 필름', emoji:'📸', kind:'item', cost:0, desc:'기억을 남기고 싶은 선물.' }
   ],
   style: [
-    { name:'고양이 비니', emoji:'🧢', kind:'item', cost:58, desc:'착용 가능한 포인트 아이템. Cute +1 · Humor +2' }
+    { name:'고양이 비니', emoji:'🧢', kind:'item', cost:0, desc:'착용 가능한 포인트 아이템.' }
   ],
   rare: [
-    { name:'장미꽃다발', emoji:'🌹', kind:'item', cost:95, desc:'강한 인상을 남기는 레어 선물. Cute +2 · Mystery +2', unlockText:'각성 이후 구매 가능', isUnlocked:() => !!state.awakened },
-    { name:'빈티지 마이크', emoji:'🎙️', kind:'item', cost:120, desc:'무대 무드를 살리는 특별 선물. Practice +2 · Social +1', unlockText:'가솔린 키 또는 DAY 5', isUnlocked:() => state.awakened?.name === '가솔린 키' || state.day >= 5 }
+    { name:'장미꽃다발', emoji:'🌹', kind:'item', cost:0, desc:'눈에 띄는 레어 선물.', unlockText:'', isUnlocked:() => true },
+    { name:'빈티지 마이크', emoji:'🎙️', kind:'item', cost:0, desc:'무대 느낌의 특별한 선물.', unlockText:'', isUnlocked:() => true }
   ]
 };
 
@@ -4311,6 +4427,23 @@ function buildGiftFeedbackHtml(text){
   return `<span>${text}</span>`;
 }
 
+function showRoomFloatFeedback(text){
+  const el = document.getElementById('roomFloatFeedback');
+  if (!el || !roomScene || !roomPlayer) return;
+  el.textContent = text;
+  const x = (state.roomPlayer.x || 0) + (state.roomPlayer.w || 54) * 0.5;
+  const y = (state.roomPlayer.y || 0) + (state.roomPlayer.h || 78) + 6;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function formatBonusForToast(effect){
+  return effect?.bonus || '상태 변화';
+}
+
 function handleGift(kind, itemName, inRoom = false){
   const effect = GIFT_EFFECTS[kind]?.[itemName];
   if (!effect) return;
@@ -4329,14 +4462,14 @@ function handleGift(kind, itemName, inRoom = false){
   renderGiftWearables();
 
   const baseText = dialogues[effect.messageKey] || `${itemName} 선물을 받았어.`;
-  const bonusText = formatGiftBonusText(effect);
+  const bonusText = formatBonusForToast(effect);
   if (inRoom) {
-    if (roomHint) roomHint.innerHTML = `${baseText}<div class="gift-gain-chip">${bonusText}</div>`;
+    if (roomHint) roomHint.textContent = baseText;
+    showRoomFloatFeedback(bonusText);
   } else {
-    setSeedMessage(`${baseText} (${bonusText})`, { idleAfterMs:SEED_IDLE_MS });
+    setSeedMessage(baseText, { idleAfterMs:SEED_IDLE_MS });
   }
 }
-
 
 
 const giftShopOverlay = document.getElementById('giftShopOverlay');
@@ -4370,6 +4503,47 @@ function closeGiftShop(){
   if (giftShopOverlay) giftShopOverlay.classList.remove('show');
 }
 
+function getAllRoomGiftItems(){
+  return ['food','item','style','rare'].flatMap(tab => getGiftItemsForTab(tab));
+}
+
+function renderRoomGiftGrid(){
+  const grid = document.getElementById('roomGiftGrid');
+  if (!grid) return;
+  const items = getAllRoomGiftItems();
+  grid.innerHTML = items.map(item => {
+    const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+    const affordable = (state.money || 0) >= Number(item.cost || 0);
+    const disabled = !unlocked || !affordable;
+    return `
+      <button type="button" class="room-gift-btn ${!unlocked ? 'locked' : ''} ${affordable ? 'affordable' : ''}" data-room-gift="${item.name}" ${disabled ? 'disabled' : ''}>
+        <div class="emoji">${item.emoji || '🎁'}</div>
+        <strong>${item.name}</strong>
+        <div class="price">${Number(item.cost || 0)}C</div>
+      </button>
+    `;
+  }).join('');
+}
+
+function setRoomBottomTab(tab){
+  document.querySelectorAll('#roomBottomTabs [data-room-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.roomTab === tab);
+  });
+  const map = {
+    schedule:'roomPaneSchedule',
+    decor:'roomPaneDecor',
+    gift:'roomPaneGift'
+  };
+  Object.values(map).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const activePane = document.getElementById(map[tab] || map.schedule);
+  if (activePane) activePane.classList.add('active');
+  if (tab === 'decor') renderRoomDecorButtons();
+  if (tab === 'gift') renderRoomGiftGrid();
+}
+
 function renderGiftShop(){
   if (!giftShopBody || !giftShopTabs) return;
   giftShopTabs.querySelectorAll('[data-tab]').forEach(btn => {
@@ -4384,16 +4558,11 @@ function renderGiftShop(){
     return `
       <div class="gift-shop-card ${unlocked ? '' : 'locked'}">
         <div class="gift-shop-card-top">
-          <div>
-            <div class="gift-shop-emoji">${item.emoji || '🎁'}</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="gift-shop-type">${giftShopTab === 'food' ? 'FOOD' : giftShopTab === 'item' ? 'PROP' : giftShopTab === 'style' ? 'STYLE' : 'RARE'}</div>
-          </div>
+          <div><div class="gift-shop-emoji">${item.emoji || '🎁'}</div></div>
+          <div style="text-align:right;"><div class="gift-shop-type">${giftShopTab === 'food' ? 'FOOD' : giftShopTab === 'item' ? 'PROP' : giftShopTab === 'style' ? 'STYLE' : 'RARE'}</div></div>
         </div>
         <div class="gift-shop-name">${item.name}</div>
         <div class="gift-shop-desc">${item.desc || ''}</div>
-        ${unlocked ? '' : `<div class="gift-shop-lock">${item.unlockText || '아직 구매할 수 없어요.'}</div>`}
         <div class="gift-shop-meta">
           <div class="gift-shop-price">🪙 ${Number(item.cost || 0)}</div>
           <button type="button" class="gift-shop-action" data-shop-buy="${item.name}" ${disabled ? 'disabled' : ''}>${actionLabel}</button>
@@ -4445,6 +4614,34 @@ if (giftShopOverlay) {
   });
 }
 
+const roomBottomTabs = document.getElementById('roomBottomTabs');
+if (roomBottomTabs) {
+  roomBottomTabs.querySelectorAll('[data-room-tab]').forEach(btn => {
+    btn.addEventListener('click', () => setRoomBottomTab(btn.dataset.roomTab));
+  });
+}
+const roomGiftGrid = document.getElementById('roomGiftGrid');
+if (roomGiftGrid) {
+  roomGiftGrid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-room-gift]');
+    if (!btn) return;
+    const allItems = getAllRoomGiftItems();
+    const item = allItems.find(v => v.name === btn.dataset.roomGift);
+    if (!item) return;
+    const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+    const cost = Number(item.cost || 0);
+    if (!unlocked) return;
+    if ((state.money || 0) < cost) {
+      if (roomHint) roomHint.textContent = '코인이 부족해요.';
+      renderRoomGiftGrid();
+      return;
+    }
+    addMoney(-cost);
+    handleGift(item.kind, item.name, true);
+    renderRoomGiftGrid();
+    await triggerSaveNow();
+  });
+}
 
 document.querySelectorAll('.schedule-btn').forEach(btn => {
   btn.addEventListener('click', () => startAction(btn.dataset.act));
@@ -4498,7 +4695,7 @@ giftBtn.addEventListener('click', () => {
 
 if (roomGiftBtn) {
   roomGiftBtn.addEventListener('click', () => {
-    openGiftShop('room', 'food');
+    setRoomBottomTab('gift');
   });
 }
 
@@ -5918,6 +6115,7 @@ function syncRoomUI(){
   renderFriendMenu();
   renderRoomVisitOverlays();
   renderGiftWearables();
+  renderRoomGiftGrid();
 }
 
 function resetAll(){
