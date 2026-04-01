@@ -662,13 +662,25 @@ img{
   top:12px;
   z-index:7;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
   gap:8px;
   pointer-events:none;
 }
 .stage-clock-row .day-badge,
 .stage-clock-row .clock-badge{
+  background:rgba(255,255,255,.88);
+  box-shadow:0 6px 16px rgba(120,104,87,.10);
+  backdrop-filter:blur(6px);
+}
+.seed-stage-left{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+.seed-stage-coin{
+  flex:0 0 auto;
   background:rgba(255,255,255,.88);
   box-shadow:0 6px 16px rgba(120,104,87,.10);
   backdrop-filter:blur(6px);
@@ -2374,6 +2386,14 @@ body.resizing .seed-awaken-anchor{
     font-size:10px;
     padding:7px 9px;
   }
+  .seed-stage-left,
+  .room-stage-left{
+    gap:4px;
+  }
+  .seed-stage-coin,
+  .room-stage-coin{
+    padding:8px 10px;
+  }
 
   .schedule-panel{
     overflow:visible;
@@ -2866,9 +2886,12 @@ body.ending-modal-open{
             <div class="seed-stage-wrap">
               <div class="seed-stage bg-default" id="seedStage">
 
-                <div class="stage-clock-row">
-                  <div class="day-badge" id="seedDayBadge">DAY1</div>
-                  <div class="clock-badge" id="seedClockBadge">07:00</div>
+                <div class="stage-clock-row seed-stage-clock">
+                  <div class="seed-stage-left">
+                    <div class="day-badge" id="seedDayBadge">DAY1</div>
+                    <div class="clock-badge" id="seedClockBadge">07:00</div>
+                  </div>
+                  <div class="coin-pill seed-stage-coin"><span class="coin-icon">🪙</span><strong id="seedMoneyValue">0</strong></div>
                 </div>
 
                 <div class="seed-player" id="seedPlayer">
@@ -2894,34 +2917,18 @@ body.ending-modal-open{
                 <div class="seed-label">
                   <div class="name">KEY의 방</div>
                 </div>
-
-                <div class="gift-anchor">
-                  <div class="popup-menu" id="giftMenu">
-                    <button type="button" id="giftFoodBtn">음식</button>
-                    <button type="button" id="giftItemBtn">아이템</button>
-
-                    <div class="submenu" id="giftFoodSubmenu">
-                      <button type="button" data-food="샐러드">샐러드</button>
-                      <button type="button" data-food="고수샐러드">고수샐러드</button>
-                      <button type="button" data-food="당근카레">당근카레</button>
-                      <button type="button" data-food="두릅튀김">두릅튀김</button>
-                      <button type="button" data-food="파스타">파스타</button>
-                    </div>
-
-                    <div class="submenu" id="giftItemSubmenu">
-                      <button type="button" data-item="지중해풍 꽃">지중해풍 꽃</button>
-                      <button type="button" data-item="핑크색 털뭉치 키링">핑크색 털뭉치 키링</button>
-                      <button type="button" data-item="고양이 비니">고양이 비니</button>
-                    </div>
-                  </div>
-                  <button class="gift-btn" id="giftBtn">선물</button>
-                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="card panel schedule-panel">
+        <div class="card panel schedule-panel room-bottom-card">
+          <div class="room-bottom-tabs" id="seedBottomTabs">
+            <button type="button" class="room-bottom-tab active" data-seed-tab="schedule">스케쥴</button>
+            <button type="button" class="room-bottom-tab" data-seed-tab="gift">선물</button>
+          </div>
+
+          <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
             <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
@@ -2950,6 +2957,11 @@ body.ending-modal-open{
           <div class="action-row">
             <button class="secondary-btn" id="resetBtn">새로 시작</button>
             <button class="primary-btn" id="debugModeBtn">디버그 모드</button>
+          </div>
+          </div>
+
+          <div class="room-bottom-pane" id="seedPaneGift">
+            <div class="room-gift-grid" id="seedGiftGrid"></div>
           </div>
         </div>
 
@@ -3102,7 +3114,6 @@ body.ending-modal-open{
           <div class="card panel room-bottom-card">
             <div class="room-bottom-tabs" id="roomBottomTabs">
               <button type="button" class="room-bottom-tab active" data-room-tab="schedule">스케쥴</button>
-              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기</button>
               <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
             </div>
 
@@ -3118,20 +3129,6 @@ body.ending-modal-open{
                 <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
               </div>
             </div>
-
-            <div class="room-bottom-pane" id="roomPaneDecor">
-              <div class="room-decor-grid" id="roomDecorGrid">
-                <button class="decor-btn" type="button" data-decor="lpPlayer"><strong>LP</strong></button>
-                <button class="decor-btn" type="button" data-decor="desk"><strong>책상</strong></button>
-                <button class="decor-btn" type="button" data-decor="birdCage"><strong>새장</strong></button>
-                <button class="decor-btn" type="button" data-decor="mirrorBall"><strong>미러볼</strong></button>
-                <button class="decor-btn" type="button" data-decor="vinylRack"><strong>바이닐</strong></button>
-                <button class="decor-btn" type="button" data-decor="plushSofa"><strong>소파</strong></button>
-                <button class="decor-btn" type="button" data-decor="neonSign"><strong>네온</strong></button>
-                <button class="decor-btn" type="button" data-decor="bookshelf"><strong>책장</strong></button>
-              </div>
-            </div>
-
             <div class="room-bottom-pane" id="roomPaneGift">
               <div class="room-gift-grid" id="roomGiftGrid"></div>
             </div>
@@ -3576,6 +3573,7 @@ const roomVisitorAffectionBox = document.getElementById('roomVisitorAffectionBox
 const roomVisitorAffectionFill = document.getElementById('roomVisitorAffectionFill');
 const roomRejectFx = document.getElementById('roomRejectFx');
 const roomMoneyValue = document.getElementById('roomMoneyValue');
+const seedMoneyValue = document.getElementById('seedMoneyValue');
 const roomChoicePanel = document.getElementById('roomChoicePanel');
 const roomSpendTimeBtn = document.getElementById('roomSpendTimeBtn');
 const roomSendAwayBtn = document.getElementById('roomSendAwayBtn');
@@ -3831,6 +3829,7 @@ function renderRoomVisitOverlays(){
 
 function updateMoneyUI(){
   if (roomMoneyValue) roomMoneyValue.textContent = String(state.money || 0);
+  if (seedMoneyValue) seedMoneyValue.textContent = String(state.money || 0);
   updateGiftShopMoney();
 }
 
@@ -3864,7 +3863,7 @@ function renderRoomVisitor(opts = {}){
   roomVisitor.style.width = `${layout.visitorW}px`;
   roomVisitor.style.height = `${layout.visitorH}px`;
   roomVisitor.style.top = `${layout.top}px`;
-  roomVisitor.style.left = `${opts.startOutside ? layout.rectWidth + 30 : layout.left}px`;
+  roomVisitor.style.left = `${opts.startOutside ? layout.rectWidth + 90 : layout.left}px`;
   roomVisitor.classList.toggle('left', layout.faceLeft);
   roomVisitorImg.src = getRoomFriendImage(visitorName);
   roomVisitorImg.alt = `${visitorName} 방문 친구`;
@@ -4077,9 +4076,10 @@ function spendTimeWithVisitor(){
     const nextAffection = addAffection(friendName, 10);
     const moneyNow = addMoney(18);
     syncRoomUI();
-    roomHint.textContent = `${friendName}와 네 시간을 함께 보냈어요. 호감도 ${nextAffection} · 코인 ${moneyNow}`;
+    roomHint.textContent = `${friendName}와 네 시간을 함께 보냈어요.`;
+    showRoomOwnerBubble('호감도가 10 올랐어!');
+    showRoomFloatFeedback('호감도 +10');
     saveLocal(serializeGameState());
-    hideRoomOwnerBubble();
     hideRoomVisitorBubble();
     queueRoomVisitTimer(() => {
       showRoomVisitorBubble('이제 슬슬 돌아가볼게. 오늘 정말 즐거웠어.');
@@ -4464,7 +4464,8 @@ function handleGift(kind, itemName, inRoom = false){
   const baseText = dialogues[effect.messageKey] || `${itemName} 선물을 받았어.`;
   const bonusText = formatBonusForToast(effect);
   if (inRoom) {
-    if (roomHint) roomHint.textContent = baseText;
+    showRoomOwnerBubble(baseText);
+    setTimeout(() => hideRoomOwnerBubble(), 2600);
     showRoomFloatFeedback(bonusText);
   } else {
     setSeedMessage(baseText, { idleAfterMs:SEED_IDLE_MS });
@@ -4501,6 +4502,40 @@ function openGiftShop(context = 'schedule', initialTab = null){
 
 function closeGiftShop(){
   if (giftShopOverlay) giftShopOverlay.classList.remove('show');
+}
+
+function renderSeedGiftGrid(){
+  const grid = document.getElementById('seedGiftGrid');
+  if (!grid) return;
+  const items = ['food','item','style','rare'].flatMap(tab => getGiftItemsForTab(tab));
+  grid.innerHTML = items.map(item => {
+    const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+    const affordable = (state.money || 0) >= Number(item.cost || 0);
+    const disabled = !unlocked || !affordable;
+    return `
+      <button type="button" class="room-gift-btn ${!unlocked ? 'locked' : ''} ${affordable ? 'affordable' : ''}" data-seed-gift="${item.name}" ${disabled ? 'disabled' : ''}>
+        <div class="emoji">${item.emoji || '🎁'}</div>
+        <strong>${item.name}</strong>
+        <div class="price">${Number(item.cost || 0)}C</div>
+      </button>
+    `;
+  }).join('');
+}
+
+function setSeedBottomTab(tab){
+  document.querySelectorAll('#seedBottomTabs [data-seed-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.seedTab === tab);
+  });
+  const map = {
+    schedule:'seedPaneSchedule',
+    gift:'seedPaneGift'
+  };
+  Object.values(map).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const activePane = document.getElementById(map[tab] || map.schedule);
+  if (activePane) activePane.classList.add('active');
 }
 
 function getAllRoomGiftItems(){
@@ -4614,6 +4649,34 @@ if (giftShopOverlay) {
   });
 }
 
+const seedBottomTabs = document.getElementById('seedBottomTabs');
+if (seedBottomTabs) {
+  seedBottomTabs.querySelectorAll('[data-seed-tab]').forEach(btn => {
+    btn.addEventListener('click', () => setSeedBottomTab(btn.dataset.seedTab));
+  });
+}
+const seedGiftGrid = document.getElementById('seedGiftGrid');
+if (seedGiftGrid) {
+  seedGiftGrid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-seed-gift]');
+    if (!btn) return;
+    const items = ['food','item','style','rare'].flatMap(tab => getGiftItemsForTab(tab));
+    const item = items.find(v => v.name === btn.dataset.seedGift);
+    if (!item) return;
+    const unlocked = item.isUnlocked ? !!item.isUnlocked() : true;
+    const cost = Number(item.cost || 0);
+    if (!unlocked) return;
+    if ((state.money || 0) < cost) {
+      setSeedMessage('코인이 부족해요.', { idleAfterMs:SEED_IDLE_MS });
+      renderSeedGiftGrid();
+      return;
+    }
+    addMoney(-cost);
+    handleGift(item.kind, item.name, false);
+    renderSeedGiftGrid();
+    await triggerSaveNow();
+  });
+}
 const roomBottomTabs = document.getElementById('roomBottomTabs');
 if (roomBottomTabs) {
   roomBottomTabs.querySelectorAll('[data-room-tab]').forEach(btn => {
@@ -4689,9 +4752,11 @@ if (restartAllBtn) {
 }
 
 
-giftBtn.addEventListener('click', () => {
-  openGiftShop('schedule', 'food');
-});
+if (giftBtn) {
+  giftBtn.addEventListener('click', () => {
+    openGiftShop('schedule', 'food');
+  });
+}
 
 if (roomGiftBtn) {
   roomGiftBtn.addEventListener('click', () => {
@@ -4745,7 +4810,7 @@ concertNoBtn.addEventListener('click', async () => {
 });
 
 document.addEventListener('click', (e) => {
-  if (!giftMenu.contains(e.target) && e.target !== giftBtn) {
+  if (giftMenu && !giftMenu.contains(e.target) && e.target !== giftBtn) {
     closeGiftMenus();
   }
   const clickedInsideRoomGift = roomGiftMenu && roomGiftMenu.contains(e.target);
@@ -5010,14 +5075,18 @@ function speakMiniTalk(kind){
   setMiniTalk(text);
 }
 
+function getAllScheduleButtons(){
+  return Array.from(document.querySelectorAll('.schedule-grid .schedule-btn'));
+}
+
 function setScheduleButtonsDisabled(disabled){
-  scheduleGrid.querySelectorAll('button').forEach(btn => {
+  getAllScheduleButtons().forEach(btn => {
     btn.disabled = disabled;
   });
 }
 
 function clearActionProgress(){
-  scheduleGrid.querySelectorAll('.schedule-btn').forEach(btn => {
+  getAllScheduleButtons().forEach(btn => {
     btn.classList.remove('is-running');
     btn.style.removeProperty('--fill-duration');
   });
@@ -5025,11 +5094,13 @@ function clearActionProgress(){
 
 function startActionProgress(type, duration){
   clearActionProgress();
-  const btn = scheduleGrid.querySelector(`.schedule-btn[data-act="${type}"]`);
-  if (!btn) return;
-  btn.style.setProperty('--fill-duration', `${duration}ms`);
-  void btn.offsetWidth;
-  btn.classList.add('is-running');
+  getAllScheduleButtons().forEach(btn => {
+    if (btn.dataset.act === type) {
+      btn.style.setProperty('--fill-duration', `${duration}ms`);
+      void btn.offsetWidth;
+      btn.classList.add('is-running');
+    }
+  });
 }
 
 function showSeedStatus(text){
@@ -5449,6 +5520,9 @@ function updateScheduleUI(){
 
   if (state.awakened) {
     renderFriendMenu();
+    renderRoomGiftGrid();
+  } else {
+    renderSeedGiftGrid();
   }
 
   if (canAwaken() && !state.awakened && !state.isActing) {
@@ -5752,10 +5826,23 @@ function handleDebugShortcut(e){
 
 
 function startAction(type){
-  if (state.awakened || state.isActing) return;
-  hideSeedMessage();
+  if (state.isActing) return;
+  const inRoom = !!state.awakened && getCurrentScreenName() === 'room';
+
+  if (!inRoom) {
+    hideSeedMessage();
+  } else {
+    hideRoomOwnerBubble();
+    hideRoomVisitorBubble();
+  }
+
   if (type !== 'sleep' && state.energy < 12){
-    setSeedMessage(dialogues.lowEnergy);
+    if (inRoom) {
+      showRoomOwnerBubble(dialogues.lowEnergy);
+      setTimeout(() => hideRoomOwnerBubble(), 2200);
+    } else {
+      setSeedMessage(dialogues.lowEnergy);
+    }
     return;
   }
 
@@ -5776,21 +5863,26 @@ function startAction(type){
     meeting:'좋아, 아이디어를 좀 모아보자.',
     sleep:'이제 푹 자고 올게…'
   };
-  setSeedMessage(actionStartLineMap[type] || dialogues.intro);
 
-  if (type === 'walk') {
-    updateSeedStageBackground('walk');
+  if (inRoom) {
+    showRoomOwnerBubble(actionStartLineMap[type] || dialogues.intro);
+    setTimeout(() => {
+      if (state.isActing) hideRoomOwnerBubble();
+    }, 1800);
   } else {
-    updateSeedStageBackground('default');
+    setSeedMessage(actionStartLineMap[type] || dialogues.intro);
+    if (type === 'walk') {
+      updateSeedStageBackground('walk');
+    } else {
+      updateSeedStageBackground('default');
+    }
+    syncSeedStageLayout({ immediate:true });
+    showSeedStatus(meta.text);
+    runActionClock(type);
   }
 
-  syncSeedStageLayout({ immediate:true });
-  showSeedStatus(meta.text);
-
-  runActionClock(type);
-
   state.actionFinishTimer = setTimeout(async () => {
-    finalizeActionClock(type);
+    if (!inRoom) finalizeActionClock(type);
     finishAction(type);
     hideSeedStatus();
     clearActionProgress();
@@ -5800,7 +5892,6 @@ function startAction(type){
     await triggerSaveNow();
   }, meta.duration);
 }
-
 function applyStatDelta(deltaMap){
   Object.keys(deltaMap).forEach(key => {
     state.stats[key] = clamp((state.stats[key] || 0) + deltaMap[key], 0, 10);
@@ -5870,8 +5961,13 @@ function finishAction(type){
   }
 
   if (earnedCoins) message += ` (+${earnedCoins}코인)`;
-  setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
-  updateSeedStageBackground('default');
+  if (state.awakened && getCurrentScreenName() === 'room') {
+    showRoomOwnerBubble(message);
+    setTimeout(() => hideRoomOwnerBubble(), 3200);
+  } else {
+    setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
+    updateSeedStageBackground('default');
+  }
 }
 
 function canAwaken(){
