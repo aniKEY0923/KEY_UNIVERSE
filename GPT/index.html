@@ -2854,6 +2854,165 @@ body.ending-modal-open{
   .gift-shop-card{ min-height:148px; padding:10px; }
 }
 
+
+.stage-decor-layer{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+}
+.stage-decor-item{
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:34px;
+  min-height:34px;
+  padding:6px 8px;
+  border-radius:12px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 6px 14px rgba(120,104,87,.10);
+  font-size:16px;
+  color:#6a584a;
+}
+.stage-decor-item .label{
+  display:block;
+  font-size:9px;
+  font-weight:900;
+  line-height:1.1;
+  margin-top:2px;
+}
+.stat-float{
+  position:absolute;
+  z-index:15;
+  left:50%;
+  bottom:34px;
+  transform:translateX(-50%) translateY(0);
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 8px 18px rgba(120,104,87,.14);
+  font-size:11px;
+  font-weight:900;
+  color:#5b4d42;
+  opacity:0;
+  pointer-events:none;
+}
+.stat-float.show{
+  animation:statFloatUp 1.6s ease forwards;
+}
+@keyframes statFloatUp{
+  0%{opacity:0; transform:translateX(-50%) translateY(8px);}
+  15%{opacity:1;}
+  100%{opacity:0; transform:translateX(-50%) translateY(-24px);}
+}
+
+
+.room-schedule-grid,
+.room-gift-grid,
+.room-decor-grid{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  width:100%;
+  padding:2px 2px 8px;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+  scrollbar-width:thin;
+}
+.room-schedule-grid::-webkit-scrollbar,
+.room-gift-grid::-webkit-scrollbar,
+.room-decor-grid::-webkit-scrollbar{
+  height:8px;
+}
+.room-schedule-grid::-webkit-scrollbar-thumb,
+.room-gift-grid::-webkit-scrollbar-thumb,
+.room-decor-grid::-webkit-scrollbar-thumb{
+  background:rgba(120,104,87,.18);
+  border-radius:999px;
+}
+.room-schedule-grid .schedule-btn,
+#seedPaneSchedule .schedule-btn{
+  flex:0 0 auto;
+  width:72px;
+  min-width:72px;
+  height:72px;
+  min-height:72px;
+  padding:8px 6px;
+  border-radius:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:2px;
+}
+.room-schedule-grid .schedule-btn .emoji,
+#seedPaneSchedule .schedule-btn .emoji{
+  font-size:16px;
+  line-height:1;
+}
+.room-schedule-grid .schedule-btn .title,
+#seedPaneSchedule .schedule-btn .title{
+  display:block;
+  font-size:10px;
+  font-weight:900;
+  line-height:1.2;
+  margin:0;
+}
+.room-schedule-grid .schedule-btn .time,
+#seedPaneSchedule .schedule-btn .time{
+  display:block;
+  font-size:8px;
+  color:var(--sub);
+  line-height:1.1;
+  margin-top:1px;
+}
+.decor-btn,
+.room-gift-grid .gift-card,
+.room-gift-grid .shop-card,
+.room-gift-grid .room-gift-card{
+  flex:0 0 auto;
+  width:72px;
+  min-width:72px;
+  height:72px;
+  min-height:72px;
+  padding:8px 6px;
+  border-radius:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  text-align:center;
+}
+.decor-btn .emoji,
+.room-gift-grid .gift-card .emoji,
+.room-gift-grid .shop-card .emoji,
+.room-gift-grid .room-gift-card .emoji{
+  font-size:16px;
+  line-height:1;
+}
+.decor-btn strong,
+.room-gift-grid .gift-card strong,
+.room-gift-grid .shop-card strong,
+.room-gift-grid .room-gift-card strong{
+  font-size:10px;
+  line-height:1.2;
+  margin:0;
+}
+.decor-btn span,
+.room-gift-grid .gift-card span,
+.room-gift-grid .shop-card span,
+.room-gift-grid .room-gift-card span{
+  font-size:8px;
+  line-height:1.1;
+  margin:0;
+}
+
 </style>
 </head>
 <body>
@@ -2868,6 +3027,7 @@ body.ending-modal-open{
 
         <div class="topbar-right">
           <div class="top-auth-row">
+            <button class="mini-btn" id="newGameBtn">새게임</button>
             <button class="mini-btn primary" id="loginBtn">Google 로그인</button>
             <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
             <button class="mini-btn" id="saveBtn">지금 저장</button>
@@ -2952,6 +3112,8 @@ body.ending-modal-open{
                   어? 왔어? 오늘은 어떤 하루를 보내게 될까?
                 </div>
 
+                <div class="stage-decor-layer" id="seedDecorLayer"></div>
+
                 <div class="seed-label">
                   <div class="name">KEY의 방</div>
                 </div>
@@ -2973,14 +3135,14 @@ body.ending-modal-open{
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
-            <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
-            <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
-            <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
-            <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
-            <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회 보기</span></button>
-            <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스 보기</span></button>
-            <button class="schedule-btn" data-act="meeting"><span class="title">💡 컨셉회의</span></button>
-            <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
+            <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">1시간</span></button>
+            <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
+            <button class="schedule-btn" data-act="exhibit"><span class="emoji">🖼️</span><span class="title">전시회</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="netflix"><span class="emoji">📺</span><span class="title">넷플릭스</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="meeting"><span class="emoji">💡</span><span class="title">회의</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="sleep"><span class="emoji">😴</span><span class="title">취침</span><span class="time">8시간</span></button>
           </div>
 
           <div class="event-card" id="concertEventCard">
@@ -3091,6 +3253,7 @@ body.ending-modal-open{
         </div>
         <div class="topbar-right">
           <div class="top-auth-row">
+            <button class="mini-btn" id="roomNewGameBtn">새게임</button>
             <button class="mini-btn primary" id="roomLoginBtn">로그인</button>
             <button class="mini-btn" id="roomLogoutBtn" style="display:none;">로그아웃</button>
             <button class="mini-btn" id="roomSaveBtn">저장</button>
@@ -3142,6 +3305,8 @@ body.ending-modal-open{
                 </div>
               </div>
 
+              <div class="stage-decor-layer room-decor-layer" id="roomDecorLayer"></div>
+
               <div class="room-stage-label">
                 <div class="name" id="roomStageName">각성한 KEY의 방</div>
               </div>
@@ -3158,14 +3323,14 @@ body.ending-modal-open{
 
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="schedule-grid room-schedule-grid">
-                <button class="schedule-btn" data-act="practice"><span class="title">🎵 연습</span></button>
-                <button class="schedule-btn" data-act="shoot"><span class="title">📹 녹화</span></button>
-                <button class="schedule-btn" data-act="walk"><span class="title">🌙 산책</span></button>
-                <button class="schedule-btn" data-act="bath"><span class="title">🛁 목욕</span></button>
-                <button class="schedule-btn" data-act="exhibit"><span class="title">🖼️ 전시회</span></button>
-                <button class="schedule-btn" data-act="netflix"><span class="title">📺 넷플릭스</span></button>
-                <button class="schedule-btn" data-act="meeting"><span class="title">💡 회의</span></button>
-                <button class="schedule-btn" data-act="sleep"><span class="title">😴 취침</span></button>
+                <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">1시간</span></button>
+                <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
+                <button class="schedule-btn" data-act="exhibit"><span class="emoji">🖼️</span><span class="title">전시회</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="netflix"><span class="emoji">📺</span><span class="title">넷플릭스</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="meeting"><span class="emoji">💡</span><span class="title">회의</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="sleep"><span class="emoji">😴</span><span class="title">취침</span><span class="time">8시간</span></button>
               </div>
             </div>
             <div class="room-bottom-pane" id="roomPaneDecor">
@@ -3205,13 +3370,6 @@ body.ending-modal-open{
 
         </div>
 
-        <div class="room-side-column">
-          <div class="card panel">
-            <div class="action-row">
-              <button class="secondary-btn" id="restartAllBtn">처음부터 다시 시작</button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -3533,6 +3691,7 @@ function unlockSpecialEndings(){
   return unlocked;
 }
 
+window.__lastActionBubbleText = '';
 const dialogues = {
   intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
   practice: '집중해서 연습했어. 몸이 조금 더 기억해낸 것 같아.',
@@ -4943,12 +5102,16 @@ function showScreen(name){
   if (name !== 'awaken') closeAwakenOverlay({ keepAnimationState:true });
 
   if (name === 'schedule') {
-    requestAnimationFrame(() => syncSeedStageLayout({ immediate:true }));
+    requestAnimationFrame(() => {
+      syncSeedStageLayout({ immediate:true });
+      renderStageDecor();
+    });
   } else if (name === 'room') {
     requestAnimationFrame(() => {
       placeRoomPlayerInitial();
       renderRoomPlayer();
       syncRoomUI();
+      renderStageDecor();
       maybeStartRoomFriendVisit();
       const roomMain = screens.room ? screens.room.querySelector('.main') : null;
       if (roomMain) roomMain.scrollTop = 0;
@@ -4985,6 +5148,91 @@ function getCurrentScreenName(){
   if (screens.schedule.classList.contains('active')) return 'schedule';
   if (screens.room.classList.contains('active')) return 'room';
   return 'schedule';
+}
+
+const newGameBtn = document.getElementById('newGameBtn');
+const roomNewGameBtn = document.getElementById('roomNewGameBtn');
+const seedDecorLayer = document.getElementById('seedDecorLayer');
+const roomDecorLayer = document.getElementById('roomDecorLayer');
+
+function hardResetToNewGame(){
+  try{
+    localStorage.removeItem(LOCAL_SAVE_KEY);
+    localStorage.removeItem('furnitureLayout');
+    localStorage.removeItem('layout');
+  }catch(err){}
+  state.day = 1;
+  state.gameHour = 7;
+  state.gameMinute = 0;
+  state.energy = 100;
+  state.maxEnergy = 100;
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0 };
+  state.awakened = null;
+  state.isActing = false;
+  state.currentStageBg = 'default';
+  state.concertEventOffered = false;
+  state.concertEventResolved = false;
+  state.roomDecor = {
+    lpPlayer:false, desk:false, birdCage:false,
+    mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false
+  };
+  state.activeRoomVisitor = null;
+  state.roomSeenFriendEvents = [];
+  state.affection = {};
+  state.unlockedEndings = [];
+  state.endingFlags = {};
+  state.collection = { ownedKeys:[], currentKey:null };
+  cloudRevision = null;
+  if (typeof hideAwakenOverlay === 'function') { try{ hideAwakenOverlay(); }catch(err){} }
+  if (typeof showScreen === 'function') showScreen('schedule');
+  if (typeof updateScheduleUI === 'function') updateScheduleUI();
+  if (typeof syncSeedStageLayout === 'function') syncSeedStageLayout({ immediate:true });
+}
+
+if (newGameBtn) newGameBtn.addEventListener('click', hardResetToNewGame);
+if (roomNewGameBtn) roomNewGameBtn.addEventListener('click', hardResetToNewGame);
+
+function showStageStatFloat(target, message){
+  if (!target || !message) return;
+  const el = document.createElement('div');
+  el.className = 'stat-float';
+  el.textContent = message;
+  target.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=> el.remove(), 1700);
+}
+
+function renderStageDecor(){
+  const items = [];
+  const mapping = {
+    lpPlayer:['🎵','LP'],
+    desk:['🪑','책상'],
+    birdCage:['🕊️','새장'],
+    mirrorBall:['🪩','미러볼'],
+    vinylRack:['💿','랙'],
+    plushSofa:['🛋️','소파'],
+    neonSign:['💡','네온'],
+    bookshelf:['📚','책장']
+  };
+  Object.keys(mapping).forEach((key, idx)=>{
+    if (state.roomDecor && state.roomDecor[key]) {
+      items.push({key, icon:mapping[key][0], label:mapping[key][1], idx});
+    }
+  });
+  [seedDecorLayer, roomDecorLayer].forEach(layer=>{
+    if (!layer) return;
+    layer.innerHTML = '';
+    items.forEach((item, idx)=>{
+      const node = document.createElement('div');
+      node.className = 'stage-decor-item';
+      const col = idx % 4;
+      const row = Math.floor(idx / 4);
+      node.style.left = (18 + col * 62) + 'px';
+      node.style.bottom = (54 + row * 52) + 'px';
+      node.innerHTML = '<div style="text-align:center;"><div>'+item.icon+'</div><span class="label">'+item.label+'</span></div>';
+      layer.appendChild(node);
+    });
+  });
 }
 
 function clamp(val, min, max){
@@ -5847,6 +6095,7 @@ function applyDebugEnding(index){
   showScreen('awaken');
   openAwakenOverlay();
   updateScheduleUI();
+  renderStageDecor();
   updateDebugOverlay(`디버그 모드 ON\n\n${index}. ${preset.name} 미리보기를 열었어요.\n목록에서 다른 엔딩도 바로 선택할 수 있어요.`);
 }
 
@@ -6742,6 +6991,72 @@ function handleResizeSync(){
     document.body.classList.remove('resizing');
   }, 120);
 }
+
+(function(){
+  const originalFinishAction = window.finishAction;
+  if (typeof originalFinishAction === 'function') {
+    window.finishAction = function(...args){
+      const before = JSON.stringify(state.stats);
+      const result = originalFinishAction.apply(this, args);
+      try{
+        const prev = JSON.parse(before);
+        const parts = [];
+        Object.keys(state.stats).forEach(k=>{
+          const diff = Number(state.stats[k]||0) - Number(prev[k]||0);
+          if (diff > 0) parts.push(k + ' +' + diff);
+        });
+        if (parts.length){
+          const target = screens.room && screens.room.classList.contains('active') ? roomScene : seedStage;
+          showStageStatFloat(target, parts.join(' · '));
+        }
+        if (typeof showBubbleText === 'function' && window.__lastActionBubbleText){
+          showBubbleText(window.__lastActionBubbleText);
+        }
+      }catch(err){}
+      renderStageDecor();
+      return result;
+    }
+  }
+})();
+(function(){
+  const originalPositionRoomBubbles = window.positionRoomBubbles;
+  if (typeof originalPositionRoomBubbles === 'function'){
+    window.positionRoomBubbles = function(...args){
+      const r = originalPositionRoomBubbles.apply(this,args);
+      try{
+        if (roomOwnerBubble && roomOwnerBubble.style.top){
+          roomOwnerBubble.style.top = (parseFloat(roomOwnerBubble.style.top) - 80) + 'px';
+        }
+        if (roomVisitorBubble && roomVisitorBubble.style.top){
+          roomVisitorBubble.style.top = (parseFloat(roomVisitorBubble.style.top) - 80) + 'px';
+        }
+      }catch(err){}
+      return r;
+    }
+  }
+})();
+
+document.addEventListener('click', (e) => {
+  const decor = e.target.closest && e.target.closest('.decor-btn');
+  if (decor){
+    setTimeout(() => {
+      renderStageDecor();
+      const label = decor.querySelector('strong') ? decor.querySelector('strong').textContent : '소품';
+      showStageStatFloat((screens.room && screens.room.classList.contains('active')) ? roomScene : seedStage, label + ' 배치됨');
+    }, 30);
+  }
+  const gift = e.target.closest && e.target.closest('.gift-card, .shop-gift-card, .room-gift-card');
+  if (gift){
+    setTimeout(() => {
+      showStageStatFloat((screens.room && screens.room.classList.contains('active')) ? roomScene : seedStage, '스탯 상승!');
+      try{
+        if (screens.room && screens.room.classList.contains('active') && typeof positionRoomBubbles === 'function'){
+          positionRoomBubbles();
+        }
+      }catch(err){}
+    }, 30);
+  }
+});
 
 window.addEventListener('resize', handleResizeSync);
 
