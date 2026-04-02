@@ -1515,8 +1515,8 @@ img{
 
 .room-layout{
   display:grid;
-  grid-template-columns:1.18fr .82fr;
-  gap:14px;
+  grid-template-columns:1fr;
+  gap:12px;
   min-height:calc(100vh - var(--top-h) - 30px);
   width:100%;
   max-width:100%;
@@ -3039,6 +3039,67 @@ body.ending-modal-open{
   100%{opacity:0; transform:translateY(-50%) scale(.9);}
 }
 
+
+.room-bottom-card{
+  padding-top:14px;
+}
+.room-bottom-tabs{
+  display:flex;
+  align-items:flex-end;
+  gap:6px;
+  margin-bottom:-1px;
+  padding:0 4px;
+}
+.room-bottom-tab{
+  position:relative;
+  flex:0 0 auto;
+  min-width:82px;
+  padding:10px 14px 9px;
+  border-radius:14px 14px 0 0;
+  background:linear-gradient(180deg, rgba(244,236,227,.96), rgba(232,223,214,.94));
+  border:1px solid rgba(120,104,87,.14);
+  border-bottom:none;
+  color:#7c6d61;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 6px 14px rgba(120,104,87,.06);
+  transform:translateY(6px);
+  transition:.18s ease;
+}
+.room-bottom-tab:hover{
+  transform:translateY(3px);
+}
+.room-bottom-tab.active{
+  background:linear-gradient(180deg, rgba(255,251,246,.98), rgba(255,247,240,.98));
+  color:#5b4d42;
+  transform:translateY(0);
+  z-index:2;
+  box-shadow:0 8px 18px rgba(120,104,87,.10);
+}
+.room-bottom-shell{
+  border:1px solid rgba(120,104,87,.14);
+  border-radius:0 18px 18px 18px;
+  background:linear-gradient(180deg, rgba(255,251,246,.98), rgba(255,247,240,.96));
+  box-shadow:0 10px 24px rgba(120,104,87,.08);
+  padding:12px;
+}
+.room-bottom-pane{
+  display:none;
+}
+.room-bottom-pane.active{
+  display:block;
+}
+@media (max-width:640px){
+  .room-bottom-tab{
+    min-width:74px;
+    padding:9px 12px 8px;
+    font-size:11px;
+  }
+  .room-bottom-shell{
+    padding:10px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3347,6 +3408,7 @@ body.ending-modal-open{
               <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
             </div>
 
+            <div class="room-bottom-shell">
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -3374,6 +3436,7 @@ body.ending-modal-open{
 
             <div class="room-bottom-pane" id="roomPaneGift">
               <div class="room-gift-grid" id="roomGiftGrid"></div>
+            </div>
             </div>
           </div>
 
@@ -3461,7 +3524,35 @@ body.ending-modal-open{
   </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// 🔧 FIX: room tab switching (gift not opening)
+const roomTabs = document.querySelectorAll('#roomBottomTabs .room-bottom-tab');
+const roomPanes = {
+  schedule: document.getElementById('roomPaneSchedule'),
+  decor: document.getElementById('roomPaneDecor'),
+  gift: document.getElementById('roomPaneGift')
+};
+
+roomTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const key = tab.dataset.roomTab;
+
+    // active tab UI
+    roomTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // pane switching
+    Object.values(roomPanes).forEach(p => {
+      if (p) p.classList.remove('active');
+    });
+
+    if (roomPanes[key]) {
+      roomPanes[key].classList.add('active');
+    }
+  });
+});
+
+</script>
 <script>
 const SUPABASE_URL = "https://tddfncbmoyytunsvfbwm.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iqgMhdtgeO35GGfG9u8x8g_fqU1I0xd";
