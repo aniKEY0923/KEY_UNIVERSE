@@ -3441,17 +3441,17 @@ body.ending-modal-open{
   </div>
 
 
-
+</div>
   <div class="debug-overlay" id="newGameConfirmOverlay">
-    <div class="debug-modal" style="max-width:420px;">
+    <div class="debug-modal" style="width:min(420px,100%);">
       <div class="debug-head">
         <div class="debug-title-wrap">
           <h3 class="debug-title">새 게임</h3>
-          <div class="debug-sub">새로 시작하면 현재 진행 상태와 저장 데이터가 초기화됩니다.</div>
+          <div class="debug-sub">새로 시작하면 모든 데이터가 리셋됩니다.</div>
         </div>
       </div>
       <div class="debug-body">
-        <p class="debug-status-text" style="margin-bottom:12px;">DAY, 각성 상태, 스탯, 코인, 친구 진행, 가구 배치, 수집 진행이 모두 리셋돼요.<br>그래도 새로 시작할까요?</p>
+        <p class="debug-status-text">DAY1, 각성 전 상태, 스탯, 코인, 친구 진행, 가구 배치, 수집 상태가 모두 초기화돼요.<br>그래도 새로 시작할까요?</p>
         <div class="action-row">
           <button class="primary-btn" id="confirmNewGameYes">네</button>
           <button class="secondary-btn" id="confirmNewGameNo">아니오</button>
@@ -3460,8 +3460,6 @@ body.ending-modal-open{
     </div>
   </div>
 
-
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -4583,6 +4581,16 @@ const statEls = {
   humor:    { fill: document.getElementById('fill-humor'),    val: document.getElementById('val-humor') }
 };
 
+
+const roomStatEls = {
+  practice: { fill: document.getElementById('room-fill-practice'), val: document.getElementById('room-val-practice') },
+  mystery:  { fill: document.getElementById('room-fill-mystery'),  val: document.getElementById('room-val-mystery') },
+  social:   { fill: document.getElementById('room-fill-social'),   val: document.getElementById('room-val-social') },
+  cute:     { fill: document.getElementById('room-fill-cute'),     val: document.getElementById('room-val-cute') },
+  scary:    { fill: document.getElementById('room-fill-scary'),    val: document.getElementById('room-val-scary') },
+  humor:    { fill: document.getElementById('room-fill-humor'),    val: document.getElementById('room-val-humor') }
+};
+
 const GIFT_EFFECTS = {
   food: {
     '샐러드': { stats:{ social:1 }, energy:6, messageKey:'giftSalad', bonus:'Social +1 · 에너지 +6' },
@@ -4654,7 +4662,7 @@ function renderGiftWearables(){
   if (seedAccessoryLayer) {
     seedAccessoryLayer.classList.add(spec.kind, 'show');
     if (spec.text) seedAccessoryLayer.textContent = spec.text;
-    const left = (state.seedPlayer.x || 0) + (state.seedPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.44);
+    const left = (state.seedPlayer.x || 0) + (state.seedPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.50);
     const top = (state.seedPlayer.y || 0) + (spec.kind === 'keyring' ? (state.seedPlayer.h || 78) * 0.5 : -6);
     seedAccessoryLayer.style.left = `${left}px`;
     seedAccessoryLayer.style.top = `${top}px`;
@@ -4662,7 +4670,7 @@ function renderGiftWearables(){
   if (roomAccessoryLayer) {
     roomAccessoryLayer.classList.add(spec.kind, 'show');
     if (spec.text) roomAccessoryLayer.textContent = spec.text;
-    const left = (state.roomPlayer.x || 0) + (state.roomPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.44);
+    const left = (state.roomPlayer.x || 0) + (state.roomPlayer.w || 54) * (spec.kind === 'keyring' ? 0.82 : 0.50);
     const top = (state.roomPlayer.y || 0) + (spec.kind === 'keyring' ? (state.roomPlayer.h || 78) * 0.5 : -6);
     roomAccessoryLayer.style.left = `${left}px`;
     roomAccessoryLayer.style.top = `${top}px`;
@@ -4670,9 +4678,29 @@ function renderGiftWearables(){
 }
 
 function applyStatDelta(delta = {}){
+  const raisedKeys = [];
   Object.entries(delta).forEach(([key, value]) => {
     if (typeof state.stats[key] !== 'number') return;
+    const before = Number(state.stats[key] || 0);
     state.stats[key] = clamp((state.stats[key] || 0) + Number(value || 0), 0, 100);
+    if (state.stats[key] > before) raisedKeys.push(key);
+  });
+
+  raisedKeys.forEach((key) => {
+    [statEls[key], roomStatEls[key]].forEach(ref => {
+      const bar = ref?.fill?.parentElement;
+      if (!bar) return;
+      let badge = bar.querySelector('.stat-up-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'stat-up-badge';
+        badge.textContent = 'UP';
+        bar.appendChild(badge);
+      }
+      badge.classList.remove('show');
+      void badge.offsetWidth;
+      badge.classList.add('show');
+    });
   });
 }
 
@@ -5150,8 +5178,6 @@ function showScreen(name){
   if (name === 'schedule') {
     requestAnimationFrame(() => {
       syncSeedStageLayout({ immediate:true });
-      syncRoomStatsUI();
-      syncAccessoryOffsets();
       renderStageDecor();
     });
   } else if (name === 'room') {
@@ -5159,8 +5185,6 @@ function showScreen(name){
       placeRoomPlayerInitial();
       renderRoomPlayer();
       syncRoomUI();
-      syncRoomStatsUI();
-      syncAccessoryOffsets();
       renderStageDecor();
       maybeStartRoomFriendVisit();
       const roomMain = screens.room ? screens.room.querySelector('.main') : null;
@@ -5239,6 +5263,17 @@ function hardResetToNewGame(){
   if (typeof syncSeedStageLayout === 'function') syncSeedStageLayout({ immediate:true });
 }
 
+const newGameConfirmOverlay = document.getElementById('newGameConfirmOverlay');
+const confirmNewGameYes = document.getElementById('confirmNewGameYes');
+const confirmNewGameNo = document.getElementById('confirmNewGameNo');
+
+function openNewGameConfirm(){
+  if (newGameConfirmOverlay) newGameConfirmOverlay.classList.add('show');
+}
+function closeNewGameConfirm(){
+  if (newGameConfirmOverlay) newGameConfirmOverlay.classList.remove('show');
+}
+
 if (newGameBtn) newGameBtn.addEventListener('click', openNewGameConfirm);
 if (roomNewGameBtn) roomNewGameBtn.addEventListener('click', openNewGameConfirm);
 if (confirmNewGameYes) confirmNewGameYes.addEventListener('click', () => {
@@ -5288,65 +5323,6 @@ function renderStageDecor(){
       layer.appendChild(node);
     });
   });
-}
-
-const newGameConfirmOverlay = document.getElementById('newGameConfirmOverlay');
-const confirmNewGameYes = document.getElementById('confirmNewGameYes');
-const confirmNewGameNo = document.getElementById('confirmNewGameNo');
-
-const ROOM_STAT_KEYS = ['practice','mystery','social','cute','scary','humor'];
-
-function openNewGameConfirm(){
-  if (newGameConfirmOverlay) newGameConfirmOverlay.classList.add('show');
-}
-function closeNewGameConfirm(){
-  if (newGameConfirmOverlay) newGameConfirmOverlay.classList.remove('show');
-}
-function syncRoomStatsUI(){
-  ROOM_STAT_KEYS.forEach(key => {
-    const v = Number((state.stats && state.stats[key]) || 0);
-    const fill = document.getElementById(`room-fill-${key}`);
-    const val = document.getElementById(`room-val-${key}`);
-    if (fill) fill.style.width = Math.max(0, Math.min(100, v)) + '%';
-    if (val) val.textContent = v;
-  });
-}
-function showStatBarUp(statKey){
-  const bars = [
-    document.querySelector(`#fill-${statKey}`)?.parentElement,
-    document.querySelector(`#room-fill-${statKey}`)?.parentElement
-  ].filter(Boolean);
-  bars.forEach(bar => {
-    let badge = bar.querySelector('.stat-up-badge');
-    if (!badge){
-      badge = document.createElement('span');
-      badge.className = 'stat-up-badge';
-      badge.textContent = 'UP';
-      bar.appendChild(badge);
-    }
-    badge.classList.remove('show');
-    void badge.offsetWidth;
-    badge.classList.add('show');
-  });
-}
-function showStatUpsFromDiff(beforeStats){
-  if (!beforeStats) return;
-  ROOM_STAT_KEYS.forEach(key => {
-    const prev = Number(beforeStats[key] || 0);
-    const next = Number((state.stats && state.stats[key]) || 0);
-    if (next > prev) showStatBarUp(key);
-  });
-}
-function syncAccessoryOffsets(){
-  try{
-    const selectors = ['.cat-beanie','.gift-wearable.cat-beanie','.wearable-cat-beanie','.accessory-cat-beanie'];
-    selectors.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        el.style.left = '50%';
-        el.style.transform = 'translateX(-50%)';
-      });
-    });
-  }catch(err){}
 }
 
 function clamp(val, min, max){
@@ -5935,6 +5911,9 @@ function updateScheduleUI(){
   Object.keys(state.stats).forEach(key => {
     statEls[key].val.textContent = state.stats[key];
     statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+
+    if (roomStatEls[key]?.val) roomStatEls[key].val.textContent = state.stats[key];
+    if (roomStatEls[key]?.fill) roomStatEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
   });
 
   if (state.awakened) {
@@ -7171,52 +7150,6 @@ document.addEventListener('click', (e) => {
     }, 30);
   }
 });
-
-(function(){
-  const __origRunAction = window.runAction;
-  if (typeof __origRunAction === 'function'){
-    window.runAction = function(...args){
-      const beforeStats = { ...(state.stats || {}) };
-      const result = __origRunAction.apply(this, args);
-      setTimeout(() => {
-        try{
-          syncRoomStatsUI();
-          syncAccessoryOffsets();
-          showStatUpsFromDiff(beforeStats);
-        }catch(err){}
-      }, 120);
-      return result;
-    };
-  }
-
-  const __origApplyGiftEffect = window.applyGiftEffect;
-  if (typeof __origApplyGiftEffect === 'function'){
-    window.applyGiftEffect = function(...args){
-      const beforeStats = { ...(state.stats || {}) };
-      const result = __origApplyGiftEffect.apply(this, args);
-      setTimeout(() => {
-        try{
-          syncRoomStatsUI();
-          syncAccessoryOffsets();
-          showStatUpsFromDiff(beforeStats);
-        }catch(err){}
-      }, 80);
-      return result;
-    };
-  }
-
-  const __origSyncRoomUI = window.syncRoomUI;
-  if (typeof __origSyncRoomUI === 'function'){
-    window.syncRoomUI = function(...args){
-      const result = __origSyncRoomUI.apply(this, args);
-      try{
-        syncRoomStatsUI();
-        syncAccessoryOffsets();
-      }catch(err){}
-      return result;
-    };
-  }
-})();
 
 window.addEventListener('resize', handleResizeSync);
 
