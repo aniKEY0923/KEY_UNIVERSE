@@ -2985,6 +2985,9 @@ body.ending-modal-open{
   z-index:2;
   pointer-events:none;
 }
+.room-decor-layer{
+  pointer-events:auto;
+}
 .stage-decor-item{
   position:absolute;
   display:flex;
@@ -3000,6 +3003,14 @@ body.ending-modal-open{
   font-size:16px;
   color:#6a584a;
 }
+.room-decor-layer .stage-decor-item{
+  pointer-events:auto;
+  cursor:pointer;
+}
+.room-decor-layer .stage-decor-item.selected{
+  box-shadow:0 8px 18px rgba(120,104,87,.12), 0 0 0 2px rgba(241,167,200,.46);
+  transform:translateY(-1px);
+}
 .stage-decor-item .label{
   display:block;
   font-size:9px;
@@ -3007,6 +3018,39 @@ body.ending-modal-open{
   line-height:1.1;
   margin-top:2px;
 }
+
+.decor-remove-popup{
+  position:absolute;
+  z-index:18;
+  display:none;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border-radius:14px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 12px 24px rgba(120,104,87,.18);
+}
+.decor-remove-popup.show{
+  display:flex;
+}
+.decor-remove-popup button{
+  min-width:34px;
+  height:34px;
+  padding:0 10px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:900;
+}
+.decor-remove-popup .confirm{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
+.decor-remove-popup .cancel{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(120,104,87,.12);
+}
+
 .stat-float{
   position:absolute;
   z-index:15;
@@ -3585,6 +3629,10 @@ body.ending-modal-open{
               </div>
 
               <div class="stage-decor-layer room-decor-layer" id="roomDecorLayer"></div>
+              <div class="decor-remove-popup" id="decorRemovePopup" aria-hidden="true">
+                <button type="button" class="confirm" id="decorRemoveConfirmBtn">배치취소 O</button>
+                <button type="button" class="cancel" id="decorRemoveCancelBtn">X</button>
+              </div>
 
               <div class="room-stage-label">
                 <div class="name" id="roomStageName">각성한 KEY의 방</div>
@@ -4124,6 +4172,9 @@ const roomSpendTimeBtn = document.getElementById('roomSpendTimeBtn');
 const roomSendAwayBtn = document.getElementById('roomSendAwayBtn');
 const roomHint = document.getElementById('roomHint');
 const roomDecorGrid = document.getElementById('roomDecorGrid');
+const decorRemovePopup = document.getElementById('decorRemovePopup');
+const decorRemoveConfirmBtn = document.getElementById('decorRemoveConfirmBtn');
+const decorRemoveCancelBtn = document.getElementById('decorRemoveCancelBtn');
 const roomDayBadge = document.getElementById('roomDayBadge');
 const roomClockBadge = document.getElementById('roomClockBadge');
 const roomStageName = document.getElementById('roomStageName');
@@ -4145,6 +4196,10 @@ const roomVisitFlow = {
   phase:'idle',
   candidate:null,
   timers:[]
+};
+
+const roomDecorSelection = {
+  key:null
 };
 
 let roomPlayTalkInterval = null;
@@ -4219,6 +4274,9 @@ const friendUnlockRules = {
     { name:'솜구름 KEY', desc:'말랑한 무드가 높아지면 찾아와요', when:({stats}) => (stats.cute || 0) + (stats.humor || 0) >= 70 }
   ],
   '_decorBonus': [
+    { name:'배드러브 키', desc:'LP플레이어를 들으면 배드러브 키가 찾아와요', when:() => !!state.roomDecor?.lpPlayer },
+    { name:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아와요', when:() => !!state.roomDecor?.desk },
+    { name:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아와요', when:() => !!state.roomDecor?.birdCage },
     { name:'무대감독 KEY', desc:'미러볼을 두면 리허설을 보러 와요', when:() => !!state.roomDecor?.mirrorBall },
     { name:'새벽산책 KEY', desc:'바이닐 랙에 이끌려 방문해요', when:() => !!state.roomDecor?.vinylRack },
     { name:'솜구름 KEY', desc:'폭신 소파를 좋아해요', when:() => !!state.roomDecor?.plushSofa },
@@ -4405,6 +4463,7 @@ function renderRoomVisitor(opts = {}){
     return;
   }
   const layout = getRoomVisitorLayout();
+  roomVisitor.style.transition = 'none';
   roomVisitor.style.width = `${layout.visitorW}px`;
   roomVisitor.style.height = `${layout.visitorH}px`;
   roomVisitor.style.top = `${layout.top}px`;
@@ -4413,11 +4472,14 @@ function renderRoomVisitor(opts = {}){
   roomVisitorImg.src = getRoomFriendImage(visitorName);
   roomVisitorImg.alt = `${visitorName} 방문 친구`;
   roomVisitor.classList.add('show');
+  void roomVisitor.offsetWidth;
   if (opts.startOutside) {
-    roomVisitor.style.transition = 'opacity .22s ease, left .9s ease, top .22s ease';
+    roomVisitor.style.transition = 'opacity .22s ease, left .9s ease';
     requestAnimationFrame(() => {
       roomVisitor.style.left = `${layout.left}px`;
     });
+  } else {
+    roomVisitor.style.transition = 'opacity .22s ease, left .22s ease';
   }
   renderRoomVisitOverlays();
   renderGiftWearables();
@@ -4636,6 +4698,7 @@ function spendTimeWithVisitor(){
 }
 
 function installDecorItem(decorKey){
+  closeDecorRemovePopup();
   const info = roomDecorConfig[decorKey];
   if (!info) return;
   if (state.roomDecor?.[decorKey]) return;
@@ -5363,6 +5426,26 @@ if (roomDecorGrid) {
   roomDecorGrid.querySelectorAll('[data-decor]').forEach(btn => {
     btn.addEventListener('click', () => installDecorItem(btn.dataset.decor));
   });
+  if (roomDecorLayer) {
+    roomDecorLayer.addEventListener('click', (e) => {
+      const item = e.target.closest('.stage-decor-item[data-decor-key]');
+      if (!item) return;
+      e.stopPropagation();
+      openDecorRemovePopup(item.dataset.decorKey);
+    });
+  }
+  if (decorRemoveConfirmBtn) {
+    decorRemoveConfirmBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (roomDecorSelection.key) removeDecorItem(roomDecorSelection.key);
+    });
+  }
+  if (decorRemoveCancelBtn) {
+    decorRemoveCancelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeDecorRemovePopup();
+    });
+  }
 }
 
 if (roomSpendTimeBtn) {
@@ -5396,6 +5479,11 @@ concertNoBtn.addEventListener('click', async () => {
 document.addEventListener('click', (e) => {
   if (giftMenu && !giftMenu.contains(e.target) && e.target !== giftBtn) {
     closeGiftMenus();
+  }
+  const clickedDecorItem = e.target.closest && e.target.closest('#roomDecorLayer .stage-decor-item');
+  const clickedDecorPopup = decorRemovePopup && decorRemovePopup.contains(e.target);
+  if (!clickedDecorItem && !clickedDecorPopup) {
+    closeDecorRemovePopup();
   }
   const clickedInsideRoomGift = roomGiftMenu && roomGiftMenu.contains(e.target);
   const clickedInsideFriend = friendMenu && friendMenu.contains(e.target);
@@ -5639,9 +5727,14 @@ function renderStageDecor(){
   [seedDecorLayer, roomDecorLayer].forEach(layer=>{
     if (!layer) return;
     layer.innerHTML = '';
+    const isRoomLayer = layer === roomDecorLayer;
     items.forEach((item, idx)=>{
       const node = document.createElement('div');
       node.className = 'stage-decor-item';
+      if (isRoomLayer) {
+        node.dataset.decorKey = item.key;
+        if (roomDecorSelection.key === item.key) node.classList.add('selected');
+      }
       const col = idx % 4;
       const row = Math.floor(idx / 4);
       node.style.left = (18 + col * 62) + 'px';
@@ -5650,6 +5743,66 @@ function renderStageDecor(){
       layer.appendChild(node);
     });
   });
+  if (roomDecorSelection.key) {
+    positionDecorRemovePopup(roomDecorSelection.key);
+  }
+}
+
+function closeDecorRemovePopup(){
+  roomDecorSelection.key = null;
+  if (decorRemovePopup) {
+    decorRemovePopup.classList.remove('show');
+    decorRemovePopup.setAttribute('aria-hidden', 'true');
+  }
+  if (roomDecorLayer) {
+    roomDecorLayer.querySelectorAll('.stage-decor-item.selected').forEach(node => node.classList.remove('selected'));
+  }
+}
+
+function positionDecorRemovePopup(decorKey){
+  if (!decorRemovePopup || !roomDecorLayer || !decorKey) return;
+  const target = roomDecorLayer.querySelector(`[data-decor-key="${decorKey}"]`);
+  if (!target) {
+    closeDecorRemovePopup();
+    return;
+  }
+  const left = target.offsetLeft + target.offsetWidth * 0.5;
+  const top = Math.max(18, target.offsetTop - 44);
+  decorRemovePopup.style.left = `${left}px`;
+  decorRemovePopup.style.top = `${top}px`;
+  decorRemovePopup.style.transform = 'translateX(-50%)';
+}
+
+function openDecorRemovePopup(decorKey){
+  if (!decorKey || !state.roomDecor?.[decorKey] || !decorRemovePopup) return;
+  roomDecorSelection.key = decorKey;
+  roomDecorLayer.querySelectorAll('.stage-decor-item.selected').forEach(node => node.classList.remove('selected'));
+  const target = roomDecorLayer.querySelector(`[data-decor-key="${decorKey}"]`);
+  if (target) target.classList.add('selected');
+  positionDecorRemovePopup(decorKey);
+  decorRemovePopup.classList.add('show');
+  decorRemovePopup.setAttribute('aria-hidden', 'false');
+}
+
+function removeDecorItem(decorKey){
+  const info = roomDecorConfig[decorKey];
+  if (!info || !state.roomDecor?.[decorKey]) {
+    closeDecorRemovePopup();
+    return;
+  }
+  state.roomDecor[decorKey] = false;
+  const rollback = {};
+  Object.entries(info.stats || {}).forEach(([k,v]) => rollback[k] = -Number(v || 0));
+  applyStatDelta(rollback);
+  closeDecorRemovePopup();
+  renderStageDecor();
+  renderRoomDecorButtons();
+  renderFriendMenu();
+  unlockSpecialEndings();
+  syncRoomUI();
+  renderEndingMenu();
+  roomHint.textContent = `${info.label} 배치를 취소했어.`;
+  saveLocal(serializeGameState());
 }
 
 function clamp(val, min, max){
@@ -6999,6 +7152,7 @@ function syncRoomUI(){
     url("img/room_default.png") center center / 108% 108% no-repeat
   `;
 
+  renderStageDecor();
   renderRoomDecorButtons();
   renderRoomVisitor();
   renderFriendMenu();
