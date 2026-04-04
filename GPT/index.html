@@ -1306,6 +1306,114 @@ img{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   color:#4f4250;
 }
+
+.mini-stage-topline{
+  position:absolute;
+  left:14px;
+  right:14px;
+  top:14px;
+  z-index:7;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.mini-abort-btn{
+  flex:0 0 auto;
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.18);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 8px 18px rgba(0,0,0,.16);
+}
+.mini-progress-wrap{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.mini-progress-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  color:#fff7fd;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.03em;
+}
+.mini-progress-track{
+  width:100%;
+  height:10px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.18);
+}
+.mini-progress-fill{
+  width:0%;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg, rgba(241,167,200,.98), rgba(201,195,232,.98));
+  box-shadow:0 0 16px rgba(241,167,200,.24);
+  transition:width .12s linear;
+}
+.mini-confirm-overlay{
+  position:absolute;
+  inset:0;
+  z-index:9;
+  display:none;
+  place-items:center;
+  padding:24px;
+  background:rgba(16,13,22,.66);
+  backdrop-filter:blur(8px);
+}
+.mini-confirm-overlay.show{ display:grid; }
+.mini-confirm-card{
+  width:min(360px, 100%);
+  padding:22px 20px 18px;
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,247,250,.94));
+  color:#5b4d42;
+  box-shadow:0 18px 40px rgba(0,0,0,.24);
+  text-align:center;
+}
+.mini-confirm-title{
+  font-size:18px;
+  font-weight:950;
+  margin-bottom:10px;
+}
+.mini-confirm-desc{
+  font-size:13px;
+  line-height:1.65;
+  color:var(--sub);
+}
+.mini-confirm-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.mini-confirm-quit,
+.mini-confirm-cancel{
+  min-height:48px;
+  padding:12px 14px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:900;
+}
+.mini-confirm-quit{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(120,104,87,.12);
+}
+.mini-confirm-cancel{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
 @media (max-width: 640px){
   .mini-talkbar{
     grid-template-columns:minmax(0,1fr) 56px;
@@ -1341,9 +1449,25 @@ img{
     font-size:18px;
   }
   .mini-feedback{
-    top:66px;
+    top:102px;
     min-width:104px;
     font-size:12px;
+  }
+  .mini-stage-topline{
+    left:10px;
+    right:10px;
+    top:10px;
+    gap:8px;
+  }
+  .mini-abort-btn{
+    padding:9px 12px;
+    font-size:11px;
+  }
+  .mini-progress-label{
+    font-size:10px;
+  }
+  .mini-progress-track{
+    height:9px;
   }
   .mini-result-grid{
     grid-template-columns:1fr 1fr 1fr;
@@ -3076,6 +3200,50 @@ body.ending-modal-open{
   z-index:2;
   box-shadow:0 8px 18px rgba(120,104,87,.10);
 }
+
+.room-bottom-tab.highlight-intro{
+  animation:roomDecorTabPulse 1.15s ease-in-out infinite;
+  box-shadow:0 8px 18px rgba(120,104,87,.10), 0 0 0 2px rgba(241,167,200,.34);
+}
+.room-tab-intro-bubble{
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 10px);
+  transform:translateX(-50%) translateY(8px);
+  width:min(250px, 72vw);
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 12px 26px rgba(120,104,87,.16);
+  color:#5b4d42;
+  font-size:11px;
+  line-height:1.5;
+  text-align:left;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease, transform .22s ease;
+}
+.room-tab-intro-bubble.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+.room-tab-intro-bubble::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-8px;
+  width:14px;
+  height:14px;
+  background:rgba(255,255,255,.98);
+  border-right:1px solid rgba(120,104,87,.12);
+  border-bottom:1px solid rgba(120,104,87,.12);
+  transform:translateX(-50%) rotate(45deg);
+}
+@keyframes roomDecorTabPulse{
+  0%,100%{ transform:translateY(6px) scale(1); }
+  50%{ transform:translateY(2px) scale(1.03); }
+}
 .room-bottom-shell{
   border:1px solid rgba(120,104,87,.14);
   border-radius:0 18px 18px 18px;
@@ -3094,6 +3262,12 @@ body.ending-modal-open{
     min-width:74px;
     padding:9px 12px 8px;
     font-size:11px;
+  }
+  .room-tab-intro-bubble{
+    width:min(220px, 78vw);
+    font-size:10px;
+    padding:9px 10px;
+    bottom:calc(100% + 8px);
   }
   .room-bottom-shell{
     padding:10px;
@@ -3267,6 +3441,13 @@ body.ending-modal-open{
 
       <div class="mini-game-body">
         <div class="mini-rhythm-stage" id="miniRhythmStage">
+          <div class="mini-stage-topline">
+            <button type="button" class="mini-abort-btn" id="miniAbortBtn">포기</button>
+            <div class="mini-progress-wrap">
+              <div class="mini-progress-label"><span>공연 진행</span><strong id="miniProgressText">0%</strong></div>
+              <div class="mini-progress-track"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
+            </div>
+          </div>
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
           </div>
@@ -3291,6 +3472,17 @@ body.ending-modal-open{
                 <div class="mini-result-chip"><strong id="miniResultGood">0</strong>Cool</div>
               </div>
               <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
+            </div>
+          </div>
+
+          <div class="mini-confirm-overlay" id="miniAbortConfirm">
+            <div class="mini-confirm-card">
+              <div class="mini-confirm-title">공연을 중지할까요?</div>
+              <div class="mini-confirm-desc">공연을 중간에 포기하면 팬들이 실망할 거야. 그래도 중지하시겠습니까?</div>
+              <div class="mini-confirm-actions">
+                <button type="button" class="mini-confirm-quit" id="miniAbortConfirmBtn">그만둔다</button>
+                <button type="button" class="mini-confirm-cancel" id="miniAbortCancelBtn">계속 진행한다</button>
+              </div>
             </div>
           </div>
         </div>
@@ -3404,8 +3596,10 @@ body.ending-modal-open{
           <div class="card panel room-bottom-card">
             <div class="room-bottom-tabs" id="roomBottomTabs">
               <button type="button" class="room-bottom-tab active" data-room-tab="schedule">스케쥴</button>
-              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기</button>
               <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
+              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기
+                <span class="room-tab-intro-bubble" id="roomDecorIntroBubble">방꾸미기 기능이 열렸습니다. 방을 꾸미면 취향의 친구가 찾아옵니다.</span>
+              </button>
             </div>
 
             <div class="room-bottom-shell">
@@ -3421,6 +3615,10 @@ body.ending-modal-open{
                 <button class="schedule-btn" data-act="sleep"><span class="emoji">😴</span><span class="title">취침</span><span class="time">8시간</span></button>
               </div>
             </div>
+            <div class="room-bottom-pane" id="roomPaneGift">
+              <div class="room-gift-grid" id="roomGiftGrid"></div>
+            </div>
+
             <div class="room-bottom-pane" id="roomPaneDecor">
               <div class="room-decor-grid" id="roomDecorGrid">
                 <button class="decor-btn" type="button" data-decor="lpPlayer"><div class="emoji">🎵</div><strong>LP플레이어</strong></button>
@@ -3432,10 +3630,6 @@ body.ending-modal-open{
                 <button class="decor-btn" type="button" data-decor="neonSign"><div class="emoji">💡</div><strong>네온사인</strong></button>
                 <button class="decor-btn" type="button" data-decor="bookshelf"><div class="emoji">📚</div><strong>심야 책장</strong></button>
               </div>
-            </div>
-
-            <div class="room-bottom-pane" id="roomPaneGift">
-              <div class="room-gift-grid" id="roomGiftGrid"></div>
             </div>
             </div>
           </div>
@@ -3527,6 +3721,8 @@ body.ending-modal-open{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 // 🔧 FIX: room tab switching (gift not opening)
 const roomTabs = document.querySelectorAll('#roomBottomTabs .room-bottom-tab');
+const roomDecorTabBtn = document.querySelector('#roomBottomTabs [data-room-tab="decor"]');
+const roomDecorIntroBubble = document.getElementById('roomDecorIntroBubble');
 const roomPanes = {
   schedule: document.getElementById('roomPaneSchedule'),
   decor: document.getElementById('roomPaneDecor'),
@@ -3600,7 +3796,9 @@ const miniGame = {
   spawnTimer:null,
   noteSeq:0,
   notes:[],
-  talkTimer:null
+  talkTimer:null,
+  progress:0,
+  aborted:false
 };
 
 const state = {
@@ -3658,6 +3856,7 @@ const state = {
   },
   activeRoomVisitor: null,
   roomSeenFriendEvents: [],
+  roomDecorIntroPending: false,
   affection: {},
   unlockedEndings: [],
   endingFlags: {},
@@ -4651,6 +4850,12 @@ const miniTalkBox = document.getElementById('miniTalkBox');
 const miniTalkChar = document.getElementById('miniTalkChar');
 const miniFeedback = document.getElementById('miniFeedback');
 const miniGameResult = document.getElementById('miniGameResult');
+const miniAbortBtn = document.getElementById('miniAbortBtn');
+const miniAbortConfirm = document.getElementById('miniAbortConfirm');
+const miniAbortConfirmBtn = document.getElementById('miniAbortConfirmBtn');
+const miniAbortCancelBtn = document.getElementById('miniAbortCancelBtn');
+const miniProgressFill = document.getElementById('miniProgressFill');
+const miniProgressText = document.getElementById('miniProgressText');
 const miniScoreEl = document.getElementById('miniScore');
 const miniComboEl = document.getElementById('miniCombo');
 const miniResultTitle = document.getElementById('miniResultTitle');
@@ -4951,7 +5156,10 @@ function setRoomBottomTab(tab){
   });
   const activePane = document.getElementById(map[tab] || map.schedule);
   if (activePane) activePane.classList.add('active');
-  if (tab === 'decor') renderRoomDecorButtons();
+  if (tab === 'decor') {
+    renderRoomDecorButtons();
+    hideRoomDecorIntroHint();
+  }
   if (tab === 'gift') renderRoomGiftGrid();
 }
 
@@ -5239,6 +5447,12 @@ window.addEventListener('keydown', (e) => {
   if (handleDebugShortcut(e)) return;
 
   if (!miniGame.active) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (miniAbortConfirm && miniAbortConfirm.classList.contains('show')) closeMiniAbortConfirm();
+    else openMiniAbortConfirm();
+    return;
+  }
   if (!miniGame.playing && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
     beginConcertMiniGamePlay();
@@ -5255,6 +5469,26 @@ miniFinishBtn.addEventListener('click', () => {
   applyConcertMiniGameRewards();
 });
 
+if (miniAbortBtn) {
+  miniAbortBtn.addEventListener('click', () => {
+    openMiniAbortConfirm();
+  });
+}
+if (miniAbortCancelBtn) {
+  miniAbortCancelBtn.addEventListener('click', () => {
+    closeMiniAbortConfirm();
+  });
+}
+if (miniAbortConfirmBtn) {
+  miniAbortConfirmBtn.addEventListener('click', () => {
+    abortConcertMiniGame();
+  });
+}
+if (miniAbortConfirm) {
+  miniAbortConfirm.addEventListener('click', (e) => {
+    if (e.target === miniAbortConfirm) closeMiniAbortConfirm();
+  });
+}
 
 function showScreen(name){
   Object.values(screens).forEach(s => {
@@ -5278,6 +5512,7 @@ function showScreen(name){
       syncRoomUI();
       renderStageDecor();
       maybeStartRoomFriendVisit();
+      maybeShowRoomDecorIntroHint();
       const roomMain = screens.room ? screens.room.querySelector('.main') : null;
       if (roomMain) roomMain.scrollTop = 0;
     });
@@ -5343,6 +5578,7 @@ function hardResetToNewGame(){
   };
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
+  state.roomDecorIntroPending = false;
   state.affection = {};
   state.unlockedEndings = [];
   state.endingFlags = {};
@@ -5730,6 +5966,61 @@ function updateMiniGameHUD(){
   miniComboEl.textContent = miniGame.combo;
 }
 
+function updateMiniGameProgress(progressValue){
+  const value = clamp(Number(progressValue || 0), 0, 1);
+  miniGame.progress = value;
+  if (miniProgressFill) miniProgressFill.style.width = `${Math.round(value * 100)}%`;
+  if (miniProgressText) miniProgressText.textContent = `${Math.round(value * 100)}%`;
+}
+
+function openMiniAbortConfirm(){
+  if (!miniGame.active || !miniAbortConfirm) return;
+  miniAbortConfirm.classList.add('show');
+}
+
+function closeMiniAbortConfirm(){
+  if (miniAbortConfirm) miniAbortConfirm.classList.remove('show');
+}
+
+function abortConcertMiniGame(){
+  if (!miniGame.active) return;
+  miniGame.aborted = true;
+  miniGame.active = false;
+  miniGame.playing = false;
+  clearInterval(miniGame.spawnTimer);
+  cancelAnimationFrame(miniGame.rafId);
+  clearMiniNotes();
+  closeMiniAbortConfirm();
+  miniGameResult.classList.remove('show');
+  miniGameLayer.classList.remove('active');
+  miniStartOverlay.classList.add('show');
+  updateMiniGameProgress(0);
+  setSeedMessage('공연을 중간에 멈췄어. 팬들이 조금 아쉬워하는 것 같아.', { idleAfterMs:SEED_IDLE_MS });
+  updateScheduleUI();
+  triggerSaveNow();
+}
+
+let roomDecorIntroTimer = null;
+function hideRoomDecorIntroHint(){
+  if (roomDecorIntroTimer) {
+    clearTimeout(roomDecorIntroTimer);
+    roomDecorIntroTimer = null;
+  }
+  if (roomDecorTabBtn) roomDecorTabBtn.classList.remove('highlight-intro');
+  if (roomDecorIntroBubble) roomDecorIntroBubble.classList.remove('show');
+  state.roomDecorIntroPending = false;
+}
+
+function maybeShowRoomDecorIntroHint(){
+  if (!state.awakened || !state.roomDecorIntroPending || !roomDecorTabBtn || !roomDecorIntroBubble) return;
+  roomDecorTabBtn.classList.add('highlight-intro');
+  roomDecorIntroBubble.classList.add('show');
+  if (roomDecorIntroTimer) clearTimeout(roomDecorIntroTimer);
+  roomDecorIntroTimer = setTimeout(() => {
+    hideRoomDecorIntroHint();
+  }, 6500);
+}
+
 function spawnMiniHitFX(lane, type){
   const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
   if (!laneEl) return;
@@ -5860,6 +6151,7 @@ function tickMiniGame(now){
   updateMiniGameHUD();
 
   if (now - miniGame.startTime >= miniGame.duration) {
+    updateMiniGameProgress(1);
     finishConcertMiniGame();
     return;
   }
@@ -5889,24 +6181,30 @@ function openConcertMiniGame(){
   miniGame.good = 0;
   miniGame.miss = 0;
   miniGame.noteSeq = 0;
+  miniGame.progress = 0;
+  miniGame.aborted = false;
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
+  closeMiniAbortConfirm();
   miniGameResult.classList.remove('show');
   miniGameLayer.classList.add('active');
   miniStartOverlay.classList.add('show');
   if (miniTalkChar) miniTalkChar.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
   setMiniTalk(miniTalkLines.ready);
   updateMiniGameHUD();
+  updateMiniGameProgress(0);
 }
 
 function beginConcertMiniGamePlay(){
   if (!miniGame.active || miniGame.playing) return;
   miniGame.playing = true;
   miniGame.startTime = performance.now();
+  closeMiniAbortConfirm();
   miniStartOverlay.classList.remove('show');
   setMiniTalk(miniTalkLines.start);
   updateMiniGameHUD();
+  updateMiniGameProgress(0);
   showMiniFeedback('START', 'cool');
 
   beginMiniGameSpawns();
@@ -5916,6 +6214,8 @@ function beginConcertMiniGamePlay(){
 function finishConcertMiniGame(){
   miniGame.active = false;
   miniGame.playing = false;
+  closeMiniAbortConfirm();
+  updateMiniGameProgress(1);
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
@@ -5969,6 +6269,7 @@ function applyConcertMiniGameRewards(){
   miniGameLayer.classList.remove('active');
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.add('show');
+  updateMiniGameProgress(0);
   updateScheduleUI();
   triggerSaveNow();
 }
@@ -6270,6 +6571,7 @@ function applyDebugEnding(index){
   if (second && base[second] < 9) base[second] = 9;
   state.stats = base;
   state.awakened = detectIdentity();
+  state.roomDecorIntroPending = true;
   addKeyToCollection(state.awakened);
   unlockEndingByName(state.awakened?.name);
   unlockSpecialEndings();
@@ -6728,6 +7030,7 @@ function resetAll(){
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false };
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
+  state.roomDecorIntroPending = false;
   state.affection = {};
   state.unlockedEndings = [];
   state.endingFlags = {};
@@ -6814,6 +7117,7 @@ function serializeGameState(){
       giftInventory: { ...(state.giftInventory || {}) },
       keyCollection: (state.keyCollection || []).map(item => deepClone(item)),
       currentKeyName: state.currentKeyName || null,
+      roomDecorIntroPending: !!state.roomDecorIntroPending,
       currentScreen: getCurrentScreenName()
     }
   };
@@ -6844,6 +7148,7 @@ function migrateSave(save){
   if (!p.giftInventory || typeof p.giftInventory !== 'object') p.giftInventory = { beanie:false, keyring:false, flower:false };
   if (!Array.isArray(p.keyCollection)) p.keyCollection = [];
   if (typeof p.currentKeyName !== 'string' && p.currentKeyName !== null) p.currentKeyName = null;
+  if (typeof p.roomDecorIntroPending !== 'boolean') p.roomDecorIntroPending = false;
 
   p.stats = {
     practice: oldStats.practice ?? 0,
@@ -6894,6 +7199,7 @@ function applySaveToState(save){
   state.giftInventory = { beanie:false, keyring:false, flower:false, ...(p.giftInventory || {}) };
   state.keyCollection = Array.isArray(p.keyCollection) ? p.keyCollection.map(item => deepClone(item)).filter(Boolean) : [];
   state.currentKeyName = p.currentKeyName ?? null;
+  state.roomDecorIntroPending = !!p.roomDecorIntroPending;
   ensureKeyCollectionShape();
   if (state.awakened) addKeyToCollection(state.awakened);
   if (!state.awakened && state.currentKeyName) {
