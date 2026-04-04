@@ -248,6 +248,9 @@ img{
 .section-title-inline .small{
   margin:0;
 }
+.section-title-inline.tab-copy{
+  margin-top:8px;
+}
 .small{
   font-size:12px;
   color:var(--sub);
@@ -3350,7 +3353,7 @@ body.ending-modal-open{
               <div class="seed-mini-title">오늘의 상태</div>
 
               <div class="seed-mini-row">
-                <span>Practice</span>
+                <span>Performance</span>
                 <div class="bar"><div class="fill practice" id="fill-practice"></div></div>
                 <strong id="val-practice">0</strong>
               </div>
@@ -3434,8 +3437,8 @@ body.ending-modal-open{
           </div>
 
           <div class="room-bottom-pane active" id="seedPaneSchedule">
-          <div class="section-title-inline">
-            <h3 class="section-title">스케줄 수행</h3>
+          <div class="section-title-inline tab-copy">
+            <h3 class="section-title">스케쥴 수행</h3>
             <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
           </div>
 
@@ -3466,6 +3469,10 @@ body.ending-modal-open{
           </div>
 
           <div class="room-bottom-pane" id="seedPaneGift">
+            <div class="section-title-inline tab-copy">
+              <h3 class="section-title">선물</h3>
+              <div class="small">KEY에게 선물을 해봅시다.</div>
+            </div>
             <div class="room-gift-grid" id="seedGiftGrid"></div>
           </div>
         </div>
@@ -3652,6 +3659,10 @@ body.ending-modal-open{
 
             <div class="room-bottom-shell">
             <div class="room-bottom-pane active" id="roomPaneSchedule">
+              <div class="section-title-inline tab-copy">
+                <h3 class="section-title">스케쥴 수행</h3>
+                <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
+              </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
@@ -3664,6 +3675,10 @@ body.ending-modal-open{
               </div>
             </div>
             <div class="room-bottom-pane" id="roomPaneGift">
+              <div class="section-title-inline tab-copy">
+                <h3 class="section-title">선물</h3>
+                <div class="small">KEY에게 선물을 해봅시다.</div>
+              </div>
               <div class="room-gift-grid" id="roomGiftGrid"></div>
             </div>
 
@@ -5649,33 +5664,17 @@ function hardResetToNewGame(){
     localStorage.removeItem('furnitureLayout');
     localStorage.removeItem('layout');
   }catch(err){}
-  state.day = 1;
-  state.gameHour = 7;
-  state.gameMinute = 0;
-  state.energy = 100;
-  state.maxEnergy = 100;
-  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0 };
-  state.awakened = null;
-  state.isActing = false;
-  state.currentStageBg = 'default';
-  state.concertEventOffered = false;
-  state.concertEventResolved = false;
-  state.roomDecor = {
-    lpPlayer:false, desk:false, birdCage:false,
-    mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false
-  };
-  state.activeRoomVisitor = null;
-  state.roomSeenFriendEvents = [];
-  state.roomDecorIntroPending = false;
-  state.affection = {};
-  state.unlockedEndings = [];
-  state.endingFlags = {};
-  state.collection = { ownedKeys:[], currentKey:null };
+
+  resetAll();
   cloudRevision = null;
-  if (typeof hideAwakenOverlay === 'function') { try{ hideAwakenOverlay(); }catch(err){} }
-  if (typeof showScreen === 'function') showScreen('schedule');
-  if (typeof updateScheduleUI === 'function') updateScheduleUI();
-  if (typeof syncSeedStageLayout === 'function') syncSeedStageLayout({ immediate:true });
+
+  try{
+    saveLocal(serializeGameState());
+  }catch(err){}
+
+  if (currentUser) {
+    uploadCloudSave(serializeGameState()).catch(err => console.error('hard reset cloud save failed', err));
+  }
 }
 
 const newGameConfirmOverlay = document.getElementById('newGameConfirmOverlay');
@@ -7163,6 +7162,14 @@ function syncRoomUI(){
 
 function resetAll(){
   clearRunningActionTimers();
+  clearRoomVisitTimers();
+  hideConcertEvent();
+  closeGiftMenus();
+  closeMiniAbortConfirm();
+  clearActionProgress();
+  hideRoomDecorIntroHint();
+  hideDecorRemovePopup();
+
   state.day = 1;
   state.gameHour = 7;
   state.gameMinute = 0;
@@ -7193,13 +7200,32 @@ function resetAll(){
   state.giftInventory = { beanie:false, keyring:false, flower:false };
   state.keyCollection = [];
   state.currentKeyName = null;
-  clearRoomVisitTimers();
+
+  state.seedPlayer = {
+    x: 80, y: 170, w: 54, h: 78,
+    baseW: 54, baseH: 78, facing: 'right'
+  };
+  state.roomPlayer = {
+    x: 100, y: 340, w: 54, h: 78,
+    baseW: 54, baseH: 78, facing: 'right'
+  };
+
   roomVisitFlow.phase = 'idle';
   roomVisitFlow.candidate = null;
+  roomDecorSelection.key = null;
 
-  clearActionProgress();
-  closeGiftMenus();
-  hideConcertEvent();
+  if (roomHint) roomHint.textContent = '방 안으로 들어왔어요.';
+  if (roomStageName) roomStageName.textContent = '각성한 KEY의 방';
+  if (roomDayBadge) roomDayBadge.textContent = 'DAY1';
+  if (roomClockBadge) roomClockBadge.textContent = '07:00';
+  if (seedDayBadge) seedDayBadge.textContent = 'DAY1';
+  if (seedClockBadge) seedClockBadge.textContent = '07:00';
+  if (roomMap) {
+    roomMap.style.background = `
+      linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
+      url("img/room_default.png") center center / 108% 108% no-repeat
+    `;
+  }
 
   awakenImg.src = imageSet.defaultLarge;
   seedPlayerImg.src = imageSet.defaultLarge;
@@ -7210,23 +7236,15 @@ function resetAll(){
   setSeedMessage(dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
   hideSeedStatus();
   setScheduleButtonsDisabled(false);
-
-  if (roomHint) roomHint.textContent = '방 안으로 들어왔어요.';
-  if (roomStageName) roomStageName.textContent = '각성한 KEY의 방';
-  if (roomDayBadge) roomDayBadge.textContent = 'DAY1';
-  if (roomClockBadge) roomClockBadge.textContent = '07:00';
-  if (roomMap) {
-    roomMap.style.background = `
-      linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)),
-      url("img/room_default.png") center center / 108% 108% no-repeat
-    `;
-  }
   renderFriendMenu();
   renderEndingMenu();
   hideRoomDoorbell();
   hideRoomOwnerBubble();
   hideRoomVisitorBubble();
   hideRoomChoicePanel();
+  renderRoomVisitor();
+  renderStageDecor();
+  renderRoomDecorButtons();
 
   syncSeedStageLayout({ immediate:true });
   placeRoomPlayerInitial();
