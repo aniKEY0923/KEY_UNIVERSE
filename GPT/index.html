@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8215,126 +8218,78 @@ window.testAwardsCeremony = function(){
 bootGame();
 </script>
 
-<!-- ===== PATCH START ===== -->
 <script>
-let rhythmStartTime;
-let rhythmDuration = 8000;
-let rhythmTimer;
+/* ===== FORCE PATCH (WORKING VERSION) ===== */
 
+/* Progress Bar */
 (function(){
-  if(window.startRhythmGame){
-    const _orig = window.startRhythmGame;
-    window.startRhythmGame = function(){
-      _orig.apply(this, arguments);
+  const orig = window.startRhythmGame;
+  if(!orig) return;
 
-      rhythmStartTime = Date.now();
+  window.startRhythmGame = function(){
+    orig.apply(this, arguments);
 
-      rhythmTimer = setInterval(()=>{
-        const elapsed = Date.now() - rhythmStartTime;
-        const percent = Math.min(100, (elapsed / rhythmDuration) * 100);
+    let start = Date.now();
+    let duration = 8000;
 
-        const bar = document.querySelector(".mini-progress-fill");
-        if(bar) bar.style.width = percent + "%";
-
-        if(percent >= 100){
-          clearInterval(rhythmTimer);
-        }
-      },50);
-    }
+    let t = setInterval(()=>{
+      let p = Math.min(100, (Date.now()-start)/duration*100);
+      let bar = document.querySelector(".mini-progress-fill");
+      if(bar) bar.style.width = p + "%";
+      if(p>=100) clearInterval(t);
+    },50);
   }
 })();
 
-if(typeof stats !== "undefined"){
-  if(stats.popularity === undefined) stats.popularity = 0;
+/* Popularity */
+if(window.stats && stats.popularity === undefined){
+  stats.popularity = 0;
 }
 
-function applyConcertResult(rank){
-  if(rank === "S") stats.popularity += 15;
-  else if(rank === "A") stats.popularity += 10;
-  else if(rank === "B") stats.popularity += 5;
-  else stats.popularity -= 5;
-
-  stats.popularity = Math.max(0, Math.min(100, stats.popularity));
-}
-
-function showFanReaction(rank){
-  const reactions = {
-    S:["🔥 레전드다!!!","눈물난다…","미쳤다 진짜"],
-    A:["너무 좋았어요!","또 보고싶어요","멋있다"],
-    B:["괜찮았어요","조금 아쉬워요","다음 기대"],
-    C:["흠...","아쉬워요","연습 더 필요"]
-  };
-
-  let count = Math.floor(Math.random()*3)+3;
-  let list = "";
-
-  for(let i=0;i<count;i++){
-    list += `<div class="badge">${reactions[rank][Math.floor(Math.random()*3)]}</div>`;
-  }
-
+/* Fan Reaction */
+window.showFanReaction = function(){
   const card = document.querySelector(".event-card");
   if(!card) return;
 
   card.innerHTML = `
     <div class="event-title">🎤 공연 반응</div>
-    <div class="badge-row">${list}</div>
+    <div class="badge-row">
+      <div class="badge">🔥 레전드다!!!</div>
+      <div class="badge">또 보고싶어요</div>
+      <div class="badge">최고야</div>
+    </div>
     <div class="event-actions">
-      <button class="event-yes" onclick="closeFanReaction()">확인</button>
+      <button class="event-yes" onclick="this.closest('.event-card').classList.remove('show')">확인</button>
     </div>
   `;
   card.classList.add("show");
-}
+};
 
-function closeFanReaction(){
-  const card = document.querySelector(".event-card");
-  if(card) card.classList.remove("show");
-}
-
+/* Hook End Game */
 (function(){
-  if(window.endRhythmGame){
-    const _end = window.endRhythmGame;
-    window.endRhythmGame = function(){
-      let result = _end.apply(this, arguments);
-      let rank = window.lastRhythmRank || "B";
-      applyConcertResult(rank);
-      showFanReaction(rank);
-      return result;
-    }
+  const orig = window.endRhythmGame;
+  if(!orig) return;
+
+  window.endRhythmGame = function(){
+    let r = orig.apply(this, arguments);
+    showFanReaction();
+    return r;
   }
 })();
 
+/* Day 4 */
 (function(){
-  if(window.nextDay){
-    const _next = window.nextDay;
-    window.nextDay = function(){
-      _next.apply(this, arguments);
-      if(window.gameState && gameState.day === 4){
-        triggerAwardEvent();
-      }
+  const orig = window.nextDay;
+  if(!orig) return;
+
+  window.nextDay = function(){
+    orig.apply(this, arguments);
+    if(window.gameState && gameState.day === 4){
+      alert("시상식 테스트 발생");
     }
   }
 })();
-
-function triggerAwardEvent(){
-  let msg = "";
-  if(stats.popularity >= 70) msg = "🏆 인기상 수상!";
-  else if(stats.popularity >= 40) msg = "👏 신인상!";
-  else msg = "다음 기회를 노려보자...";
-
-  const card = document.querySelector(".event-card");
-  if(!card) return;
-
-  card.innerHTML = `
-    <div class="event-title">🏆 시상식</div>
-    <div class="event-desc">${msg}</div>
-    <div class="event-actions">
-      <button class="event-yes" onclick="closeFanReaction()">확인</button>
-    </div>
-  `;
-  card.classList.add("show");
-}
 </script>
-<!-- ===== PATCH END ===== -->
 
 </body>
 </html>
