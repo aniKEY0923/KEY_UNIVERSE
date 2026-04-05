@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8217,51 +8214,40 @@ window.testAwardsCeremony = function(){
 
 bootGame();
 </script>
-</body>
-</html>
 
-
-
-
-<!-- ========================= -->
-<!-- PATCH: Rhythm + Fans + Popularity + Award -->
-<!-- ========================= -->
+<!-- ===== PATCH START ===== -->
 <script>
-/* ===== Rhythm Progress Real-time Override ===== */
+let rhythmStartTime;
+let rhythmDuration = 8000;
+let rhythmTimer;
+
 (function(){
   if(window.startRhythmGame){
     const _orig = window.startRhythmGame;
     window.startRhythmGame = function(){
       _orig.apply(this, arguments);
 
-      let start = Date.now();
-      let duration = 8000;
+      rhythmStartTime = Date.now();
 
-      let bar = document.querySelector(".mini-progress-fill");
+      rhythmTimer = setInterval(()=>{
+        const elapsed = Date.now() - rhythmStartTime;
+        const percent = Math.min(100, (elapsed / rhythmDuration) * 100);
 
-      let t = setInterval(()=>{
-        let p = Math.min(100, (Date.now()-start)/duration*100);
-        if(bar) bar.style.width = p + "%";
-        if(p>=100) clearInterval(t);
+        const bar = document.querySelector(".mini-progress-fill");
+        if(bar) bar.style.width = percent + "%";
+
+        if(percent >= 100){
+          clearInterval(rhythmTimer);
+        }
       },50);
     }
   }
 })();
 
-/* ===== Popularity Stat ===== */
 if(typeof stats !== "undefined"){
   if(stats.popularity === undefined) stats.popularity = 0;
 }
 
-if(typeof setFill === "function"){
-  const _origUpdate = window.updateStatsUI || function(){};
-  window.updateStatsUI = function(){
-    _origUpdate();
-    setFill("stat-popularity", stats.popularity || 0);
-  }
-}
-
-/* ===== Concert Result Hook ===== */
 function applyConcertResult(rank){
   if(rank === "S") stats.popularity += 15;
   else if(rank === "A") stats.popularity += 10;
@@ -8271,9 +8257,7 @@ function applyConcertResult(rank){
   stats.popularity = Math.max(0, Math.min(100, stats.popularity));
 }
 
-/* ===== Fan Reaction ===== */
 function showFanReaction(rank){
-
   const reactions = {
     S:["🔥 레전드다!!!","눈물난다…","미쳤다 진짜"],
     A:["너무 좋았어요!","또 보고싶어요","멋있다"],
@@ -8282,8 +8266,8 @@ function showFanReaction(rank){
   };
 
   let count = Math.floor(Math.random()*3)+3;
-
   let list = "";
+
   for(let i=0;i<count;i++){
     list += `<div class="badge">${reactions[rank][Math.floor(Math.random()*3)]}</div>`;
   }
@@ -8306,7 +8290,6 @@ function closeFanReaction(){
   if(card) card.classList.remove("show");
 }
 
-/* ===== Inject Hook into endRhythmGame if exists ===== */
 (function(){
   if(window.endRhythmGame){
     const _end = window.endRhythmGame;
@@ -8320,7 +8303,6 @@ function closeFanReaction(){
   }
 })();
 
-/* ===== Day 4 Award ===== */
 (function(){
   if(window.nextDay){
     const _next = window.nextDay;
@@ -8335,13 +8317,9 @@ function closeFanReaction(){
 
 function triggerAwardEvent(){
   let msg = "";
-  if(stats.popularity >= 70){
-    msg = "🏆 인기상 수상!";
-  }else if(stats.popularity >= 40){
-    msg = "👏 신인상!";
-  }else{
-    msg = "다음 기회를 노려보자...";
-  }
+  if(stats.popularity >= 70) msg = "🏆 인기상 수상!";
+  else if(stats.popularity >= 40) msg = "👏 신인상!";
+  else msg = "다음 기회를 노려보자...";
 
   const card = document.querySelector(".event-card");
   if(!card) return;
@@ -8356,3 +8334,7 @@ function triggerAwardEvent(){
   card.classList.add("show");
 }
 </script>
+<!-- ===== PATCH END ===== -->
+
+</body>
+</html>
