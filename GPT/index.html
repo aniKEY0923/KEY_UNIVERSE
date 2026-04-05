@@ -8817,5 +8817,182 @@ bootGame();
 })();
 </script>
 
+
+<script>
+(function(){
+  const PATCH_KEY = '__keyverse_awards_concert_fix_20260405';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  function getPerformanceValue(){
+    const stats = state?.stats || {};
+    const performance = Number(stats.performance ?? 0);
+    const practice = Number(stats.practice ?? 0);
+    return Math.max(performance, practice);
+  }
+
+  if (typeof getStatDisplayName === 'function') {
+    const _origGetStatDisplayName_fix = getStatDisplayName;
+    window.getStatDisplayName = function(key){
+      if (key === 'practice') return 'Performance';
+      if (key === 'performance') return 'Performance';
+      return _origGetStatDisplayName_fix(key);
+    };
+  }
+
+  if (typeof maybeTriggerConcertEvent === 'function') {
+    window.maybeTriggerConcertEvent = function(){
+      const performanceValue = getPerformanceValue();
+      if (performanceValue >= 10 && !state.concertEventOffered && !state.concertEventResolved) {
+        state.concertEventOffered = true;
+        if (typeof dialogues !== 'undefined') {
+          dialogues.concertReady = '퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?';
+        }
+        if (typeof setSeedMessage === 'function') {
+          setSeedMessage((typeof dialogues !== 'undefined' && dialogues.concertReady) ? dialogues.concertReady : '퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?');
+        }
+        if (typeof showConcertEvent === 'function') showConcertEvent();
+      } else if (!state.concertEventResolved) {
+        if (typeof hideConcertEvent === 'function') hideConcertEvent();
+      }
+    };
+  }
+
+  if (typeof applyConcertMiniGameRewards === 'function') {
+    const _origConcertRewardFix = applyConcertMiniGameRewards;
+    window.applyConcertMiniGameRewards = function(){
+      const beforePractice = Number(state?.stats?.practice ?? 0);
+      const beforePerformance = Number(state?.stats?.performance ?? 0);
+      const result = _origConcertRewardFix.apply(this, arguments);
+      try{
+        if (state?.stats) {
+          const afterPractice = Number(state.stats.practice ?? beforePractice);
+          const gained = Math.max(0, afterPractice - beforePractice);
+          if (state.stats.performance != null) {
+            state.stats.performance = beforePerformance + gained;
+            if (state.stats.practice != null) state.stats.practice = state.stats.performance;
+          } else if (state.stats.practice != null) {
+            state.stats.performance = state.stats.practice;
+          }
+        }
+        if (typeof updateScheduleUI === 'function') updateScheduleUI();
+        if (typeof syncRoomUI === 'function') syncRoomUI();
+      }catch(e){
+        console.error('concert reward performance sync error', e);
+      }
+      return result;
+    };
+  }
+
+  function showAwardsIntroThenOpen(){
+    const card = document.querySelector('.event-card');
+    if (!card) {
+      if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
+      return;
+    }
+
+    card.innerHTML = `
+      <div class="event-title">🏆 연말 시상식</div>
+      <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="awardsIntroConfirmBtn">결과 보기</button>
+      </div>
+    `;
+    card.classList.add('show');
+
+    const btn = document.getElementById('awardsIntroConfirmBtn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        card.classList.remove('show');
+        if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
+      }, { once:true });
+    }
+  }
+
+  if (typeof maybeTriggerAwardsCeremony === 'function') {
+    window.maybeTriggerAwardsCeremony = function(){
+      const AWARDS_DAY = 2;
+      if (typeof state === 'undefined' || !state.awards) return;
+      if (state.day < AWARDS_DAY) return;
+      if ((state.awards.lastHeldDay || 0) >= state.day) return;
+      if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+      state.awards.hasPending = true;
+      showAwardsIntroThenOpen();
+    };
+  }
+
+  if (typeof updateScheduleUI === 'function') {
+    const _origUpdateScheduleUI_fix2 = updateScheduleUI;
+    window.updateScheduleUI = function(){
+      const result = _origUpdateScheduleUI_fix2.apply(this, arguments);
+      try{
+        if (state?.stats) {
+          if (state.stats.performance == null && state.stats.practice != null) {
+            state.stats.performance = state.stats.practice;
+          }
+          if (state.stats.practice == null && state.stats.performance != null) {
+            state.stats.practice = state.stats.performance;
+          }
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  if (typeof applySaveToState === 'function') {
+    const _origApplySaveToState_fix = applySaveToState;
+    window.applySaveToState = function(save){
+      const result = _origApplySaveToState_fix.apply(this, arguments);
+      try{
+        if (state?.stats) {
+          if (state.stats.performance == null && state.stats.practice != null) state.stats.performance = state.stats.practice;
+          if (state.stats.practice == null && state.stats.performance != null) state.stats.practice = state.stats.performance;
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  if (typeof migrateSave === 'function') {
+    const _origMigrateSave_fix = migrateSave;
+    window.migrateSave = function(save){
+      const result = _origMigrateSave_fix.apply(this, arguments);
+      try{
+        if (result?.progress?.stats) {
+          const s = result.progress.stats;
+          if (s.performance == null && s.practice != null) s.performance = s.practice;
+          if (s.practice == null && s.performance != null) s.practice = s.performance;
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  if (typeof serializeGameState === 'function') {
+    const _origSerialize_fix = serializeGameState;
+    window.serializeGameState = function(){
+      const result = _origSerialize_fix.apply(this, arguments);
+      try{
+        if (result?.progress?.stats) {
+          const s = result.progress.stats;
+          if (s.performance == null && s.practice != null) s.performance = s.practice;
+          if (s.practice == null && s.performance != null) s.practice = s.performance;
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  try{
+    if (state?.stats) {
+      if (state.stats.performance == null && state.stats.practice != null) state.stats.performance = state.stats.practice;
+      if (state.stats.practice == null && state.stats.performance != null) state.stats.practice = state.stats.performance;
+    }
+  }catch(e){}
+
+  if (typeof updateScheduleUI === 'function') updateScheduleUI();
+})();
+</script>
+
 </body>
 </html>
