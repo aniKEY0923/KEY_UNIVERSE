@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8216,3 +8219,140 @@ bootGame();
 </script>
 </body>
 </html>
+
+
+
+
+<!-- ========================= -->
+<!-- PATCH: Rhythm + Fans + Popularity + Award -->
+<!-- ========================= -->
+<script>
+/* ===== Rhythm Progress Real-time Override ===== */
+(function(){
+  if(window.startRhythmGame){
+    const _orig = window.startRhythmGame;
+    window.startRhythmGame = function(){
+      _orig.apply(this, arguments);
+
+      let start = Date.now();
+      let duration = 8000;
+
+      let bar = document.querySelector(".mini-progress-fill");
+
+      let t = setInterval(()=>{
+        let p = Math.min(100, (Date.now()-start)/duration*100);
+        if(bar) bar.style.width = p + "%";
+        if(p>=100) clearInterval(t);
+      },50);
+    }
+  }
+})();
+
+/* ===== Popularity Stat ===== */
+if(typeof stats !== "undefined"){
+  if(stats.popularity === undefined) stats.popularity = 0;
+}
+
+if(typeof setFill === "function"){
+  const _origUpdate = window.updateStatsUI || function(){};
+  window.updateStatsUI = function(){
+    _origUpdate();
+    setFill("stat-popularity", stats.popularity || 0);
+  }
+}
+
+/* ===== Concert Result Hook ===== */
+function applyConcertResult(rank){
+  if(rank === "S") stats.popularity += 15;
+  else if(rank === "A") stats.popularity += 10;
+  else if(rank === "B") stats.popularity += 5;
+  else stats.popularity -= 5;
+
+  stats.popularity = Math.max(0, Math.min(100, stats.popularity));
+}
+
+/* ===== Fan Reaction ===== */
+function showFanReaction(rank){
+
+  const reactions = {
+    S:["🔥 레전드다!!!","눈물난다…","미쳤다 진짜"],
+    A:["너무 좋았어요!","또 보고싶어요","멋있다"],
+    B:["괜찮았어요","조금 아쉬워요","다음 기대"],
+    C:["흠...","아쉬워요","연습 더 필요"]
+  };
+
+  let count = Math.floor(Math.random()*3)+3;
+
+  let list = "";
+  for(let i=0;i<count;i++){
+    list += `<div class="badge">${reactions[rank][Math.floor(Math.random()*3)]}</div>`;
+  }
+
+  const card = document.querySelector(".event-card");
+  if(!card) return;
+
+  card.innerHTML = `
+    <div class="event-title">🎤 공연 반응</div>
+    <div class="badge-row">${list}</div>
+    <div class="event-actions">
+      <button class="event-yes" onclick="closeFanReaction()">확인</button>
+    </div>
+  `;
+  card.classList.add("show");
+}
+
+function closeFanReaction(){
+  const card = document.querySelector(".event-card");
+  if(card) card.classList.remove("show");
+}
+
+/* ===== Inject Hook into endRhythmGame if exists ===== */
+(function(){
+  if(window.endRhythmGame){
+    const _end = window.endRhythmGame;
+    window.endRhythmGame = function(){
+      let result = _end.apply(this, arguments);
+      let rank = window.lastRhythmRank || "B";
+      applyConcertResult(rank);
+      showFanReaction(rank);
+      return result;
+    }
+  }
+})();
+
+/* ===== Day 4 Award ===== */
+(function(){
+  if(window.nextDay){
+    const _next = window.nextDay;
+    window.nextDay = function(){
+      _next.apply(this, arguments);
+      if(window.gameState && gameState.day === 4){
+        triggerAwardEvent();
+      }
+    }
+  }
+})();
+
+function triggerAwardEvent(){
+  let msg = "";
+  if(stats.popularity >= 70){
+    msg = "🏆 인기상 수상!";
+  }else if(stats.popularity >= 40){
+    msg = "👏 신인상!";
+  }else{
+    msg = "다음 기회를 노려보자...";
+  }
+
+  const card = document.querySelector(".event-card");
+  if(!card) return;
+
+  card.innerHTML = `
+    <div class="event-title">🏆 시상식</div>
+    <div class="event-desc">${msg}</div>
+    <div class="event-actions">
+      <button class="event-yes" onclick="closeFanReaction()">확인</button>
+    </div>
+  `;
+  card.classList.add("show");
+}
+</script>
