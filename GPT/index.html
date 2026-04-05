@@ -9425,18 +9425,131 @@ bootGame();
 
 <script>
 (function(){
-  const PATCH_KEY = '__keyverse_hotfix_20260406_v2';
+  const PATCH_KEY = '__keyverse_critical_hotfix_20260406';
   if (window[PATCH_KEY]) return;
   window[PATCH_KEY] = true;
 
+  const giftReactionMap = {
+    '샐러드': '음... 지금은 이게 별로 안 당기네.',
+    '고수샐러드': '향이 너무 강해서 조금 놀랐어...',
+    '당근카레': '따뜻하고 든든해서 좋다~',
+    '두릅튀김': '조금 낯설지만 기억에 남는 맛이야.',
+    '파스타': '이건 무난하게 맛있어!',
+    '지중해풍 꽃': '꽃향기 덕분에 기분이 좋아졌어.',
+    '핑크색 털뭉치 키링': '너무 귀여워... 마음에 들어!',
+    '고양이 비니': '이거 쓰니까 기분이 확 풀려~',
+    '향초': '향이 은은해서 마음이 편해져.',
+    '폴라로이드 필름': '뭔가 소중한 순간을 남기고 싶어졌어.',
+    '장미꽃다발': '와... 정말 예쁘다. 기분이 좋아!',
+    '빈티지 마이크': '당장 무대에 오르고 싶어졌어!'
+  };
+
+  function setFreshGiftMessage(itemName, inRoom){
+    const line = giftReactionMap[itemName] || `${itemName || '선물'} 고마워!`;
+    try{
+      if (typeof cancelSeedBubbleAutoClear === 'function') cancelSeedBubbleAutoClear();
+      if (typeof cancelSeedIdleMessage === 'function') cancelSeedIdleMessage();
+    }catch(e){}
+    try{
+      if (typeof setSeedMessage === 'function') {
+        setSeedMessage(line, {
+          autoClearMs: 3200,
+          idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
+        });
+      }
+    }catch(e){}
+    try{
+      if (inRoom && typeof showRoomOwnerBubble === 'function') {
+        showRoomOwnerBubble(line);
+        setTimeout(() => { try{ hideRoomOwnerBubble(); }catch(e){} }, 2600);
+      }
+    }catch(e){}
+  }
+
+  if (typeof window.handleGift === 'function'){
+    const _origHandleGift = window.handleGift;
+    window.handleGift = function(kind, itemName, inRoom = false){
+      const result = _origHandleGift.apply(this, arguments);
+      setTimeout(() => setFreshGiftMessage(itemName, inRoom), 20);
+      return result;
+    };
+  }
+
+  function getConcertRankLocal(){
+    if (typeof miniGame === 'undefined') return 'B';
+    if (miniGame.score >= 2400 || miniGame.perfect >= 14) return 'S';
+    if (miniGame.score >= 1500 || miniGame.perfect >= 8) return 'A';
+    if (miniGame.score >= 900 || miniGame.perfect >= 4) return 'B';
+    return 'C';
+  }
+
+  function buildConcertFanLines(rank){
+    const pool = {
+      S:['🔥 레전드다!!!','오늘 무대 진짜 미쳤어!','앵콜 또 해줘요!','눈물날 정도로 좋았어'],
+      A:['너무 좋았어요!','또 보고 싶어요','오늘 무대 멋졌어!','분위기 최고였어'],
+      B:['괜찮았어요','다음 공연도 기대할게요','오늘도 즐거웠어요','조금 아쉽지만 좋았어'],
+      C:['조금 아쉬웠어','다음엔 더 잘할 수 있을 거야','오늘은 컨디션이 별로였나 봐']
+    };
+    const arr = pool[rank] || pool.B;
+    const count = Math.floor(Math.random() * 3) + 3;
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      html += `<div class="badge">${arr[Math.floor(Math.random() * arr.length)]}</div>`;
+    }
+    return html;
+  }
+
+  let concertReactionLock = false;
+  function showConcertReactionCard(){
+    if (concertReactionLock) return;
+    concertReactionLock = true;
+    const card = document.querySelector('.event-card');
+    if (!card) {
+      concertReactionLock = false;
+      return;
+    }
+    const rank = getConcertRankLocal();
+    const message = rank === 'S'
+      ? '공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!'
+      : rank === 'A'
+      ? '성공적인 공연으로 인기가 올라갔습니다!'
+      : rank === 'B'
+      ? '무난한 공연으로 인기가 조금 올라갔습니다.'
+      : '아쉬운 공연으로 인기가 조금 떨어졌습니다.';
+    const delta = rank === 'S' ? '+3' : rank === 'A' ? '+2' : rank === 'B' ? '+1' : '-1';
+
+    card.innerHTML = `
+      <div class="event-title">🎤 공연 직후 팬 반응</div>
+      <div class="event-desc">${message}</div>
+      <div class="badge-row">${buildConcertFanLines(rank)}</div>
+      <div class="badge-row"><div class="badge"><strong>인기 ${delta}</strong></div></div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="concertReactionCloseBtn">확인</button>
+      </div>
+    `;
+    card.classList.add('show');
+  }
+
+  if (typeof window.applyConcertMiniGameRewards === 'function'){
+    const _origApplyConcertMiniGameRewards = window.applyConcertMiniGameRewards;
+    window.applyConcertMiniGameRewards = function(){
+      const result = _origApplyConcertMiniGameRewards.apply(this, arguments);
+      setTimeout(() => {
+        concertReactionLock = false;
+        showConcertReactionCard();
+      }, 80);
+      return result;
+    };
+  }
+
   function pickImagePath(candidates, cb){
-    let i = 0;
+    let idx = 0;
     function tryNext(){
-      if (i >= candidates.length){
+      if (idx >= candidates.length){
         cb(candidates[0]);
         return;
       }
-      const src = candidates[i++];
+      const src = candidates[idx++];
       const img = new Image();
       img.onload = () => cb(src);
       img.onerror = tryNext;
@@ -9451,8 +9564,7 @@ bootGame();
   function getRoomMapEl(){
     return window.roomMap || document.getElementById('roomMap') || document.querySelector('.room-map');
   }
-
-  function saveStageState(){
+  function saveBgState(){
     const seedStage = getSeedStageEl();
     const roomMap = getRoomMapEl();
     return {
@@ -9461,20 +9573,14 @@ bootGame();
       roomBg: roomMap ? roomMap.style.background : ''
     };
   }
-
-  function applyStageTripBackground(kind, done){
-    const candidates = kind === 'sokcho'
-      ? ['sea.png','img/sea.png']
-      : ['hotel.png','img/hotel.png'];
-
+  function applyTripBg(kind, done){
+    const candidates = kind === 'sokcho' ? ['sea.png','img/sea.png'] : ['hotel.png','img/hotel.png'];
     pickImagePath(candidates, (src) => {
       const overlay = kind === 'sokcho'
         ? 'linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.12))'
         : 'linear-gradient(rgba(255,248,244,.10), rgba(214,205,195,.16))';
-
       const seedStage = getSeedStageEl();
       const roomMap = getRoomMapEl();
-
       if (seedStage){
         seedStage.classList.remove('bg-default','bg-default-night','bg-walk');
         seedStage.style.background = `${overlay}, url("${src}") center center / 108% 108% no-repeat`;
@@ -9482,14 +9588,12 @@ bootGame();
       if (roomMap){
         roomMap.style.background = `${overlay}, url("${src}") center center / 108% 108% no-repeat`;
       }
-      if (done) done(src);
+      if (done) done();
     });
   }
-
-  function restoreStageState(saved){
+  function restoreBgState(saved){
     const seedStage = getSeedStageEl();
     const roomMap = getRoomMapEl();
-
     if (seedStage){
       seedStage.className = saved.seedClass || seedStage.className;
       seedStage.style.background = saved.seedBg || '';
@@ -9506,20 +9610,26 @@ bootGame();
 
   function runVacation(kind){
     if (!window.state || !state.stats) return;
-    const saved = saveStageState();
-
-    applyStageTripBackground(kind, () => {
+    const saved = saveBgState();
+    applyTripBg(kind, () => {
       const line = kind === 'sokcho' ? '바다 보면서 푹 쉬었어~' : '폭신한 침대에서 푹 쉬었어~';
 
-      if (typeof setSeedMessage === 'function'){
-        try{
+      state.stats.stress = Math.max(0, (state.stats.stress || 0) - (kind === 'sokcho' ? 6 : 7));
+      state.energy = Math.max(0, Math.min(state.maxEnergy || 100, (state.energy || 0) + (kind === 'sokcho' ? 18 : 22)));
+      try{
+        if (kind === 'sokcho' && typeof applyStatDelta === 'function') applyStatDelta({ mystery: 2, scary: 1 });
+        if (kind === 'hotel' && typeof applyStatDelta === 'function') applyStatDelta({ cute: 2, social: 1 });
+      }catch(e){}
+      state.day = Number(state.day || 1) + 1;
+
+      try{
+        if (typeof setSeedMessage === 'function'){
           setSeedMessage(line, {
             autoClearMs: 2600,
             idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
           });
-        }catch(e){}
-      }
-
+        }
+      }catch(e){}
       try{
         if (typeof showRoomOwnerBubble === 'function'){
           showRoomOwnerBubble(line);
@@ -9527,53 +9637,45 @@ bootGame();
         }
       }catch(e){}
 
-      state.stats.stress = Math.max(0, (state.stats.stress || 0) - (kind === 'sokcho' ? 6 : 7));
-      state.energy = Math.max(0, Math.min(state.maxEnergy || 100, (state.energy || 0) + (kind === 'sokcho' ? 18 : 22)));
+      try{
+        const overlay = document.getElementById('burnoutOverlay');
+        if (overlay) overlay.classList.remove('show');
+        if (!state.burnout) state.burnout = {};
+        state.burnout.pending = false;
+        if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(false);
+      }catch(e){}
 
-      if (kind === 'sokcho'){
-        try{ if (typeof applyStatDelta === 'function') applyStatDelta({ mystery: 2, scary: 1 }); }catch(e){}
-      } else {
-        try{ if (typeof applyStatDelta === 'function') applyStatDelta({ cute: 2, social: 1 }); }catch(e){}
-      }
-
-      state.day = Number(state.day || 1) + 1;
-
-      try{ if (typeof closeBurnoutVacation === 'function') closeBurnoutVacation(); }catch(e){}
-      try{ if (typeof refreshExtraStatUI === 'function') refreshExtraStatUI(); }catch(e){}
       try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(e){}
       try{ if (typeof syncRoomUI === 'function') syncRoomUI(); }catch(e){}
       try{ if (typeof triggerSaveNow === 'function') triggerSaveNow(); }catch(e){}
 
       setTimeout(() => {
-        restoreStageState(saved);
+        restoreBgState(saved);
         try{ if (typeof syncRoomUI === 'function') syncRoomUI(); }catch(e){}
       }, 3000);
     });
   }
 
-  function forceConcertOpen(){
-    try{
-      if (typeof state !== 'undefined'){
-        state.concertEventResolved = true;
-        state.concertEventOffered = true;
-      }
-      try{ if (typeof hideConcertEvent === 'function') hideConcertEvent(); }catch(e){}
-      try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(e){}
-
-      if (typeof openConcertMiniGame === 'function'){
-        openConcertMiniGame();
-        return true;
-      }
-    }catch(e){
-      console.error('forceConcertOpen failed', e);
-    }
-    return false;
+  let awardsIntroOpen = false;
+  function showAwardsIntro(){
+    const card = document.querySelector('.event-card');
+    if (!card) return;
+    awardsIntroOpen = true;
+    card.innerHTML = `
+      <div class="event-title">🏆 연말 시상식</div>
+      <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
+      </div>
+    `;
+    card.classList.add('show');
   }
 
   function forceAwardsOpen(){
     try{
       const card = document.querySelector('.event-card');
       if (card) card.classList.remove('show');
+      awardsIntroOpen = false;
       if (typeof state !== 'undefined'){
         if (!state.awards) state.awards = {};
         state.awards.hasPending = false;
@@ -9584,6 +9686,27 @@ bootGame();
       }
     }catch(e){
       console.error('forceAwardsOpen failed', e);
+    }
+    return false;
+  }
+
+  function forceConcertOpen(){
+    try{
+      if (typeof state !== 'undefined'){
+        state.concertEventResolved = true;
+        state.concertEventOffered = true;
+      }
+      try{ if (typeof hideConcertEvent === 'function') hideConcertEvent(); }catch(e){}
+      try{
+        const card = document.getElementById('concertEventCard');
+        if (card) card.classList.remove('show');
+      }catch(e){}
+      if (typeof openConcertMiniGame === 'function'){
+        openConcertMiniGame();
+        return true;
+      }
+    }catch(e){
+      console.error('forceConcertOpen failed', e);
     }
     return false;
   }
@@ -9604,6 +9727,17 @@ bootGame();
       e.stopPropagation();
       e.stopImmediatePropagation();
       forceAwardsOpen();
+      return;
+    }
+
+    const giftClose = e.target.closest('#concertReactionCloseBtn');
+    if (giftClose){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      const card = document.querySelector('.event-card');
+      if (card) card.classList.remove('show');
+      concertReactionLock = false;
       return;
     }
 
@@ -9639,7 +9773,7 @@ bootGame();
         if (card) card.classList.add('show');
       }
     }catch(e){
-      console.error('maybeTriggerConcertEvent hotfix failed', e);
+      console.error('maybeTriggerConcertEvent failed', e);
     }
   };
 
@@ -9649,32 +9783,20 @@ bootGame();
       if (!state.awards) state.awards = {};
       if (Number(state.day || 1) < 2) return;
       if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
-      if (state.awards.hasPending) return;
       if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+      if (state.awards.hasPending || awardsIntroOpen) return;
 
       state.awards.hasPending = true;
-      const card = document.querySelector('.event-card');
-      if (card){
-        card.innerHTML = `
-          <div class="event-title">🏆 연말 시상식</div>
-          <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
-          <div class="event-actions">
-            <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
-          </div>
-        `;
-        card.classList.add('show');
-      } else {
-        forceAwardsOpen();
-      }
+      showAwardsIntro();
     }catch(e){
-      console.error('maybeTriggerAwardsCeremony hotfix failed', e);
+      console.error('maybeTriggerAwardsCeremony failed', e);
     }
   };
 
   if (typeof finishAction === 'function'){
-    const _origFinishActionHotfix = finishAction;
+    const _origFinishAction = finishAction;
     window.finishAction = function(type){
-      const result = _origFinishActionHotfix.apply(this, arguments);
+      const result = _origFinishAction.apply(this, arguments);
       setTimeout(() => {
         try{ window.maybeTriggerConcertEvent(); }catch(e){}
         try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
@@ -9684,9 +9806,9 @@ bootGame();
   }
 
   if (typeof nextDay === 'function'){
-    const _origNextDayHotfix = nextDay;
+    const _origNextDay = nextDay;
     window.nextDay = function(){
-      const result = _origNextDayHotfix.apply(this, arguments);
+      const result = _origNextDay.apply(this, arguments);
       setTimeout(() => {
         try{ window.maybeTriggerConcertEvent(); }catch(e){}
         try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
