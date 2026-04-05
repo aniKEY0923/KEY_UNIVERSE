@@ -8218,59 +8218,329 @@ window.testAwardsCeremony = function(){
 bootGame();
 </script>
 
+<style>
+/* ===== 2026-04-05 gift/stress/vacation/awards patch ===== */
+.burnout-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10020;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(31,25,38,.42);
+  backdrop-filter:blur(8px);
+}
+.burnout-overlay.show{ display:flex; }
+.burnout-card{
+  width:min(420px, 100%);
+  padding:22px 20px 18px;
+  border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 24px 60px rgba(0,0,0,.24);
+}
+.burnout-title{
+  margin:0 0 8px;
+  font-size:22px;
+  font-weight:950;
+  color:#5b4d42;
+}
+.burnout-desc{
+  margin:0;
+  font-size:13px;
+  line-height:1.65;
+  color:#8c7d71;
+}
+.burnout-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.burnout-btn{
+  min-height:52px;
+  padding:12px 14px;
+  border-radius:16px;
+  font-size:13px;
+  font-weight:900;
+}
+.burnout-btn.trip{
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+}
+.burnout-btn.hotel{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(120,104,87,.12);
+}
+@media (max-width:640px){
+  .burnout-actions{ grid-template-columns:1fr; }
+}
+</style>
 <script>
-/* ===== 2026-04-05 patch: concert progress + fan reaction + popularity + awards day 4 ===== */
 (function(){
-  function ensurePopularityStatRows(){
-    try{
-      if (typeof state === 'undefined' || !state.stats) return;
-      if (typeof statEls === 'undefined' || typeof roomStatEls === 'undefined') return;
+  const PATCH_KEY = '__keyverse_patch_20260405_vacation';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
 
-      if (state.stats.popularity == null) state.stats.popularity = 0;
+  function clampLocal(v, min, max){
+    if (typeof clamp === 'function') return clamp(v, min, max);
+    return Math.max(min, Math.min(max, v));
+  }
 
-      const stageWrap = document.querySelector('.seed-side-status');
-      if (stageWrap && !document.getElementById('fill-popularity')) {
-        const row = document.createElement('div');
-        row.className = 'seed-mini-row';
-        row.innerHTML = `
-          <strong>인기</strong>
-          <div class="bar"><div id="fill-popularity" class="fill social"></div></div>
-          <span id="val-popularity">0</span>
-        `;
-        stageWrap.appendChild(row);
-      }
+  function ensureStatContainers(){
+    if (typeof state === 'undefined' || !state.stats) return;
+    if (state.stats.stress == null) state.stats.stress = 0;
 
-      const roomWrap = document.querySelector('#screen-room .seed-side-status, #screen-room .room-side-status, #screen-room .card .seed-side-status');
-      if (roomWrap && !document.getElementById('room-fill-popularity')) {
-        const row = document.createElement('div');
-        row.className = 'seed-mini-row';
-        row.innerHTML = `
-          <strong>인기</strong>
-          <div class="bar"><div id="room-fill-popularity" class="fill social"></div></div>
-          <span id="room-val-popularity">0</span>
-        `;
-        roomWrap.appendChild(row);
-      }
+    if (typeof statEls !== 'undefined' && !statEls.stress) {
+      statEls.stress = { fill: null, val: null };
+    }
+    if (typeof roomStatEls !== 'undefined' && !roomStatEls.stress) {
+      roomStatEls.stress = { fill: null, val: null };
+    }
 
-      statEls.popularity = {
-        fill: document.getElementById('fill-popularity'),
-        val: document.getElementById('val-popularity')
+    const stageWrap = document.querySelector('.seed-side-status');
+    if (stageWrap && !document.getElementById('fill-stress')) {
+      const row = document.createElement('div');
+      row.className = 'seed-mini-row';
+      row.innerHTML = `
+        <strong>스트레스</strong>
+        <div class="bar"><div id="fill-stress" class="fill scary"></div></div>
+        <span id="val-stress">0</span>
+      `;
+      stageWrap.appendChild(row);
+    }
+
+    const roomWrap = document.querySelector('#screen-room .seed-side-status, #screen-room .room-side-status, #screen-room .card .seed-side-status');
+    if (roomWrap && !document.getElementById('room-fill-stress')) {
+      const row = document.createElement('div');
+      row.className = 'seed-mini-row';
+      row.innerHTML = `
+        <strong>스트레스</strong>
+        <div class="bar"><div id="room-fill-stress" class="fill scary"></div></div>
+        <span id="room-val-stress">0</span>
+      `;
+      roomWrap.appendChild(row);
+    }
+
+    if (typeof statEls !== 'undefined') {
+      statEls.stress = {
+        fill: document.getElementById('fill-stress'),
+        val: document.getElementById('val-stress')
       };
-      roomStatEls.popularity = {
-        fill: document.getElementById('room-fill-popularity'),
-        val: document.getElementById('room-val-popularity')
+    }
+    if (typeof roomStatEls !== 'undefined') {
+      roomStatEls.stress = {
+        fill: document.getElementById('room-fill-stress'),
+        val: document.getElementById('room-val-stress')
       };
-    }catch(e){
-      console.error('ensurePopularityStatRows error', e);
     }
   }
 
-  ensurePopularityStatRows();
+  function refreshStressUI(){
+    try{
+      ensureStatContainers();
+      const value = Number(state?.stats?.stress || 0);
+      const pct = `${clampLocal((value / 10) * 100, 0, 100)}%`;
+
+      const refs = [];
+      if (typeof statEls !== 'undefined' && statEls.stress) refs.push(statEls.stress);
+      if (typeof roomStatEls !== 'undefined' && roomStatEls.stress) refs.push(roomStatEls.stress);
+
+      refs.forEach(ref => {
+        if (ref?.fill) ref.fill.style.width = pct;
+        if (ref?.val) ref.val.textContent = String(value);
+      });
+    }catch(e){
+      console.error('refreshStressUI error', e);
+    }
+  }
+
+  function ensureBurnoutOverlay(){
+    if (document.getElementById('burnoutOverlay')) return;
+    const wrap = document.createElement('div');
+    wrap.id = 'burnoutOverlay';
+    wrap.className = 'burnout-overlay';
+    wrap.innerHTML = `
+      <div class="burnout-card">
+        <h3 class="burnout-title">번아웃이 온 것 같아.</h3>
+        <p class="burnout-desc">스트레스가 꽉 찼어. 잠깐 쉬고 오자. 어디로 다녀올까?</p>
+        <div class="burnout-actions">
+          <button type="button" class="burnout-btn trip" id="burnoutTripBtn">속초에 다녀온다</button>
+          <button type="button" class="burnout-btn hotel" id="burnoutHotelBtn">호캉스를 다녀온다</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+    document.getElementById('burnoutTripBtn').addEventListener('click', () => resolveBurnoutVacation('sokcho'));
+    document.getElementById('burnoutHotelBtn').addEventListener('click', () => resolveBurnoutVacation('hotel'));
+  }
+
+  function openBurnoutVacation(){
+    ensureBurnoutOverlay();
+    const overlay = document.getElementById('burnoutOverlay');
+    if (!overlay) return;
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = true;
+    overlay.classList.add('show');
+    if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(true);
+  }
+
+  function closeBurnoutVacation(){
+    const overlay = document.getElementById('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(false);
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = false;
+  }
+
+  function resolveBurnoutVacation(kind){
+    if (!state?.stats) return;
+    state.stats.stress = Math.max(0, (state.stats.stress || 0) - (kind === 'sokcho' ? 6 : 7));
+    state.energy = clampLocal((state.energy || 0) + (kind === 'sokcho' ? 18 : 22), 0, state.maxEnergy || 100);
+
+    if (kind === 'sokcho') {
+      if (typeof applyStatDelta === 'function') applyStatDelta({ mystery: 2, scary: 1 });
+      if (typeof setSeedMessage === 'function') setSeedMessage('속초 바다를 보고 왔더니 머리가 맑아졌어. Mystery +2 · Scary +1 · 스트레스 -6', { autoClearMs:5000, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000 });
+      if (typeof showRoomOwnerBubble === 'function' && typeof getCurrentScreenName === 'function' && getCurrentScreenName() === 'room') {
+        showRoomOwnerBubble('속초 바다를 보고 왔더니 머리가 맑아졌어.');
+        setTimeout(() => { try{ hideRoomOwnerBubble(); }catch(e){} }, 2800);
+      }
+    } else {
+      if (typeof applyStatDelta === 'function') applyStatDelta({ cute: 2, social: 1 });
+      if (typeof setSeedMessage === 'function') setSeedMessage('호캉스를 다녀오니 한결 여유로워졌어. Cute +2 · Social +1 · 스트레스 -7', { autoClearMs:5000, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000 });
+      if (typeof showRoomOwnerBubble === 'function' && typeof getCurrentScreenName === 'function' && getCurrentScreenName() === 'room') {
+        showRoomOwnerBubble('호캉스를 다녀오니 한결 여유로워졌어.');
+        setTimeout(() => { try{ hideRoomOwnerBubble(); }catch(e){} }, 2800);
+      }
+    }
+
+    state.day = Number(state.day || 1) + 1;
+    closeBurnoutVacation();
+    refreshStressUI();
+    if (typeof updateScheduleUI === 'function') updateScheduleUI();
+    if (typeof syncRoomUI === 'function') syncRoomUI();
+    if (typeof triggerSaveNow === 'function') triggerSaveNow();
+    if (typeof maybeTriggerAwardsCeremony === 'function') setTimeout(() => maybeTriggerAwardsCeremony(), 120);
+  }
+
+  function maybeTriggerBurnoutVacation(){
+    if (!state?.stats) return;
+    if (!state.burnout) state.burnout = {};
+    if (state.stats.stress >= 10 && !state.burnout.pending) {
+      openBurnoutVacation();
+    }
+  }
+
+  const GIFT_REACTION_EXTRAS = {
+    '샐러드': { liked:false, stress:2, message:'풀만 먹기엔 조금 아쉬운 표정이야. 스트레스 +2' },
+    '고수샐러드': { liked:false, stress:2, message:'취향이 강해서 조금 당황한 것 같아. 스트레스 +2' },
+    '당근카레': { liked:true, stats:{ cute:1 }, stress:-1, message:'든든해서 만족한 것 같아. Cute +1 · 스트레스 -1' },
+    '두릅튀김': { liked:false, stress:1, message:'조금 낯선 맛이라 긴장한 것 같아. 스트레스 +1' },
+    '파스타': { liked:true, stats:{ social:1 }, stress:-1, message:'무난하게 마음에 든 것 같아. Social +1 · 스트레스 -1' },
+    '지중해풍 꽃': { liked:true, stats:{ mystery:1 }, stress:-1, message:'향기로운 꽃에 기분이 좋아졌어. Mystery +1 · 스트레스 -1' },
+    '핑크색 털뭉치 키링': { liked:true, stats:{ cute:1, humor:1 }, stress:-1, message:'귀여운 키링을 엄청 마음에 들어 해. Cute +1 · Humor +1 · 스트레스 -1' },
+    '고양이 비니': { liked:true, stats:{ humor:1 }, stress:-1, message:'쓰자마자 표정이 풀렸어. Humor +1 · 스트레스 -1' },
+    '향초': { liked:true, stats:{ mystery:1 }, stress:-2, message:'은은한 향 덕분에 진정된 것 같아. Mystery +1 · 스트레스 -2' },
+    '폴라로이드 필름': { liked:true, stats:{ social:1 }, stress:-1, message:'기록할 생각에 들뜬 것 같아. Social +1 · 스트레스 -1' },
+    '장미꽃다발': { liked:true, stats:{ cute:1, mystery:1 }, stress:-2, message:'꽃다발을 받고 기분이 확 좋아졌어. Cute +1 · Mystery +1 · 스트레스 -2' },
+    '빈티지 마이크': { liked:true, stats:{ practice:1, social:1 }, stress:-1, message:'공연 욕심이 살아났어. Practice +1 · Social +1 · 스트레스 -1' }
+  };
+
+  function applyGiftStressAndPreference(itemName, inRoom){
+    const reaction = GIFT_REACTION_EXTRAS[itemName];
+    if (!reaction || !state?.stats) return;
+    if (state.stats.stress == null) state.stats.stress = 0;
+
+    if (reaction.stats && typeof applyStatDelta === 'function') {
+      applyStatDelta(reaction.stats);
+    }
+    if (typeof reaction.stress === 'number') {
+      state.stats.stress = clampLocal((state.stats.stress || 0) + reaction.stress, 0, 10);
+    }
+
+    refreshStressUI();
+
+    const text = reaction.message || (reaction.liked ? '마음에 든 것 같아.' : '마음에 들지 않는 것 같아.');
+    if (inRoom) {
+      if (typeof showRoomFloatFeedback === 'function') showRoomFloatFeedback(text);
+    } else if (typeof setSeedMessage === 'function') {
+      setSeedMessage(text, { autoClearMs:3500, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000 });
+    }
+
+    maybeTriggerBurnoutVacation();
+  }
+
+  if (typeof handleGift === 'function') {
+    const _origHandleGift = handleGift;
+    window.handleGift = function(kind, itemName, inRoom = false){
+      const result = _origHandleGift.apply(this, arguments);
+      try{
+        applyGiftStressAndPreference(itemName, inRoom);
+        if (typeof updateScheduleUI === 'function') updateScheduleUI();
+        if (typeof syncRoomUI === 'function') syncRoomUI();
+      }catch(e){
+        console.error('gift reaction patch error', e);
+      }
+      return result;
+    };
+  }
+
+  if (typeof finishAction === 'function') {
+    const _origFinishAction = finishAction;
+    window.finishAction = function(type){
+      const beforeStress = Number(state?.stats?.stress || 0);
+      const result = _origFinishAction.apply(this, arguments);
+      try{
+        if (state?.stats && state.stats.stress == null) state.stats.stress = beforeStress;
+
+        const stressDeltaMap = {
+          practice: 2,
+          shoot: 1,
+          exhibit: 1,
+          meeting: 1,
+          netflix: -1,
+          walk: -2,
+          bath: -3,
+          sleep: -4
+        };
+        const stressDelta = Number(stressDeltaMap[type] || 0);
+        state.stats.stress = clampLocal((state.stats.stress || 0) + stressDelta, 0, 10);
+
+        refreshStressUI();
+        maybeTriggerBurnoutVacation();
+        if (typeof updateScheduleUI === 'function') updateScheduleUI();
+        if (typeof syncRoomUI === 'function') syncRoomUI();
+      }catch(e){
+        console.error('finishAction stress patch error', e);
+      }
+      return result;
+    };
+  }
+
+  if (typeof applyConcertMiniGameRewards === 'function') {
+    const _origConcertRewards = applyConcertMiniGameRewards;
+    window.applyConcertMiniGameRewards = function(){
+      const result = _origConcertRewards.apply(this, arguments);
+      try{
+        if (state?.stats) {
+          state.stats.stress = clampLocal((state.stats.stress || 0) + 1, 0, 10);
+          refreshStressUI();
+          maybeTriggerBurnoutVacation();
+          if (typeof updateScheduleUI === 'function') updateScheduleUI();
+          if (typeof syncRoomUI === 'function') syncRoomUI();
+        }
+      }catch(e){
+        console.error('concert stress patch error', e);
+      }
+      return result;
+    };
+  }
 
   if (typeof getStatDisplayName === 'function') {
     const _origGetStatDisplayName = getStatDisplayName;
     window.getStatDisplayName = function(key){
-      if (key === 'popularity') return 'Popularity';
+      if (key === 'stress') return 'Stress';
       return _origGetStatDisplayName(key);
     };
   }
@@ -8278,9 +8548,10 @@ bootGame();
   if (typeof updateScheduleUI === 'function') {
     const _origUpdateScheduleUI = updateScheduleUI;
     window.updateScheduleUI = function(){
-      ensurePopularityStatRows();
-      if (typeof state !== 'undefined' && state.stats && state.stats.popularity == null) state.stats.popularity = 0;
-      return _origUpdateScheduleUI.apply(this, arguments);
+      const result = _origUpdateScheduleUI.apply(this, arguments);
+      ensureStatContainers();
+      refreshStressUI();
+      return result;
     };
   }
 
@@ -8288,13 +8559,8 @@ bootGame();
     const _origSyncRoomUI = syncRoomUI;
     window.syncRoomUI = function(){
       const result = _origSyncRoomUI.apply(this, arguments);
-      ensurePopularityStatRows();
-      if (typeof roomStatEls !== 'undefined' && roomStatEls.popularity?.val && typeof state !== 'undefined') {
-        roomStatEls.popularity.val.textContent = state.stats?.popularity ?? 0;
-      }
-      if (typeof roomStatEls !== 'undefined' && roomStatEls.popularity?.fill && typeof state !== 'undefined') {
-        roomStatEls.popularity.fill.style.width = `${Math.min(100, ((state.stats?.popularity ?? 0) / 10) * 100)}%`;
-      }
+      ensureStatContainers();
+      refreshStressUI();
       return result;
     };
   }
@@ -8303,9 +8569,12 @@ bootGame();
     const _origResetAll = resetAll;
     window.resetAll = function(){
       const result = _origResetAll.apply(this, arguments);
-      if (state?.stats) state.stats.popularity = 0;
-      ensurePopularityStatRows();
-      if (typeof updateScheduleUI === 'function') updateScheduleUI();
+      try{
+        if (state?.stats) state.stats.stress = 0;
+        if (!state.burnout) state.burnout = {};
+        state.burnout.pending = false;
+        refreshStressUI();
+      }catch(e){}
       return result;
     };
   }
@@ -8314,8 +8583,10 @@ bootGame();
     const _origApplySaveToState = applySaveToState;
     window.applySaveToState = function(save){
       const result = _origApplySaveToState.apply(this, arguments);
-      if (state?.stats && state.stats.popularity == null) state.stats.popularity = save?.progress?.stats?.popularity ?? 0;
-      ensurePopularityStatRows();
+      try{
+        if (state?.stats && state.stats.stress == null) state.stats.stress = save?.progress?.stats?.stress ?? 0;
+        refreshStressUI();
+      }catch(e){}
       return result;
     };
   }
@@ -8325,8 +8596,8 @@ bootGame();
     window.migrateSave = function(save){
       const result = _origMigrateSave.apply(this, arguments);
       try{
-        if (result?.progress?.stats && result.progress.stats.popularity == null) {
-          result.progress.stats.popularity = 0;
+        if (result?.progress?.stats && result.progress.stats.stress == null) {
+          result.progress.stats.stress = 0;
         }
       }catch(e){}
       return result;
@@ -8338,199 +8609,34 @@ bootGame();
     window.serializeGameState = function(){
       const result = _origSerializeGameState.apply(this, arguments);
       try{
-        if (result?.progress?.stats && result.progress.stats.popularity == null) {
-          result.progress.stats.popularity = state?.stats?.popularity ?? 0;
+        if (result?.progress?.stats && result.progress.stats.stress == null) {
+          result.progress.stats.stress = state?.stats?.stress ?? 0;
         }
       }catch(e){}
       return result;
     };
   }
 
-  function getConcertRank(){
-    if (typeof miniGame === 'undefined') return 'B';
-    if (miniGame.score >= 2400 || miniGame.perfect >= 14) return 'S';
-    if (miniGame.score >= 1500 || miniGame.perfect >= 8) return 'A';
-    if (miniGame.score >= 900 || miniGame.perfect >= 4) return 'B';
-    return 'C';
-  }
-
-  function applyConcertPopularity(rank){
-    if (!state?.stats) return;
-    if (state.stats.popularity == null) state.stats.popularity = 0;
-
-    if (rank === 'S') state.stats.popularity += 3;
-    else if (rank === 'A') state.stats.popularity += 2;
-    else if (rank === 'B') state.stats.popularity += 1;
-    else state.stats.popularity = Math.max(0, state.stats.popularity - 1);
-  }
-
-  function buildFanReaction(rank){
-    const pool = {
-      S: ['🔥 레전드다!!!', '앵콜 또 해줘요!', '오늘 진짜 최고였어요', '미쳤다… 눈물난다', '이 무대 평생 못 잊어'],
-      A: ['너무 좋았어요!', '또 보고 싶어요', '오늘 무대 멋졌어요', '분위기 진짜 좋다', '다음 공연도 기대할게요'],
-      B: ['괜찮았어요', '점점 좋아지는 것 같아요', '다음엔 더 기대할게요', '오늘도 즐거웠어요', '조금 아쉽지만 좋았어요'],
-      C: ['조금 아쉬웠어요', '다음엔 더 잘할 수 있을 거예요', '연습 더 하면 좋을 듯', '무대는 귀여웠어요', '컨디션이 안 좋았나봐요']
-    };
-    const picked = [];
-    const arr = pool[rank] || pool.B;
-    const count = Math.floor(Math.random() * 3) + 3;
-    for(let i=0;i<count;i++){
-      picked.push(arr[Math.floor(Math.random() * arr.length)]);
-    }
-    return picked;
-  }
-
-  function showConcertFanReaction(){
-    const card = document.querySelector('.event-card');
-    if (!card || typeof miniGame === 'undefined') return;
-
-    const rank = getConcertRank();
-    const reactions = buildFanReaction(rank);
-    const delta = rank === 'S' ? '+3' : rank === 'A' ? '+2' : rank === 'B' ? '+1' : '-1';
-    const message = rank === 'S'
-      ? '공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!'
-      : rank === 'A'
-      ? '성공적인 공연으로 인기가 올라갔습니다!'
-      : rank === 'B'
-      ? '무난한 공연으로 인기가 조금 올라갔습니다.'
-      : '아쉬운 공연으로 인기가 조금 떨어졌습니다.';
-
-    card.innerHTML = `
-      <div class="event-title">🎤 공연 직후 팬 반응</div>
-      <div class="event-desc">${message}</div>
-      <div class="badge-row">${reactions.map(line => `<div class="badge">${line}</div>`).join('')}</div>
-      <div class="badge-row"><div class="badge"><strong>Popularity ${delta}</strong></div></div>
-      <div class="event-actions">
-        <button class="event-yes" type="button" onclick="this.closest('.event-card').classList.remove('show')">확인</button>
-      </div>
-    `;
-    card.classList.add('show');
-  }
-
-  if (typeof tickMiniGame === 'function') {
-    window.tickMiniGame = function(now){
-      if (!miniGame.active || !miniGame.playing) return;
-
-      const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
-
-      miniGame.notes = miniGame.notes.filter(note => {
-        note.y += note.speed * 16.666;
-        note.el.style.transform = `translate(-50%, ${note.y}px)`;
-
-        if (note.y > hitLine + 52) {
-          note.el.remove();
-          miniGame.combo = 0;
-          miniGame.miss += 1;
-          showMiniFeedback('MISS', 'miss');
-          return false;
-        }
-        return true;
-      });
-
-      updateMiniGameHUD();
-
-      const elapsed = now - miniGame.startTime;
-      updateMiniGameProgress(Math.min(1, elapsed / miniGame.duration));
-
-      if (elapsed >= miniGame.duration) {
-        updateMiniGameProgress(1);
-        finishConcertMiniGame();
-        return;
-      }
-
-      miniGame.rafId = requestAnimationFrame(tickMiniGame);
-    };
-  }
-
-  if (typeof finishConcertMiniGame === 'function') {
-    const _origFinishConcertMiniGame = finishConcertMiniGame;
-    window.finishConcertMiniGame = function(){
-      const result = _origFinishConcertMiniGame.apply(this, arguments);
-      try{
-        const rank = getConcertRank();
-        applyConcertPopularity(rank);
-        if (typeof updateScheduleUI === 'function') updateScheduleUI();
-        setTimeout(showConcertFanReaction, 80);
-      }catch(e){
-        console.error('finishConcertMiniGame patch error', e);
-      }
-      return result;
-    };
-  }
-
   if (typeof maybeTriggerAwardsCeremony === 'function') {
     window.maybeTriggerAwardsCeremony = function(){
-      const AWARDS_DAY = 4;
-      if (!state.awakened) return;
+      const AWARDS_DAY = 2;
+      if (typeof state === 'undefined' || !state.awards) return;
       if (state.day < AWARDS_DAY) return;
       if ((state.awards.lastHeldDay || 0) >= state.day) return;
-      if (typeof awardsOverlay !== 'undefined' && awardsOverlay.classList.contains('show')) return;
+      if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+
       state.awards.hasPending = true;
       openAwardsCeremony();
     };
   }
 
-  if (typeof getAwardsCandidates === 'function') {
-    window.getAwardsCandidates = function(){
-      const stats = state.stats || {};
-      const statEntries = Object.entries(stats).sort((a, b) => (Number(b[1]) || 0) - (Number(a[1]) || 0));
-      const top = statEntries[0] || ['practice', 0];
-      const second = statEntries[1] || ['mystery', 0];
-      const charismaScore = (Number(stats.scary) || 0) + (Number(stats.mystery) || 0);
-      const popularityScore = Number(stats.popularity) || ((Number(stats.social) || 0) + (Number(stats.cute) || 0));
+  ensureStatContainers();
+  ensureBurnoutOverlay();
+  refreshStressUI();
 
-      return [
-        {
-          key: 'performance',
-          title: '올해의 퍼포먼스상',
-          score: Number(stats.practice) || 0,
-          won: (Number(stats.practice) || 0) >= 8,
-          reason: `Performance ${Number(stats.practice) || 0}`,
-          topStatKey: top[0],
-          topStatValue: Number(top[1]) || 0,
-          secondStatKey: second[0],
-          secondStatValue: Number(second[1]) || 0
-        },
-        {
-          key: 'mystery',
-          title: '올해의 미스터리상',
-          score: Number(stats.mystery) || 0,
-          won: (Number(stats.mystery) || 0) >= 8,
-          reason: `Mystery ${Number(stats.mystery) || 0}`,
-          topStatKey: top[0],
-          topStatValue: Number(top[1]) || 0,
-          secondStatKey: second[0],
-          secondStatValue: Number(second[1]) || 0
-        },
-        {
-          key: 'popularity',
-          title: '인기상',
-          score: popularityScore,
-          won: popularityScore >= 8,
-          reason: `Popularity ${popularityScore}`,
-          topStatKey: top[0],
-          topStatValue: Number(top[1]) || 0,
-          secondStatKey: second[0],
-          secondStatValue: Number(second[1]) || 0
-        },
-        {
-          key: 'concept',
-          title: '콘셉트상',
-          score: charismaScore,
-          won: charismaScore >= 14,
-          reason: `Scary + Mystery = ${charismaScore}`,
-          topStatKey: top[0],
-          topStatValue: Number(top[1]) || 0,
-          secondStatKey: second[0],
-          secondStatValue: Number(second[1]) || 0
-        }
-      ];
-    };
-  }
-
-  ensurePopularityStatRows();
   if (typeof updateScheduleUI === 'function') updateScheduleUI();
-  if (typeof syncRoomUI === 'function' && state?.awakened) syncRoomUI();
+  if (typeof syncRoomUI === 'function') syncRoomUI();
+  if (typeof maybeTriggerAwardsCeremony === 'function') setTimeout(() => maybeTriggerAwardsCeremony(), 150);
 })();
 </script>
 
