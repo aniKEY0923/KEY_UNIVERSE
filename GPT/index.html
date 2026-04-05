@@ -8994,5 +8994,184 @@ bootGame();
 })();
 </script>
 
+
+<script>
+(function(){
+  const PATCH_KEY = '__keyverse_force_concert_awards_20260405';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  function perfValue(){
+    const s = state?.stats || {};
+    return Math.max(Number(s.performance || 0), Number(s.practice || 0));
+  }
+
+  function syncPerformancePractice(){
+    try{
+      if (!state?.stats) return;
+      const perf = Number(state.stats.performance || 0);
+      const prac = Number(state.stats.practice || 0);
+      const v = Math.max(perf, prac);
+      state.stats.performance = v;
+      state.stats.practice = v;
+    }catch(e){}
+  }
+
+  function showAwardsIntroCard(){
+    const card = document.querySelector('.event-card');
+    if (!card) {
+      if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
+      return;
+    }
+    card.innerHTML = `
+      <div class="event-title">🏆 연말 시상식</div>
+      <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
+      </div>
+    `;
+    card.classList.add('show');
+    const btn = document.getElementById('forceAwardsOpenBtn');
+    if (btn) {
+      btn.onclick = function(){
+        card.classList.remove('show');
+        if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
+      };
+    }
+  }
+
+  window.maybeTriggerConcertEvent = function(){
+    syncPerformancePractice();
+    const v = perfValue();
+    if (v >= 10 && !state.concertEventOffered && !state.concertEventResolved) {
+      state.concertEventOffered = true;
+      if (typeof dialogues !== 'undefined') {
+        dialogues.concertReady = '퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?';
+      }
+      if (typeof setSeedMessage === 'function') {
+        setSeedMessage('퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?');
+      }
+      if (typeof showConcertEvent === 'function') {
+        showConcertEvent();
+      } else {
+        const card = document.querySelector('.event-card');
+        if (card) {
+          card.innerHTML = `
+            <div class="event-title">🎤 콘서트 개최</div>
+            <div class="event-desc">퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?</div>
+            <div class="event-actions">
+              <button class="event-yes" type="button" onclick="startConcertMiniGame && startConcertMiniGame()">예</button>
+              <button class="event-no" type="button" onclick="this.closest('.event-card').classList.remove('show')">아니오</button>
+            </div>
+          `;
+          card.classList.add('show');
+        }
+      }
+    }
+  };
+
+  window.maybeTriggerAwardsCeremony = function(){
+    if (typeof state === 'undefined') return;
+    if (!state.awards) state.awards = {};
+    if (Number(state.day || 1) < 2) return;
+    if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
+    if (state.awards.hasPending) return;
+    if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+
+    state.awards.hasPending = true;
+    showAwardsIntroCard();
+  };
+
+  if (typeof finishAction === 'function') {
+    const _origFinishActionForce = finishAction;
+    window.finishAction = function(type){
+      const r = _origFinishActionForce.apply(this, arguments);
+      try{
+        syncPerformancePractice();
+        setTimeout(() => {
+          try{ maybeTriggerConcertEvent(); }catch(e){}
+          try{ maybeTriggerAwardsCeremony(); }catch(e){}
+        }, 80);
+      }catch(e){}
+      return r;
+    };
+  }
+
+  if (typeof nextDay === 'function') {
+    const _origNextDayForce = nextDay;
+    window.nextDay = function(){
+      const r = _origNextDayForce.apply(this, arguments);
+      try{
+        syncPerformancePractice();
+        setTimeout(() => {
+          try{ maybeTriggerConcertEvent(); }catch(e){}
+          try{ maybeTriggerAwardsCeremony(); }catch(e){}
+        }, 80);
+      }catch(e){}
+      return r;
+    };
+  }
+
+  if (typeof applyConcertMiniGameRewards === 'function') {
+    const _origConcertForce = applyConcertMiniGameRewards;
+    window.applyConcertMiniGameRewards = function(){
+      const r = _origConcertForce.apply(this, arguments);
+      try{ syncPerformancePractice(); }catch(e){}
+      return r;
+    };
+  }
+
+  if (typeof applySaveToState === 'function') {
+    const _origApplySaveForce = applySaveToState;
+    window.applySaveToState = function(save){
+      const r = _origApplySaveForce.apply(this, arguments);
+      try{ syncPerformancePractice(); }catch(e){}
+      return r;
+    };
+  }
+
+  if (typeof migrateSave === 'function') {
+    const _origMigrateForce = migrateSave;
+    window.migrateSave = function(save){
+      const r = _origMigrateForce.apply(this, arguments);
+      try{
+        if (r?.progress?.stats) {
+          const s = r.progress.stats;
+          const v = Math.max(Number(s.performance || 0), Number(s.practice || 0));
+          s.performance = v;
+          s.practice = v;
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  if (typeof serializeGameState === 'function') {
+    const _origSerializeForce = serializeGameState;
+    window.serializeGameState = function(){
+      try{ syncPerformancePractice(); }catch(e){}
+      const r = _origSerializeForce.apply(this, arguments);
+      try{
+        if (r?.progress?.stats) {
+          const s = r.progress.stats;
+          const v = Math.max(Number(s.performance || 0), Number(s.practice || 0));
+          s.performance = v;
+          s.practice = v;
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  try{
+    syncPerformancePractice();
+    setTimeout(() => {
+      try{ maybeTriggerConcertEvent(); }catch(e){}
+      try{ maybeTriggerAwardsCeremony(); }catch(e){}
+    }, 200);
+  }catch(e){}
+})();
+</script>
+
 </body>
 </html>
