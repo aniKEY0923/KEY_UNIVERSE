@@ -9173,155 +9173,132 @@ bootGame();
 
 <script>
 (function(){
-  const PATCH_KEY = '__keyverse_trip_concert_awards_fix_20260406';
+  const PATCH_KEY = '__keyverse_final_fix_20260406';
   if (window[PATCH_KEY]) return;
   window[PATCH_KEY] = true;
 
-  function getMainStageEl(){ return document.querySelector('.seed-stage'); }
-  function getRoomMapEl(){ return document.querySelector('.room-map'); }
-
-  function saveStageBackgroundState(){
-    const stage = getMainStageEl();
-    const roomMap = getRoomMapEl();
+  function getSeedStage(){
+    return document.querySelector('.seed-stage');
+  }
+  function getRoomMap(){
+    return document.querySelector('.room-map');
+  }
+  function saveBgState(){
+    const seedStage = getSeedStage();
+    const roomMap = getRoomMap();
     return {
-      stageClass: stage ? stage.className : '',
-      stageBg: stage ? stage.style.background : '',
-      roomBg: roomMap ? roomMap.style.background : ''
+      stageClass: seedStage ? seedStage.className : '',
+      stageInlineBg: seedStage ? seedStage.style.background : '',
+      roomInlineBg: roomMap ? roomMap.style.background : ''
     };
   }
-
-  function applyTripBackground(kind){
-    const stage = getMainStageEl();
-    const roomMap = getRoomMapEl();
+  function applyTripBg(kind){
     const url = kind === 'sokcho' ? 'img/sea.png' : 'img/hotel.png';
     const overlay = kind === 'sokcho'
       ? 'linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.12))'
       : 'linear-gradient(rgba(255,248,244,.10), rgba(214,205,195,.16))';
-    if (stage) {
-      stage.classList.remove('bg-default','bg-default-night','bg-walk');
-      stage.style.background = `${overlay}, url("${url}") center center / 108% 108% no-repeat`;
+    const seedStage = getSeedStage();
+    const roomMap = getRoomMap();
+    if (seedStage){
+      seedStage.classList.remove('bg-default','bg-default-night','bg-walk');
+      seedStage.style.background = `${overlay}, url("${url}") center center / 108% 108% no-repeat`;
     }
-    if (roomMap) {
+    if (roomMap){
       roomMap.style.background = `${overlay}, url("${url}") center center / 108% 108% no-repeat`;
     }
   }
-
-  function restoreStageBackgroundState(saved){
-    const stage = getMainStageEl();
-    const roomMap = getRoomMapEl();
-    if (stage) {
-      stage.className = saved.stageClass || stage.className;
-      stage.style.background = saved.stageBg || '';
-      if (typeof updateSeedStageBackground === 'function' && typeof state !== 'undefined') {
-        try{ updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg); }catch(e){}
+  function restoreBgState(saved){
+    const seedStage = getSeedStage();
+    const roomMap = getRoomMap();
+    if (seedStage){
+      seedStage.className = saved.stageClass || seedStage.className;
+      seedStage.style.background = saved.stageInlineBg || '';
+      if (typeof updateSeedStageBackground === 'function' && typeof state !== 'undefined'){
+        try{
+          updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
+        }catch(e){}
       }
     }
-    if (roomMap) {
-      roomMap.style.background = saved.roomBg || '';
+    if (roomMap){
+      roomMap.style.background = saved.roomInlineBg || '';
     }
   }
 
-  if (typeof resolveBurnoutVacation === 'function') {
-    const _origResolveBurnoutVacation = resolveBurnoutVacation;
+  /* 1) burnout trip image + line + restore */
+  if (typeof window.resolveBurnoutVacation === 'function'){
+    const _origResolveBurnoutVacation = window.resolveBurnoutVacation;
     window.resolveBurnoutVacation = function(kind){
-      const saved = saveStageBackgroundState();
-      applyTripBackground(kind);
+      const saved = saveBgState();
+      applyTripBg(kind);
 
-      const line = kind === 'sokcho' ? '바다 보면서 푹 쉬었어~' : '폭신한 침대에서 푹 쉬었어~';
+      const line = kind === 'sokcho'
+        ? '바다 보면서 푹 쉬었어~'
+        : '폭신한 침대에서 푹 쉬었어~';
 
-      if (typeof setSeedMessage === 'function') {
-        setSeedMessage(line, {
-          autoClearMs: 2600,
-          idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
-        });
-      }
-      if (typeof showRoomOwnerBubble === 'function') {
-        try{
+      try{
+        if (typeof setSeedMessage === 'function'){
+          setSeedMessage(line, {
+            autoClearMs: 2600,
+            idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
+          });
+        }
+      }catch(e){}
+
+      try{
+        if (typeof showRoomOwnerBubble === 'function'){
           showRoomOwnerBubble(line);
           setTimeout(() => { try{ hideRoomOwnerBubble(); }catch(e){} }, 2600);
-        }catch(e){}
-      }
+        }
+      }catch(e){}
 
       const result = _origResolveBurnoutVacation.apply(this, arguments);
 
       setTimeout(() => {
-        restoreStageBackgroundState(saved);
-        if (typeof syncRoomUI === 'function') { try{ syncRoomUI(); }catch(e){} }
+        restoreBgState(saved);
+        try{
+          if (typeof syncRoomUI === 'function') syncRoomUI();
+        }catch(e){}
       }, 3000);
 
       return result;
     };
   }
 
-  function forceOpenConcertMiniGame(){
+  /* 2) concert accept -> actual openConcertMiniGame */
+  function forceConcertOpen(){
     try{
-      if (typeof openConcertMiniGame === 'function') {
+      if (typeof state !== 'undefined'){
         state.concertEventResolved = true;
-        if (typeof hideConcertEvent === 'function') hideConcertEvent();
-        if (typeof updateScheduleUI === 'function') updateScheduleUI();
+      }
+      if (typeof hideConcertEvent === 'function') hideConcertEvent();
+      if (typeof updateScheduleUI === 'function') updateScheduleUI();
+      if (typeof openConcertMiniGame === 'function'){
         openConcertMiniGame();
         return true;
       }
     }catch(e){
-      console.error('forceOpenConcertMiniGame error', e);
+      console.error('forceConcertOpen error', e);
     }
     return false;
   }
 
-  document.addEventListener('click', (e) => {
-    const concertBtn = e.target.closest('#forceConcertOpenBtn');
-    if (concertBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      forceOpenConcertMiniGame();
-      return;
-    }
-
-    const awardsBtn = e.target.closest('#forceAwardsOpenBtn, #awardsIntroConfirmBtn');
-    if (awardsBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const card = document.querySelector('.event-card');
-      if (card) card.classList.remove('show');
-      try{
-        if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
-      }catch(err){
-        console.error('openAwardsCeremony click fix error', err);
-      }
-      return;
-    }
-  }, true);
-})();
-</script>
-
-<script>
-(function(){
-  const PATCH_KEY2 = '__keyverse_trip_concert_awards_fix_20260406_b';
-  if (window[PATCH_KEY2]) return;
-  window[PATCH_KEY2] = true;
-
-  if (typeof showConcertEvent === 'function') {
-    const _origShowConcertEvent = showConcertEvent;
+  if (typeof window.showConcertEvent === 'function'){
+    const _origShowConcertEvent = window.showConcertEvent;
     window.showConcertEvent = function(){
       const result = _origShowConcertEvent.apply(this, arguments);
       try{
-        if (typeof concertYesBtn !== 'undefined' && concertYesBtn) {
-          const clone = concertYesBtn.cloneNode(true);
-          concertYesBtn.parentNode.replaceChild(clone, concertYesBtn);
-          window.concertYesBtn = clone;
-          clone.addEventListener('click', function(ev){
+        if (typeof concertYesBtn !== 'undefined' && concertYesBtn){
+          const newBtn = concertYesBtn.cloneNode(true);
+          concertYesBtn.parentNode.replaceChild(newBtn, concertYesBtn);
+          window.concertYesBtn = newBtn;
+          newBtn.addEventListener('click', function(ev){
             ev.preventDefault();
             ev.stopPropagation();
-            if (typeof openConcertMiniGame === 'function') {
-              state.concertEventResolved = true;
-              if (typeof hideConcertEvent === 'function') hideConcertEvent();
-              if (typeof updateScheduleUI === 'function') updateScheduleUI();
-              openConcertMiniGame();
-            }
+            forceConcertOpen();
           });
         }
       }catch(e){
-        console.error('showConcertEvent button patch error', e);
+        console.error('showConcertEvent patch error', e);
       }
       return result;
     };
@@ -9330,32 +9307,40 @@ bootGame();
   window.maybeTriggerConcertEvent = function(){
     try{
       const s = state?.stats || {};
-      const v = Math.max(Number(s.performance || 0), Number(s.practice || 0));
-      if (v >= 10 && !state.concertEventOffered && !state.concertEventResolved) {
+      const performanceValue = Math.max(Number(s.performance || 0), Number(s.practice || 0));
+      if (performanceValue >= 10 && !state.concertEventOffered && !state.concertEventResolved){
         state.concertEventOffered = true;
-        if (typeof dialogues !== 'undefined') dialogues.concertReady = '퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?';
-        if (typeof setSeedMessage === 'function') setSeedMessage('퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?');
-        if (typeof showConcertEvent === 'function') {
-          showConcertEvent();
-        } else {
-          const card = document.querySelector('.event-card');
-          if (card) {
-            card.innerHTML = `
-              <div class="event-title">🎤 콘서트 개최</div>
-              <div class="event-desc">퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?</div>
-              <div class="event-actions">
-                <button class="event-yes" type="button" id="forceConcertOpenBtn">예</button>
-                <button class="event-no" type="button" onclick="this.closest('.event-card').classList.remove('show')">아니오</button>
-              </div>
-            `;
-            card.classList.add('show');
-          }
+        if (typeof dialogues !== 'undefined'){
+          dialogues.concertReady = '퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?';
         }
+        if (typeof setSeedMessage === 'function'){
+          setSeedMessage('퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?');
+        }
+        if (typeof showConcertEvent === 'function'){
+          showConcertEvent();
+        }
+      } else if (!state.concertEventResolved) {
+        if (typeof hideConcertEvent === 'function') hideConcertEvent();
       }
     }catch(e){
-      console.error('maybeTriggerConcertEvent fix error', e);
+      console.error('maybeTriggerConcertEvent final error', e);
     }
   };
+
+  /* 3) awards intro -> actual openAwardsCeremony */
+  function forceAwardsOpen(){
+    try{
+      const card = document.querySelector('.event-card');
+      if (card) card.classList.remove('show');
+      if (typeof openAwardsCeremony === 'function'){
+        openAwardsCeremony();
+        return true;
+      }
+    }catch(e){
+      console.error('forceAwardsOpen error', e);
+    }
+    return false;
+  }
 
   window.maybeTriggerAwardsCeremony = function(){
     try{
@@ -9363,55 +9348,76 @@ bootGame();
       if (!state.awards) state.awards = {};
       if (Number(state.day || 1) < 2) return;
       if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
-      if (state.awards.hasPending) return;
       if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+      if (state.awards.hasPending) return;
 
       state.awards.hasPending = true;
+
       const card = document.querySelector('.event-card');
-      if (card) {
-        card.innerHTML = `
-          <div class="event-title">🏆 연말 시상식</div>
-          <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
-          <div class="event-actions">
-            <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
-          </div>
-        `;
-        card.classList.add('show');
-      } else if (typeof openAwardsCeremony === 'function') {
-        openAwardsCeremony();
+      if (!card){
+        forceAwardsOpen();
+        return;
       }
+
+      card.innerHTML = `
+        <div class="event-title">🏆 연말 시상식</div>
+        <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
+        <div class="event-actions">
+          <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
+        </div>
+      `;
+      card.classList.add('show');
     }catch(e){
-      console.error('maybeTriggerAwardsCeremony fix error', e);
+      console.error('maybeTriggerAwardsCeremony final error', e);
     }
   };
 
-  if (typeof finishAction === 'function') {
-    const _origFinishActionFinalFix = finishAction;
+  /* universal capture for dynamically injected buttons */
+  document.addEventListener('click', function(e){
+    const concertBtn = e.target.closest('#forceConcertOpenBtn');
+    if (concertBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      forceConcertOpen();
+      return;
+    }
+
+    const awardsBtn = e.target.closest('#forceAwardsOpenBtn, #awardsIntroConfirmBtn');
+    if (awardsBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      forceAwardsOpen();
+      return;
+    }
+  }, true);
+
+  if (typeof finishAction === 'function'){
+    const _origFinishAction = finishAction;
     window.finishAction = function(type){
-      const r = _origFinishActionFinalFix.apply(this, arguments);
+      const result = _origFinishAction.apply(this, arguments);
       setTimeout(() => {
-        try{ maybeTriggerConcertEvent(); }catch(e){}
-        try{ maybeTriggerAwardsCeremony(); }catch(e){}
-      }, 100);
-      return r;
+        try{ window.maybeTriggerConcertEvent(); }catch(e){}
+        try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
+      }, 120);
+      return result;
     };
   }
 
-  if (typeof nextDay === 'function') {
-    const _origNextDayFinalFix = nextDay;
+  if (typeof nextDay === 'function'){
+    const _origNextDay = nextDay;
     window.nextDay = function(){
-      const r = _origNextDayFinalFix.apply(this, arguments);
+      const result = _origNextDay.apply(this, arguments);
       setTimeout(() => {
-        try{ maybeTriggerConcertEvent(); }catch(e){}
-        try{ maybeTriggerAwardsCeremony(); }catch(e){}
-      }, 100);
-      return r;
+        try{ window.maybeTriggerConcertEvent(); }catch(e){}
+        try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
+      }, 120);
+      return result;
     };
   }
 
   setTimeout(() => {
-    try{ maybeTriggerConcertEvent(); }catch(e){}
-    try{ maybeTriggerAwardsCeremony(); }catch(e){}
+    try{ window.maybeTriggerConcertEvent(); }catch(e){}
+    try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
   }, 250);
 })();
 </script>
