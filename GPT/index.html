@@ -9422,5 +9422,285 @@ bootGame();
 })();
 </script>
 
+
+<script>
+(function(){
+  const PATCH_KEY = '__keyverse_hotfix_20260406_v2';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  function pickImagePath(candidates, cb){
+    let i = 0;
+    function tryNext(){
+      if (i >= candidates.length){
+        cb(candidates[0]);
+        return;
+      }
+      const src = candidates[i++];
+      const img = new Image();
+      img.onload = () => cb(src);
+      img.onerror = tryNext;
+      img.src = src;
+    }
+    tryNext();
+  }
+
+  function getSeedStageEl(){
+    return window.seedStage || document.getElementById('seedStage') || document.querySelector('.seed-stage');
+  }
+  function getRoomMapEl(){
+    return window.roomMap || document.getElementById('roomMap') || document.querySelector('.room-map');
+  }
+
+  function saveStageState(){
+    const seedStage = getSeedStageEl();
+    const roomMap = getRoomMapEl();
+    return {
+      seedClass: seedStage ? seedStage.className : '',
+      seedBg: seedStage ? seedStage.style.background : '',
+      roomBg: roomMap ? roomMap.style.background : ''
+    };
+  }
+
+  function applyStageTripBackground(kind, done){
+    const candidates = kind === 'sokcho'
+      ? ['sea.png','img/sea.png']
+      : ['hotel.png','img/hotel.png'];
+
+    pickImagePath(candidates, (src) => {
+      const overlay = kind === 'sokcho'
+        ? 'linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.12))'
+        : 'linear-gradient(rgba(255,248,244,.10), rgba(214,205,195,.16))';
+
+      const seedStage = getSeedStageEl();
+      const roomMap = getRoomMapEl();
+
+      if (seedStage){
+        seedStage.classList.remove('bg-default','bg-default-night','bg-walk');
+        seedStage.style.background = `${overlay}, url("${src}") center center / 108% 108% no-repeat`;
+      }
+      if (roomMap){
+        roomMap.style.background = `${overlay}, url("${src}") center center / 108% 108% no-repeat`;
+      }
+      if (done) done(src);
+    });
+  }
+
+  function restoreStageState(saved){
+    const seedStage = getSeedStageEl();
+    const roomMap = getRoomMapEl();
+
+    if (seedStage){
+      seedStage.className = saved.seedClass || seedStage.className;
+      seedStage.style.background = saved.seedBg || '';
+      try{
+        if (typeof updateSeedStageBackground === 'function' && typeof state !== 'undefined'){
+          updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
+        }
+      }catch(e){}
+    }
+    if (roomMap){
+      roomMap.style.background = saved.roomBg || '';
+    }
+  }
+
+  function runVacation(kind){
+    if (!window.state || !state.stats) return;
+    const saved = saveStageState();
+
+    applyStageTripBackground(kind, () => {
+      const line = kind === 'sokcho' ? '바다 보면서 푹 쉬었어~' : '폭신한 침대에서 푹 쉬었어~';
+
+      if (typeof setSeedMessage === 'function'){
+        try{
+          setSeedMessage(line, {
+            autoClearMs: 2600,
+            idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
+          });
+        }catch(e){}
+      }
+
+      try{
+        if (typeof showRoomOwnerBubble === 'function'){
+          showRoomOwnerBubble(line);
+          setTimeout(() => { try{ hideRoomOwnerBubble(); }catch(e){} }, 2600);
+        }
+      }catch(e){}
+
+      state.stats.stress = Math.max(0, (state.stats.stress || 0) - (kind === 'sokcho' ? 6 : 7));
+      state.energy = Math.max(0, Math.min(state.maxEnergy || 100, (state.energy || 0) + (kind === 'sokcho' ? 18 : 22)));
+
+      if (kind === 'sokcho'){
+        try{ if (typeof applyStatDelta === 'function') applyStatDelta({ mystery: 2, scary: 1 }); }catch(e){}
+      } else {
+        try{ if (typeof applyStatDelta === 'function') applyStatDelta({ cute: 2, social: 1 }); }catch(e){}
+      }
+
+      state.day = Number(state.day || 1) + 1;
+
+      try{ if (typeof closeBurnoutVacation === 'function') closeBurnoutVacation(); }catch(e){}
+      try{ if (typeof refreshExtraStatUI === 'function') refreshExtraStatUI(); }catch(e){}
+      try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(e){}
+      try{ if (typeof syncRoomUI === 'function') syncRoomUI(); }catch(e){}
+      try{ if (typeof triggerSaveNow === 'function') triggerSaveNow(); }catch(e){}
+
+      setTimeout(() => {
+        restoreStageState(saved);
+        try{ if (typeof syncRoomUI === 'function') syncRoomUI(); }catch(e){}
+      }, 3000);
+    });
+  }
+
+  function forceConcertOpen(){
+    try{
+      if (typeof state !== 'undefined'){
+        state.concertEventResolved = true;
+        state.concertEventOffered = true;
+      }
+      try{ if (typeof hideConcertEvent === 'function') hideConcertEvent(); }catch(e){}
+      try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(e){}
+
+      if (typeof openConcertMiniGame === 'function'){
+        openConcertMiniGame();
+        return true;
+      }
+    }catch(e){
+      console.error('forceConcertOpen failed', e);
+    }
+    return false;
+  }
+
+  function forceAwardsOpen(){
+    try{
+      const card = document.querySelector('.event-card');
+      if (card) card.classList.remove('show');
+      if (typeof state !== 'undefined'){
+        if (!state.awards) state.awards = {};
+        state.awards.hasPending = false;
+      }
+      if (typeof openAwardsCeremony === 'function'){
+        openAwardsCeremony();
+        return true;
+      }
+    }catch(e){
+      console.error('forceAwardsOpen failed', e);
+    }
+    return false;
+  }
+
+  document.addEventListener('click', function(e){
+    const concertYes = e.target.closest('#concertYesBtn, #forceConcertOpenBtn');
+    if (concertYes){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      forceConcertOpen();
+      return;
+    }
+
+    const awardsYes = e.target.closest('#forceAwardsOpenBtn, #awardsIntroConfirmBtn');
+    if (awardsYes){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      forceAwardsOpen();
+      return;
+    }
+
+    const sokchoBtn = e.target.closest('#burnoutTripBtn');
+    if (sokchoBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      runVacation('sokcho');
+      return;
+    }
+
+    const hotelBtn = e.target.closest('#burnoutHotelBtn');
+    if (hotelBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      runVacation('hotel');
+      return;
+    }
+  }, true);
+
+  window.maybeTriggerConcertEvent = function(){
+    try{
+      const s = state?.stats || {};
+      const performanceValue = Math.max(Number(s.performance || 0), Number(s.practice || 0));
+      if (performanceValue >= 10 && !state.concertEventResolved){
+        state.concertEventOffered = true;
+        if (typeof setSeedMessage === 'function'){
+          setSeedMessage('퍼포먼스가 가득 찼어요. 지금 바로 무대에 올라가 볼까요?');
+        }
+        const card = document.getElementById('concertEventCard') || document.querySelector('#concertEventCard');
+        if (card) card.classList.add('show');
+      }
+    }catch(e){
+      console.error('maybeTriggerConcertEvent hotfix failed', e);
+    }
+  };
+
+  window.maybeTriggerAwardsCeremony = function(){
+    try{
+      if (typeof state === 'undefined') return;
+      if (!state.awards) state.awards = {};
+      if (Number(state.day || 1) < 2) return;
+      if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
+      if (state.awards.hasPending) return;
+      if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+
+      state.awards.hasPending = true;
+      const card = document.querySelector('.event-card');
+      if (card){
+        card.innerHTML = `
+          <div class="event-title">🏆 연말 시상식</div>
+          <div class="event-desc">올해 시상식을 진행한다. 어떤 결과가 기다리고 있을까?</div>
+          <div class="event-actions">
+            <button class="event-yes" type="button" id="forceAwardsOpenBtn">결과 보기</button>
+          </div>
+        `;
+        card.classList.add('show');
+      } else {
+        forceAwardsOpen();
+      }
+    }catch(e){
+      console.error('maybeTriggerAwardsCeremony hotfix failed', e);
+    }
+  };
+
+  if (typeof finishAction === 'function'){
+    const _origFinishActionHotfix = finishAction;
+    window.finishAction = function(type){
+      const result = _origFinishActionHotfix.apply(this, arguments);
+      setTimeout(() => {
+        try{ window.maybeTriggerConcertEvent(); }catch(e){}
+        try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
+      }, 120);
+      return result;
+    };
+  }
+
+  if (typeof nextDay === 'function'){
+    const _origNextDayHotfix = nextDay;
+    window.nextDay = function(){
+      const result = _origNextDayHotfix.apply(this, arguments);
+      setTimeout(() => {
+        try{ window.maybeTriggerConcertEvent(); }catch(e){}
+        try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
+      }, 120);
+      return result;
+    };
+  }
+
+  setTimeout(() => {
+    try{ window.maybeTriggerConcertEvent(); }catch(e){}
+    try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
+  }, 250);
+})();
+</script>
+
 </body>
 </html>
