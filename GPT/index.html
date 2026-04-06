@@ -2278,26 +2278,52 @@ img{
 }
 
 .room-bottom-card{
+  position:relative;
   overflow:hidden;
 }
 .room-bottom-tabs{
+  position:relative;
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px;
   margin-bottom:12px;
+  padding-bottom:0;
+}
+.room-bottom-tabs::after{
+  content:"";
+  position:absolute;
+  left:-16px;
+  right:-16px;
+  bottom:0;
+  height:1px;
+  background:rgba(120,104,87,.12);
+  z-index:0;
 }
 .room-bottom-tab{
+  position:relative;
+  z-index:1;
   min-height:42px;
   padding:10px 8px;
-  border-radius:14px;
+  border-radius:14px 14px 0 0;
   background:rgba(255,255,255,.78);
   border:1px solid rgba(120,104,87,.12);
+  border-bottom-color:transparent;
   font-size:12px;
   font-weight:900;
+  margin-bottom:-1px;
 }
 .room-bottom-tab.active{
   background:linear-gradient(135deg,var(--pink),var(--violet));
   color:#4f4250;
+}
+.room-bottom-tab.active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-1px;
+  height:2px;
+  background:linear-gradient(135deg,var(--pink),var(--violet));
 }
 .room-bottom-pane{ display:none; }
 .room-bottom-pane.active{ display:block; }
@@ -2612,6 +2638,7 @@ body.resizing .seed-awaken-anchor{
     min-height:38px;
     font-size:11px;
     padding:8px 6px;
+    border-radius:12px 12px 0 0;
   }
   .decor-btn,
   .room-gift-btn{
@@ -3601,7 +3628,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 v7] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">[임시 안내 v8] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
     </div>
 
     <div class="main">
@@ -3698,7 +3725,7 @@ body.ending-modal-open{
           <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">[임시 안내 v7] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+            <div class="small">[임시 안내 v8] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3916,7 +3943,7 @@ body.ending-modal-open{
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="section-title-inline room-pane-heading schedule-pane-heading">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">[임시 안내 v7] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+                <div class="small">[임시 안내 v8] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -9976,7 +10003,7 @@ bootGame();
     const subline = document.querySelector('.schedule-subline');
     if (loginBtn) loginBtn.textContent = 'Google로그인';
     if (saveBtn) saveBtn.textContent = '저장';
-    if (subline) subline.textContent = '[임시 안내 v7] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+    if (subline) subline.textContent = '[임시 안내 v8] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn && resetBtn.parentElement){
       resetBtn.remove();
@@ -11272,7 +11299,7 @@ bootGame();
   if (window[TAG]) return;
   window[TAG] = true;
 
-  const NOTICE = '[임시 안내 v7] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+  const NOTICE = '[임시 안내 v8] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
 
   function $(id){ return document.getElementById(id); }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -11686,6 +11713,74 @@ bootGame();
     bindBurnoutButtons();
     patchNewGameReset();
   }, 1000);
+})();
+</script>
+
+
+<script>
+/* ===== HOTFIX QA PATCH V8 ===== */
+(function(){
+  const TAG = 'KEYVERSE_QA_PATCH_V8';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  function $(id){ return document.getElementById(id); }
+
+  // Re-add / normalize awards list if prior patch removed or hid it.
+  const DEFAULT_AWARDS = [
+    { name:'신인상', desc:'데뷔 후 첫 큰 주목을 받는 상.' },
+    { name:'퍼포먼스상', desc:'무대 장악력과 완성도가 뛰어난 KEY에게 수여.' },
+    { name:'콘셉트상', desc:'독보적인 세계관과 캐릭터성이 빛난 KEY에게 수여.' },
+    { name:'인기상', desc:'팬들의 사랑을 가장 많이 받은 KEY에게 수여.' },
+    { name:'베스트 스타일상', desc:'무대·비주얼·분위기 조합이 돋보인 KEY에게 수여.' },
+    { name:'올해의 KEY', desc:'한 해를 대표할 정도로 강렬했던 KEY에게 수여.' }
+  ];
+
+  if (!window.AWARD_LIST || !Array.isArray(window.AWARD_LIST) || !window.AWARD_LIST.length) {
+    window.AWARD_LIST = DEFAULT_AWARDS;
+  }
+
+  if (typeof window.openYearEndAwards !== 'function') {
+    window.openYearEndAwards = function(){
+      const card = $('concertEventCard') || document.querySelector('.event-card');
+      if (!card) return;
+      const items = (window.AWARD_LIST || DEFAULT_AWARDS).map(item =>
+        `<div class="ending-item"><strong>${item.name}</strong><span>${item.desc}</span></div>`
+      ).join('');
+      card.innerHTML = `
+        <div class="event-title">🏆 연말 시상식</div>
+        <div class="event-desc">한 해 동안 쌓아온 결과를 바탕으로 시상식 후보와 수상 가능 항목을 확인할 수 있어.</div>
+        <div class="ending-grid">${items}</div>
+        <div class="event-actions">
+          <button class="event-yes" type="button" id="qaAwardsCloseBtn">확인</button>
+        </div>
+      `;
+      card.classList.add('show');
+      const btn = $('qaAwardsCloseBtn');
+      if (btn) btn.onclick = () => card.classList.remove('show');
+    };
+  }
+
+  // If a year-end awards button exists, bind it.
+  const bindAwardsBtn = () => {
+    const candidates = [
+      $('yearEndAwardsBtn'),
+      $('awardShowBtn'),
+      document.querySelector('[data-action="year-end-awards"]'),
+      document.querySelector('[data-action="awards"]')
+    ].filter(Boolean);
+    candidates.forEach(btn => {
+      if (btn.dataset.qaAwardsBound === '1') return;
+      btn.dataset.qaAwardsBound = '1';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.openYearEndAwards();
+      }, true);
+    });
+  };
+
+  bindAwardsBtn();
+  setInterval(bindAwardsBtn, 1200);
 })();
 </script>
 
