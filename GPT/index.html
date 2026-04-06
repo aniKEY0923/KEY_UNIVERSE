@@ -10149,38 +10149,131 @@ bootGame();
   function resolveBurnoutVacationHotfix(kind){
     if (!window.state?.stats) return;
     const isSokcho = kind === 'sokcho';
-    state.stats.stress = Math.max(0, Number(state.stats.stress || 0) - (isSokcho ? 6 : 7));
-    state.energy = clampHotfix(Number(state.energy || 0) + (isSokcho ? 18 : 22), 0, Number(state.maxEnergy || 100));
-    try{
-      if (typeof window.applyStatDelta === 'function') {
-        window.applyStatDelta(isSokcho ? { mystery:2, scary:1 } : { cute:2, social:1 });
-      }
-    }catch(err){
-      console.error(err);
-    }
-    const line = isSokcho
-      ? '속초에 다녀오며 푹 쉬었어. Mystery +2 · Scary +1 · Stress -6'
-      : '호캉스로 기분 전환했어. Cute +2 · Social +1 · Stress -7';
-    try{
-      if (typeof window.setSeedMessage === 'function') {
-        window.setSeedMessage(line, { autoClearMs: 4200, idleAfterMs: window.SEED_IDLE_MS || 180000 });
-      }
-      if (typeof window.showRoomOwnerBubble === 'function' && typeof window.getCurrentScreenName === 'function' && window.getCurrentScreenName() === 'room') {
-        window.showRoomOwnerBubble(line);
-        setTimeout(() => { try{ window.hideRoomOwnerBubble && window.hideRoomOwnerBubble(); }catch(_){} }, 2800);
-      }
-    }catch(err){
-      console.error(err);
-    }
     const overlay = document.getElementById('burnoutOverlay');
     if (overlay) overlay.classList.remove('show');
     if (!state.burnout) state.burnout = {};
     state.burnout.pending = false;
     try{ window.setScheduleButtonsDisabled && window.setScheduleButtonsDisabled(false); }catch(_){}
     closeAnyEventCard();
-    try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
-    try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
-    try{ window.triggerSaveNow && window.triggerSaveNow(); }catch(_){}
+
+    const seedStageEl = window.seedStage || document.getElementById('seedStage') || document.querySelector('.seed-stage');
+    const roomMapEl = window.roomMap || document.getElementById('roomMap') || document.querySelector('.room-map');
+    const savedSeedClass = seedStageEl ? seedStageEl.className : '';
+    const savedSeedBg = seedStageEl ? seedStageEl.style.background : '';
+    const savedRoomBg = roomMapEl ? roomMapEl.style.background : '';
+
+    const bgCandidates = isSokcho ? ['sea.png','img/sea.png'] : ['hotel.png','img/hotel.png'];
+    const travelLine = isSokcho ? '즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.' : '즐거웠다~ 푹 쉬고 오니 기분이 한결 가벼워졌어.';
+    const bonusText = isSokcho ? 'Mystery +2 · Scary +1 · Stress -6' : 'Cute +2 · Social +1 · Stress -7';
+    const statsDelta = isSokcho ? { mystery:2, scary:1 } : { cute:2, social:1 };
+    const stressCut = isSokcho ? 6 : 7;
+    const energyGain = isSokcho ? 18 : 22;
+
+    function pickImage(candidates, done){
+      let idx = 0;
+      function next(){
+        if (idx >= candidates.length){
+          done(candidates[candidates.length - 1]);
+          return;
+        }
+        const src = candidates[idx++];
+        const img = new Image();
+        img.onload = () => done(src);
+        img.onerror = next;
+        img.src = src;
+      }
+      next();
+    }
+
+    function applyTripBackground(src){
+      const overlayCss = isSokcho
+        ? 'linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.12))'
+        : 'linear-gradient(rgba(255,248,244,.10), rgba(214,205,195,.16))';
+      if (seedStageEl){
+        seedStageEl.classList.remove('bg-default','bg-default-night','bg-walk');
+        seedStageEl.style.background = `${overlayCss}, url("${src}") center center / 108% 108% no-repeat`;
+      }
+      if (roomMapEl){
+        roomMapEl.style.background = `${overlayCss}, url("${src}") center center / 108% 108% no-repeat`;
+      }
+    }
+
+    function restoreTripBackground(){
+      if (seedStageEl){
+        seedStageEl.className = savedSeedClass || seedStageEl.className;
+        seedStageEl.style.background = savedSeedBg || '';
+        try{
+          if (typeof window.updateSeedStageBackground === 'function'){
+            window.updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
+          }
+        }catch(_){}
+      }
+      if (roomMapEl){
+        roomMapEl.style.background = savedRoomBg || '';
+      }
+    }
+
+    pickImage(bgCandidates, function(src){
+      applyTripBackground(src);
+
+      setTimeout(() => {
+        try{
+          if (typeof window.applyStatDelta === 'function') {
+            window.applyStatDelta(statsDelta);
+          } else {
+            Object.entries(statsDelta).forEach(([k,v]) => {
+              state.stats[k] = Math.max(0, Math.min(100, Number(state.stats[k] || 0) + Number(v || 0)));
+            });
+          }
+        }catch(err){
+          console.error(err);
+        }
+
+        state.stats.stress = Math.max(0, Number(state.stats.stress || 0) - stressCut);
+        state.energy = clampHotfix(Number(state.energy || 0) + energyGain, 0, Number(state.maxEnergy || 100));
+        state.day = Number(state.day || 1) + 1;
+
+        try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
+        try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
+
+        setTimeout(() => {
+          restoreTripBackground();
+
+          try{
+            if (typeof window.setSeedMessage === 'function') {
+              window.setSeedMessage(travelLine, { autoClearMs: 4200, idleAfterMs: window.SEED_IDLE_MS || 180000 });
+            }
+            if (typeof setDirectSeedBubble === 'function') {
+              setDirectSeedBubble(travelLine);
+            }
+          }catch(err){
+            console.error(err);
+          }
+
+          try{
+            if (typeof window.showRoomOwnerBubble === 'function' && typeof window.getCurrentScreenName === 'function' && window.getCurrentScreenName() === 'room') {
+              window.showRoomOwnerBubble(travelLine);
+              setTimeout(() => { try{ window.hideRoomOwnerBubble && window.hideRoomOwnerBubble(); }catch(_){} }, 2800);
+            }
+          }catch(err){
+            console.error(err);
+          }
+
+          try{
+            if (typeof showStageStatFloat === 'function') {
+              if (window.seedStage || document.querySelector('.seed-stage')) showStageStatFloat(window.seedStage || document.querySelector('.seed-stage'), bonusText);
+              if (window.roomScene) showStageStatFloat(window.roomScene, bonusText);
+            }
+          }catch(err){
+            console.error(err);
+          }
+
+          try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
+          try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
+          try{ window.triggerSaveNow && window.triggerSaveNow(); }catch(_){}
+        }, 900);
+      }, 900);
+    });
   }
 
   window.resolveBurnoutVacation = resolveBurnoutVacationHotfix;
