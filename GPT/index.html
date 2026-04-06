@@ -10850,5 +10850,419 @@ bootGame();
 })();
 </script>
 
+
+
+<script>
+/* ===== STABILIZATION LAYER / STRUCTURAL CLEANUP (temporary, removable) ===== */
+(function(){
+  const PATCH_TAG = 'KEYVERSE_STABLE_LAYER_V2';
+  if (window[PATCH_TAG]) return;
+  window[PATCH_TAG] = true;
+
+  const CONFIG = {
+    awakenDay: 30,
+    allowedFriends: new Set([
+      '가솔린 키','배드러브 키','프릭키','언릴키','오컬트키','왹져공주 키','헌터 키','굿앤그 인턴 키',
+      '꼼가 아빠 키','헌터 검정키','천사 키','잇범 키','백작 키','크리쳐 키','킬러 키','빌런 키','범동이 키','말랑콩떡 키',
+      '복실이','북실이','꼼데가르송'
+    ]),
+    friendProfiles: {
+      '복실이': { intro:'복실복실한 발소리와 함께 찾아왔어!', enjoy:'같이 있으니 마음이 편안해.', leave:'다음에도 꼬리 흔들며 올게!', trait:'포근 / 반려' },
+      '북실이': { intro:'북실북실한 기운을 따라 왔어.', enjoy:'오늘은 유난히 즐겁다!', leave:'다음엔 더 신나게 놀자!', trait:'유쾌 / 반려' },
+      '꼼데가르송': { intro:'우아하게 문 앞까지 산책 왔어.', enjoy:'꽤 근사한 시간이었네.', leave:'다음에도 품위 있게 들를게.', trait:'도도 / 반려' }
+    },
+    burnoutTrips: {
+      sokcho: {
+        imageCandidates: ['img/sea.png','sea.png'],
+        bubble: '즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.',
+        bonusText: 'Mystery +2 · Scary +1 · 스트레스 -6 · 에너지 +18',
+        statDelta: { mystery:2, scary:1 },
+        stressDown: 6,
+        energyUp: 18
+      },
+      hotel: {
+        imageCandidates: ['img/hotel.png','hotel.png'],
+        bubble: '즐거웠다~ 푹 쉬고 오니 기분이 한결 가벼워졌어.',
+        bonusText: 'Cute +2 · Social +1 · 스트레스 -7 · 에너지 +22',
+        statDelta: { cute:2, social:1 },
+        stressDown: 7,
+        energyUp: 22
+      }
+    }
+  };
+
+  function safe(fn, fallback){
+    try{
+      return typeof fn === 'function' ? fn() : fallback;
+    }catch(_){
+      return fallback;
+    }
+  }
+
+  function q(id){
+    return document.getElementById(id);
+  }
+
+  function stageEl(){
+    return window.seedStage || q('seedStage');
+  }
+
+  function roomMapEl(){
+    return window.roomMap || q('roomMap');
+  }
+
+  function stageFloat(text){
+    safe(() => showStageStatFloat(stageEl(), text));
+  }
+
+  function roomFloat(text){
+    safe(() => showRoomFloatFeedback(text));
+  }
+
+  function syncAllUi(){
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    safe(() => renderGiftWearables && renderGiftWearables());
+    safe(() => renderStageDecor && renderStageDecor());
+    safe(() => renderRoomDecorButtons && renderRoomDecorButtons());
+    safe(() => renderFriendMenu && renderFriendMenu());
+  }
+
+  function isRoomScreen(){
+    return safe(() => getCurrentScreenName && getCurrentScreenName(), '') === 'room';
+  }
+
+  function showOwnerLine(text){
+    if (isRoomScreen()) {
+      safe(() => showRoomOwnerBubble(text));
+      setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 2800);
+      return;
+    }
+    safe(() => setSeedMessage(text, {
+      autoClearMs: 2800,
+      idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000
+    }));
+  }
+
+  function formatGiftBonus(effect){
+    if (effect?.bonus) return effect.bonus;
+    const labelMap = {
+      practice:'Practice',
+      mystery:'Mystery',
+      social:'Social',
+      cute:'Cute',
+      scary:'Scary',
+      humor:'Humor'
+    };
+    const parts = [];
+    Object.entries(effect?.stats || {}).forEach(([key, value]) => {
+      if (value) parts.push(`${labelMap[key] || key} +${value}`);
+    });
+    if (effect?.energy) parts.push(`에너지 +${effect.energy}`);
+    return parts.join(' · ') || '상태 변화';
+  }
+
+  function applyWearable(effect){
+    if (!effect?.wearable || !window.state) return;
+    if (!state.equippedGiftWearables) {
+      state.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
+    }
+    state.equippedGiftWearables[effect.wearable] = true;
+  }
+
+  function exposeGiftEffects(){
+    if (typeof GIFT_EFFECTS !== 'undefined') {
+      window.GIFT_EFFECTS = GIFT_EFFECTS;
+    }
+  }
+
+  function patchHandleGift(){
+    const original = typeof window.handleGift === 'function' ? window.handleGift : null;
+    if (!original || original.__stableWrapped) return;
+
+    const wrapped = function(kind, itemName, inRoom = false){
+      const effect = window.GIFT_EFFECTS?.[kind]?.[itemName] || null;
+      const result = original.apply(this, arguments);
+
+      const message = (effect?.messageKey && typeof dialogues !== 'undefined' && dialogues?.[effect.messageKey])
+        ? dialogues[effect.messageKey]
+        : `${itemName} 선물을 받았어.`;
+
+      const bonusText = formatGiftBonus(effect);
+      applyWearable(effect);
+
+      requestAnimationFrame(() => {
+        safe(() => renderGiftWearables && renderGiftWearables());
+        safe(() => syncSeedStageLayout && syncSeedStageLayout({ immediate:true }));
+        safe(() => syncRoomLayout && syncRoomLayout({ immediate:true }));
+      });
+
+      if (inRoom) {
+        safe(() => showRoomOwnerBubble && showRoomOwnerBubble(message));
+        setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 2600);
+        roomFloat(bonusText);
+      } else {
+        showOwnerLine(message);
+        stageFloat(bonusText);
+      }
+
+      return result;
+    };
+
+    wrapped.__stableWrapped = true;
+    window.handleGift = wrapped;
+  }
+
+  function getConcertRank(){
+    const mg = window.miniGame || {};
+    if (mg.score >= 2400 || mg.perfect >= 14) return 'S';
+    if (mg.score >= 1500 || mg.perfect >= 8) return 'A';
+    if (mg.score >= 900 || mg.perfect >= 4) return 'B';
+    return 'C';
+  }
+
+  function renderConcertReactionCard(){
+    const card = q('concertEventCard') || document.querySelector('.event-card');
+    if (!card) return;
+
+    const rank = getConcertRank();
+    const reactionPool = {
+      S:['🔥 레전드다!!!','오늘 무대 진짜 미쳤어!','앵콜 또 해줘요!','눈물날 정도로 좋았어'],
+      A:['너무 좋았어요!','또 보고 싶어요','오늘 무대 멋졌어!','분위기 최고였어'],
+      B:['괜찮았어요','다음 공연도 기대할게요','오늘도 즐거웠어요','조금 아쉽지만 좋았어'],
+      C:['조금 아쉬웠어','다음엔 더 잘할 수 있을 거야','오늘은 컨디션이 별로였나 봐']
+    };
+    const descByRank = {
+      S:'공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!',
+      A:'성공적인 공연으로 인기가 올라갔습니다!',
+      B:'무난한 공연으로 인기가 조금 올라갔습니다.',
+      C:'아쉬운 공연으로 인기가 조금 떨어졌습니다.'
+    };
+    const deltaByRank = { S:'+3', A:'+2', B:'+1', C:'-1' };
+
+    const pool = reactionPool[rank] || reactionPool.B;
+    const picked = Array.from({ length:4 }, (_, i) => pool[(Math.floor(Math.random() * pool.length) + i) % pool.length]);
+
+    card.innerHTML = `
+      <div class="event-title">🎤 공연 직후 팬 반응</div>
+      <div class="event-desc">${descByRank[rank]}</div>
+      <div class="badge-row">${picked.map(line => `<div class="badge">${line}</div>`).join('')}</div>
+      <div class="badge-row"><div class="badge"><strong>인기 ${deltaByRank[rank]}</strong></div></div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="concertReactionStableOk">확인</button>
+      </div>
+    `;
+    card.classList.add('show');
+    const ok = q('concertReactionStableOk');
+    if (ok) ok.onclick = () => card.classList.remove('show');
+  }
+
+  function patchConcertReward(){
+    const original = typeof window.applyConcertMiniGameRewards === 'function' ? window.applyConcertMiniGameRewards : null;
+    if (!original || original.__stableWrapped) return;
+
+    const wrapped = function(){
+      const out = original.apply(this, arguments);
+      setTimeout(renderConcertReactionCard, 80);
+      return out;
+    };
+    wrapped.__stableWrapped = true;
+    window.applyConcertMiniGameRewards = wrapped;
+  }
+
+  async function firstLoadableImage(candidates){
+    for (const src of candidates){
+      const ok = await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+      if (ok) return src;
+    }
+    return candidates[0];
+  }
+
+  function applyTripBackground(src){
+    const seed = stageEl();
+    const room = roomMapEl();
+
+    const prev = {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: room ? (room.getAttribute('style') || '') : ''
+    };
+
+    if (seed){
+      seed.className = 'seed-stage layout-ready';
+      seed.style.background = `linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.18)), url("${src}") center center / 108% 108% no-repeat`;
+    }
+    if (room){
+      room.style.background = `linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)), url("${src}") center center / 108% 108% no-repeat`;
+    }
+
+    return function restore(){
+      if (seed){
+        seed.className = prev.seedClass;
+        seed.setAttribute('style', prev.seedStyle);
+      }
+      if (room){
+        room.setAttribute('style', prev.roomStyle);
+      }
+      safe(() => updateSeedStageBackground && updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg));
+    };
+  }
+
+  window.resolveBurnoutVacation = async function(kind){
+    if (!window.state || !state.stats) return;
+    const trip = CONFIG.burnoutTrips[kind];
+    if (!trip) return;
+
+    const overlay = q('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+
+    const src = await firstLoadableImage(trip.imageCandidates);
+    const restore = applyTripBackground(src);
+
+    setTimeout(() => {
+      state.stats.stress = Math.max(0, Number(state.stats.stress || 0) - trip.stressDown);
+      state.energy = Math.min(Number(state.maxEnergy || 100), Number(state.energy || 0) + trip.energyUp);
+      state.day = Number(state.day || 1) + 1;
+
+      safe(() => applyStatDelta && applyStatDelta(trip.statDelta));
+      syncAllUi();
+
+      setTimeout(() => {
+        restore();
+        showOwnerLine(trip.bubble);
+        stageFloat(trip.bonusText);
+        roomFloat(trip.bonusText);
+        syncAllUi();
+        safe(() => triggerSaveNow && triggerSaveNow());
+      }, 950);
+    }, 950);
+  };
+
+  window.canAwaken = function(){
+    return Number(state?.day || 0) >= CONFIG.awakenDay;
+  };
+
+  function forceAwakenButton(){
+    const anchor = q('seedAwakenAnchor');
+    if (!anchor) return;
+    const visible = window.canAwaken() && !state?.isActing && !state?.awakened;
+    anchor.classList.toggle('hidden', !visible);
+    if (visible) {
+      requestAnimationFrame(() => safe(() => positionAwakenButton && positionAwakenButton()));
+    }
+  }
+
+  window.getFriendProfile = function(name){
+    return CONFIG.friendProfiles[name]
+      || (typeof FRIEND_PROFILES !== 'undefined' && FRIEND_PROFILES[name])
+      || {
+        intro:`안녕~ ${name}야.`,
+        enjoy:'같이 있으니까 생각보다 즐겁다.',
+        leave:'다음에 또 올게.',
+        likes:'이 방 분위기',
+        trait:'친구'
+      };
+  };
+
+  window.getUnlockedFriends = function(identityName){
+    const identityList = state?.awakened?.name
+      ? [{ name: state.awakened.name, desc:'각성한 KEY 본인', when:() => true }]
+      : [];
+
+    const pets = [
+      { name:'복실이', desc:'복실복실한 친구', when:() => true },
+      { name:'북실이', desc:'북실북실한 친구', when:() => true },
+      { name:'꼼데가르송', desc:'도도한 친구', when:() => true }
+    ];
+
+    return [...identityList, ...pets]
+      .filter(rule => rule.when(state))
+      .filter(rule => CONFIG.allowedFriends.has(rule.name));
+  };
+
+  function patchRoomVisitor(){
+    const original = typeof window.renderRoomVisitor === 'function' ? window.renderRoomVisitor : null;
+    if (!original || original.__stableWrapped) return;
+
+    const wrapped = function(opts = {}){
+      return original.call(this, { ...opts, startOutside:true });
+    };
+    wrapped.__stableWrapped = true;
+    window.renderRoomVisitor = wrapped;
+  }
+
+  function patchDecorRender(){
+    const original = typeof window.renderStageDecor === 'function' ? window.renderStageDecor : null;
+    if (!original || original.__stableWrapped) return;
+
+    const wrapped = function(){
+      original.apply(this, arguments);
+
+      const activeKeys = Object.keys(state?.roomDecor || {}).filter(key => state.roomDecor[key]);
+      ['seedDecorLayer','roomDecorLayer'].forEach(id => {
+        const layer = q(id);
+        if (!layer) return;
+        Array.from(layer.children).forEach((node, idx) => {
+          const key = activeKeys[idx];
+          if (!key) return;
+          node.dataset.decorKey = key;
+          node.style.pointerEvents = 'auto';
+          node.title = '탭해서 배치 취소';
+        });
+      });
+    };
+
+    wrapped.__stableWrapped = true;
+    window.renderStageDecor = wrapped;
+  }
+
+  function bindDecorUnplace(){
+    if (document.body.dataset.decorUnplaceBound === '1') return;
+    document.body.dataset.decorUnplaceBound = '1';
+
+    document.addEventListener('click', function(e){
+      const item = e.target.closest('.stage-decor-item[data-decor-key]');
+      if (!item) return;
+
+      e.preventDefault();
+      const key = item.dataset.decorKey;
+      if (!key || !state?.roomDecor || !state.roomDecor[key]) return;
+
+      state.roomDecor[key] = false;
+      syncAllUi();
+      showOwnerLine('배치한 아이템을 창고로 넣었어.');
+      safe(() => triggerSaveNow && triggerSaveNow());
+    }, true);
+  }
+
+  function boot(){
+    exposeGiftEffects();
+    patchHandleGift();
+    patchConcertReward();
+    patchRoomVisitor();
+    patchDecorRender();
+    bindDecorUnplace();
+
+    setTimeout(() => {
+      syncAllUi();
+      forceAwakenButton();
+    }, 180);
+  }
+
+  boot();
+  document.addEventListener('click', forceAwakenButton, true);
+})();
+</script>
+
+
 </body>
 </html>
