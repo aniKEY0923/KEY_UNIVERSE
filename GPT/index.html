@@ -3595,13 +3595,13 @@ body.ending-modal-open{
         <div class="topbar-right">
           <div class="top-auth-row">
             <button class="mini-btn" id="newGameBtn">새게임</button>
-            <button class="mini-btn primary" id="loginBtn">Google 로그인</button>
+            <button class="mini-btn primary" id="loginBtn">Google로그인</button>
             <button class="mini-btn" id="logoutBtn" style="display:none;">로그아웃</button>
-            <button class="mini-btn" id="saveBtn">지금 저장</button>
+            <button class="mini-btn" id="saveBtn">저장</button>
           </div>
         </div>
       </div>
-      <div class="schedule-subline">한 달동안 스케줄을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
+      <div class="schedule-subline">한달동안 스케쥴을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
     </div>
 
     <div class="main">
@@ -3618,7 +3618,7 @@ body.ending-modal-open{
               </div>
 
               <div class="seed-mini-row">
-                <span>Myst</span>
+                <span>Mystery</span>
                 <div class="bar"><div class="fill mystery" id="fill-mystery"></div></div>
                 <strong id="val-mystery">0</strong>
               </div>
@@ -3698,7 +3698,7 @@ body.ending-modal-open{
           <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
+            <div class="small">한달동안 스케쥴을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3916,7 +3916,7 @@ body.ending-modal-open{
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="section-title-inline room-pane-heading schedule-pane-heading">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">테스트용으로 3일째가 되면 각성의 날이 찾아옵니다.</div>
+                <div class="small">한달동안 스케쥴을 보내고, 어떤 KEY로 각성할지 지켜보세요</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -9791,6 +9791,614 @@ bootGame();
     try{ window.maybeTriggerConcertEvent(); }catch(e){}
     try{ window.maybeTriggerAwardsCeremony(); }catch(e){}
   }, 250);
+})();
+</script>
+
+
+<style id="final-hotfix-20260406-style">
+/* ===== final hotfix 2026-04-06 ===== */
+.top-auth-row{
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+}
+.top-auth-row .mini-btn{
+  padding:9px 10px !important;
+  font-size:11px !important;
+  letter-spacing:-0.01em;
+}
+#resetBtn{
+  display:none !important;
+}
+.seed-mini-row,
+.seed-mini-row strong,
+.seed-mini-row span,
+#roomPaneStatus .seed-mini-row,
+#roomPaneStatus .seed-mini-row strong,
+#roomPaneStatus .seed-mini-row span{
+  text-align:left !important;
+}
+.seed-mini-row{
+  grid-template-columns:68px 1fr 26px !important;
+}
+.seed-mini-row strong{
+  text-align:left !important;
+}
+.event-card .badge-row{
+  margin-top:10px;
+}
+.custom-ceremony-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10060;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(20,16,26,.62);
+  backdrop-filter:blur(8px);
+}
+.custom-ceremony-overlay.show{
+  display:flex;
+}
+.custom-ceremony-card{
+  position:relative;
+  width:min(480px, 100%);
+  min-height:540px;
+  padding:22px 18px 18px;
+  border-radius:24px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(22,18,30,.28), rgba(22,18,30,.44)),
+    url("img/ceremony.png") center center / cover no-repeat;
+  box-shadow:0 24px 60px rgba(0,0,0,.34);
+  border:1px solid rgba(255,255,255,.14);
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+.custom-ceremony-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at top, rgba(255,255,255,.18), transparent 36%);
+  pointer-events:none;
+}
+.custom-ceremony-stage{
+  position:absolute;
+  left:50%;
+  bottom:132px;
+  transform:translateX(-50%);
+  width:min(220px, 56vw);
+  height:min(280px, 52vh);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  pointer-events:none;
+}
+.custom-ceremony-stage img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,.34));
+}
+.custom-ceremony-bubble{
+  position:relative;
+  z-index:2;
+  margin-top:auto;
+  padding:14px 16px;
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  color:#5b4d42;
+  font-size:14px;
+  line-height:1.6;
+  font-weight:900;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+}
+.custom-ceremony-bubble::after{
+  content:"";
+  position:absolute;
+  left:48px;
+  bottom:-9px;
+  width:16px;
+  height:16px;
+  background:rgba(255,255,255,.96);
+  transform:rotate(45deg);
+}
+.custom-ceremony-actions{
+  position:relative;
+  z-index:2;
+  margin-top:12px;
+  display:flex;
+  justify-content:flex-end;
+}
+.custom-ceremony-btn{
+  padding:12px 16px;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--pink),var(--violet));
+  color:#4f4250;
+  font-weight:900;
+}
+.custom-ceremony-card.shake{
+  animation:customCeremonyShake .52s ease-in-out 2;
+}
+@keyframes customCeremonyShake{
+  0%,100%{ transform:translateX(0); }
+  15%{ transform:translateX(-4px); }
+  30%{ transform:translateX(5px); }
+  45%{ transform:translateX(-6px); }
+  60%{ transform:translateX(6px); }
+  75%{ transform:translateX(-3px); }
+}
+@media (max-width:640px){
+  .top-auth-row{
+    gap:4px !important;
+  }
+  .top-auth-row .mini-btn{
+    padding:8px 8px !important;
+    font-size:10px !important;
+  }
+  .seed-mini-row{
+    grid-template-columns:62px 1fr 22px !important;
+  }
+  .custom-ceremony-card{
+    min-height:500px;
+    padding:18px 14px 14px;
+  }
+  .custom-ceremony-stage{
+    bottom:126px;
+    width:min(200px, 60vw);
+  }
+  .custom-ceremony-bubble{
+    font-size:13px;
+  }
+}
+</style>
+
+<script id="final-hotfix-20260406-script">
+(function(){
+  const PATCH_KEY = '__keyverse_final_hotfix_20260406';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const nextFrame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+  function clampHotfix(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function ensureHeaderLayout(){
+    const loginBtn = document.getElementById('loginBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const subline = document.querySelector('.schedule-subline');
+    if (loginBtn) loginBtn.textContent = 'Google로그인';
+    if (saveBtn) saveBtn.textContent = '저장';
+    if (subline) subline.textContent = '한달동안 스케쥴을 보내고, 어떤 KEY로 각성할지 지켜보세요';
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn && resetBtn.parentElement){
+      resetBtn.remove();
+    }
+  }
+
+  function relabelStatsEnglish(){
+    const scheduleRows = $$('#screen-schedule .seed-mini-row');
+    const names = ['Performance', 'Mystery', 'Social', 'Cute', 'Scary', 'Humor'];
+    scheduleRows.forEach((row, idx) => {
+      const span = row.querySelector('span');
+      if (span && names[idx]) span.textContent = names[idx];
+    });
+    $$('#screen-room .seed-mini-row').forEach((row) => {
+      const key = row.dataset.statKey || row.getAttribute('data-stat') || '';
+      const span = row.querySelector('span');
+      if (!span) return;
+      const map = {
+        practice:'Performance',
+        performance:'Performance',
+        mystery:'Mystery',
+        social:'Social',
+        cute:'Cute',
+        scary:'Scary',
+        humor:'Humor',
+        popularity:'Popularity',
+        stress:'Stress'
+      };
+      if (map[key]) span.textContent = map[key];
+    });
+  }
+
+  async function signInWithGoogleHotfix(){
+    if (!window.supabaseClient) {
+      alert('Supabase 연결 설정을 먼저 확인해주세요.');
+      return;
+    }
+    if (location.protocol === 'file:') {
+      alert('로컬 파일을 직접 열면 Google 로그인 리디렉션이 동작하지 않아요. 배포 주소에서 실행해주세요.');
+      return;
+    }
+    const cleanUrl = location.origin + location.pathname;
+    const { error } = await window.supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: cleanUrl
+      }
+    });
+    if (error) {
+      console.error('Google login error:', error);
+      alert('로그인 중 오류가 발생했어요: ' + error.message);
+    }
+  }
+
+  window.signInWithGoogle = signInWithGoogleHotfix;
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) {
+    const fresh = loginBtn.cloneNode(true);
+    loginBtn.parentNode.replaceChild(fresh, loginBtn);
+    fresh.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      signInWithGoogleHotfix();
+    });
+  }
+
+  function getGiftMessage(itemName){
+    const reactionMap = (window.GIFT_REACTION_EXTRAS || {});
+    if (reactionMap[itemName]?.message) return reactionMap[itemName].message;
+    const effects = window.GIFT_EFFECTS || {};
+    for (const group of Object.values(effects)) {
+      if (group && group[itemName]) {
+        const effect = group[itemName];
+        if (effect.messageKey && window.dialogues?.[effect.messageKey]) return window.dialogues[effect.messageKey];
+        if (effect.bonus) return `${itemName} 선물을 받았어. ${effect.bonus}`;
+        return `${itemName} 선물을 받았어.`;
+      }
+    }
+    return `${itemName} 선물을 받았어.`;
+  }
+
+  if (typeof window.handleGift === 'function') {
+    const originalHandleGift = window.handleGift;
+    window.handleGift = function(kind, itemName, inRoom = false){
+      const result = originalHandleGift.apply(this, arguments);
+      const line = getGiftMessage(itemName);
+      setTimeout(() => {
+        try{
+          if (inRoom) {
+            if (typeof window.showRoomOwnerBubble === 'function') {
+              window.showRoomOwnerBubble(line);
+              setTimeout(() => {
+                try{ window.hideRoomOwnerBubble && window.hideRoomOwnerBubble(); }catch(_){}
+              }, 2800);
+            }
+          } else if (typeof window.setSeedMessage === 'function') {
+            window.setSeedMessage(line, { autoClearMs: 3200, idleAfterMs: window.SEED_IDLE_MS || 180000 });
+          }
+        }catch(err){
+          console.error('gift bubble hotfix error', err);
+        }
+      }, 30);
+      return result;
+    };
+  }
+
+  function getConcertRankHotfix(){
+    const mg = window.miniGame || {};
+    if ((mg.score || 0) >= 2400 || (mg.perfect || 0) >= 14) return 'S';
+    if ((mg.score || 0) >= 1500 || (mg.perfect || 0) >= 8) return 'A';
+    if ((mg.score || 0) >= 900 || (mg.perfect || 0) >= 4) return 'B';
+    return 'C';
+  }
+
+  function buildConcertFanLines(rank){
+    const pool = {
+      S:['🔥 레전드다!!!','앵콜 또 해줘요!','오늘 진짜 최고였어요','눈물날 정도로 좋았어요','이 무대 평생 못 잊어요'],
+      A:['너무 좋았어요!','또 보고 싶어요','오늘 무대 멋졌어요','분위기 진짜 좋다','다음 공연도 기대할게요'],
+      B:['괜찮았어요','점점 좋아지는 것 같아요','다음엔 더 기대할게요','오늘도 즐거웠어요','조금 아쉽지만 좋았어요'],
+      C:['조금 아쉬웠어요','다음엔 더 잘할 수 있을 거예요','연습 더 하면 좋을 듯','무대는 귀여웠어요']
+    };
+    const arr = pool[rank] || pool.B;
+    const out = [];
+    const count = Math.floor(Math.random() * 3) + 3;
+    for (let i = 0; i < count; i++) out.push(arr[Math.floor(Math.random() * arr.length)]);
+    return out;
+  }
+
+  function showConcertFanReactionHotfix(){
+    const card = document.getElementById('concertEventCard') || document.querySelector('.event-card');
+    if (!card) return;
+    const rank = getConcertRankHotfix();
+    const delta = rank === 'S' ? '+3' : rank === 'A' ? '+2' : rank === 'B' ? '+1' : '-1';
+    const title = '🎤 공연 직후 팬 반응';
+    const desc = rank === 'S'
+      ? '공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!'
+      : rank === 'A'
+      ? '성공적인 공연으로 인기가 올라갔습니다!'
+      : rank === 'B'
+      ? '무난한 공연으로 인기가 조금 올라갔습니다.'
+      : '아쉬운 공연으로 인기가 조금 떨어졌습니다.';
+    const badges = buildConcertFanLines(rank).map(line => `<div class="badge">${line}</div>`).join('');
+    card.innerHTML = `
+      <div class="event-title">${title}</div>
+      <div class="event-desc">${desc}</div>
+      <div class="badge-row">${badges}</div>
+      <div class="badge-row"><div class="badge"><strong>Popularity ${delta}</strong></div></div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="concertReactionOkBtnHotfix">확인</button>
+      </div>
+    `;
+    card.classList.add('show');
+  }
+
+  if (typeof window.applyConcertMiniGameRewards === 'function') {
+    const originalConcertReward = window.applyConcertMiniGameRewards;
+    window.applyConcertMiniGameRewards = function(){
+      const result = originalConcertReward.apply(this, arguments);
+      setTimeout(showConcertFanReactionHotfix, 80);
+      return result;
+    };
+  }
+
+  function closeAnyEventCard(){
+    const concertCard = document.getElementById('concertEventCard');
+    if (concertCard) concertCard.classList.remove('show');
+    $$('.event-card.show').forEach(el => el.classList.remove('show'));
+  }
+
+  function resolveBurnoutVacationHotfix(kind){
+    if (!window.state?.stats) return;
+    const isSokcho = kind === 'sokcho';
+    state.stats.stress = Math.max(0, Number(state.stats.stress || 0) - (isSokcho ? 6 : 7));
+    state.energy = clampHotfix(Number(state.energy || 0) + (isSokcho ? 18 : 22), 0, Number(state.maxEnergy || 100));
+    try{
+      if (typeof window.applyStatDelta === 'function') {
+        window.applyStatDelta(isSokcho ? { mystery:2, scary:1 } : { cute:2, social:1 });
+      }
+    }catch(err){
+      console.error(err);
+    }
+    const line = isSokcho
+      ? '속초에 다녀오며 푹 쉬었어. Mystery +2 · Scary +1 · Stress -6'
+      : '호캉스로 기분 전환했어. Cute +2 · Social +1 · Stress -7';
+    try{
+      if (typeof window.setSeedMessage === 'function') {
+        window.setSeedMessage(line, { autoClearMs: 4200, idleAfterMs: window.SEED_IDLE_MS || 180000 });
+      }
+      if (typeof window.showRoomOwnerBubble === 'function' && typeof window.getCurrentScreenName === 'function' && window.getCurrentScreenName() === 'room') {
+        window.showRoomOwnerBubble(line);
+        setTimeout(() => { try{ window.hideRoomOwnerBubble && window.hideRoomOwnerBubble(); }catch(_){} }, 2800);
+      }
+    }catch(err){
+      console.error(err);
+    }
+    const overlay = document.getElementById('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = false;
+    try{ window.setScheduleButtonsDisabled && window.setScheduleButtonsDisabled(false); }catch(_){}
+    closeAnyEventCard();
+    try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
+    try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
+    try{ window.triggerSaveNow && window.triggerSaveNow(); }catch(_){}
+  }
+
+  window.resolveBurnoutVacation = resolveBurnoutVacationHotfix;
+
+  document.addEventListener('click', function(e){
+    const tripBtn = e.target.closest('#burnoutTripBtn');
+    const hotelBtn = e.target.closest('#burnoutHotelBtn');
+    if (tripBtn || hotelBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      resolveBurnoutVacationHotfix(tripBtn ? 'sokcho' : 'hotel');
+      return;
+    }
+    const reactionOk = e.target.closest('#concertReactionOkBtnHotfix');
+    if (reactionOk){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      closeAnyEventCard();
+      return;
+    }
+  }, true);
+
+  function ensureCeremonyOverlay(){
+    if (document.getElementById('customCeremonyOverlay')) return document.getElementById('customCeremonyOverlay');
+    const overlay = document.createElement('div');
+    overlay.id = 'customCeremonyOverlay';
+    overlay.className = 'custom-ceremony-overlay';
+    overlay.innerHTML = `
+      <div class="custom-ceremony-card" id="customCeremonyCard">
+        <div class="custom-ceremony-stage" id="customCeremonyStage">
+          <img id="customCeremonyCharacter" src="img/MC.png" alt="MC">
+        </div>
+        <div class="custom-ceremony-bubble" id="customCeremonyBubble">올해의 연말 시상식을 진행합니다.</div>
+        <div class="custom-ceremony-actions">
+          <button type="button" class="custom-ceremony-btn" id="customCeremonyCloseBtn" style="display:none;">확인</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    $('#customCeremonyCloseBtn', overlay).addEventListener('click', () => {
+      overlay.classList.remove('show');
+      document.body.classList.remove('ending-modal-open');
+      closeAnyEventCard();
+      try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
+      try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
+    });
+    overlay.addEventListener('click', (evt) => {
+      if (evt.target === overlay && $('#customCeremonyCloseBtn', overlay).style.display !== 'none') {
+        $('#customCeremonyCloseBtn', overlay).click();
+      }
+    });
+    return overlay;
+  }
+
+  function ceremonyImage(srcList){
+    return new Promise(resolve => {
+      let i = 0;
+      const tryNext = () => {
+        if (i >= srcList.length) return resolve(srcList[0]);
+        const src = srcList[i++];
+        const img = new Image();
+        img.onload = () => resolve(src);
+        img.onerror = tryNext;
+        img.src = src;
+      };
+      tryNext();
+    });
+  }
+
+  function computeAwardsResultHotfix(){
+    if (typeof window.buildAwardsResult === 'function') {
+      return window.buildAwardsResult();
+    }
+    const stats = state?.stats || {};
+    const practice = Number(stats.practice || 0);
+    const mystery = Number(stats.mystery || 0);
+    const social = Number(stats.social || 0);
+    const cute = Number(stats.cute || 0);
+    const scary = Number(stats.scary || 0);
+    const humor = Number(stats.humor || 0);
+    const popularity = Number(stats.popularity || 0) || (social + cute);
+    const candidates = [
+      { title:'올해의 퍼포먼스상', score:practice, won:practice >= 8 },
+      { title:'올해의 미스터리상', score:mystery, won:mystery >= 8 },
+      { title:'인기상', score:popularity, won:popularity >= 8 },
+      { title:'콘셉트상', score:scary + mystery, won:(scary + mystery) >= 14 }
+    ];
+    const winnerCategory = candidates.find(item => item.won) || candidates[0];
+    const isWinner = !!winnerCategory?.won;
+    return { isWinner, winnerCategory };
+  }
+
+  async function playAwardsCeremonyHotfix(){
+    const overlay = ensureCeremonyOverlay();
+    const card = document.getElementById('customCeremonyCard');
+    const bubble = document.getElementById('customCeremonyBubble');
+    const character = document.getElementById('customCeremonyCharacter');
+    const closeBtn = document.getElementById('customCeremonyCloseBtn');
+    const stage = document.getElementById('customCeremonyStage');
+
+    const result = computeAwardsResultHotfix();
+    const awakenedName = state?.awakened?.name || 'KEY';
+    if (!state.awards) state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
+
+    state.awards.hasPending = false;
+    state.awards.lastHeldDay = Number(state.day || 1);
+    state.awards.lastResult = result;
+    state.awards.season = Number(state.awards.season || 1) + 1;
+
+    document.body.classList.add('ending-modal-open');
+    overlay.classList.add('show');
+    closeBtn.style.display = 'none';
+    card.classList.remove('shake');
+    bubble.textContent = '올해의 연말 시상식을 진행합니다.';
+    character.src = await ceremonyImage(['img/MC.png','MC.png']);
+    await new Promise(r => setTimeout(r, 1200));
+    bubble.textContent = '올해의 수상자는....';
+    await new Promise(r => setTimeout(r, 1000));
+    void card.offsetWidth;
+    card.classList.add('shake');
+    await new Promise(r => setTimeout(r, 1100));
+
+    if (result.isWinner) {
+      if (typeof state.money === 'number') state.money += 120;
+      character.src = await ceremonyImage([
+        state?.awakened?.images?.large,
+        state?.awakened?.images?.room,
+        'img/KEY_default.png'
+      ].filter(Boolean));
+      bubble.textContent = `축하합니다 ${awakenedName}님`;
+    } else {
+      if (typeof state.money === 'number') state.money += 40;
+      character.src = await ceremonyImage([
+        state?.awakened?.images?.large,
+        state?.awakened?.images?.room,
+        'img/KEY_default.png'
+      ].filter(Boolean));
+      bubble.textContent = '아쉽지만 수상하지 못했다';
+    }
+
+    try{ window.updateScheduleUI && window.updateScheduleUI(); }catch(_){}
+    try{ window.syncRoomUI && window.syncRoomUI(); }catch(_){}
+    try{ window.triggerSaveNow && window.triggerSaveNow(); }catch(_){}
+    closeBtn.style.display = '';
+  }
+
+  function showAwardsIntroHotfix(){
+    const card = document.getElementById('concertEventCard') || document.querySelector('.event-card');
+    if (!card) {
+      playAwardsCeremonyHotfix();
+      return;
+    }
+    card.innerHTML = `
+      <div class="event-title">🏆 연말 시상식</div>
+      <div class="event-desc">올해의 연말 시상식을 진행합니다.</div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="customAwardsStartBtn">시상식 진행</button>
+      </div>
+    `;
+    card.classList.add('show');
+  }
+
+  window.openAwardsCeremony = playAwardsCeremonyHotfix;
+  window.maybeTriggerAwardsCeremony = function(){
+    if (typeof window.state === 'undefined') return;
+    if (!state.awards) state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
+    const awardsDay = 30;
+    if (Number(state.day || 1) < awardsDay) return;
+    if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
+    if (document.getElementById('customCeremonyOverlay')?.classList.contains('show')) return;
+    if (state.awards.hasPending) return;
+    state.awards.hasPending = true;
+    showAwardsIntroHotfix();
+  };
+
+  document.addEventListener('click', function(e){
+    const awardsStartBtn = e.target.closest('#customAwardsStartBtn, #forceAwardsOpenBtn, #awardsIntroConfirmBtn');
+    if (awardsStartBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      closeAnyEventCard();
+      playAwardsCeremonyHotfix();
+      return;
+    }
+    const concertYesBtn = e.target.closest('#concertYesBtn');
+    if (concertYesBtn){
+      // let original concert button work, but don't let generic bad patched handlers hijack other buttons
+      return;
+    }
+  }, true);
+
+  const statNameMap = {
+    practice:'Performance',
+    mystery:'Mystery',
+    social:'Social',
+    cute:'Cute',
+    scary:'Scary',
+    humor:'Humor',
+    popularity:'Popularity',
+    stress:'Stress'
+  };
+  if (typeof window.getStatDisplayName === 'function') {
+    const orig = window.getStatDisplayName;
+    window.getStatDisplayName = function(key){
+      return statNameMap[key] || orig.call(this, key);
+    };
+  } else {
+    window.getStatDisplayName = function(key){ return statNameMap[key] || key; };
+  }
+
+  ensureHeaderLayout();
+  relabelStatsEnglish();
+  setTimeout(() => {
+    ensureHeaderLayout();
+    relabelStatsEnglish();
+  }, 100);
 })();
 </script>
 
