@@ -3651,7 +3651,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 v9] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">[임시 안내 v10] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
     </div>
 
     <div class="main">
@@ -10026,7 +10026,7 @@ bootGame();
     const subline = document.querySelector('.schedule-subline');
     if (loginBtn) loginBtn.textContent = 'Google로그인';
     if (saveBtn) saveBtn.textContent = '저장';
-    if (subline) subline.textContent = '[임시 안내 v9] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+    if (subline) subline.textContent = '[임시 안내 v10] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn && resetBtn.parentElement){
       resetBtn.remove();
@@ -11322,7 +11322,7 @@ bootGame();
   if (window[TAG]) return;
   window[TAG] = true;
 
-  const NOTICE = '[임시 안내 v9] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+  const NOTICE = '[임시 안내 v10] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
 
   function $(id){ return document.getElementById(id); }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -11802,5 +11802,90 @@ bootGame();
   setTimeout(triggerAwardsOnDay4, 300);
 })();
 </script>
+
+<script>
+/* ===== HOTFIX QA PATCH V10 : awards modal hard trigger ===== */
+(function(){
+  const TAG = 'KEYVERSE_QA_PATCH_V10_AWARDS';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  function ensureAwardsModal(){
+    let overlay = document.getElementById('qaAwardsOverlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'qaAwardsOverlay';
+    overlay.style.cssText = [
+      'position:fixed','inset:0','z-index:10020','display:none',
+      'align-items:center','justify-content:center','padding:20px',
+      'background:rgba(31,25,38,.42)','backdrop-filter:blur(6px)'
+    ].join(';');
+    overlay.innerHTML = `
+      <div style="width:min(480px,100%); max-height:80vh; overflow:auto; border-radius:24px; background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96)); border:1px solid rgba(120,104,87,.14); box-shadow:0 24px 60px rgba(0,0,0,.24); padding:18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+          <div style="font-size:20px; font-weight:950;">🏆 연말 시상식</div>
+          <button id="qaAwardsOverlayCloseX" type="button" style="width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid rgba(120,104,87,.12);font-size:18px;font-weight:900;line-height:1;cursor:pointer;">×</button>
+        </div>
+        <div style="font-size:12px; color:#8c7d71; line-height:1.6; margin-bottom:12px;">올해의 무대와 성과를 바탕으로 시상식이 열렸어.</div>
+        <div id="qaAwardsOverlayList" style="display:grid; gap:10px;"></div>
+        <div style="margin-top:14px;">
+          <button id="qaAwardsOverlayCloseBtn" type="button" style="width:100%; padding:14px 16px; border-radius:16px; font-weight:900; background:linear-gradient(135deg,#f1a7c8,#c9c3e8); color:#4f4250; border:0; cursor:pointer;">확인</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = () => { overlay.style.display = 'none'; };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.getElementById('qaAwardsOverlayCloseBtn').onclick = close;
+    document.getElementById('qaAwardsOverlayCloseX').onclick = close;
+    return overlay;
+  }
+
+  const DEFAULT_AWARDS = [
+    { name:'신인상', desc:'데뷔 후 첫 큰 주목을 받는 상.' },
+    { name:'퍼포먼스상', desc:'무대 장악력과 완성도가 뛰어난 KEY에게 수여.' },
+    { name:'콘셉트상', desc:'독보적인 세계관과 캐릭터성이 빛난 KEY에게 수여.' },
+    { name:'인기상', desc:'팬들의 사랑을 가장 많이 받은 KEY에게 수여.' },
+    { name:'베스트 스타일상', desc:'무대·비주얼·분위기 조합이 돋보인 KEY에게 수여.' },
+    { name:'올해의 KEY', desc:'한 해를 대표할 정도로 강렬했던 KEY에게 수여.' }
+  ];
+
+  function openAwardsModal(){
+    const overlay = ensureAwardsModal();
+    const list = overlay.querySelector('#qaAwardsOverlayList');
+    const awards = (window.AWARD_LIST && Array.isArray(window.AWARD_LIST) && window.AWARD_LIST.length) ? window.AWARD_LIST : DEFAULT_AWARDS;
+    list.innerHTML = awards.map(item => `
+      <div style="padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.9); border:1px solid rgba(120,104,87,.10); box-shadow:0 8px 18px rgba(120,104,87,.06);">
+        <strong style="display:block; font-size:13px; color:#5b4d42; margin-bottom:4px;">${item.name}</strong>
+        <span style="display:block; font-size:12px; color:#8c7d71; line-height:1.5;">${item.desc}</span>
+      </div>
+    `).join('');
+    overlay.style.display = 'flex';
+  }
+
+  window.openYearEndAwards = openAwardsModal;
+
+  function triggerAwardsOnDay4(){
+    try{
+      if (!window.state) return;
+      state.flags = state.flags || {};
+      if (Number(state.day || 0) >= 4 && !state.flags.yearEndAwardsTriggered) {
+        state.flags.yearEndAwardsTriggered = true;
+        openAwardsModal();
+        try{
+          if (typeof triggerSaveNow === 'function') triggerSaveNow();
+        }catch(_){}
+      }
+    }catch(_){}
+  }
+
+  ensureAwardsModal();
+  setTimeout(triggerAwardsOnDay4, 200);
+  setTimeout(triggerAwardsOnDay4, 1200);
+  setInterval(triggerAwardsOnDay4, 1000);
+})();
+</script>
+
 </body>
 </html>
