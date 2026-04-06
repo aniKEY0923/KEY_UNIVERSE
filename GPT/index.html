@@ -11264,5 +11264,430 @@ bootGame();
 </script>
 
 
+
+<script>
+/* ===== HOTFIX QA PATCH V7 ===== */
+(function(){
+  const TAG = 'KEYVERSE_QA_PATCH_V7';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  const NOTICE = '[임시 안내] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+
+  function $(id){ return document.getElementById(id); }
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function currentScreen(){
+    try { return typeof getCurrentScreenName === 'function' ? getCurrentScreenName() : 'schedule'; }
+    catch(_) { return 'schedule'; }
+  }
+  function seedBubbleEl(){ return window.seedBubble || $('seedBubble'); }
+  function roomOwnerBubbleEl(){ return window.roomOwnerBubble || $('roomOwnerBubble'); }
+  function roomVisitorEl(){ return window.roomVisitor || $('roomVisitor'); }
+
+  function ensureNotice(){
+    document.querySelectorAll('.schedule-subline, .small').forEach(el => {
+      if (!el) return;
+      if (el.textContent && el.textContent.includes('한달동안 스케쥴을 보내고')) {
+        el.textContent = NOTICE;
+      }
+    });
+  }
+
+  function forceSeedMessage(text){
+    try{
+      if (typeof setSeedMessage === 'function') {
+        setSeedMessage(text, { autoClearMs: 2800, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000 });
+      }
+    }catch(_){}
+    const bubble = seedBubbleEl();
+    if (!bubble) return;
+    bubble.textContent = text;
+    bubble.classList.remove('hidden');
+    bubble.classList.add('placed');
+    try{
+      if (typeof positionSeedBubble === 'function') positionSeedBubble();
+    }catch(_){}
+    window.clearTimeout(window.__qaSeedBubbleTimer);
+    window.__qaSeedBubbleTimer = window.setTimeout(() => {
+      bubble.classList.add('hidden');
+    }, 2800);
+  }
+
+  function forceRoomOwnerBubble(text){
+    try{
+      if (typeof showRoomOwnerBubble === 'function') showRoomOwnerBubble(text);
+    }catch(_){}
+    const bubble = roomOwnerBubbleEl();
+    if (!bubble) return;
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    try{
+      if (typeof positionRoomOwnerBubble === 'function') positionRoomOwnerBubble();
+    }catch(_){}
+    window.clearTimeout(window.__qaRoomBubbleTimer);
+    window.__qaRoomBubbleTimer = window.setTimeout(() => {
+      bubble.classList.remove('show');
+      try{
+        if (typeof hideRoomOwnerBubble === 'function') hideRoomOwnerBubble();
+      }catch(_){}
+    }, 2800);
+  }
+
+  function showLine(text){
+    if (currentScreen() === 'room') forceRoomOwnerBubble(text);
+    else forceSeedMessage(text);
+  }
+
+  function showStatToast(text){
+    try{
+      if (currentScreen() === 'room' && typeof showRoomFloatFeedback === 'function') {
+        showRoomFloatFeedback(text);
+        return;
+      }
+    }catch(_){}
+    try{
+      const target = window.seedStage || $('seedStage');
+      if (typeof showStageStatFloat === 'function' && target) showStageStatFloat(target, text);
+    }catch(_){}
+  }
+
+  function getGiftEffect(kind, itemName){
+    try{
+      if (window.GIFT_EFFECTS?.[kind]?.[itemName]) return window.GIFT_EFFECTS[kind][itemName];
+    }catch(_){}
+    try{
+      if (typeof GIFT_EFFECTS !== 'undefined' && GIFT_EFFECTS?.[kind]?.[itemName]) return GIFT_EFFECTS[kind][itemName];
+    }catch(_){}
+    return null;
+  }
+
+  function forceWearableRender(){
+    try{
+      if (typeof syncSeedStageLayout === 'function') syncSeedStageLayout({ immediate:true });
+    }catch(_){}
+    try{
+      if (typeof renderGiftWearables === 'function') renderGiftWearables();
+    }catch(_){}
+    try{
+      if (typeof renderRoomVisitOverlays === 'function') renderRoomVisitOverlays();
+    }catch(_){}
+  }
+
+  function wrapHandleGift(){
+    if (typeof handleGift !== 'function' || handleGift.__qaWrappedV7) return;
+    const original = handleGift;
+    const wrapped = function(kind, itemName, inRoom = false){
+      const effect = getGiftEffect(kind, itemName);
+      const result = original.apply(this, arguments);
+
+      const line = effect?.messageKey && typeof dialogues !== 'undefined' && dialogues?.[effect.messageKey]
+        ? dialogues[effect.messageKey]
+        : `${itemName} 선물을 받았어.`;
+      const bonus = effect?.bonus || '상태 변화';
+
+      if (effect?.wearable && window.state) {
+        state.giftInventory = state.giftInventory || { beanie:false, keyring:false, flower:false };
+        state.equippedGiftWearables = state.equippedGiftWearables || { beanie:false, keyring:false, flower:false };
+        state.giftInventory[effect.wearable] = true;
+        state.equippedGiftWearables.beanie = false;
+        state.equippedGiftWearables.keyring = false;
+        state.equippedGiftWearables.flower = false;
+        state.equippedGiftWearables[effect.wearable] = true;
+      }
+
+      showLine(line);
+      showStatToast(bonus);
+
+      setTimeout(forceWearableRender, 0);
+      setTimeout(forceWearableRender, 120);
+      setTimeout(forceWearableRender, 360);
+
+      try{
+        if (typeof triggerSaveNow === 'function') triggerSaveNow();
+      }catch(_){}
+      return result;
+    };
+    wrapped.__qaWrappedV7 = true;
+    window.handleGift = wrapped;
+  }
+
+  function concertReactionData(){
+    const mg = window.miniGame || {};
+    const rank = (mg.score >= 2400 || mg.perfect >= 14) ? 'S'
+      : (mg.score >= 1500 || mg.perfect >= 8) ? 'A'
+      : (mg.score >= 900 || mg.perfect >= 4) ? 'B' : 'C';
+    const pools = {
+      S:['🔥 레전드다!!!','오늘 무대 진짜 미쳤어!','앵콜 또 해줘요!','눈물날 정도로 좋았어'],
+      A:['너무 좋았어요!','또 보고 싶어요','오늘 무대 멋졌어!','분위기 최고였어!'],
+      B:['괜찮았어요','다음 공연도 기대할게요','오늘도 즐거웠어요','조금 아쉽지만 좋았어'],
+      C:['조금 아쉬웠어','다음엔 더 잘할 수 있을 거야','오늘은 컨디션이 별로였나 봐']
+    };
+    const desc = {
+      S:'공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!',
+      A:'성공적인 공연으로 인기가 올라갔습니다!',
+      B:'무난한 공연으로 인기가 조금 올라갔습니다.',
+      C:'아쉬운 공연으로 인기가 조금 변동했습니다.'
+    };
+    const delta = { S:'+3', A:'+2', B:'+1', C:'-1' };
+    return { rank, desc: desc[rank], delta: delta[rank], reactions: pools[rank] };
+  }
+
+  function showConcertReactionCard(){
+    const card = $('concertEventCard');
+    if (!card) return;
+    const info = concertReactionData();
+    card.innerHTML = `
+      <div class="event-title">🎤 공연 직후 팬 반응</div>
+      <div class="event-desc">${info.desc}</div>
+      <div class="badge-row">${info.reactions.map(line => `<div class="badge">${line}</div>`).join('')}</div>
+      <div class="badge-row"><div class="badge"><strong>인기 ${info.delta}</strong></div></div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="concertReactionCloseBtn">확인</button>
+      </div>
+    `;
+    card.classList.add('show');
+    const btn = $('concertReactionCloseBtn');
+    if (btn) btn.onclick = () => card.classList.remove('show');
+  }
+
+  function bindConcertFinish(){
+    const btn = $('miniFinishBtn');
+    if (!btn || btn.dataset.qaBoundV7 === '1') return;
+    btn.dataset.qaBoundV7 = '1';
+    btn.addEventListener('click', () => {
+      setTimeout(showConcertReactionCard, 120);
+    }, true);
+  }
+
+  async function loadTripBackground(kind){
+    const map = {
+      sokcho:['img/sea.png','sea.png'],
+      hotel:['img/hotel.png','hotel.png']
+    };
+    const list = map[kind] || [];
+    for (const src of list){
+      const ok = await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+      if (ok) return src;
+    }
+    return list[0] || '';
+  }
+
+  function setStageBg(src){
+    const seed = window.seedStage || $('seedStage');
+    const roomMap = window.roomMap || $('roomMap');
+    const prev = {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: roomMap ? (roomMap.getAttribute('style') || '') : ''
+    };
+    if (seed){
+      seed.className = 'seed-stage layout-ready';
+      seed.style.background = `linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.18)), url("${src}") center center / 108% 108% no-repeat`;
+    }
+    if (roomMap){
+      roomMap.style.background = `linear-gradient(rgba(255,250,241,.10), rgba(214,205,195,.16)), url("${src}") center center / 108% 108% no-repeat`;
+    }
+    return () => {
+      if (seed){
+        seed.className = prev.seedClass;
+        seed.setAttribute('style', prev.seedStyle);
+      }
+      if (roomMap){
+        roomMap.setAttribute('style', prev.roomStyle);
+      }
+      try{
+        if (typeof updateSeedStageBackground === 'function') {
+          updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
+        }
+      }catch(_){}
+    };
+  }
+
+  function syncAll(){
+    try{ if (typeof refreshExtraStatUI === 'function') refreshExtraStatUI(); }catch(_){}
+    try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(_){}
+    try{ if (typeof syncRoomUI === 'function') syncRoomUI(); }catch(_){}
+    try{ if (typeof renderGiftWearables === 'function') renderGiftWearables(); }catch(_){}
+    try{ if (typeof renderRoomDecorButtons === 'function') renderRoomDecorButtons(); }catch(_){}
+  }
+
+  async function resolveBurnoutTrip(kind){
+    if (!window.state) return;
+    const overlay = $('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    state.burnout = state.burnout || {};
+    state.burnout.pending = false;
+    try{ if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(false); }catch(_){}
+
+    const src = await loadTripBackground(kind);
+    const restore = setStageBg(src);
+
+    const isSokcho = kind === 'sokcho';
+    const line = isSokcho
+      ? '즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.'
+      : '즐거웠다~ 푹 쉬고 오니 기분이 한결 가벼워졌어.';
+    const bonus = isSokcho
+      ? 'Mystery +2 · Scary +1 · 스트레스 -6 · 에너지 +18'
+      : 'Cute +2 · Social +1 · 스트레스 -7 · 에너지 +22';
+
+    setTimeout(() => {
+      if (!window.state?.stats) return;
+      if (isSokcho) {
+        state.stats.mystery = clamp((state.stats.mystery || 0) + 2, 0, 100);
+        state.stats.scary = clamp((state.stats.scary || 0) + 1, 0, 100);
+        state.stats.stress = clamp((state.stats.stress || 0) - 6, 0, 100);
+        state.energy = clamp((state.energy || 0) + 18, 0, state.maxEnergy || 100);
+      } else {
+        state.stats.cute = clamp((state.stats.cute || 0) + 2, 0, 100);
+        state.stats.social = clamp((state.stats.social || 0) + 1, 0, 100);
+        state.stats.stress = clamp((state.stats.stress || 0) - 7, 0, 100);
+        state.energy = clamp((state.energy || 0) + 22, 0, state.maxEnergy || 100);
+      }
+      state.day = Number(state.day || 1) + 1;
+      syncAll();
+      setTimeout(() => {
+        restore();
+        syncAll();
+        showLine(line);
+        showStatToast(bonus);
+        try{ if (typeof triggerSaveNow === 'function') triggerSaveNow(); }catch(_){}
+      }, 900);
+    }, 900);
+  }
+
+  function bindBurnoutButtons(){
+    const overlay = $('burnoutOverlay');
+    if (!overlay) return;
+    const trip = $('burnoutTripBtn');
+    const hotel = $('burnoutHotelBtn');
+    if (trip && trip.dataset.qaBoundV7 !== '1') {
+      trip.dataset.qaBoundV7 = '1';
+      trip.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        resolveBurnoutTrip('sokcho');
+      }, true);
+    }
+    if (hotel && hotel.dataset.qaBoundV7 !== '1') {
+      hotel.dataset.qaBoundV7 = '1';
+      hotel.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        resolveBurnoutTrip('hotel');
+      }, true);
+    }
+  }
+
+  function patchFriends(){
+    window.getUnlockedFriends = function(){
+      const selfName = state?.awakened?.name || '';
+      const pets = [
+        { name:'복실이', desc:'복실복실한 친구' },
+        { name:'북실이', desc:'북실북실한 친구' },
+        { name:'꼼데가르송', desc:'도도한 친구' }
+      ];
+      const identity = selfName ? [] : [];
+      return [...identity, ...pets].filter(friend => friend.name !== selfName);
+    };
+  }
+
+  function keepVisitorFromRight(){
+    const visitor = roomVisitorEl();
+    if (!visitor) return;
+    const scene = $('roomScene');
+    if (!scene) return;
+
+    const apply = () => {
+      if (!visitor.classList.contains('show')) return;
+      const rect = scene.getBoundingClientRect();
+      const targetLeft = parseFloat(visitor.style.left || '0');
+      if (Number.isNaN(targetLeft)) return;
+      if (!visitor.dataset.qaEnteredRight) {
+        visitor.dataset.qaEnteredRight = '1';
+        visitor.style.left = `${rect.width + 90}px`;
+        visitor.style.transition = 'opacity .22s ease, left .9s ease, top .22s ease';
+        requestAnimationFrame(() => {
+          visitor.style.left = `${targetLeft}px`;
+        });
+      }
+    };
+
+    const mo = new MutationObserver(apply);
+    mo.observe(visitor, { attributes:true, attributeFilter:['class','style'] });
+    apply();
+  }
+
+  function patchAwakenDay(){
+    try{
+      if (window.state) {
+        state.awakenDay = 5;
+      }
+    }catch(_){}
+    try{
+      window.canAwaken = function(){ return Number(state?.day || 0) >= 5; };
+    }catch(_){}
+    const force = () => {
+      const anchor = $('seedAwakenAnchor');
+      if (!anchor || !window.state) return;
+      const visible = Number(state.day || 0) >= 5 && !state.isActing && !state.awakened;
+      anchor.classList.toggle('hidden', !visible);
+      if (visible) {
+        anchor.classList.add('placed');
+        try{ if (typeof positionAwakenButton === 'function') positionAwakenButton(); }catch(_){}
+      }
+    };
+    setInterval(force, 500);
+    force();
+  }
+
+  function patchNewGameReset(){
+    const yes = $('confirmNewGameYes');
+    if (!yes || yes.dataset.qaBoundV7 === '1') return;
+    yes.dataset.qaBoundV7 = '1';
+    yes.addEventListener('click', () => {
+      setTimeout(() => {
+        if (!window.state) return;
+        state.awakened = null;
+        state.currentKeyName = null;
+        state.keyCollection = [];
+        state.collection = { ownedKeys:[], currentKey:null };
+        state.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
+        state.giftInventory = { beanie:false, keyring:false, flower:false };
+        state.activeRoomVisitor = null;
+        state.roomSeenFriendEvents = [];
+        try{ if (typeof renderGiftWearables === 'function') renderGiftWearables(); }catch(_){}
+        try{ if (typeof syncSeedStageLayout === 'function') syncSeedStageLayout({ immediate:true }); }catch(_){}
+        try{ if (typeof updateScheduleUI === 'function') updateScheduleUI(); }catch(_){}
+      }, 50);
+    }, true);
+  }
+
+  function boot(){
+    ensureNotice();
+    wrapHandleGift();
+    bindConcertFinish();
+    bindBurnoutButtons();
+    patchFriends();
+    keepVisitorFromRight();
+    patchAwakenDay();
+    patchNewGameReset();
+    setTimeout(forceWearableRender, 200);
+  }
+
+  boot();
+  setInterval(() => {
+    ensureNotice();
+    bindConcertFinish();
+    bindBurnoutButtons();
+    patchNewGameReset();
+  }, 1000);
+})();
+</script>
+
 </body>
 </html>
