@@ -4036,7 +4036,8 @@ body.ending-modal-open{
   </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 // 🔧 FIX: room tab switching (gift not opening)
 const roomTabs = document.querySelectorAll('#roomBottomTabs .room-bottom-tab');
 const roomDecorTabBtn = document.querySelector('#roomBottomTabs [data-room-tab="decor"]');
@@ -10399,6 +10400,173 @@ bootGame();
     ensureHeaderLayout();
     relabelStatsEnglish();
   }, 100);
+})();
+</script>
+
+
+<script>
+(function(){
+  const PATCH_KEY = '__keyverse_followup_fix_20260406_v2';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  function safeInitSupabase(){
+    try {
+      if (window.supabase && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+        if (!window.supabaseClient || typeof window.supabaseClient.auth === 'undefined') {
+          window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        }
+        try { supabaseClient = window.supabaseClient; } catch(_){}
+        return window.supabaseClient;
+      }
+    } catch (err) {
+      console.error('safeInitSupabase error:', err);
+    }
+    return null;
+  }
+
+  window.signInWithGoogle = async function(){
+    const client = safeInitSupabase() || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) {
+      alert('Supabase SDK가 아직 준비되지 않았어요. 페이지를 새로고침한 뒤 다시 시도해주세요.');
+      return;
+    }
+    const cleanUrl = window.location.origin + window.location.pathname;
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: cleanUrl }
+    });
+    if (error) {
+      alert('로그인 중 오류가 발생했어요: ' + error.message);
+    }
+  };
+
+  if (typeof loginBtn !== 'undefined' && loginBtn) {
+    loginBtn.onclick = (e) => { e.preventDefault(); window.signInWithGoogle(); };
+  }
+  if (typeof awakenLoginBtn !== 'undefined' && awakenLoginBtn) {
+    awakenLoginBtn.onclick = (e) => { e.preventDefault(); window.signInWithGoogle(); };
+  }
+  if (typeof roomLoginBtn !== 'undefined' && roomLoginBtn) {
+    roomLoginBtn.onclick = (e) => { e.preventDefault(); window.signInWithGoogle(); };
+  }
+
+  window.canAwaken = function(){
+    return Number(state?.day || 1) >= 2;
+  };
+
+  function forceAwakenButtonRefresh(){
+    try {
+      if (typeof updateAwakenButtonUI === 'function') updateAwakenButtonUI();
+      if (typeof syncSeedStageLayout === 'function' && typeof screens !== 'undefined' && screens.schedule?.classList?.contains('active')) {
+        syncSeedStageLayout({ immediate:true });
+      }
+    } catch (err) {
+      console.error('forceAwakenButtonRefresh error:', err);
+    }
+  }
+
+  const originalUpdateScheduleUI = window.updateScheduleUI;
+  if (typeof originalUpdateScheduleUI === 'function') {
+    window.updateScheduleUI = function(){
+      const result = originalUpdateScheduleUI.apply(this, arguments);
+      forceAwakenButtonRefresh();
+      return result;
+    };
+  }
+
+  function bonusTextFromEffect(effect){
+    if (!effect) return '상태 변화';
+    if (effect.bonus) return effect.bonus;
+    const parts = [];
+    const labelMap = {
+      practice:'Practice', mystery:'Mystery', social:'Social',
+      cute:'Cute', scary:'Scary', humor:'Humor'
+    };
+    Object.entries(effect.stats || {}).forEach(([k,v]) => {
+      if (v) parts.push(`${labelMap[k] || k} +${v}`);
+    });
+    if (effect.energy) parts.push(`Energy +${effect.energy}`);
+    return parts.join(' · ') || '상태 변화';
+  }
+
+  const originalHandleGift = window.handleGift;
+  if (typeof originalHandleGift === 'function') {
+    window.handleGift = function(kind, itemName, inRoom){
+      const effect = window.GIFT_EFFECTS?.[kind]?.[itemName] || null;
+      const result = originalHandleGift.apply(this, arguments);
+      const bonusText = bonusTextFromEffect(effect);
+      try {
+        if (inRoom) {
+          if (typeof showStageStatFloat === 'function') showStageStatFloat(window.roomScene, bonusText);
+          if (typeof positionRoomBubbles === 'function') positionRoomBubbles();
+        } else {
+          if (typeof showStageStatFloat === 'function') showStageStatFloat(window.seedStage, bonusText);
+          if (typeof positionSeedBubble === 'function') positionSeedBubble();
+        }
+      } catch (err) {
+        console.error('gift float patch error:', err);
+      }
+      return result;
+    };
+  }
+
+  document.addEventListener('click', function(e){
+    const seedBtn = e.target.closest('[data-seed-gift]');
+    const roomBtn = e.target.closest('[data-room-gift]');
+    const customAwardsStartBtn = e.target.closest('#customAwardsStartBtn, #forceAwardsOpenBtn, #awardsIntroConfirmBtn');
+    if (customAwardsStartBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof playAwardsCeremonyHotfix === 'function') {
+        playAwardsCeremonyHotfix();
+      } else if (typeof openAwardsCeremony === 'function') {
+        openAwardsCeremony();
+      }
+      return;
+    }
+    if (seedBtn || roomBtn) {
+      const bonusSourceName = seedBtn ? seedBtn.dataset.seedGift : roomBtn.dataset.roomGift;
+      const effect = (window.GIFT_EFFECTS && Object.values(window.GIFT_EFFECTS).flatMap(v => Object.entries(v)).find(([name]) => name === bonusSourceName)?.[1]) || null;
+      const bonusText = bonusTextFromEffect(effect);
+      setTimeout(() => {
+        try {
+          if (seedBtn && typeof showStageStatFloat === 'function') showStageStatFloat(window.seedStage, bonusText);
+          if (roomBtn && typeof showStageStatFloat === 'function') showStageStatFloat(window.roomScene, bonusText);
+        } catch(err){
+          console.error('gift click patch error:', err);
+        }
+      }, 50);
+    }
+  }, true);
+
+  // awards: keep the temporary day-2 trigger for debugging and open the ceremony directly.
+  window.maybeTriggerAwardsCeremony = function(){
+    try {
+      if (!window.state) return;
+      if (!state.awards) state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
+      const awardsDay = 2;
+      if (Number(state.day || 1) < awardsDay) return;
+      if ((state.awards.lastHeldDay || 0) >= Number(state.day || 1)) return;
+      if (document.getElementById('customCeremonyOverlay')?.classList.contains('show')) return;
+      if (typeof awardsOverlay !== 'undefined' && awardsOverlay?.classList?.contains('show')) return;
+      if (state.awards.hasPending) return;
+      state.awards.hasPending = true;
+      if (typeof playAwardsCeremonyHotfix === 'function') {
+        playAwardsCeremonyHotfix();
+      } else if (typeof openAwardsCeremony === 'function') {
+        openAwardsCeremony();
+      }
+    } catch (err) {
+      console.error('maybeTriggerAwardsCeremony patch error:', err);
+    }
+  };
+
+  setTimeout(() => {
+    safeInitSupabase();
+    forceAwakenButtonRefresh();
+    try { window.maybeTriggerAwardsCeremony(); } catch(_) {}
+  }, 250);
 })();
 </script>
 
