@@ -3601,7 +3601,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
     </div>
 
     <div class="main">
@@ -3698,7 +3698,7 @@ body.ending-modal-open{
           <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+            <div class="small">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3916,7 +3916,7 @@ body.ending-modal-open{
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="section-title-inline room-pane-heading schedule-pane-heading">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+                <div class="small">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -9976,7 +9976,7 @@ bootGame();
     const subline = document.querySelector('.schedule-subline');
     if (loginBtn) loginBtn.textContent = 'Google로그인';
     if (saveBtn) saveBtn.textContent = '저장';
-    if (subline) subline.textContent = '[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+    if (subline) subline.textContent = '[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn && resetBtn.parentElement){
       resetBtn.remove();
@@ -11272,7 +11272,7 @@ bootGame();
   if (window[TAG]) return;
   window[TAG] = true;
 
-  const NOTICE = '[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+  const NOTICE = '[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
 
   function $(id){ return document.getElementById(id); }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -11693,7 +11693,7 @@ bootGame();
 /* ===================================================================
    KEY:VERSE — 통합 버그수정 패치 (v_FINAL_CLEAN)
    이 파일의 내용을 기존 HTML 맨 마지막 </body> 바로 앞에
-   <script> ... </script> 로 감싸서 삽입하면 됩니다.
+   &lt;script&gt; ... &lt;/script&gt; 로 감싸서 삽입하면 됩니다.
    
    수정 항목:
    1. 선물 말풍선 + 착용 아이템 렌더링
