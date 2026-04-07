@@ -3601,7 +3601,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 rollback] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
     </div>
 
     <div class="main">
@@ -3698,7 +3698,7 @@ body.ending-modal-open{
           <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">[임시 안내 rollback] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+            <div class="small">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3916,7 +3916,7 @@ body.ending-modal-open{
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="section-title-inline room-pane-heading schedule-pane-heading">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">[임시 안내 rollback] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+                <div class="small">[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -9976,7 +9976,7 @@ bootGame();
     const subline = document.querySelector('.schedule-subline');
     if (loginBtn) loginBtn.textContent = 'Google로그인';
     if (saveBtn) saveBtn.textContent = '저장';
-    if (subline) subline.textContent = '[임시 안내 rollback] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+    if (subline) subline.textContent = '[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn && resetBtn.parentElement){
       resetBtn.remove();
@@ -11272,7 +11272,7 @@ bootGame();
   if (window[TAG]) return;
   window[TAG] = true;
 
-  const NOTICE = '[임시 안내 rollback] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+  const NOTICE = '[임시 안내 patch-test] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
 
   function $(id){ return document.getElementById(id); }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -11689,5 +11689,483 @@ bootGame();
 })();
 </script>
 
+<script>
+/* ===================================================================
+   KEY:VERSE — 통합 버그수정 패치 (v_FINAL_CLEAN)
+   이 파일의 내용을 기존 HTML 맨 마지막 </body> 바로 앞에
+   <script> ... </script> 로 감싸서 삽입하면 됩니다.
+   
+   수정 항목:
+   1. 선물 말풍선 + 착용 아이템 렌더링
+   2. 상태변화 토스트 상세 내용
+   3. 콘서트 팬 리액션 카드
+   4. 번아웃 여행 버튼 (속초/호캉스)
+   5. 각성 버튼 (day >= 3 으로 복구)
+   6. 친구 목록 → 18 KEY + 복실이/북실이/꼼데가르송만
+   7. 친구 우측에서 등장
+   8. 배치 아이템 탭 → 창고로 되돌리기
+=================================================================== */
+
+(function () {
+  /* ────────── 중복 실행 방지 ────────── */
+  const TAG = '__KEYVERSE_FINAL_CLEAN_PATCH';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  /* ────────── 유틸 ────────── */
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, Number(v) || 0)); }
+  function $ (id) { return document.getElementById(id); }
+  function safe(fn) { try { fn(); } catch (_) {} }
+
+  /* ================================================================
+     1. 선물 말풍선 + 착용 아이템 렌더링 + 토스트 상세
+  ================================================================ */
+
+  /* 선물 효과 테이블 — 기존 GIFT_EFFECTS를 확장/덮어씀 */
+  window.GIFT_EFFECTS = {
+    food: {
+      '샐러드':          { stats:{ social:1 },          energy:6,  messageKey:'giftSalad',          bonus:'Social +1 · 에너지 +6' },
+      '고수샐러드':      { stats:{ mystery:2 },          energy:3,  messageKey:'giftCorianderSalad', bonus:'Mystery +2 · 에너지 +3' },
+      '당근카레':        { stats:{ practice:1, cute:1 }, energy:8,  messageKey:'giftCarrotCurry',    bonus:'Practice +1 · Cute +1 · 에너지 +8' },
+      '두릅튀김':        { stats:{ scary:1, mystery:1 }, energy:4,  messageKey:'giftFried',          bonus:'Scary +1 · Mystery +1 · 에너지 +4' },
+      '파스타':          { stats:{ social:1, humor:1 },  energy:7,  messageKey:'giftPasta',          bonus:'Social +1 · Humor +1 · 에너지 +7' },
+    },
+    item: {
+      '지중해풍 꽃':         { stats:{ cute:1, mystery:1 },  wearable:'flower',  messageKey:'giftFlower',  bonus:'Cute +1 · Mystery +1' },
+      '핑크색 털뭉치 키링':  { stats:{ cute:2, humor:1 },    wearable:'keyring', messageKey:'giftKeyring', bonus:'Cute +2 · Humor +1' },
+      '고양이 비니':         { stats:{ cute:1, humor:2 },    wearable:'beanie',  messageKey:'giftBeanie',  bonus:'Cute +1 · Humor +2' },
+      '향초':                { stats:{ mystery:1, social:1 },                    bonus:'Mystery +1 · Social +1' },
+      '폴라로이드 필름':     { stats:{ cute:1, humor:1 },                        bonus:'Cute +1 · Humor +1' },
+      '장미꽃다발':          { stats:{ cute:2, mystery:2 },  wearable:'flower',  bonus:'Cute +2 · Mystery +2' },
+      '빈티지 마이크':       { stats:{ practice:2, social:1 },                   bonus:'Practice +2 · Social +1' },
+    }
+  };
+
+  /* dialogues 보장 */
+  if (typeof dialogues !== 'undefined') {
+    Object.assign(dialogues, {
+      giftSalad:          '샐러드 맛있었다. 고마워.',
+      giftCorianderSalad: '고수샐러드...? 미안, 이건 조금 어려울지도. 그래도 챙겨준 마음은 고마워.',
+      giftCarrotCurry:    '당근카레는... 오늘은 조금 용기가 필요할 것 같아. 그래도 신경 써줘서 고마워.',
+      giftFried:          '두릅튀김이라니, 맛있게 잘 먹었어. 고마워.',
+      giftPasta:          '파스타 정말 맛있었다. 챙겨줘서 고마워.',
+      giftFlower:         '지중해풍 꽃이라니, 방 안 공기까지 달라진 것 같아. 고마워.',
+      giftKeyring:        '핑크색 털뭉치 키링? 너무 귀엽다. 가방에 달아둘래.',
+      giftBeanie:         '고양이 비니까지 준비했어? 오늘은 조금 더 장난스럽게 보여도 좋겠다.',
+    });
+  }
+
+  function getGiftEffect(kind, name) {
+    return window.GIFT_EFFECTS?.[kind]?.[name] ?? null;
+  }
+
+  function getGiftLine(effect) {
+    if (!effect) return null;
+    const key = effect.messageKey;
+    if (key && typeof dialogues !== 'undefined' && dialogues[key]) return dialogues[key];
+    return null;
+  }
+
+  /* 말풍선 표시 헬퍼 */
+  function showLine(text, inRoom) {
+    if (!text) return;
+    if (inRoom) {
+      safe(() => showRoomOwnerBubble(text));
+      setTimeout(() => safe(() => hideRoomOwnerBubble()), 2800);
+    } else {
+      safe(() => setSeedMessage(text, { autoClearMs: 3200,
+        idleAfterMs: (typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000) }));
+    }
+  }
+
+  /* 토스트 헬퍼 */
+  function showToast(text, inRoom) {
+    if (!text) return;
+    if (inRoom) {
+      safe(() => showRoomFloatFeedback(text));
+    } else {
+      const target = window.seedStage || $('seedStage');
+      safe(() => showStageStatFloat(target, text));
+    }
+  }
+
+  /* 착용 아이템 적용 */
+  function applyWearable(effect) {
+    if (!effect?.wearable || !window.state) return;
+    if (!state.equippedGiftWearables)
+      state.equippedGiftWearables = { beanie: false, keyring: false, flower: false };
+    if (!state.giftInventory)
+      state.giftInventory = { beanie: false, keyring: false, flower: false };
+    // 하나만 착용
+    state.equippedGiftWearables.beanie  = false;
+    state.equippedGiftWearables.keyring = false;
+    state.equippedGiftWearables.flower  = false;
+    state.equippedGiftWearables[effect.wearable] = true;
+    state.giftInventory[effect.wearable] = true;
+  }
+
+  /* renderGiftWearables 강제 재실행 */
+  function forceWearables() {
+    safe(() => renderGiftWearables && renderGiftWearables());
+    // seedStage가 layout-ready인지 확인 후 재호출
+    requestAnimationFrame(() => safe(() => renderGiftWearables && renderGiftWearables()));
+  }
+
+  /* handleGift 교체 — 기존 여러 패치를 무시하고 단일 함수로 */
+  window.handleGift = function (kind, itemName, inRoom = false) {
+    const effect = getGiftEffect(kind, itemName);
+    if (!effect) return;
+
+    /* 스탯 적용 */
+    safe(() => applyStatDelta && applyStatDelta(effect.stats || {}));
+    if (effect.energy && window.state)
+      state.energy = clamp(state.energy + effect.energy, 0, state.maxEnergy || 100);
+
+    /* 착용 */
+    applyWearable(effect);
+
+    /* UI 갱신 */
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    forceWearables();
+
+    /* 말풍선 */
+    const line = getGiftLine(effect);
+    if (line) showLine(line, inRoom);
+
+    /* 토스트 */
+    const bonus = effect.bonus || '상태 변화';
+    showToast(bonus, inRoom);
+
+    safe(() => triggerSaveNow && triggerSaveNow());
+  };
+
+  /* ================================================================
+     2. 콘서트 팬 리액션 카드
+  ================================================================ */
+
+  function getConcertRank() {
+    const mg = window.miniGame || {};
+    if ((mg.score || 0) >= 2400 || (mg.perfect || 0) >= 14) return 'S';
+    if ((mg.score || 0) >= 1500 || (mg.perfect || 0) >= 8)  return 'A';
+    if ((mg.score || 0) >= 900  || (mg.perfect || 0) >= 4)  return 'B';
+    return 'C';
+  }
+
+  function showConcertFanReaction() {
+    const card = $('concertEventCard');
+    if (!card) return;
+
+    const rank = getConcertRank();
+    const pools = {
+      S: ['🔥 레전드다!!!', '오늘 무대 진짜 미쳤어!', '앵콜 또 해줘요!', '눈물날 정도로 좋았어요'],
+      A: ['너무 좋았어요!', '또 보고 싶어요', '오늘 무대 멋졌어요', '분위기 진짜 좋다'],
+      B: ['괜찮았어요', '다음 공연도 기대할게요', '오늘도 즐거웠어요', '조금 아쉽지만 좋았어요'],
+      C: ['조금 아쉬웠어요', '다음엔 더 잘할 수 있을 거예요', '컨디션이 안 좋았나봐요'],
+    };
+    const desc = {
+      S: '공연을 성공적으로 마쳐 인기가 크게 올라갔습니다!',
+      A: '성공적인 공연으로 인기가 올라갔습니다!',
+      B: '무난한 공연으로 인기가 조금 올라갔습니다.',
+      C: '아쉬운 공연으로 인기가 조금 떨어졌습니다.',
+    };
+    const delta = { S: '+3', A: '+2', B: '+1', C: '-1' };
+
+    const arr = pools[rank];
+    const picked = [arr[0], arr[1 % arr.length], arr[2 % arr.length], arr[3 % arr.length]];
+    const badgeHtml = picked.map(l => `<div class="badge">${l}</div>`).join('');
+
+    card.innerHTML = `
+      <div class="event-title">🎤 공연 직후 팬 반응</div>
+      <div class="event-desc">${desc[rank]}</div>
+      <div class="badge-row">${badgeHtml}</div>
+      <div class="badge-row"><div class="badge"><strong>인기 ${delta[rank]}</strong></div></div>
+      <div class="event-actions">
+        <button class="event-yes" type="button" id="fanReactionOkBtn">확인</button>
+      </div>
+    `;
+    card.classList.add('show');
+
+    const ok = $('fanReactionOkBtn');
+    if (ok) ok.onclick = () => card.classList.remove('show');
+  }
+
+  /* applyConcertMiniGameRewards 후에 팬 리액션 삽입 */
+  const _origApply = typeof applyConcertMiniGameRewards === 'function'
+    ? applyConcertMiniGameRewards : null;
+  window.applyConcertMiniGameRewards = function () {
+    if (_origApply) _origApply.apply(this, arguments);
+    /* miniGameLayer 닫힌 후에 카드 표시 */
+    setTimeout(showConcertFanReaction, 120);
+  };
+
+  /* ================================================================
+     3. 번아웃 여행 버튼 (속초 / 호캉스)
+  ================================================================ */
+
+  async function loadImage(candidates) {
+    for (const src of candidates) {
+      const ok = await new Promise(res => {
+        const img = new Image();
+        img.onload = () => res(true);
+        img.onerror = () => res(false);
+        img.src = src;
+      });
+      if (ok) return src;
+    }
+    return candidates[candidates.length - 1];
+  }
+
+  function setTempBackground(src) {
+    const seed = window.seedStage || $('seedStage');
+    const rmap = window.roomMap  || $('roomMap');
+    const css  = `linear-gradient(rgba(255,250,241,.08),rgba(214,205,195,.12)), url("${src}") center/108% 108% no-repeat`;
+
+    const prev = {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: rmap ? (rmap.getAttribute('style') || '') : '',
+    };
+
+    if (seed) { seed.classList.remove('bg-default','bg-default-night','bg-walk'); seed.style.background = css; }
+    if (rmap) rmap.style.background = css;
+
+    return function restore() {
+      if (seed) { seed.className = prev.seedClass; seed.setAttribute('style', prev.seedStyle); }
+      if (rmap) rmap.setAttribute('style', prev.roomStyle);
+      safe(() => updateSeedStageBackground &&
+        updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg));
+    };
+  }
+
+  const TRIP_CONFIG = {
+    sokcho: {
+      imgs:    ['img/sea.png', 'sea.png'],
+      statDelta: { mystery:2, scary:1 },
+      stressDown: 6, energyUp: 18,
+      line: '바다를 보고 오니 머리가 맑아졌어. 즐거웠다~',
+      bonus: 'Mystery +2 · Scary +1 · Stress -6',
+    },
+    hotel: {
+      imgs:    ['img/hotel.png', 'hotel.png'],
+      statDelta: { cute:2, social:1 },
+      stressDown: 7, energyUp: 22,
+      line: '푹 쉬고 오니 기분이 한결 가벼워졌어. 즐거웠다~',
+      bonus: 'Cute +2 · Social +1 · Stress -7',
+    },
+  };
+
+  async function resolveTrip(kind) {
+    const cfg = TRIP_CONFIG[kind];
+    if (!cfg || !window.state?.stats) return;
+
+    /* 다이얼로그 닫기 */
+    const overlay = $('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+
+    /* 배경 변경 */
+    const src = await loadImage(cfg.imgs);
+    const restore = setTempBackground(src);
+
+    /* 1초 후 스탯 적용 */
+    await new Promise(res => setTimeout(res, 1000));
+
+    if (!state.stats) return;
+    safe(() => applyStatDelta && applyStatDelta(cfg.statDelta));
+    state.stats.stress = clamp((state.stats.stress || 0) - cfg.stressDown, 0, 100);
+    state.energy = clamp((state.energy || 0) + cfg.energyUp, 0, state.maxEnergy || 100);
+    state.day = Number(state.day || 1) + 1;
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    /* 배경 복구 + 말풍선 */
+    await new Promise(res => setTimeout(res, 1000));
+    restore();
+    safe(() => updateScheduleUI && updateScheduleUI());
+
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName(), '') === 'room';
+    showLine(cfg.line, inRoom);
+    showToast(cfg.bonus, inRoom);
+
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  /* 버튼 바인딩 — 캡처 단계에서 다른 핸들러보다 먼저 처리 */
+  document.addEventListener('click', async function(e) {
+    const btn = e.target.closest('#burnoutTripBtn, #burnoutHotelBtn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    await resolveTrip(btn.id === 'burnoutTripBtn' ? 'sokcho' : 'hotel');
+  }, true);
+
+  /* resolveBurnoutVacation 전역 재정의 (다른 패치가 호출할 수도 있으므로) */
+  window.resolveBurnoutVacation = resolveTrip;
+  window.resolveBurnoutVacationEmergency = resolveTrip;
+
+  /* ================================================================
+     4. 각성 버튼 — day >= 3 으로 복구
+  ================================================================ */
+
+  window.canAwaken = function () {
+    return Number(window.state?.day || 0) >= 3;
+  };
+
+  /* 각성 버튼 표시 강제 갱신 */
+  function refreshAwakenBtn() {
+    const anchor = $('seedAwakenAnchor');
+    if (!anchor || !window.state) return;
+    const visible = window.canAwaken() && !state.isActing && !state.awakened;
+    anchor.classList.toggle('hidden', !visible);
+    if (visible) {
+      anchor.classList.add('placed');
+      safe(() => positionAwakenButton && positionAwakenButton());
+    }
+  }
+
+  /* updateScheduleUI 에 훅 */
+  const _origUpdate = typeof updateScheduleUI === 'function' ? updateScheduleUI : null;
+  window.updateScheduleUI = function () {
+    if (_origUpdate) _origUpdate.apply(this, arguments);
+    refreshAwakenBtn();
+  };
+
+  setInterval(refreshAwakenBtn, 800);
+
+  /* ================================================================
+     5. 친구 목록 — 18 KEY + 반려 셋만
+  ================================================================ */
+
+  const ALLOWED_FRIENDS = new Set([
+    '가솔린 키','배드러브 키','프릭키','언릴키','오컬트키','왹져공주 키',
+    '헌터 키','굿앤그 인턴 키','꼼가 아빠 키','헌터 검정키','천사 키','잇범 키',
+    '백작 키','크리쳐 키','킬러 키','빌런 키','범동이 키','말랑콩떡 키',
+    '복실이','북실이','꼼데가르송',
+  ]);
+
+  const PET_PROFILES = {
+    '복실이':     { intro:'복실복실~ 왔어!',          enjoy:'같이 있으니 마음이 편안해.',   leave:'다음에도 꼬리 흔들며 올게!', trait:'포근 / 반려' },
+    '북실이':     { intro:'북실북실~ 반가워!',         enjoy:'오늘 유난히 즐겁다!',          leave:'다음엔 더 신나게 놀자!',     trait:'유쾌 / 반려' },
+    '꼼데가르송': { intro:'우아하게 산책 왔어.',       enjoy:'꽤 근사한 시간이었어.',        leave:'품위 있게 또 들를게.',       trait:'도도 / 반려' },
+  };
+
+  /* getFriendProfile 덮어쓰기 */
+  window.getFriendProfile = function (name) {
+    if (PET_PROFILES[name]) return PET_PROFILES[name];
+    if (typeof FRIEND_PROFILES !== 'undefined' && FRIEND_PROFILES[name]) return FRIEND_PROFILES[name];
+    return { intro:`안녕~ ${name}야.`, enjoy:'같이 있으니까 즐거워.', leave:'또 올게.', trait:'친구' };
+  };
+
+  /* getUnlockedFriends — 허용 목록만 */
+  window.getUnlockedFriends = function (identityName) {
+    /* 각성한 KEY와 같은 이름의 친구는 제외 */
+    const selfName = window.state?.awakened?.name || '';
+    const pets = ['복실이','북실이','꼼데가르송'].map(name => ({
+      name, desc: PET_PROFILES[name]?.trait || '반려 친구', when: () => true,
+    }));
+    /* 조건을 만족하는 기존 KEY 친구들 중 허용 목록에 있는 것 */
+    let keyfriends = [];
+    if (identityName && typeof friendUnlockRules !== 'undefined') {
+      const rules = [...(friendUnlockRules[identityName] || []), ...(friendUnlockRules['_decorBonus'] || [])];
+      keyfriends = rules.filter(r => r?.name && ALLOWED_FRIENDS.has(r.name) && r.name !== selfName && r.when(window.state));
+    }
+    /* 중복 제거 */
+    const seen = new Set();
+    return [...keyfriends, ...pets].filter(f => {
+      if (seen.has(f.name)) return false;
+      if (f.name === selfName) return false;
+      seen.add(f.name);
+      return ALLOWED_FRIENDS.has(f.name);
+    });
+  };
+
+  /* ================================================================
+     6. 친구 캐릭터 — 오른쪽에서 등장
+  ================================================================ */
+
+  const _origRenderRoomVisitor = typeof renderRoomVisitor === 'function' ? renderRoomVisitor : null;
+  window.renderRoomVisitor = function (opts = {}) {
+    /* startOutside: true 를 강제 */
+    if (_origRenderRoomVisitor) {
+      _origRenderRoomVisitor.call(this, { ...opts, startOutside: true });
+    }
+  };
+
+  /* ================================================================
+     7. 배치 아이템 탭 → 창고로 되돌리기
+  ================================================================ */
+
+  /* stage-decor-item 에 data-decor-key 붙이기 — renderStageDecor 래핑 */
+  const _origRenderDecor = typeof renderStageDecor === 'function' ? renderStageDecor : null;
+  window.renderStageDecor = function () {
+    if (_origRenderDecor) _origRenderDecor.apply(this, arguments);
+
+    /* decorKey 매핑 (renderStageDecor 내부 mapping 과 동기화) */
+    const mapping = {
+      lpPlayer:'LP',desk:'책상',birdCage:'새장',mirrorBall:'미러볼',
+      vinylRack:'랙',plushSofa:'소파',neonSign:'네온',bookshelf:'책장',
+    };
+    const installed = Object.keys(mapping).filter(k => window.state?.roomDecor?.[k]);
+    ['seedDecorLayer','roomDecorLayer'].forEach(id => {
+      const layer = $(id);
+      if (!layer) return;
+      const items = layer.querySelectorAll('.stage-decor-item');
+      items.forEach((node, idx) => {
+        const key = installed[idx];
+        if (!key) return;
+        node.dataset.decorKey = key;
+        node.style.cursor = 'pointer';
+        node.title = '탭해서 창고로 되돌리기';
+      });
+    });
+  };
+
+  /* 클릭 이벤트 — 배치 취소 */
+  document.addEventListener('click', function (e) {
+    const item = e.target.closest && e.target.closest('.stage-decor-item[data-decor-key]');
+    if (!item) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const key = item.dataset.decorKey;
+    if (!key || !window.state?.roomDecor || !state.roomDecor[key]) return;
+    state.roomDecor[key] = false;
+    safe(() => renderStageDecor && renderStageDecor());
+    safe(() => renderRoomDecorButtons && renderRoomDecorButtons());
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    /* 피드백 말풍선 */
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName(), '') === 'room';
+    showLine(`${key} 아이템을 창고로 넣었어.`, inRoom);
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }, false);
+
+  /* ================================================================
+     8. 수동 초기화 — 부팅 직후
+  ================================================================ */
+
+  function boot() {
+    refreshAwakenBtn();
+    safe(() => renderGiftWearables && renderGiftWearables());
+    safe(() => renderStageDecor && renderStageDecor());
+    safe(() => renderFriendMenu && renderFriendMenu());
+  }
+
+  /* DOM 준비 후 실행 */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+  setTimeout(boot, 300);
+  setTimeout(boot, 800);
+
+})();
+
+</script>
 </body>
 </html>
