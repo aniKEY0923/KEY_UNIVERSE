@@ -3601,7 +3601,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">[임시 안내 patch-test-3] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
     </div>
 
     <div class="main">
@@ -3698,7 +3698,7 @@ body.ending-modal-open{
           <div class="room-bottom-pane active" id="seedPaneSchedule">
           <div class="section-title-inline">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+            <div class="small">[임시 안내 patch-test-3] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3916,7 +3916,7 @@ body.ending-modal-open{
             <div class="room-bottom-pane active" id="roomPaneSchedule">
               <div class="section-title-inline room-pane-heading schedule-pane-heading">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+                <div class="small">[임시 안내 patch-test-3] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -9976,7 +9976,7 @@ bootGame();
     const subline = document.querySelector('.schedule-subline');
     if (loginBtn) loginBtn.textContent = 'Google로그인';
     if (saveBtn) saveBtn.textContent = '저장';
-    if (subline) subline.textContent = '[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+    if (subline) subline.textContent = '[임시 안내 patch-test-3] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn && resetBtn.parentElement){
       resetBtn.remove();
@@ -11272,7 +11272,7 @@ bootGame();
   if (window[TAG]) return;
   window[TAG] = true;
 
-  const NOTICE = '[임시 안내 patch-test-2] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
+  const NOTICE = '[임시 안내 patch-test-3] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)';
 
   function $(id){ return document.getElementById(id); }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -11692,7 +11692,188 @@ bootGame();
 <script>
 /* ===================================================================
    KEY:VERSE — 통합 버그수정 패치 (v_FINAL_CLEAN)
-   이 파일의 내용을 기존 HTML 맨 마지막 </body> 바로 앞에
+   이 파일의 내용을 기존 HTML 맨 마지막 
+<script>
+/* ===== PATCH-TEST-3 : burnout click + concert close followup ===== */
+(function(){
+  const TAG = '__KEYVERSE_PATCH_TEST_3_FIXES';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  function $(id){ return document.getElementById(id); }
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, Number(v) || 0)); }
+  function safe(fn){ try { return fn(); } catch(_) { return undefined; } }
+
+  function showLine(text){
+    if (!text) return;
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName()) === 'room';
+    if (inRoom) {
+      safe(() => showRoomOwnerBubble && showRoomOwnerBubble(text));
+      setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 2600);
+    } else {
+      safe(() => setSeedMessage && setSeedMessage(text, {
+        autoClearMs: 3000,
+        idleAfterMs: (typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000)
+      }));
+    }
+  }
+
+  function showToast(text){
+    if (!text) return;
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName()) === 'room';
+    if (inRoom) safe(() => showRoomFloatFeedback && showRoomFloatFeedback(text));
+    else safe(() => showStageStatFloat && showStageStatFloat(window.seedStage || $('seedStage'), text));
+  }
+
+  async function firstLoadable(list){
+    for (const src of list){
+      const ok = await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+      if (ok) return src;
+    }
+    return list[0] || '';
+  }
+
+  function temporaryBg(src){
+    const seed = window.seedStage || $('seedStage');
+    const roomMap = window.roomMap || $('roomMap');
+    const prev = {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: roomMap ? (roomMap.getAttribute('style') || '') : ''
+    };
+    const css = `linear-gradient(rgba(255,250,241,.08),rgba(214,205,195,.12)), url("${src}") center/108% 108% no-repeat`;
+    if (seed){
+      seed.classList.remove('bg-default','bg-default-night','bg-walk');
+      seed.style.background = css;
+    }
+    if (roomMap) roomMap.style.background = css;
+    return function restore(){
+      if (seed){
+        seed.className = prev.seedClass;
+        seed.setAttribute('style', prev.seedStyle);
+      }
+      if (roomMap){
+        roomMap.setAttribute('style', prev.roomStyle);
+      }
+      safe(() => updateSeedStageBackground && updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg));
+    };
+  }
+
+  const TRIPS = {
+    sokcho: {
+      imgs:['img/sea.png','sea.png'],
+      delta:{ mystery:2, scary:1 },
+      energy:18, stress:6,
+      line:'즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.',
+      toast:'Mystery +2 · Scary +1 · Stress -6 · 에너지 +18'
+    },
+    hotel: {
+      imgs:['img/hotel.png','hotel.png'],
+      delta:{ cute:2, social:1 },
+      energy:22, stress:7,
+      line:'즐거웠다~ 푹 쉬고 오니 기분이 한결 가벼워졌어.',
+      toast:'Cute +2 · Social +1 · Stress -7 · 에너지 +22'
+    }
+  };
+
+  async function resolveTripPatched(kind){
+    const cfg = TRIPS[kind];
+    if (!cfg || !window.state || !state.stats) return;
+
+    const overlay = $('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    state.burnout = state.burnout || {};
+    state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+
+    const src = await firstLoadable(cfg.imgs);
+    const restore = temporaryBg(src);
+
+    await new Promise(r => setTimeout(r, 800));
+
+    safe(() => applyStatDelta && applyStatDelta(cfg.delta));
+    state.stats.stress = clamp((state.stats.stress || 0) - cfg.stress, 0, 100);
+    state.energy = clamp((state.energy || 0) + cfg.energy, 0, state.maxEnergy || 100);
+    state.day = Number(state.day || 1) + 1;
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    await new Promise(r => setTimeout(r, 900));
+    restore();
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    showLine(cfg.line);
+    showToast(cfg.toast);
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  function bindBurnoutButtonsNow(){
+    const trip = $('burnoutTripBtn');
+    const hotel = $('burnoutHotelBtn');
+
+    [trip, hotel].forEach(btn => {
+      if (!btn) return;
+      btn.style.pointerEvents = 'auto';
+      btn.disabled = false;
+    });
+
+    if (trip && trip.dataset.patchTest3Bound !== '1'){
+      trip.dataset.patchTest3Bound = '1';
+      trip.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        resolveTripPatched('sokcho');
+        return false;
+      };
+    }
+    if (hotel && hotel.dataset.patchTest3Bound !== '1'){
+      hotel.dataset.patchTest3Bound = '1';
+      hotel.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        resolveTripPatched('hotel');
+        return false;
+      };
+    }
+  }
+
+  window.resolveBurnoutVacation = resolveTripPatched;
+  window.resolveBurnoutVacationEmergency = resolveTripPatched;
+
+  function fixConcertClose(){
+    const btn = $('concertReactionCloseBtn');
+    if (!btn || btn.dataset.patchTest3Bound === '1') return;
+    btn.dataset.patchTest3Bound = '1';
+    btn.onclick = () => {
+      const card = $('concertEventCard');
+      if (card) card.classList.remove('show');
+      safe(() => miniGameResult && miniGameResult.classList.remove('show'));
+      safe(() => miniGameLayer && miniGameLayer.classList.remove('active'));
+      safe(() => miniStartOverlay && miniStartOverlay.classList.add('show'));
+      safe(() => closeMiniAbortConfirm && closeMiniAbortConfirm());
+      safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
+      safe(() => updateScheduleUI && updateScheduleUI());
+      return false;
+    };
+  }
+
+  bindBurnoutButtonsNow();
+  fixConcertClose();
+  setInterval(bindBurnoutButtonsNow, 700);
+  setInterval(fixConcertClose, 700);
+})();
+</script>
+
+</body> 바로 앞에
    &lt;script&gt; ... &lt;/script&gt; 로 감싸서 삽입하면 됩니다.
    
    수정 항목:
@@ -12167,5 +12348,186 @@ bootGame();
 })();
 
 </script>
+
+<script>
+/* ===== PATCH-TEST-3 : burnout click + concert close followup ===== */
+(function(){
+  const TAG = '__KEYVERSE_PATCH_TEST_3_FIXES';
+  if (window[TAG]) return;
+  window[TAG] = true;
+
+  function $(id){ return document.getElementById(id); }
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, Number(v) || 0)); }
+  function safe(fn){ try { return fn(); } catch(_) { return undefined; } }
+
+  function showLine(text){
+    if (!text) return;
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName()) === 'room';
+    if (inRoom) {
+      safe(() => showRoomOwnerBubble && showRoomOwnerBubble(text));
+      setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 2600);
+    } else {
+      safe(() => setSeedMessage && setSeedMessage(text, {
+        autoClearMs: 3000,
+        idleAfterMs: (typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 180000)
+      }));
+    }
+  }
+
+  function showToast(text){
+    if (!text) return;
+    const inRoom = safe(() => getCurrentScreenName && getCurrentScreenName()) === 'room';
+    if (inRoom) safe(() => showRoomFloatFeedback && showRoomFloatFeedback(text));
+    else safe(() => showStageStatFloat && showStageStatFloat(window.seedStage || $('seedStage'), text));
+  }
+
+  async function firstLoadable(list){
+    for (const src of list){
+      const ok = await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+      if (ok) return src;
+    }
+    return list[0] || '';
+  }
+
+  function temporaryBg(src){
+    const seed = window.seedStage || $('seedStage');
+    const roomMap = window.roomMap || $('roomMap');
+    const prev = {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: roomMap ? (roomMap.getAttribute('style') || '') : ''
+    };
+    const css = `linear-gradient(rgba(255,250,241,.08),rgba(214,205,195,.12)), url("${src}") center/108% 108% no-repeat`;
+    if (seed){
+      seed.classList.remove('bg-default','bg-default-night','bg-walk');
+      seed.style.background = css;
+    }
+    if (roomMap) roomMap.style.background = css;
+    return function restore(){
+      if (seed){
+        seed.className = prev.seedClass;
+        seed.setAttribute('style', prev.seedStyle);
+      }
+      if (roomMap){
+        roomMap.setAttribute('style', prev.roomStyle);
+      }
+      safe(() => updateSeedStageBackground && updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg));
+    };
+  }
+
+  const TRIPS = {
+    sokcho: {
+      imgs:['img/sea.png','sea.png'],
+      delta:{ mystery:2, scary:1 },
+      energy:18, stress:6,
+      line:'즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.',
+      toast:'Mystery +2 · Scary +1 · Stress -6 · 에너지 +18'
+    },
+    hotel: {
+      imgs:['img/hotel.png','hotel.png'],
+      delta:{ cute:2, social:1 },
+      energy:22, stress:7,
+      line:'즐거웠다~ 푹 쉬고 오니 기분이 한결 가벼워졌어.',
+      toast:'Cute +2 · Social +1 · Stress -7 · 에너지 +22'
+    }
+  };
+
+  async function resolveTripPatched(kind){
+    const cfg = TRIPS[kind];
+    if (!cfg || !window.state || !state.stats) return;
+
+    const overlay = $('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    state.burnout = state.burnout || {};
+    state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+
+    const src = await firstLoadable(cfg.imgs);
+    const restore = temporaryBg(src);
+
+    await new Promise(r => setTimeout(r, 800));
+
+    safe(() => applyStatDelta && applyStatDelta(cfg.delta));
+    state.stats.stress = clamp((state.stats.stress || 0) - cfg.stress, 0, 100);
+    state.energy = clamp((state.energy || 0) + cfg.energy, 0, state.maxEnergy || 100);
+    state.day = Number(state.day || 1) + 1;
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    await new Promise(r => setTimeout(r, 900));
+    restore();
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    showLine(cfg.line);
+    showToast(cfg.toast);
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  function bindBurnoutButtonsNow(){
+    const trip = $('burnoutTripBtn');
+    const hotel = $('burnoutHotelBtn');
+
+    [trip, hotel].forEach(btn => {
+      if (!btn) return;
+      btn.style.pointerEvents = 'auto';
+      btn.disabled = false;
+    });
+
+    if (trip && trip.dataset.patchTest3Bound !== '1'){
+      trip.dataset.patchTest3Bound = '1';
+      trip.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        resolveTripPatched('sokcho');
+        return false;
+      };
+    }
+    if (hotel && hotel.dataset.patchTest3Bound !== '1'){
+      hotel.dataset.patchTest3Bound = '1';
+      hotel.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        resolveTripPatched('hotel');
+        return false;
+      };
+    }
+  }
+
+  window.resolveBurnoutVacation = resolveTripPatched;
+  window.resolveBurnoutVacationEmergency = resolveTripPatched;
+
+  function fixConcertClose(){
+    const btn = $('concertReactionCloseBtn');
+    if (!btn || btn.dataset.patchTest3Bound === '1') return;
+    btn.dataset.patchTest3Bound = '1';
+    btn.onclick = () => {
+      const card = $('concertEventCard');
+      if (card) card.classList.remove('show');
+      safe(() => miniGameResult && miniGameResult.classList.remove('show'));
+      safe(() => miniGameLayer && miniGameLayer.classList.remove('active'));
+      safe(() => miniStartOverlay && miniStartOverlay.classList.add('show'));
+      safe(() => closeMiniAbortConfirm && closeMiniAbortConfirm());
+      safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
+      safe(() => updateScheduleUI && updateScheduleUI());
+      return false;
+    };
+  }
+
+  bindBurnoutButtonsNow();
+  fixConcertClose();
+  setInterval(bindBurnoutButtonsNow, 700);
+  setInterval(fixConcertClose, 700);
+})();
+</script>
+
 </body>
 </html>
