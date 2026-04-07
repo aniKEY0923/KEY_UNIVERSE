@@ -13180,15 +13180,10 @@ bootGame();
 </script>
 <!-- 
 =================================================================
-KEY:VERSE FINAL FIX PATCH
+KEY:VERSE PATCH v2.1
+적용: 팬 반응 카드 수정 / 번아웃 버튼 수정 / 연습 스트레스 2배 / 버전 표시
 =================================================================
 이 파일 전체를 index.html의 맨 마지막 </body> 태그 바로 앞에 붙여넣으세요.
-
-삽입 위치:
-  ... (기존 코드 끝) ...
-  [이 파일 내용]
-</body>
-</html>
 =================================================================
 -->
 
@@ -13196,27 +13191,22 @@ KEY:VERSE FINAL FIX PATCH
 /* ===== 팬 반응 전체화면 카드 ===== */
 .kv-fan-backdrop{
   position:fixed;inset:0;z-index:99999;
-  display:flex;align-items:flex-end;justify-content:center;
-  padding:0;
-  background:rgba(18,14,24,.72);
-  backdrop-filter:blur(10px);
-  opacity:0;pointer-events:none;
-  transition:opacity .28s ease;
+  display:flex;align-items:flex-end;justify-content:center;padding:0;
+  background:rgba(18,14,24,.72);backdrop-filter:blur(10px);
+  opacity:0;pointer-events:none;transition:opacity .28s ease;
 }
 .kv-fan-backdrop.show{opacity:1;pointer-events:auto;}
 .kv-fan-sheet{
   width:100%;max-width:520px;max-height:92dvh;
   border-radius:28px 28px 0 0;
   background:linear-gradient(180deg,rgba(255,255,255,.99),rgba(253,247,243,.97));
-  border:1px solid rgba(120,104,87,.14);
-  box-shadow:0 -8px 40px rgba(0,0,0,.22);
+  border:1px solid rgba(120,104,87,.14);box-shadow:0 -8px 40px rgba(0,0,0,.22);
   display:flex;flex-direction:column;overflow:hidden;
   transform:translateY(32px);transition:transform .28s ease;
 }
 .kv-fan-backdrop.show .kv-fan-sheet{transform:translateY(0);}
 .kv-fan-handle{
-  width:54px;height:6px;border-radius:999px;
-  background:rgba(120,104,87,.18);
+  width:54px;height:6px;border-radius:999px;background:rgba(120,104,87,.18);
   margin:14px auto 4px;flex:0 0 auto;
 }
 .kv-fan-head{padding:8px 18px 12px;border-bottom:1px solid rgba(120,104,87,.08);flex:0 0 auto;}
@@ -13227,8 +13217,7 @@ KEY:VERSE FINAL FIX PATCH
 .kv-fan-avatar{
   width:52px;height:52px;border-radius:16px;overflow:hidden;
   background:linear-gradient(180deg,#fff4f8,#f0e8ff);
-  border:1px solid rgba(120,104,87,.10);
-  box-shadow:0 6px 14px rgba(120,104,87,.10);flex:0 0 auto;
+  border:1px solid rgba(120,104,87,.10);box-shadow:0 6px 14px rgba(120,104,87,.10);flex:0 0 auto;
 }
 .kv-fan-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
 .kv-fan-bubble{
@@ -13238,18 +13227,15 @@ KEY:VERSE FINAL FIX PATCH
   box-shadow:0 6px 14px rgba(120,104,87,.08);min-height:52px;
 }
 .kv-fan-bubble::before{
-  content:"";position:absolute;left:-8px;top:16px;
-  width:15px;height:15px;background:rgba(255,255,255,.98);
-  border-left:1px solid rgba(120,104,87,.10);
-  border-bottom:1px solid rgba(120,104,87,.10);
-  transform:rotate(45deg);
+  content:"";position:absolute;left:-8px;top:16px;width:15px;height:15px;
+  background:rgba(255,255,255,.98);border-left:1px solid rgba(120,104,87,.10);
+  border-bottom:1px solid rgba(120,104,87,.10);transform:rotate(45deg);
 }
 .kv-fan-foot{flex:0 0 auto;padding:10px 16px 18px;display:grid;gap:10px;}
 .kv-fan-delta{display:flex;flex-wrap:wrap;gap:8px;}
 .kv-fan-chip{
-  padding:8px 12px;border-radius:999px;
-  background:rgba(255,255,255,.9);border:1px solid rgba(120,104,87,.10);
-  font-size:12px;font-weight:900;color:#6a584a;
+  padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.9);
+  border:1px solid rgba(120,104,87,.10);font-size:12px;font-weight:900;color:#6a584a;
 }
 .kv-fan-chip.neg{background:rgba(255,244,244,.96);color:#9b5d5d;}
 .kv-fan-ok{
@@ -13261,22 +13247,18 @@ KEY:VERSE FINAL FIX PATCH
 /* ===== 여행 결과 토스트 ===== */
 .kv-trip-toast{
   position:fixed;left:50%;bottom:24px;z-index:99998;
-  width:min(calc(100vw - 24px),420px);
-  padding:14px 16px;border-radius:20px;
+  width:min(calc(100vw - 24px),420px);padding:14px 16px;border-radius:20px;
   background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(252,247,242,.96));
-  border:1px solid rgba(120,104,87,.12);
-  box-shadow:0 16px 36px rgba(0,0,0,.16);
-  transform:translateX(-50%) translateY(20px);
-  opacity:0;pointer-events:none;
+  border:1px solid rgba(120,104,87,.12);box-shadow:0 16px 36px rgba(0,0,0,.16);
+  transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
   transition:opacity .22s ease,transform .22s ease;
 }
 .kv-trip-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .kv-trip-toast-title{margin:0 0 8px;font-size:13px;font-weight:950;color:#5b4d42;}
 .kv-trip-pills{display:flex;flex-wrap:wrap;gap:6px;}
 .kv-trip-pill{
-  padding:7px 10px;border-radius:999px;
-  background:rgba(255,255,255,.9);border:1px solid rgba(120,104,87,.10);
-  font-size:11px;font-weight:900;color:#6a584a;
+  padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.9);
+  border:1px solid rgba(120,104,87,.10);font-size:11px;font-weight:900;color:#6a584a;
 }
 
 @media(max-width:640px){
@@ -13291,15 +13273,27 @@ KEY:VERSE FINAL FIX PATCH
 <script id="kv-final-script">
 (function(){
   'use strict';
-  const TAG = '__KV_FINAL_FIX_20260408';
+  const TAG = '__KV_FINAL_FIX_v21';
   if (window[TAG]) return;
   window[TAG] = true;
 
   const $ = id => document.getElementById(id);
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,Number(v)||0));
-  const safe = (fn,fb=null) => { try { return fn(); } catch(e){ return fb; } };
+  const clamp = (v,lo,hi) => Math.max(lo, Math.min(hi, Number(v)||0));
+  const safe = (fn, fb=null) => { try { return fn(); } catch(e){ return fb; } };
 
+  /* ── 버전 표시 업데이트 ── */
+  const VERSION_TEXT = '[v2.1] 팬 반응 카드 UI · 번아웃 버튼 수정 · 연습 스트레스 2배 (테스트용)';
+  function applyVersionNotice() {
+    document.querySelectorAll('.schedule-subline').forEach(el => {
+      el.textContent = VERSION_TEXT;
+    });
+  }
+  applyVersionNotice();
+  setTimeout(applyVersionNotice, 300);
+  setTimeout(applyVersionNotice, 1000);
+
+  /* ── 유틸 ── */
   function isRoom(){
     return safe(()=>getCurrentScreenName&&getCurrentScreenName(),'') === 'room';
   }
@@ -13307,20 +13301,43 @@ KEY:VERSE FINAL FIX PATCH
     if(!text) return;
     if(isRoom()){
       safe(()=>showRoomOwnerBubble&&showRoomOwnerBubble(text));
-      setTimeout(()=>safe(()=>hideRoomOwnerBubble&&hideRoomOwnerBubble()),2800);
+      setTimeout(()=>safe(()=>hideRoomOwnerBubble&&hideRoomOwnerBubble()), 2800);
     } else {
       safe(()=>setSeedMessage&&setSeedMessage(text,{
-        autoClearMs:3200,
-        idleAfterMs:(typeof SEED_IDLE_MS!=='undefined'?SEED_IDLE_MS:180000)
+        autoClearMs: 3200,
+        idleAfterMs: (typeof SEED_IDLE_MS!=='undefined' ? SEED_IDLE_MS : 180000)
       }));
     }
   }
 
-  /* ─────────────────────────────────────────
-     1. 팬 반응 전체화면 카드
-  ───────────────────────────────────────── */
+  /* ══════════════════════════════════════════
+     1. 연습 스트레스 2배 (테스트용)
+     practice 액션 종료 시 stress += 4 (기존 2의 2배)
+  ══════════════════════════════════════════ */
+  function installStressHook(){
+    const cur = window.finishAction;
+    if(!cur || cur.__kvStressHooked) return;
+    window.finishAction = function(type){
+      const result = cur.apply(this, arguments);
+      if(type === 'practice' && window.state?.stats){
+        // 기존 패치가 +2 적용 → 추가로 +2 더해서 총 +4 (2배)
+        state.stats.stress = clamp((state.stats.stress||0) + 2, 0, 100);
+        safe(()=>refreshExtraStatUI&&refreshExtraStatUI());
+        safe(()=>maybeTriggerBurnoutVacation&&maybeTriggerBurnoutVacation());
+      }
+      return result;
+    };
+    window.finishAction.__kvStressHooked = true;
+  }
+  setTimeout(installStressHook, 50);
+  setTimeout(installStressHook, 600);
+  setTimeout(installStressHook, 1500);
+
+  /* ══════════════════════════════════════════
+     2. 팬 반응 전체화면 카드
+  ══════════════════════════════════════════ */
   function rankFromScore(){
-    const mg=window.miniGame||{};
+    const mg = window.miniGame||{};
     if((mg.score||0)>=2400||(mg.perfect||0)>=14) return 'S';
     if((mg.score||0)>=1500||(mg.perfect||0)>=8)  return 'A';
     if((mg.score||0)>=900 ||(mg.perfect||0)>=4)  return 'B';
@@ -13328,35 +13345,35 @@ KEY:VERSE FINAL FIX PATCH
   }
 
   function buildFanData(rank){
-    const lineMap={
+    const lineMap = {
       S:['오늘 무대 진짜 미쳤어!','앵콜 또 해줘요!','눈물날 정도로 좋았어!','레전드 무대였다!'],
       A:['너무 좋았어요!','오늘 무대 멋졌어요!','분위기 최고였어!','다음 공연도 기대돼!'],
       B:['괜찮았어요!','오늘도 즐거웠어요!','조금 아쉽지만 좋았어.','그래도 반가웠어요!'],
       C:['조금 아쉬웠어…','오늘은 컨디션이 별로였나봐.','다음엔 더 잘할 수 있을 거야!','다음 무대 기다릴게!']
     };
-    const descMap={
+    const descMap = {
       S:'압도적인 공연으로 팬들의 반응이 폭발했습니다.',
       A:'좋은 공연으로 팬들의 반응이 매우 좋았습니다.',
       B:'무난한 공연으로 팬들의 반응이 나쁘지 않았습니다.',
       C:'아쉬운 공연이었지만 다음 무대를 기대하는 팬들이 남았습니다.'
     };
-    const deltaMap={S:3,A:2,B:1,C:-1};
-    const pool=lineMap[rank]||lineMap.B;
-    const lines=[],avatars=[];
+    const deltaMap = {S:3, A:2, B:1, C:-1};
+    const pool = lineMap[rank]||lineMap.B;
+    const lines=[], avatars=[];
     for(let i=0;i<4;i++){
       lines.push(pool[i%pool.length]);
       avatars.push(`img/fangirl_0${Math.floor(Math.random()*7)}.png`);
     }
-    return {desc:descMap[rank],delta:deltaMap[rank],lines,avatars};
+    return {desc:descMap[rank], delta:deltaMap[rank], lines, avatars};
   }
 
   function ensureFanOverlay(){
-    let el=$('kvFanBackdrop');
+    let el = $('kvFanBackdrop');
     if(el) return el;
-    el=document.createElement('div');
-    el.id='kvFanBackdrop';
-    el.className='kv-fan-backdrop';
-    el.innerHTML=`
+    el = document.createElement('div');
+    el.id = 'kvFanBackdrop';
+    el.className = 'kv-fan-backdrop';
+    el.innerHTML = `
       <div class="kv-fan-sheet">
         <div class="kv-fan-handle"></div>
         <div class="kv-fan-head">
@@ -13370,36 +13387,41 @@ KEY:VERSE FINAL FIX PATCH
         </div>
       </div>`;
     document.body.appendChild(el);
-    $('kvFanOkBtn').addEventListener('click',closeKvFanAndReturn,true);
-    el.addEventListener('click',function(e){ if(e.target===el) closeKvFanAndReturn(); });
+    $('kvFanOkBtn').addEventListener('click', closeKvFanAndReturn, true);
+    el.addEventListener('click', e => { if(e.target===el) closeKvFanAndReturn(); });
     return el;
   }
 
   function openKvFanCard(){
-    const rank=rankFromScore();
-    const info=buildFanData(rank);
+    const rank = rankFromScore();
+    const info = buildFanData(rank);
     ensureFanOverlay();
-    $('kvFanSub').textContent=info.desc;
-    $('kvFanBody').innerHTML=info.lines.map((line,i)=>`
+    $('kvFanSub').textContent = info.desc;
+    $('kvFanBody').innerHTML = info.lines.map((line,i) => `
       <div class="kv-fan-row">
-        <div class="kv-fan-avatar"><img src="${info.avatars[i]}" alt="팬" onerror="this.parentElement.innerHTML='💖'"></div>
+        <div class="kv-fan-avatar">
+          <img src="${info.avatars[i]}" alt="팬" onerror="this.parentElement.innerHTML='💖'">
+        </div>
         <div class="kv-fan-bubble">${line}</div>
       </div>`).join('');
-    const pos=info.delta>=0;
-    $('kvFanDelta').innerHTML=`<span class="kv-fan-chip ${pos?'':'neg'}">인기 ${pos?'+':''}${info.delta} ${pos?'상승':'하락'}했습니다.</span>`;
+    const pos = info.delta >= 0;
+    $('kvFanDelta').innerHTML = `
+      <span class="kv-fan-chip ${pos?'':'neg'}">
+        인기 ${pos?'+':''}${info.delta} ${pos?'상승':'하락'}했습니다.
+      </span>`;
     $('kvFanBackdrop').classList.add('show');
     document.body.classList.add('ending-modal-open');
   }
 
   function closeKvFanAndReturn(){
-    const bd=$('kvFanBackdrop');
+    const bd = $('kvFanBackdrop');
     if(bd) bd.classList.remove('show');
     document.body.classList.remove('ending-modal-open');
 
     // 콘서트 관련 UI 완전 종료
-    ['concertEventCard','miniGameLayer','miniGameResult','miniStartOverlay','miniAbortConfirm',
-     'v81FanOverlay','fanReactionOverlay'].forEach(id=>{
-      const el=$(id); if(!el) return;
+    ['concertEventCard','miniGameLayer','miniGameResult','miniStartOverlay',
+     'miniAbortConfirm','v81FanOverlay','fanReactionOverlay'].forEach(id => {
+      const el = $(id); if(!el) return;
       el.classList.remove('show','active');
     });
     document.querySelectorAll('.event-card.show').forEach(el=>el.classList.remove('show'));
@@ -13409,7 +13431,7 @@ KEY:VERSE FINAL FIX PATCH
     if(window.state){ state.concertEventResolved=true; state.concertEventOffered=true; }
     safe(()=>updateMiniGameProgress&&updateMiniGameProgress(0));
 
-    // 방으로 복귀
+    // 방 화면으로 복귀
     if(window.state?.awakened && typeof showScreen==='function') showScreen('room');
     else if(typeof showScreen==='function') showScreen('schedule');
 
@@ -13417,58 +13439,57 @@ KEY:VERSE FINAL FIX PATCH
     safe(()=>syncRoomUI&&syncRoomUI());
   }
 
-  /* applyConcertMiniGameRewards 훅 설치 */
   function installConcertHook(){
-    const cur=window.applyConcertMiniGameRewards;
-    if(!cur||cur.__kvHooked) return;
-    window.applyConcertMiniGameRewards=function(){
-      const r=cur.apply(this,arguments);
-      // 기존 팬 반응 UI 모두 닫기
+    const cur = window.applyConcertMiniGameRewards;
+    if(!cur || cur.__kvHooked) return;
+    window.applyConcertMiniGameRewards = function(){
+      const r = cur.apply(this, arguments);
+      // 기존 팬 반응 UI 모두 숨기기
       ['v81FanOverlay','fanReactionOverlay','concertEventCard'].forEach(id=>{
         const el=$(id); if(el) el.classList.remove('show','active');
       });
       document.querySelectorAll('.event-card.show').forEach(el=>el.classList.remove('show'));
-      setTimeout(openKvFanCard,100);
+      setTimeout(openKvFanCard, 100);
       return r;
     };
-    window.applyConcertMiniGameRewards.__kvHooked=true;
+    window.applyConcertMiniGameRewards.__kvHooked = true;
   }
-  setTimeout(installConcertHook,50);
-  setTimeout(installConcertHook,500);
-  setTimeout(installConcertHook,1500);
+  setTimeout(installConcertHook, 50);
+  setTimeout(installConcertHook, 500);
+  setTimeout(installConcertHook, 1500);
 
-  /* ─────────────────────────────────────────
-     2. 번아웃 여행 버튼
-  ───────────────────────────────────────── */
+  /* ══════════════════════════════════════════
+     3. 번아웃 여행 버튼
+  ══════════════════════════════════════════ */
   function getSeedStage(){ return window.seedStage||$('seedStage')||document.querySelector('.seed-stage'); }
-  function getRoomMap(){ return window.roomMap||$('roomMap')||document.querySelector('.room-map'); }
+  function getRoomMap(){   return window.roomMap||$('roomMap')||document.querySelector('.room-map'); }
 
   function saveBg(){
-    const s=getSeedStage(),r=getRoomMap();
+    const s=getSeedStage(), r=getRoomMap();
     return {
-      seedClass:s?s.className:'',
-      seedStyle:s?(s.getAttribute('style')||''):'',
-      roomStyle:r?(r.getAttribute('style')||''):''
+      seedClass: s?s.className:'',
+      seedStyle: s?(s.getAttribute('style')||''):'',
+      roomStyle:  r?(r.getAttribute('style')||''):''
     };
   }
   function applyBg(kind){
-    const src=kind==='sokcho'?'img/sea.png':'img/hotel.png';
-    const tint=kind==='sokcho'
-      ?'linear-gradient(rgba(30,70,120,.10),rgba(20,50,90,.14))'
-      :'linear-gradient(rgba(255,248,244,.12),rgba(214,200,195,.20))';
-    const css=`${tint}, url("${src}") center center / cover no-repeat`;
-    const s=getSeedStage(),r=getRoomMap();
-    if(s){s.classList.remove('bg-default','bg-default-night','bg-walk');s.style.background=css;}
-    if(r) r.style.background=css;
+    const src  = kind==='sokcho' ? 'img/sea.png' : 'img/hotel.png';
+    const tint = kind==='sokcho'
+      ? 'linear-gradient(rgba(30,70,120,.10),rgba(20,50,90,.14))'
+      : 'linear-gradient(rgba(255,248,244,.12),rgba(214,200,195,.20))';
+    const css = `${tint}, url("${src}") center center / cover no-repeat`;
+    const s=getSeedStage(), r=getRoomMap();
+    if(s){ s.classList.remove('bg-default','bg-default-night','bg-walk'); s.style.background=css; }
+    if(r) r.style.background = css;
   }
   function restoreBg(saved){
-    const s=getSeedStage(),r=getRoomMap();
+    const s=getSeedStage(), r=getRoomMap();
     if(s){
-      s.className=saved.seedClass||s.className;
-      if(saved.seedStyle) s.setAttribute('style',saved.seedStyle); else s.removeAttribute('style');
+      s.className = saved.seedClass||s.className;
+      if(saved.seedStyle) s.setAttribute('style', saved.seedStyle); else s.removeAttribute('style');
     }
     if(r){
-      if(saved.roomStyle) r.setAttribute('style',saved.roomStyle); else r.removeAttribute('style');
+      if(saved.roomStyle) r.setAttribute('style', saved.roomStyle); else r.removeAttribute('style');
     }
     safe(()=>updateSeedStageBackground&&updateSeedStageBackground(
       state.currentStageBg==='walk'?'default':state.currentStageBg
@@ -13477,111 +13498,111 @@ KEY:VERSE FINAL FIX PATCH
 
   async function animateClock(){
     if(!window.state) return;
-    const steps=[[10,0],[13,30],[17,0],[20,30],[23,0],[5,30],[7,0]];
+    const steps = [[10,0],[13,30],[17,0],[20,30],[23,0],[5,30],[7,0]];
     for(const [h,m] of steps){
       state.gameHour=h; state.gameMinute=m;
       safe(()=>updateScheduleUI&&updateScheduleUI());
       safe(()=>syncRoomUI&&syncRoomUI());
       await sleep(160);
     }
-    state.day=Number(state.day||1)+1;
+    state.day = Number(state.day||1)+1;
     state.gameHour=7; state.gameMinute=0;
     safe(()=>updateScheduleUI&&updateScheduleUI());
     safe(()=>syncRoomUI&&syncRoomUI());
   }
 
   function showTripToast(pills){
-    let toast=$('kvTripToast');
+    let toast = $('kvTripToast');
     if(!toast){
       toast=document.createElement('div');
       toast.id='kvTripToast';
       toast.className='kv-trip-toast';
       document.body.appendChild(toast);
     }
-    toast.innerHTML=`<div class="kv-trip-toast-title">📊 여행 후 변화</div><div class="kv-trip-pills">${pills.map(p=>`<span class="kv-trip-pill">${p}</span>`).join('')}</div>`;
+    toast.innerHTML = `
+      <div class="kv-trip-toast-title">📊 여행 후 변화</div>
+      <div class="kv-trip-pills">${pills.map(p=>`<span class="kv-trip-pill">${p}</span>`).join('')}</div>`;
     toast.classList.add('show');
     clearTimeout(toast._t);
-    toast._t=setTimeout(()=>toast.classList.remove('show'),3500);
+    toast._t = setTimeout(()=>toast.classList.remove('show'), 3500);
   }
 
-  const TRIP_CFG={
+  const TRIP_CFG = {
     sokcho:{
-      statDelta:{mystery:2,scary:1},stressDown:6,energyUp:18,
+      statDelta:{mystery:2,scary:1}, stressDown:6, energyUp:18,
       bubble:'즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.',
       pills:['Mystery +2','Scary +1','Stress -6','에너지 +18']
     },
     hotel:{
-      statDelta:{cute:2,social:1},stressDown:7,energyUp:22,
+      statDelta:{cute:2,social:1}, stressDown:7, energyUp:22,
       bubble:'즐거웠다~ 푹 쉬고 오니 몸도 마음도 가벼워졌어.',
       pills:['Cute +2','Social +1','Stress -7','에너지 +22']
     }
   };
 
   async function doTrip(kind){
-    const cfg=TRIP_CFG[kind];
-    if(!cfg||!window.state?.stats) return;
+    const cfg = TRIP_CFG[kind];
+    if(!cfg || !window.state?.stats) return;
 
-    /* A→B. 버튼 선택 → 대화상자 닫기 */
-    const ov=$('burnoutOverlay');
+    /* A→B: 버튼 선택 → 대화상자 닫기 */
+    const ov = $('burnoutOverlay');
     if(ov) ov.classList.remove('show');
     if(!state.burnout) state.burnout={};
-    state.burnout.pending=false;
+    state.burnout.pending = false;
     safe(()=>setScheduleButtonsDisabled&&setScheduleButtonsDisabled(false));
 
-    /* C. 배경 변경 */
-    const saved=saveBg();
+    /* C: 배경 변경 */
+    const saved = saveBg();
     applyBg(kind);
     await sleep(300);
 
-    /* D. 시간 흘러가기 */
+    /* D: 시간 흘러가기 */
     await animateClock();
 
     /* 스탯 적용 */
     safe(()=>applyStatDelta&&applyStatDelta(cfg.statDelta));
-    if(!state.stats) state.stats={};
-    state.stats.stress=clamp((state.stats.stress||0)-cfg.stressDown,0,100);
-    state.energy=clamp((state.energy||0)+cfg.energyUp,0,state.maxEnergy||100);
+    state.stats.stress = clamp((state.stats.stress||0)-cfg.stressDown, 0, 100);
+    state.energy = clamp((state.energy||0)+cfg.energyUp, 0, state.maxEnergy||100);
     safe(()=>refreshExtraStatUI&&refreshExtraStatUI());
     safe(()=>updateScheduleUI&&updateScheduleUI());
     safe(()=>syncRoomUI&&syncRoomUI());
-
     await sleep(400);
 
-    /* E. 배경 복원 + 말풍선 */
+    /* E: 배경 복원 + 말풍선 */
     restoreBg(saved);
     safe(()=>updateScheduleUI&&updateScheduleUI());
     safe(()=>syncRoomUI&&syncRoomUI());
     showOwnerLine(cfg.bubble);
 
-    /* F. 스탯 변화 토스트 */
+    /* F: 스탯 변화 토스트 */
     showTripToast(cfg.pills);
-
     safe(()=>triggerSaveNow&&triggerSaveNow());
   }
 
-  /* 버튼에 onclick 직접 설정 — 모든 capture 이벤트 경쟁 우회 */
+  /* 버튼에 onclick 직접 설정 */
   function bindBurnoutButtons(){
-    const trip=$('burnoutTripBtn'),hotel=$('burnoutHotelBtn');
+    const trip  = $('burnoutTripBtn');
+    const hotel = $('burnoutHotelBtn');
     if(trip){  trip.onclick  = e=>{ e.stopPropagation(); doTrip('sokcho'); }; }
     if(hotel){ hotel.onclick = e=>{ e.stopPropagation(); doTrip('hotel');  }; }
   }
 
-  /* MutationObserver: burnoutOverlay가 show될 때마다 재바인딩 */
-  const burnoutOv=$('burnoutOverlay');
+  const burnoutOv = $('burnoutOverlay');
   if(burnoutOv){
     new MutationObserver(()=>bindBurnoutButtons())
-      .observe(burnoutOv,{attributes:true,attributeFilter:['class']});
+      .observe(burnoutOv, {attributes:true, attributeFilter:['class']});
   }
-  window.resolveBurnoutVacation=doTrip;
-  window.resolveBurnoutVacationEmergency=doTrip;
+  window.resolveBurnoutVacation = doTrip;
+  window.resolveBurnoutVacationEmergency = doTrip;
 
   bindBurnoutButtons();
-  setTimeout(bindBurnoutButtons,200);
-  setTimeout(bindBurnoutButtons,800);
-  setTimeout(bindBurnoutButtons,2000);
+  setTimeout(bindBurnoutButtons, 200);
+  setTimeout(bindBurnoutButtons, 800);
+  setTimeout(bindBurnoutButtons, 2000);
 
 })();
 </script>
+
 
 </body>
 </html>
