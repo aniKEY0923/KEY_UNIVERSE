@@ -12788,5 +12788,396 @@ bootGame();
 })();
 </script>
 
+
+<style>
+.v81-fan-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px 14px max(18px, env(safe-area-inset-bottom));
+  background:rgba(31,25,38,.58);
+  backdrop-filter:blur(8px);
+}
+.v81-fan-overlay.show{display:flex;}
+.v81-fan-card{
+  width:min(100%, 520px);
+  max-height:min(88vh, 820px);
+  overflow:hidden;
+  border-radius:28px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(253,247,242,.96));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 28px 68px rgba(0,0,0,.28);
+  display:flex;
+  flex-direction:column;
+}
+.v81-fan-head{
+  padding:18px 18px 12px;
+  border-bottom:1px solid rgba(120,104,87,.08);
+}
+.v81-fan-title{margin:0;font-size:20px;font-weight:950;color:#5b4d42;}
+.v81-fan-sub{margin:8px 0 0;font-size:12px;line-height:1.6;color:#8c7d71;}
+.v81-fan-body{padding:14px 14px 12px;display:grid;gap:12px;overflow:auto;}
+.v81-fan-row{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:start;}
+.v81-fan-avatar{
+  width:56px;height:56px;border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg,#fff2f7,#f1e7ff);
+  border:1px solid rgba(120,104,87,.10);
+  box-shadow:0 8px 16px rgba(120,104,87,.08);
+}
+.v81-fan-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.v81-fan-bubble{
+  position:relative;
+  min-height:56px;
+  padding:14px 15px;
+  border-radius:20px;
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(120,104,87,.10);
+  color:#64564a;
+  font-size:13px;
+  line-height:1.5;
+  box-shadow:0 8px 18px rgba(120,104,87,.08);
+}
+.v81-fan-bubble::before{
+  content:"";
+  position:absolute;
+  left:-8px;
+  top:18px;
+  width:16px;
+  height:16px;
+  background:rgba(255,255,255,.98);
+  border-left:1px solid rgba(120,104,87,.10);
+  border-bottom:1px solid rgba(120,104,87,.10);
+  transform:rotate(45deg);
+}
+.v81-fan-foot{padding:10px 14px 16px;display:grid;gap:10px;}
+.v81-fan-delta{display:flex;flex-wrap:wrap;gap:8px;}
+.v81-fan-chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid rgba(120,104,87,.10);font-size:12px;font-weight:900;color:#6a584a;}
+.v81-fan-chip.negative{background:rgba(255,243,243,.96);color:#9b5d5d;}
+.v81-fan-ok{min-height:52px;border-radius:16px;background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;font-size:15px;font-weight:950;}
+.v81-trip-toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  z-index:10040;
+  width:min(calc(100vw - 24px), 440px);
+  padding:14px;
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(252,247,242,.96));
+  border:1px solid rgba(120,104,87,.12);
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease, transform .22s ease;
+}
+.v81-trip-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.v81-trip-title{margin:0 0 8px;font-size:13px;font-weight:950;color:#5b4d42;}
+.v81-trip-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.v81-trip-pill{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid rgba(120,104,87,.10);font-size:11px;font-weight:900;color:#6a584a;}
+@media (max-width:640px){
+  .v81-fan-card{border-radius:24px;}
+  .v81-fan-row{grid-template-columns:46px 1fr;gap:8px;}
+  .v81-fan-avatar{width:46px;height:46px;border-radius:13px;}
+  .v81-fan-bubble{padding:12px 13px;font-size:12px;}
+}
+</style>
+<script>
+(function(){
+  const PATCH_KEY = '__keyverse_patch_20260407_v81';
+  if (window[PATCH_KEY]) return;
+  window[PATCH_KEY] = true;
+
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const safe = (fn, fallback=null) => { try { return fn(); } catch (e) { return fallback; } };
+
+  function setVersionNotice(){
+    const text = '[업데이트 V8.1] 팬 반응 전체화면 카드 / 콘서트 종료 복귀 수정 / 번아웃 여행 이벤트 수정';
+    document.querySelectorAll('.schedule-subline, .small').forEach((el) => {
+      if (!el) return;
+      if (/업데이트|임시 안내|patch-test/i.test(el.textContent || '')) el.textContent = text;
+    });
+  }
+
+  function getConcertRank(){
+    const mg = window.miniGame || {};
+    if ((mg.score || 0) >= 2400 || (mg.perfect || 0) >= 14) return 'S';
+    if ((mg.score || 0) >= 1500 || (mg.perfect || 0) >= 8) return 'A';
+    if ((mg.score || 0) >= 900 || (mg.perfect || 0) >= 4) return 'B';
+    return 'C';
+  }
+
+  function pickFanLines(rank){
+    const poolMap = {
+      S:['오늘 무대 진짜 미쳤어!', '앵콜 또 해줘요!', '눈물날 정도로 좋았어!', '레전드 무대였다!', '진짜 또 보고 싶어!'],
+      A:['너무 좋았어요!', '오늘 무대 멋졌어!', '분위기 최고였어!', '다음 공연도 기대돼!', '계속 생각날 것 같아!'],
+      B:['괜찮았어요!', '오늘도 즐거웠어요!', '조금 아쉽지만 좋았어.', '다음엔 더 기대할게!', '그래도 반가웠어!'],
+      C:['조금 아쉬웠어…', '오늘은 컨디션이 별로였나 봐.', '다음엔 더 잘할 수 있을 거야!', '조금 더 보고 싶었어.', '다음 무대 기다릴게!']
+    };
+    const descMap = {
+      S:'압도적인 공연으로 팬들의 반응이 폭발했습니다.',
+      A:'좋은 공연으로 팬들의 반응이 매우 좋았습니다.',
+      B:'무난한 공연으로 팬들의 반응이 나쁘지 않았습니다.',
+      C:'아쉬운 공연이었지만 다음 무대를 기대하는 팬들이 남았습니다.'
+    };
+    const deltaMap = {S:3, A:2, B:1, C:-1};
+    const pool = poolMap[rank] || poolMap.B;
+    const lines = [];
+    for (let i = 0; i < 4; i += 1) lines.push(pool[(Math.floor(Math.random()*pool.length) + i) % pool.length]);
+    const avatars = Array.from({length:4}, () => `img/fangirl_0${Math.floor(Math.random()*7)}.png`);
+    return { desc: descMap[rank], delta: deltaMap[rank], lines, avatars };
+  }
+
+  function ensureFanOverlay(){
+    let overlay = $('v81FanOverlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'v81FanOverlay';
+    overlay.className = 'v81-fan-overlay';
+    overlay.innerHTML = `
+      <div class="v81-fan-card">
+        <div class="v81-fan-head">
+          <h3 class="v81-fan-title">공연 직후 팬 반응</h3>
+          <p class="v81-fan-sub" id="v81FanSub"></p>
+        </div>
+        <div class="v81-fan-body" id="v81FanBody"></div>
+        <div class="v81-fan-foot">
+          <div class="v81-fan-delta" id="v81FanDelta"></div>
+          <button type="button" class="v81-fan-ok" id="v81FanOkBtn">확인</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    $('v81FanOkBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      closeConcertFlow();
+    }, true);
+    return overlay;
+  }
+
+  function renderFanOverlay(){
+    const overlay = ensureFanOverlay();
+    const rank = getConcertRank();
+    const info = pickFanLines(rank);
+    $('v81FanSub').textContent = info.desc;
+    $('v81FanBody').innerHTML = info.lines.map((line, idx) => `
+      <div class="v81-fan-row">
+        <div class="v81-fan-avatar"><img src="${info.avatars[idx]}" alt="팬"></div>
+        <div class="v81-fan-bubble">${line}</div>
+      </div>`).join('');
+    const deltaText = info.delta >= 0 ? `인기 +${info.delta} 상승했습니다.` : `인기 ${info.delta} 하락했습니다.`;
+    $('v81FanDelta').innerHTML = `<span class="v81-fan-chip ${info.delta < 0 ? 'negative' : ''}">${deltaText}</span>`;
+    overlay.classList.add('show');
+    document.body.classList.add('ending-modal-open');
+  }
+
+  function closeConcertFlow(){
+    safe(() => $('v81FanOverlay').classList.remove('show'));
+    document.body.classList.remove('ending-modal-open');
+    ['concertEventCard','miniGameLayer','miniGameResult','miniStartOverlay','miniConfirmOverlay','fanReactionOverlay'].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.classList.remove('show','active');
+      if (id === 'miniGameLayer') el.style.display = '';
+    });
+    document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
+    safe(() => closeMiniAbortConfirm && closeMiniAbortConfirm());
+    if (window.miniGame){
+      miniGame.active = false;
+      miniGame.playing = false;
+      miniGame.pendingFinish = false;
+    }
+    if (window.state){
+      state.concertEventResolved = true;
+      state.concertEventOffered = true;
+      state.__v81ConcertOverlayOpen = false;
+    }
+    safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    if (window.state?.awakened && typeof showScreen === 'function') showScreen('room');
+  }
+
+  function queueFanOverlay(){
+    if (window.state?.__v81ConcertOverlayOpen) return;
+    if (window.state) state.__v81ConcertOverlayOpen = true;
+    setTimeout(() => {
+      document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
+      renderFanOverlay();
+    }, 120);
+    setTimeout(() => {
+      if ($('v81FanOverlay') && !$('v81FanOverlay').classList.contains('show')) renderFanOverlay();
+    }, 320);
+  }
+
+  if (!window.__v81ConcertRewardWrapped){
+    const prev = typeof window.applyConcertMiniGameRewards === 'function' ? window.applyConcertMiniGameRewards : null;
+    if (prev){
+      window.__v81ConcertRewardWrapped = true;
+      window.applyConcertMiniGameRewards = function(){
+        const result = prev.apply(this, arguments);
+        queueFanOverlay();
+        return result;
+      };
+    }
+  }
+
+  function getBgTargets(){
+    return {
+      seed: window.seedStage || $('seedStage') || document.querySelector('.seed-stage'),
+      room: window.roomMap || $('roomMap') || document.querySelector('.room-map')
+    };
+  }
+
+  function saveBgState(){
+    const { seed, room } = getBgTargets();
+    return {
+      seedClass: seed ? seed.className : '',
+      seedStyle: seed ? (seed.getAttribute('style') || '') : '',
+      roomStyle: room ? (room.getAttribute('style') || '') : ''
+    };
+  }
+
+  function applyTripBackground(kind){
+    const src = kind === 'sokcho' ? 'img/sea.png' : 'img/hotel.png';
+    const tint = kind === 'sokcho'
+      ? 'linear-gradient(rgba(255,250,241,.08), rgba(214,205,195,.14))'
+      : 'linear-gradient(rgba(255,248,244,.10), rgba(214,205,195,.16))';
+    const bg = `${tint}, url("${src}") center center / 108% 108% no-repeat`;
+    const { seed, room } = getBgTargets();
+    if (seed){
+      seed.classList.remove('bg-default','bg-default-night','bg-walk');
+      seed.style.background = bg;
+    }
+    if (room) room.style.background = bg;
+  }
+
+  function restoreBgState(saved){
+    const { seed, room } = getBgTargets();
+    if (seed){
+      seed.className = saved.seedClass || seed.className;
+      if (saved.seedStyle) seed.setAttribute('style', saved.seedStyle); else seed.removeAttribute('style');
+    }
+    if (room){
+      if (saved.roomStyle) room.setAttribute('style', saved.roomStyle); else room.removeAttribute('style');
+    }
+    safe(() => updateSeedStageBackground && updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg));
+  }
+
+  async function animateTripClock(){
+    if (!window.state) return;
+    const steps = [[10,0],[13,0],[16,0],[19,0],[22,0],[6,0]];
+    for (const [h,m] of steps){
+      state.gameHour = h;
+      state.gameMinute = m;
+      safe(() => updateScheduleUI && updateScheduleUI());
+      safe(() => syncRoomUI && syncRoomUI());
+      await sleep(170);
+    }
+    state.day = Number(state.day || 1) + 1;
+    state.gameHour = 7;
+    state.gameMinute = 0;
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+  }
+
+  function showTripToast(lines){
+    let toast = $('v81TripToast');
+    if (!toast){
+      toast = document.createElement('div');
+      toast.id = 'v81TripToast';
+      toast.className = 'v81-trip-toast';
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = `<div class="v81-trip-title">휴가 후 변화</div><div class="v81-trip-pills">${lines.map(line => `<span class="v81-trip-pill">${line}</span>`).join('')}</div>`;
+    toast.classList.add('show');
+    clearTimeout(toast.__timer);
+    toast.__timer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  const TRIP_CFG = {
+    sokcho: {
+      bubble: '즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.',
+      statDelta: { mystery: 2, scary: 1 },
+      stressDown: 6,
+      energyUp: 18,
+      result: ['Mystery +2', 'Scary +1', 'Stress -6', '에너지 +18']
+    },
+    hotel: {
+      bubble: '즐거웠다~ 푹 쉬고 오니 몸도 마음도 가벼워졌어.',
+      statDelta: { cute: 2, social: 1 },
+      stressDown: 7,
+      energyUp: 22,
+      result: ['Cute +2', 'Social +1', 'Stress -7', '에너지 +22']
+    }
+  };
+
+  async function resolveTrip(kind){
+    const cfg = TRIP_CFG[kind];
+    if (!cfg || !window.state?.stats) return;
+    const overlay = $('burnoutOverlay');
+    if (overlay) overlay.classList.remove('show');
+    if (!state.burnout) state.burnout = {};
+    state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+    if (window.state?.awakened && typeof showScreen === 'function') showScreen('room');
+
+    const saved = saveBgState();
+    applyTripBackground(kind);
+    await sleep(260);
+    await animateTripClock();
+
+    safe(() => applyStatDelta && applyStatDelta(cfg.statDelta));
+    state.stats.stress = clamp((state.stats.stress || 0) - cfg.stressDown, 0, 100);
+    state.energy = clamp((state.energy || 0) + cfg.energyUp, 0, state.maxEnergy || 100);
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    await sleep(420);
+    restoreBgState(saved);
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+
+    safe(() => setSeedMessage && setSeedMessage(cfg.bubble));
+    safe(() => showRoomOwnerBubble && showRoomOwnerBubble(cfg.bubble));
+    setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 2600);
+    showTripToast(cfg.result);
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  window.resolveBurnoutVacation = resolveTrip;
+  window.resolveBurnoutVacationEmergency = resolveTrip;
+
+  function handleTripButtonEvent(e){
+    const btn = e.target && e.target.closest ? e.target.closest('#burnoutTripBtn, #burnoutHotelBtn') : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    resolveTrip(btn.id === 'burnoutTripBtn' ? 'sokcho' : 'hotel');
+  }
+  document.addEventListener('click', handleTripButtonEvent, true);
+  document.addEventListener('touchend', handleTripButtonEvent, true);
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('#concertReactionOkBtn, #concertReactionOkBtnHotfix, #concertReactionOkBtnFinal, #v81FanOkBtn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    closeConcertFlow();
+  }, true);
+
+  setVersionNotice();
+  setTimeout(setVersionNotice, 250);
+  setTimeout(setVersionNotice, 1000);
+})();
+</script>
+
 </body>
 </html>
