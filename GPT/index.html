@@ -7296,11 +7296,7 @@ function startAction(type){
     await triggerSaveNow();
   }, meta.duration);
 }
-function applyStatDelta(deltaMap){
-  Object.keys(deltaMap).forEach(key => {
-    state.stats[key] = clamp((state.stats[key] || 0) + deltaMap[key], 0, 10);
-  });
-}
+
 
 function finishAction(type){
   let message = dialogues.intro;
