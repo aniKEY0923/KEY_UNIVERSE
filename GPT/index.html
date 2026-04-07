@@ -7298,7 +7298,7 @@ function startAction(type){
 }
 
 
-function finishAction(type){
+window.finishAction = function(type){
   let message = dialogues.intro;
 
   switch(type){
@@ -7348,8 +7348,7 @@ function finishAction(type){
       state.energy += 52;
       message = dialogues.sleep;
       break;
-  }
-
+  };
   state.energy = clamp(state.energy, 0, state.maxEnergy);
   const earnedCoins = actionCoinReward[type] || 0;
   if (earnedCoins) addMoney(earnedCoins);
