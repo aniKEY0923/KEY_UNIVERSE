@@ -6316,11 +6316,11 @@ function openAwardsCeremony(){
 }
 
 function maybeTriggerAwardsCeremony(){
-  const AWARDS_DAY = 30;
-  if (!state.awakened) return;
+  const AWARDS_DAY = 3;
   if (state.day < AWARDS_DAY) return;
   if ((state.awards.lastHeldDay || 0) >= state.day) return;
-  if (awardsOverlay.classList.contains('show')) return;
+  const ov = document.getElementById('awardsOverlay');
+  if (!ov || ov.classList.contains('show')) return;
 
   state.awards.hasPending = true;
   openAwardsCeremony();
@@ -6770,7 +6770,12 @@ function tickMiniGame(now){
 
   updateMiniGameHUD();
 
-  if (now - miniGame.startTime >= miniGame.duration) {
+  /* 진행바 업데이트 - 매 프레임마다 현재 경과 시간으로 계산 */
+  const elapsed = now - miniGame.startTime;
+  const progress = Math.min(1, elapsed / miniGame.duration);
+  updateMiniGameProgress(progress);
+
+  if (elapsed >= miniGame.duration) {
     updateMiniGameProgress(1);
     finishConcertMiniGame();
     return;
@@ -6929,6 +6934,15 @@ function updateScheduleUI(){
     const rel = roomStatEls[key];
     if (rel?.val) rel.val.textContent = state.stats[key];
     if (rel?.fill) rel.fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+  });
+
+  /* stress / popularity 바 직접 업데이트 (statEls에 없는 경우 대비) */
+  ['stress', 'popularity'].forEach(key => {
+    const val = state.stats[key] || 0;
+    const fillEl = document.getElementById('fill-' + key);
+    const valEl  = document.getElementById('val-'  + key);
+    if (fillEl) fillEl.style.width = Math.min(100, val) + '%';
+    if (valEl)  valEl.textContent  = val;
   });
 
   if (state.awakened) {
@@ -8537,9 +8551,12 @@ bootGame();
   ──────────────────────────────────────────────── */
   function getConcertRank() {
     const mg = window.miniGame || {};
-    if ((mg.score || 0) >= 2400 || (mg.perfect || 0) >= 14) return 'S';
-    if ((mg.score || 0) >= 1500 || (mg.perfect || 0) >= 8)  return 'A';
-    if ((mg.score || 0) >= 900  || (mg.perfect || 0) >= 4)  return 'B';
+    /* _lastScore/_lastPerfect/_lastGood: applyConcertMiniGameRewards 전에 저장된 값 우선 사용 */
+    const score   = mg._lastScore   ?? mg.score   ?? 0;
+    const perfect = mg._lastPerfect ?? mg.perfect ?? 0;
+    if (score >= 2400 || perfect >= 14) return 'S';
+    if (score >= 1500 || perfect >= 8)  return 'A';
+    if (score >= 900  || perfect >= 4)  return 'B';
     return 'C';
   }
 
@@ -8660,7 +8677,17 @@ bootGame();
     const orig = window.applyConcertMiniGameRewards;
     if (!orig || orig._kvFinal) return false;
     window.applyConcertMiniGameRewards = function () {
+      /* orig 실행 전에 점수 저장 (orig가 miniGame 상태를 변경할 수 있으므로) */
+      const savedScore   = (window.miniGame?.score   || 0);
+      const savedPerfect = (window.miniGame?.perfect || 0);
+      const savedGood    = (window.miniGame?.good    || 0);
       orig.apply(this, arguments);
+      /* 저장된 점수를 miniGame에 복원 (팬카드 rank 계산에 사용) */
+      if (window.miniGame) {
+        window.miniGame._lastScore   = savedScore;
+        window.miniGame._lastPerfect = savedPerfect;
+        window.miniGame._lastGood    = savedGood;
+      }
       const layer = $('miniGameLayer');
       if (layer) layer.classList.remove('active');
       const result = $('miniGameResult');
@@ -8799,14 +8826,20 @@ bootGame();
 
   function checkAwardsTrigger() {
     if (!window.state) return;
-    if (!window.awardsOverlay) return;
-    if (awardsOverlay.classList.contains('show')) return;
+    const awardsOv = document.getElementById('awardsOverlay');
+    if (!awardsOv) return;
+    if (awardsOv.classList.contains('show')) return;
 
     const currentDay = state.day || 1;
     const lastHeld = state.awards?.lastHeldDay || 0;
 
-    /* DAY7, DAY14, DAY21... 마다 한 번씩 */
-    const nextAwardsDay = (Math.floor(lastHeld / AWARDS_INTERVAL) + 1) * AWARDS_INTERVAL;
+    /* DAY3, 그 이후 AWARDS_INTERVAL(7)일마다 한 번씩 */
+    let nextAwardsDay;
+    if (lastHeld === 0) {
+      nextAwardsDay = 3; /* 첫 시상식은 DAY3 */
+    } else {
+      nextAwardsDay = lastHeld + AWARDS_INTERVAL;
+    }
 
     if (currentDay >= nextAwardsDay) {
       safe(() => openAwardsCeremony && openAwardsCeremony());
@@ -8904,7 +8937,7 @@ bootGame();
     ensureExtraStatBars();
     ensureBurnoutOverlay();
     patchRenderStageDecor();
-    patchAwardsTrigger();
+    patchAwardsTrigger(); /* 즉시 override */
 
     /* canAwaken 즉시 패치 (원본이 이미 있으므로) */
     patchCanAwaken();
@@ -8918,6 +8951,7 @@ bootGame();
       if (patchConcertReward())          done++;
       if (patchFinishConcertMiniGame())  done++;
       ensureExtraStatBars();
+      patchAwardsTrigger(); /* 매 틱마다 재보장 */
 
       /* canAwaken 재패치 (혹시 나중에 덮어써진 경우) */
       if (!window.canAwaken?._kvFinal) patchCanAwaken();
