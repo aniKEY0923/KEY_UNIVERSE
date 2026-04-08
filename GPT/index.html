@@ -6942,7 +6942,7 @@ function updateScheduleUI(){
     setSeedMessage(dialogues.ready, { idleAfterMs:SEED_IDLE_MS });
   }
 
-  updateSeedStageBackground(state.currentStageBg === 'walk' ? 'default' : state.currentStageBg);
+  updateSeedStageBackground(state.currentStageBg);
   updateAwakenButtonUI();
   maybeTriggerConcertEvent();
   positionStageEnergyBar();
@@ -7383,7 +7383,7 @@ window.finishAction = function(type){
 }
 
 function canAwaken(){
-  return state.day >= 3;
+  return state.day >= 5;
 }
 
 function getTopStatName(){
@@ -8427,7 +8427,7 @@ bootGame();
       const val = state.stats[key] || 0;
       const fill = $('fill-' + key);
       const valEl = $('val-' + key);
-      if (fill) fill.style.width = clamp((val / 10) * 100, 0, 100) + '%';
+      if (fill) fill.style.width = clamp(val, 0, 100) + '%';
       if (valEl) valEl.textContent = val;
     });
   }
@@ -8498,13 +8498,6 @@ bootGame();
       /* 원본 실행 */
       const r = orig.apply(this, arguments);
 
-      /* walk 배경 강제 유지 */
-      if (isWalk && window.seedStage) {
-        if (window.state) state.currentStageBg = 'walk';
-        safe(() => seedStage.classList.remove('bg-default', 'bg-default-night'));
-        safe(() => seedStage.classList.add('bg-walk'));
-      }
-
       /* 2) 스트레스 적용 */
       if (window.state?.stats != null) {
         const delta = STRESS_DELTA[type];
@@ -8525,19 +8518,12 @@ bootGame();
     return true;
   }
 
-  /* updateScheduleUI 래퍼: walk 배경 보호 */
+  /* updateScheduleUI 래퍼: 시상식 트리거 추가 */
   function patchUpdateScheduleUI() {
     const orig = window.updateScheduleUI;
     if (!orig || orig._kvFinal) return false;
     window.updateScheduleUI = function () {
-      const wasWalk = window.state?.currentStageBg === 'walk';
       const r = orig.apply(this, arguments);
-      /* updateScheduleUI 내부에서 walk→default 리셋이 일어나면 복원 */
-      if (wasWalk && window.seedStage) {
-        if (window.state) state.currentStageBg = 'walk';
-        safe(() => seedStage.classList.remove('bg-default', 'bg-default-night'));
-        safe(() => seedStage.classList.add('bg-walk'));
-      }
       /* 추가: 시상식 트리거 */
       safe(() => checkAwardsTrigger());
       return r;
@@ -8618,8 +8604,9 @@ bootGame();
 
     $('kvFanSub').textContent = data.desc;
 
-    /* fangirl 이미지 랜덤 4장 (fangirl_00 ~ fangirl_06) */
-    const indices = Array.from({ length: 4 }, () => Math.floor(Math.random() * 7));
+    /* fangirl 이미지 랜덤 4장 (fangirl_00 ~ fangirl_06, 중복 없음) */
+    const pool = [0,1,2,3,4,5,6].sort(() => Math.random() - 0.5);
+    const indices = pool.slice(0, 4);
     $('kvFanBody').innerHTML = data.lines.map((line, i) => {
       const imgFile = `img/fangirl_0${indices[i]}.png`;
       return `<div class="kv-fan-row">
@@ -8808,18 +8795,17 @@ bootGame();
      6. 시상식 - DAY30마다 발동 (반복)
         updateScheduleUI가 호출될 때마다 체크
   ──────────────────────────────────────────────── */
-  const AWARDS_INTERVAL = 30; /* N일마다 시상식 */
+  const AWARDS_INTERVAL = 7; /* N일마다 시상식 */
 
   function checkAwardsTrigger() {
     if (!window.state) return;
-    if (!state.awakened) return;
     if (!window.awardsOverlay) return;
     if (awardsOverlay.classList.contains('show')) return;
 
     const currentDay = state.day || 1;
     const lastHeld = state.awards?.lastHeldDay || 0;
 
-    /* DAY30, DAY60, DAY90... 마다 한 번씩 */
+    /* DAY7, DAY14, DAY21... 마다 한 번씩 */
     const nextAwardsDay = (Math.floor(lastHeld / AWARDS_INTERVAL) + 1) * AWARDS_INTERVAL;
 
     if (currentDay >= nextAwardsDay) {
