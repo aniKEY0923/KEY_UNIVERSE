@@ -6301,6 +6301,7 @@ function renderAwardsCeremony(result){
 }
 
 function openAwardsCeremony(){
+  if (!state.awards) state.awards = { season: 1, lastHeldDay: 0, hasPending: false, lastResult: null };
   const result = buildAwardsResult();
   state.awards.lastResult = result;
   state.awards.hasPending = false;
@@ -6980,7 +6981,7 @@ function updateScheduleUI(){
   updateAwakenButtonUI();
   maybeTriggerConcertEvent();
   positionStageEnergyBar();
-  maybeTriggerAwardsCeremony();
+  if (typeof window.maybeTriggerAwardsCeremony === 'function') window.maybeTriggerAwardsCeremony();
 }
 
 function syncSeedStageLayout(options = {}){
@@ -7397,10 +7398,10 @@ window.finishAction = function(type){
       break;
   };
   const stressDeltaMap = {
-    practice: 4,
-    shoot: 1,
-    exhibit: 1,
-    meeting: 1,
+    practice: 12,
+    shoot: 3,
+    exhibit: 3,
+    meeting: 3,
     netflix: -1,
     walk: -2,
     bath: -3,
@@ -7433,7 +7434,8 @@ window.finishAction = function(type){
 window.finishAction._stressBuiltIn = true;
 
 function canAwaken(){
-  return state.day >= 5;
+  if (!window.state) return false;
+  return (window.state.day || 1) >= 5;
 }
 
 function getTopStatName(){
@@ -8547,7 +8549,7 @@ bootGame();
         const r = orig.apply(this, arguments);
         safe(() => syncExtraStatBars && syncExtraStatBars());
         if (window.state?.stats != null) {
-          if ((state.stats.stress || 0) >= 10 && !state.burnout?.pending) {
+          if ((state.stats.stress || 0) >= 40 && !state.burnout?.pending) {
             safe(() => openBurnoutV5());
           }
         }
@@ -8569,7 +8571,7 @@ bootGame();
         syncExtraStatBars();
 
         /* 번아웃 체크 */
-        if ((state.stats.stress || 0) >= 10 && !state.burnout?.pending) {
+        if ((state.stats.stress || 0) >= 40 && !state.burnout?.pending) {
           safe(() => openBurnoutV5());
         }
       }
@@ -8877,6 +8879,9 @@ bootGame();
     if (awardsOv.classList.contains('show')) return;
     if (state.isActing || (window.miniGame && window.miniGame.active)) return;
 
+    /* state.awards 미초기화 방어 */
+    if (!state.awards) state.awards = { season: 1, lastHeldDay: 0, hasPending: false, lastResult: null };
+
     const currentDay = state.day || 1;
     const lastHeld = state.awards?.lastHeldDay || 0;
 
@@ -8979,7 +8984,7 @@ bootGame();
   window.openBurnout = openBurnoutV5;
   window.openBurnoutVacation = openBurnoutV5;
   window.maybeTriggerBurnoutVacation = () => {
-    if ((window.state?.stats?.stress || 0) >= 10 && !window.state?.burnout?.pending) openBurnoutV5();
+    if ((window.state?.stats?.stress || 0) >= 40 && !window.state?.burnout?.pending) openBurnoutV5();
   };
 
   function boot() {
