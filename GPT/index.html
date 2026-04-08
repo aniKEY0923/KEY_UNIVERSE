@@ -8548,6 +8548,143 @@ bootGame();
 
 
 
+<!-- ============================================================
+  KEY:VERSE v3.0 버그픽스 패치
+  
+  사용법: index.html 파일에서 맨 아래 </body> 바로 앞에
+  이 전체 내용을 붙여넣으세요.
+  
+  수정 내용:
+  1. 스트레스가 쌓이지 않던 버그 수정
+  2. 팬 반응 카드 제목/버튼/인기 변동 텍스트 수정
+============================================================ -->
+<style>
+/* 팬 반응 카드 — 인기 상승/하락 색상 */
+.kv-fan-chip.pos{
+  color:#27ae60;
+  border-color:rgba(39,174,96,.18);
+  background:rgba(236,252,244,.92);
+}
+.kv-fan-chip.neg{
+  color:#c0392b !important;
+  border-color:rgba(192,57,43,.18) !important;
+  background:rgba(255,240,238,.92) !important;
+}
+</style>
+<script>
+(function(){
+  'use strict';
+
+  /* ── 1. 스트레스 버그픽스 ──────────────────────────────────
+     문제: v3.0 overrideFinishAction과 메인 IIFE 래퍼가 충돌해서
+           stress 값이 업데이트되지 않음.
+     해결: 페이지 로드 완료 후 finishAction을 직접 래핑.
+  ─────────────────────────────────────────────────────────── */
+  function applyStressFix() {
+    var orig = window.finishAction;
+    if (!orig || orig._kvStressFix) return;
+
+    window.finishAction = function(type) {
+      var result = orig.apply(this, arguments);
+
+      if (!window.state || !window.state.stats) return result;
+
+      var stressMap = {
+        practice: 4,
+        shoot: 1,
+        exhibit: 1,
+        meeting: 1,
+        netflix: -1,
+        walk: -2,
+        bath: -3,
+        sleep: -4
+      };
+
+      if (stressMap[type] !== undefined) {
+        if (typeof state.stats.stress !== 'number') state.stats.stress = 0;
+        state.stats.stress = Math.min(100, Math.max(0, state.stats.stress + stressMap[type]));
+
+        // UI 바 업데이트
+        var fillEl = document.getElementById('fill-stress');
+        var valEl  = document.getElementById('val-stress');
+        if (fillEl) fillEl.style.width = Math.min(100, (state.stats.stress / 10) * 100) + '%';
+        if (valEl)  valEl.textContent = state.stats.stress;
+
+        // 번아웃 체크
+        if (state.stats.stress >= 10) {
+          var burnout = state.burnout || {};
+          if (!burnout.pending && typeof openBurnoutVacation === 'function') {
+            openBurnoutVacation();
+          }
+        }
+      }
+      return result;
+    };
+
+    window.finishAction._kvStressFix = true;
+    console.log('[v3.0 bugfix] 스트레스 패치 적용 완료');
+  }
+
+  // 페이지 로드 완료 후 적용 (v3.0 패치 실행 후)
+  if (document.readyState === 'complete') {
+    setTimeout(applyStressFix, 600);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(applyStressFix, 600);
+    });
+  }
+
+
+  /* ── 2. 팬 반응 카드 UI 픽스 ──────────────────────────────
+     문제: 제목이 "공연 직후 팬 반응", 버튼이 너무 긴 텍스트,
+           인기 변동 텍스트가 이상하게 표시됨.
+     해결: openFanCard 호출 후 DOM을 수정.
+  ─────────────────────────────────────────────────────────── */
+  var fanCardCheckInterval = setInterval(function() {
+    if (typeof openFanCard !== 'function') return;
+    clearInterval(fanCardCheckInterval);
+
+    var _origOpenFanCard = openFanCard;
+
+    window.openFanCard = function() {
+      // 원래 함수 먼저 실행
+      _origOpenFanCard.apply(this, arguments);
+
+      // DOM이 생성된 뒤에 수정
+      setTimeout(function() {
+        // 제목
+        var titleEl = document.querySelector('.kv-fan-title');
+        if (titleEl) titleEl.textContent = '공연에 대한 팬들의 반응';
+
+        // 확인 버튼
+        var okBtn = document.getElementById('kvFanOkBtn');
+        if (okBtn) okBtn.textContent = '확인';
+
+        // 인기 변동 텍스트
+        var deltaEl = document.getElementById('kvFanDelta');
+        if (deltaEl) {
+          var chip = deltaEl.querySelector('.kv-fan-chip');
+          if (chip) {
+            var txt = chip.textContent || '';
+            // 현재 텍스트에서 숫자 추출
+            var numMatch = txt.match(/[\+\-]?\d+/);
+            var num = numMatch ? parseInt(numMatch[0]) : 1;
+            var isPos = num >= 0;
+            var absNum = Math.abs(num) || 1;
+
+            chip.textContent = '인기 가 ' + absNum + '만큼 ' + (isPos ? '상승' : '하락') + '하였습니다.';
+            chip.classList.remove('pos', 'neg');
+            chip.classList.add(isPos ? 'pos' : 'neg');
+          }
+        }
+      }, 50);
+    };
+
+    console.log('[v3.0 bugfix] 팬 반응 카드 패치 적용 완료');
+  }, 300);
+
+})();
+</script>
 
 
 
