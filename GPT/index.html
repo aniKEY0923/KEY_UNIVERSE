@@ -2278,7 +2278,7 @@ img{
 }
 
 .room-bottom-card{
-  overflow:hidden;
+  overflow:visible;
 }
 .room-bottom-tabs{
   display:grid;
@@ -3223,6 +3223,7 @@ body.ending-modal-open{
   opacity:0;
   pointer-events:none;
   transition:opacity .22s ease, transform .22s ease;
+  z-index:300;
 }
 .room-tab-intro-bubble.show{
   opacity:1;
@@ -3914,12 +3915,17 @@ body.ending-modal-open{
           </div>
 
           <div class="card panel room-bottom-card">
-            <div class="room-bottom-tabs" id="roomBottomTabs">
+            <div class="room-bottom-tabs" id="roomBottomTabs" style="position:relative;overflow:visible;">
               <button type="button" class="room-bottom-tab active" data-room-tab="schedule">스케쥴</button>
               <button type="button" class="room-bottom-tab" data-room-tab="gift">선물</button>
-              <button type="button" class="room-bottom-tab" data-room-tab="decor">방꾸미기
-                <span class="room-tab-intro-bubble" id="roomDecorIntroBubble">방꾸미기 기능이 열렸습니다. 방을 꾸미면 취향의 친구가 찾아옵니다.</span>
+              <button type="button" class="room-bottom-tab" data-room-tab="decor" style="position:relative;overflow:visible;">방꾸미기
+                <span class="room-decor-new-badge" id="roomDecorNewBadge" style="display:none;">NEW</span>
               </button>
+            </div>
+            <!-- 말풍선: 탭바 위에 고정. z-index를 높여서 room 이미지 위에 표시 -->
+            <div class="room-tab-intro-bubble" id="roomDecorIntroBubble"
+                 style="position:absolute;left:66%;transform:translateX(-50%);bottom:calc(100% + 8px);z-index:200;width:min(260px,80vw);">
+              이제부터 방 꾸미기가 가능합니다. 방에 배치된 소품이 마음에 들면 친구가 방문합니다
             </div>
 
             <div class="room-bottom-shell">
@@ -4142,7 +4148,9 @@ const state = {
     social: 0,
     cute: 0,
     scary: 0,
-    humor: 0
+    humor: 0,
+    stress: 0,
+    popularity: 0
   },
   awakened: null,
   awards: {
@@ -5262,12 +5270,14 @@ const miniStartBtn = document.getElementById('miniStartBtn');
 const miniLaneButtons = document.querySelectorAll('.mini-hit-btn');
 
 const statEls = {
-  practice: { fill: document.getElementById('fill-practice'), val: document.getElementById('val-practice') },
-  mystery:  { fill: document.getElementById('fill-mystery'),  val: document.getElementById('val-mystery') },
-  social:   { fill: document.getElementById('fill-social'),   val: document.getElementById('val-social') },
-  cute:     { fill: document.getElementById('fill-cute'),     val: document.getElementById('val-cute') },
-  scary:    { fill: document.getElementById('fill-scary'),    val: document.getElementById('val-scary') },
-  humor:    { fill: document.getElementById('fill-humor'),    val: document.getElementById('val-humor') }
+  practice:   { fill: document.getElementById('fill-practice'),   val: document.getElementById('val-practice') },
+  mystery:    { fill: document.getElementById('fill-mystery'),    val: document.getElementById('val-mystery') },
+  social:     { fill: document.getElementById('fill-social'),     val: document.getElementById('val-social') },
+  cute:       { fill: document.getElementById('fill-cute'),       val: document.getElementById('val-cute') },
+  scary:      { fill: document.getElementById('fill-scary'),      val: document.getElementById('val-scary') },
+  humor:      { fill: document.getElementById('fill-humor'),      val: document.getElementById('val-humor') },
+  stress:     { fill: document.getElementById('fill-stress'),     val: document.getElementById('val-stress') },
+  popularity: { fill: document.getElementById('fill-popularity'), val: document.getElementById('val-popularity') }
 };
 
 
@@ -5959,7 +5969,7 @@ function hardResetToNewGame(){
   state.gameMinute = 0;
   state.energy = 100;
   state.maxEnergy = 100;
-  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0 };
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
   state.awakened = null;
   state.awards.season = 1;
   state.awards.lastHeldDay = 0;
@@ -6911,11 +6921,14 @@ function updateScheduleUI(){
   stageEnergyFill.style.width = `${clamp((state.energy / state.maxEnergy) * 100, 0, 100)}%`;
 
   Object.keys(state.stats).forEach(key => {
-    statEls[key].val.textContent = state.stats[key];
-    statEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+    const el = statEls[key];
+    if (!el) return;
+    if (el.val) el.val.textContent = state.stats[key];
+    if (el.fill) el.fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
 
-    if (roomStatEls[key]?.val) roomStatEls[key].val.textContent = state.stats[key];
-    if (roomStatEls[key]?.fill) roomStatEls[key].fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+    const rel = roomStatEls[key];
+    if (rel?.val) rel.val.textContent = state.stats[key];
+    if (rel?.fill) rel.fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
   });
 
   if (state.awakened) {
@@ -7550,7 +7563,7 @@ function beginNewSeedRun(){
   state.gameMinute = 0;
   state.energy = 100;
   state.maxEnergy = 100;
-  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0 };
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
   state.awakened = null;
   state.isActing = false;
   state.currentStageBg = 'default';
@@ -7626,7 +7639,9 @@ function resetAll(){
     social: 0,
     cute: 0,
     scary: 0,
-    humor: 0
+    humor: 0,
+    stress: 0,
+    popularity: 0
   };
   state.awakened = null;
   state.isActing = false;
@@ -7758,12 +7773,14 @@ function migrateSave(save){
   if (typeof p.roomDecorIntroPending !== 'boolean') p.roomDecorIntroPending = false;
 
   p.stats = {
-    practice: oldStats.practice ?? 0,
-    mystery: oldStats.mystery ?? 0,
-    social: oldStats.social ?? 0,
-    cute: oldStats.cute ?? 0,
-    scary: oldStats.scary ?? 0,
-    humor: oldStats.humor ?? 0
+    practice:   oldStats.practice   ?? 0,
+    mystery:    oldStats.mystery    ?? 0,
+    social:     oldStats.social     ?? 0,
+    cute:       oldStats.cute       ?? 0,
+    scary:      oldStats.scary      ?? 0,
+    humor:      oldStats.humor      ?? 0,
+    stress:     oldStats.stress     ?? 0,
+    popularity: oldStats.popularity ?? 0
   };
 
   if (p.seedPlayer) {
@@ -7786,12 +7803,14 @@ function applySaveToState(save){
   state.energy = p.energy ?? 100;
   state.maxEnergy = p.maxEnergy ?? 100;
   state.stats = {
-    practice: p.stats?.practice ?? 0,
-    mystery: p.stats?.mystery ?? 0,
-    social: p.stats?.social ?? 0,
-    cute: p.stats?.cute ?? 0,
-    scary: p.stats?.scary ?? 0,
-    humor: p.stats?.humor ?? 0
+    practice:   p.stats?.practice   ?? 0,
+    mystery:    p.stats?.mystery    ?? 0,
+    social:     p.stats?.social     ?? 0,
+    cute:       p.stats?.cute       ?? 0,
+    scary:      p.stats?.scary      ?? 0,
+    humor:      p.stats?.humor      ?? 0,
+    stress:     p.stats?.stress     ?? 0,
+    popularity: p.stats?.popularity ?? 0
   };
   state.awakened = p.awakened ?? null;
   state.awards = {
@@ -8548,145 +8567,753 @@ bootGame();
 
 
 
+
+
+
+
 <!-- ============================================================
-  KEY:VERSE v3.0 버그픽스 패치
-  
-  사용법: index.html 파일에서 맨 아래 </body> 바로 앞에
-  이 전체 내용을 붙여넣으세요.
-  
-  수정 내용:
-  1. 스트레스가 쌓이지 않던 버그 수정
-  2. 팬 반응 카드 제목/버튼/인기 변동 텍스트 수정
+  KEY:VERSE 통합 패치 v4.0
+  수정 항목:
+  1. 스트레스 바 정상 작동 (practice/shoot/meeting 상승)
+  2. 팬 반응 UI — 이미지와 동일한 레이아웃
+  3. DAY3에 시상식 이벤트 발생
+  4. DAY5에 각성 버튼 표시
+  5. 각성 후 방꾸미기 탭에 NEW 배지 + 말풍선 (레이어 위)
+  6. 배치된 방꾸미기 가구 클릭 → X버튼 → 제거 + 수치 복구
+  7. 친구 후보 목록 수정 (다른 엔딩KEY + 복실이/북실이/꼼데가르송)
+  8. 첫 번째 방문자도 우측에서 진입
 ============================================================ -->
 <style>
-/* 팬 반응 카드 — 인기 상승/하락 색상 */
-.kv-fan-chip.pos{
-  color:#27ae60;
-  border-color:rgba(39,174,96,.18);
-  background:rgba(236,252,244,.92);
+/* ── 팬 반응 카드 ── */
+.kv-fan-backdrop {
+  position: fixed; inset: 0; z-index: 10050;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(31,25,38,.48); backdrop-filter: blur(8px);
 }
-.kv-fan-chip.neg{
-  color:#c0392b !important;
-  border-color:rgba(192,57,43,.18) !important;
-  background:rgba(255,240,238,.92) !important;
+.kv-fan-backdrop.show { display: flex; }
+.kv-fan-sheet {
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(88vh, 760px);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96));
+  border: 1px solid rgba(120,104,87,.14);
+  box-shadow: 0 24px 60px rgba(0,0,0,.28);
+  overflow: hidden; display: flex; flex-direction: column;
 }
+.kv-fan-handle { width: 54px; height: 6px; border-radius: 999px; background: rgba(120,104,87,.18); margin: 14px auto 4px; }
+.kv-fan-head { padding: 8px 20px 12px; border-bottom: 1px solid rgba(120,104,87,.08); }
+.kv-fan-title { margin: 0 0 4px; font-size: 17px; font-weight: 900; color: #5b4d42; }
+.kv-fan-sub { margin: 0; font-size: 12px; color: #8c7d71; line-height: 1.5; }
+.kv-fan-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
+.kv-fan-row { display: flex; align-items: center; gap: 12px; }
+.kv-fan-avatar {
+  width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%;
+  background: linear-gradient(135deg, #fff2f7, #f7c8dd);
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(241,167,200,.3); overflow: hidden;
+  font-size: 22px;
+}
+.kv-fan-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.kv-fan-bubble {
+  flex: 1; padding: 10px 14px; border-radius: 16px;
+  background: rgba(255,255,255,.88); border: 1px solid rgba(120,104,87,.10);
+  font-size: 13px; color: #5b4d42; line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(120,104,87,.08);
+}
+.kv-fan-foot { padding: 12px 20px 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(120,104,87,.08); }
+.kv-fan-delta { text-align: center; }
+.kv-fan-chip {
+  display: inline-block; padding: 8px 18px; border-radius: 999px;
+  font-size: 13px; font-weight: 900; border: 1px solid;
+  background: rgba(255,248,240,.92); color: #6a584a; border-color: rgba(120,104,87,.18);
+}
+.kv-fan-chip.pos { color: #27ae60; border-color: rgba(39,174,96,.22); background: rgba(236,252,244,.92); }
+.kv-fan-chip.neg { color: #c0392b; border-color: rgba(192,57,43,.22); background: rgba(255,240,238,.92); }
+.kv-fan-ok {
+  width: 100%; padding: 14px 16px; border-radius: 16px; font-size: 15px; font-weight: 900;
+  background: linear-gradient(135deg, #f1a7c8, #c9c3e8); color: #4c3f4f;
+  box-shadow: 0 10px 22px rgba(188,160,194,.22);
+}
+
+/* ── 방꾸미기 NEW 배지 & 말풍선 ── */
+.room-decor-tab-wrap { position: relative; }
+.room-decor-new-badge {
+  position: absolute; top: -8px; right: -6px; z-index: 30;
+  padding: 3px 7px; border-radius: 999px;
+  background: linear-gradient(135deg, #f1a7c8, #c9c3e8);
+  color: #4c3f4f; font-size: 10px; font-weight: 900;
+  box-shadow: 0 2px 8px rgba(188,160,194,.4);
+  animation: newBadgePulse 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes newBadgePulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+/* 말풍선 — 스테이지 이미지 위에 올라옴 */
+.room-decor-intro-bubble {
+  position: absolute;
+  z-index: 100;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  width: min(280px, 90vw);
+  padding: 12px 16px; border-radius: 18px;
+  background: rgba(255,255,255,.97);
+  border: 1px solid rgba(120,104,87,.14);
+  box-shadow: 0 12px 28px rgba(120,104,87,.20);
+  font-size: 12px; color: #5b4d42; line-height: 1.6;
+  white-space: pre-line;
+  pointer-events: none;
+  animation: introFadeIn .3s ease;
+}
+.room-decor-intro-bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px;
+  width: 15px; height: 15px;
+  background: rgba(255,255,255,.97);
+  border-right: 1px solid rgba(120,104,87,.14);
+  border-bottom: 1px solid rgba(120,104,87,.14);
+  transform: translateX(-50%) rotate(45deg);
+}
+@keyframes introFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── 배치된 가구 X버튼 ── */
+.stage-decor-item { pointer-events: auto; cursor: pointer; position: relative; }
+.stage-decor-remove-btn {
+  position: absolute; top: -7px; right: -7px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(192,57,43,.9); color: #fff;
+  font-size: 11px; font-weight: 900; line-height: 18px; text-align: center;
+  display: none; border: 1.5px solid rgba(255,255,255,.8);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  cursor: pointer; z-index: 5;
+}
+.stage-decor-item.selected .stage-decor-remove-btn { display: block; }
+
+/* ── 번아웃 오버레이 ── */
+.burnout-overlay{
+  position:fixed; inset:0; z-index:10020;
+  display:none; align-items:center; justify-content:center;
+  padding:20px; background:rgba(31,25,38,.42); backdrop-filter:blur(8px);
+}
+.burnout-overlay.show{ display:flex; }
+.burnout-card{
+  width:min(420px, 100%); padding:22px 20px 18px; border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,250,.96));
+  border:1px solid rgba(120,104,87,.14); box-shadow:0 24px 60px rgba(0,0,0,.24);
+}
+.burnout-title{ margin:0 0 8px; font-size:22px; font-weight:950; color:#5b4d42; }
+.burnout-desc{ margin:0; font-size:13px; line-height:1.65; color:#8c7d71; }
+.burnout-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.burnout-btn{ min-height:52px; padding:12px 14px; border-radius:16px; font-size:13px; font-weight:900; }
+.burnout-btn.trip{ background:linear-gradient(135deg,var(--pink),var(--violet)); color:#4f4250; }
+.burnout-btn.hotel{ background:rgba(255,255,255,.88); border:1px solid rgba(120,104,87,.12); }
+@media (max-width:640px){ .burnout-actions{ grid-template-columns:1fr; } }
+
+/* ── 스탯 float ── */
+.kv-trip-toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  z-index: 10060; padding: 10px 16px; border-radius: 16px;
+  background: rgba(255,255,255,.96); border: 1px solid rgba(120,104,87,.14);
+  box-shadow: 0 12px 28px rgba(120,104,87,.18);
+  opacity: 0; transition: opacity .3s ease; pointer-events: none;
+}
+.kv-trip-toast.show { opacity: 1; }
+.kv-trip-toast-title { font-size: 12px; font-weight: 900; color: #6a584a; margin-bottom: 6px; }
+.kv-trip-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.kv-trip-pill { padding: 5px 10px; border-radius: 999px; background: rgba(255,248,240,.95);
+  border: 1px solid rgba(120,104,87,.12); font-size: 11px; color: #6a584a; font-weight: 900; }
 </style>
+
 <script>
-(function(){
+/* ================================================================
+   KEY:VERSE 통합 패치 v4.0
+   - 기존 버그픽스 패치들을 모두 제거하고 새로 작성
+================================================================ */
+(function () {
   'use strict';
 
-  /* ── 1. 스트레스 버그픽스 ──────────────────────────────────
-     문제: v3.0 overrideFinishAction과 메인 IIFE 래퍼가 충돌해서
-           stress 값이 업데이트되지 않음.
-     해결: 페이지 로드 완료 후 finishAction을 직접 래핑.
-  ─────────────────────────────────────────────────────────── */
-  function applyStressFix() {
-    var orig = window.finishAction;
-    if (!orig || orig._kvStressFix) return;
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Number(v) || 0));
+  const safe = fn => { try { return fn(); } catch (e) { return null; } };
 
-    window.finishAction = function(type) {
-      var result = orig.apply(this, arguments);
+  /* ──────────────────────────────────────────────────────────
+     헬퍼
+  ────────────────────────────────────────────────────────── */
+  function isRoom() { return safe(() => getCurrentScreenName()) === 'room'; }
+  function isSchedule() { return safe(() => getCurrentScreenName()) === 'schedule'; }
 
-      if (!window.state || !window.state.stats) return result;
-
-      var stressMap = {
-        practice: 4,
-        shoot: 1,
-        exhibit: 1,
-        meeting: 1,
-        netflix: -1,
-        walk: -2,
-        bath: -3,
-        sleep: -4
-      };
-
-      if (stressMap[type] !== undefined) {
-        if (typeof state.stats.stress !== 'number') state.stats.stress = 0;
-        state.stats.stress = Math.min(100, Math.max(0, state.stats.stress + stressMap[type]));
-
-        // UI 바 업데이트
-        var fillEl = document.getElementById('fill-stress');
-        var valEl  = document.getElementById('val-stress');
-        if (fillEl) fillEl.style.width = Math.min(100, (state.stats.stress / 10) * 100) + '%';
-        if (valEl)  valEl.textContent = state.stats.stress;
-
-        // 번아웃 체크
-        if (state.stats.stress >= 10) {
-          var burnout = state.burnout || {};
-          if (!burnout.pending && typeof openBurnoutVacation === 'function') {
-            openBurnoutVacation();
-          }
-        }
-      }
-      return result;
-    };
-
-    window.finishAction._kvStressFix = true;
-    console.log('[v3.0 bugfix] 스트레스 패치 적용 완료');
+  function showLine(text) {
+    if (!text) return;
+    if (isRoom()) { safe(() => showRoomOwnerBubble(text)); setTimeout(() => safe(() => hideRoomOwnerBubble()), 2800); }
+    else { safe(() => setSeedMessage(text, { autoClearMs: 3200, idleAfterMs: 180000 })); }
   }
 
-  // 페이지 로드 완료 후 적용 (v3.0 패치 실행 후)
-  if (document.readyState === 'complete') {
-    setTimeout(applyStressFix, 600);
-  } else {
-    window.addEventListener('load', function() {
-      setTimeout(applyStressFix, 600);
+  function syncExtraStatBars() {
+    if (!window.state?.stats) return;
+    ['popularity', 'stress'].forEach(key => {
+      const val = state.stats[key] || 0;
+      const fill = $('fill-' + key); const valEl = $('val-' + key);
+      if (fill) fill.style.width = clamp((val / 10) * 100, 0, 100) + '%';
+      if (valEl) valEl.textContent = val;
     });
   }
 
+  function showStatFloat(text) {
+    const target = isRoom() ? (window.roomScene || $('roomScene')) : (window.seedStage || $('seedStage'));
+    if (!target) return;
+    const el = document.createElement('div'); el.className = 'stat-float'; el.textContent = text;
+    target.appendChild(el); requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => el.remove(), 1700);
+  }
 
-  /* ── 2. 팬 반응 카드 UI 픽스 ──────────────────────────────
-     문제: 제목이 "공연 직후 팬 반응", 버튼이 너무 긴 텍스트,
-           인기 변동 텍스트가 이상하게 표시됨.
-     해결: openFanCard 호출 후 DOM을 수정.
-  ─────────────────────────────────────────────────────────── */
-  var fanCardCheckInterval = setInterval(function() {
-    if (typeof openFanCard !== 'function') return;
-    clearInterval(fanCardCheckInterval);
+  /* ──────────────────────────────────────────────────────────
+     1. 스트레스 바 정상 작동
+     state.stats에 stress가 추가됐으므로 v3.0 overrideFinishAction이
+     자동으로 처리. 여기서는 번아웃 체크만 보강.
+  ────────────────────────────────────────────────────────── */
+  const STRESS_MAP = { practice: 4, shoot: 1, meeting: 1, netflix: -1, walk: -2, bath: -3, sleep: -4 };
 
-    var _origOpenFanCard = openFanCard;
+  function applyStress(type) {
+    if (!window.state?.stats) return;
+    const delta = STRESS_MAP[type];
+    if (delta == null) return;
+    state.stats.stress = clamp((state.stats.stress || 0) + delta, 0, 100);
+    // updateScheduleUI가 자동으로 UI를 갱신하지만, 직접도 반영
+    const fillEl = document.getElementById('fill-stress');
+    const valEl  = document.getElementById('val-stress');
+    if (fillEl) fillEl.style.width = Math.min(100, (state.stats.stress / 10) * 100) + '%';
+    if (valEl)  valEl.textContent = state.stats.stress;
+    if (state.stats.stress >= 10 && !state.burnout?.pending) {
+      safe(() => openBurnout && openBurnout());
+    }
+  }
 
-    window.openFanCard = function() {
-      // 원래 함수 먼저 실행
-      _origOpenFanCard.apply(this, arguments);
+  function patchFinishAction() {
+    // v3.0의 overrideFinishAction(_kv)이 이미 stress를 처리하지만
+    // state.stats에 stress 키가 없었던 것이 문제였음.
+    // 이제 state.stats.stress가 초기화되므로 추가 래핑 불필요.
+    // 단, _kv 래핑 이후에도 한 번 더 확실히 적용되도록 보강만 함.
+    const orig = window.finishAction;
+    if (!orig || orig._kvPatch4) return false;
+    window.finishAction = function (type) {
+      const r = orig.apply(this, arguments);
+      // v3.0이 이미 처리했지만 혹시 누락된 경우를 위해 한 번 더
+      if (window.state?.stats && typeof state.stats.stress === 'number') {
+        const fillEl = document.getElementById('fill-stress');
+        const valEl  = document.getElementById('val-stress');
+        if (fillEl) fillEl.style.width = Math.min(100, (state.stats.stress / 10) * 100) + '%';
+        if (valEl)  valEl.textContent = state.stats.stress;
+      }
+      return r;
+    };
+    window.finishAction._kvPatch4 = true;
+    return true;
+  }
 
-      // DOM이 생성된 뒤에 수정
-      setTimeout(function() {
-        // 제목
-        var titleEl = document.querySelector('.kv-fan-title');
-        if (titleEl) titleEl.textContent = '공연에 대한 팬들의 반응';
+  /* ──────────────────────────────────────────────────────────
+     2. 팬 반응 카드 — 이미지와 동일한 레이아웃
+     팬 아바타: 귀여운 이모지 5종 랜덤
+  ────────────────────────────────────────────────────────── */
+  const FAN_AVATARS = ['🌸','💜','🌟','🎀','💫','🌈','✨','🦋'];
+  const FAN_DATA = {
+    S: {
+      lines: ['오늘 무대 진짜 미쳤어!', '앵콜 또 해줘요!', '눈물날 정도로 좋았어!', '레전드 무대였다!'],
+      desc: '압도적인 공연으로 팬들의 반응이 폭발했습니다.',
+      subDesc: '인기가 크게 상승하였습니다.',
+      delta: 3
+    },
+    A: {
+      lines: ['너무 좋았어요!', '오늘 무대 멋졌어요!', '분위기 최고였어!', '다음 공연도 기대돼!'],
+      desc: '좋은 공연으로 팬들의 반응이 매우 좋았습니다.',
+      subDesc: '인기가 상승하였습니다.',
+      delta: 2
+    },
+    B: {
+      lines: ['괜찮았어요!', '오늘도 즐거웠어요!', '조금 아쉽지만 좋았어.', '그래도 반가웠어요!'],
+      desc: '무난한 공연으로 팬들의 반응이 나쁘지 않았습니다.',
+      subDesc: '인기가 조금 상승하였습니다.',
+      delta: 1
+    },
+    C: {
+      lines: ['조금 아쉬웠어', '오늘은 컨디션이 별로였나 봐', '다음엔 더 잘할 수 있을 거야', '다음 무대 기다릴게!'],
+      desc: '아쉬운 공연이었지만 다음을 기대하는 팬들이 남았습니다.',
+      subDesc: '인기 가 1만큼 하락하였습니다.',
+      delta: -1
+    }
+  };
 
-        // 확인 버튼
-        var okBtn = document.getElementById('kvFanOkBtn');
-        if (okBtn) okBtn.textContent = '확인';
+  function getConcertRank() {
+    const mg = window.miniGame || {};
+    if ((mg.score || 0) >= 2400 || (mg.perfect || 0) >= 14) return 'S';
+    if ((mg.score || 0) >= 1500 || (mg.perfect || 0) >= 8) return 'A';
+    if ((mg.score || 0) >= 900 || (mg.perfect || 0) >= 4) return 'B';
+    return 'C';
+  }
 
-        // 인기 변동 텍스트
-        var deltaEl = document.getElementById('kvFanDelta');
-        if (deltaEl) {
-          var chip = deltaEl.querySelector('.kv-fan-chip');
-          if (chip) {
-            var txt = chip.textContent || '';
-            // 현재 텍스트에서 숫자 추출
-            var numMatch = txt.match(/[\+\-]?\d+/);
-            var num = numMatch ? parseInt(numMatch[0]) : 1;
-            var isPos = num >= 0;
-            var absNum = Math.abs(num) || 1;
+  function buildFanCard() {
+    if ($('kvFanBackdrop')) return;
+    const el = document.createElement('div');
+    el.id = 'kvFanBackdrop'; el.className = 'kv-fan-backdrop';
+    el.innerHTML = `
+      <div class="kv-fan-sheet">
+        <div class="kv-fan-handle"></div>
+        <div class="kv-fan-head">
+          <h3 class="kv-fan-title">공연에 대한 팬들의 반응</h3>
+          <p class="kv-fan-sub" id="kvFanSub"></p>
+        </div>
+        <div class="kv-fan-body" id="kvFanBody"></div>
+        <div class="kv-fan-foot">
+          <div class="kv-fan-delta" id="kvFanDelta"></div>
+          <button type="button" class="kv-fan-ok" id="kvFanOkBtn">확인</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    $('kvFanOkBtn').addEventListener('click', closeFanCard);
+    el.addEventListener('click', e => { if (e.target === el) closeFanCard(); });
+  }
 
-            chip.textContent = '인기 가 ' + absNum + '만큼 ' + (isPos ? '상승' : '하락') + '하였습니다.';
-            chip.classList.remove('pos', 'neg');
-            chip.classList.add(isPos ? 'pos' : 'neg');
-          }
+  function openFanCard() {
+    buildFanCard();
+    const rank = getConcertRank();
+    const data = FAN_DATA[rank];
+    $('kvFanSub').textContent = data.desc;
+
+    // 팬 행 생성 (4명)
+    const avatars = Array.from({ length: 4 }, () => FAN_AVATARS[Math.floor(Math.random() * FAN_AVATARS.length)]);
+    $('kvFanBody').innerHTML = data.lines.map((line, i) =>
+      `<div class="kv-fan-row">
+        <div class="kv-fan-avatar">${avatars[i]}</div>
+        <div class="kv-fan-bubble">${line}</div>
+      </div>`
+    ).join('');
+
+    // 인기 변동 텍스트
+    const delta = data.delta;
+    const isPos = delta >= 0;
+    const absVal = Math.abs(delta);
+    const chipClass = isPos ? 'pos' : 'neg';
+    const chipText = isPos
+      ? `인기 가 ${absVal}만큼 상승하였습니다.`
+      : `인기 가 ${absVal}만큼 하락하였습니다.`;
+    $('kvFanDelta').innerHTML = `<span class="kv-fan-chip ${chipClass}">${chipText}</span>`;
+
+    // 인기 수치 적용
+    if (window.state?.stats) {
+      if (typeof state.stats.popularity !== 'number') state.stats.popularity = 0;
+      state.stats.popularity = clamp(state.stats.popularity + delta, 0, 100);
+      syncExtraStatBars();
+    }
+
+    $('kvFanBackdrop').classList.add('show');
+    document.body.classList.add('ending-modal-open');
+  }
+
+  function closeFanCard() {
+    const bd = $('kvFanBackdrop'); if (bd) bd.classList.remove('show');
+    document.body.classList.remove('ending-modal-open');
+    ['miniGameLayer', 'miniGameResult', 'miniStartOverlay', 'miniAbortConfirm', 'concertEventCard'].forEach(id => {
+      const el = $(id); if (el) el.classList.remove('show', 'active');
+    });
+    document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
+    if (window.miniGame) { miniGame.active = false; miniGame.playing = false; }
+    if (window.state) { state.concertEventResolved = true; state.concertEventOffered = true; }
+    safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
+    if (window.state?.awakened && typeof showScreen === 'function') showScreen('room');
+    else if (typeof showScreen === 'function') showScreen('schedule');
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+  }
+
+  function patchConcertReward() {
+    const orig = window.applyConcertMiniGameRewards;
+    if (!orig || orig._kvPatch4) return false;
+    window.applyConcertMiniGameRewards = function () {
+      orig.apply(this, arguments);
+      const layer = $('miniGameLayer'); if (layer) layer.classList.remove('active');
+      const result = $('miniGameResult'); if (result) result.classList.remove('show');
+      document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
+      setTimeout(openFanCard, 80);
+    };
+    window.applyConcertMiniGameRewards._kvPatch4 = true;
+    return true;
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     3. DAY3에 시상식 이벤트 발생
+     maybeTriggerAwardsCeremony를 오버라이드
+  ────────────────────────────────────────────────────────── */
+  function patchAwardsTrigger() {
+    if (window._kvAwardsPatch4) return;
+    window._kvAwardsPatch4 = true;
+
+    // DAY3 이상이면 시상식을 열 수 있도록 조건 변경
+    const origMaybe = window.maybeTriggerAwardsCeremony;
+    window.maybeTriggerAwardsCeremony = function () {
+      if (!window.state) return;
+      const AWARDS_DAY = 3; // DAY3으로 변경
+      if (state.day < AWARDS_DAY) return;
+      if ((state.awards?.lastHeldDay || 0) >= state.day) return;
+      const awardsEl = $('awardsOverlay');
+      if (awardsEl && awardsEl.classList.contains('show')) return;
+      if (typeof openAwardsCeremony === 'function') openAwardsCeremony();
+    };
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     4. DAY5에 각성 버튼 표시
+     canAwaken을 오버라이드해서 DAY5 이상이면 항상 각성 가능
+  ────────────────────────────────────────────────────────── */
+  function patchCanAwaken() {
+    if (window._kvAwakenPatch4) return;
+    window._kvAwakenPatch4 = true;
+    const origCan = window.canAwaken;
+    window.canAwaken = function () {
+      if (!window.state) return false;
+      if (state.day >= 5) return true;
+      if (typeof origCan === 'function') return origCan.apply(this, arguments);
+      return false;
+    };
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     5. 각성 후 방꾸미기 탭 — NEW 배지 + 말풍선
+  ────────────────────────────────────────────────────────── */
+  /* 기존 maybeShowRoomDecorIntroHint를 오버라이드해서 NEW 배지도 함께 표시 */
+  function patchDecorIntro() {
+    if (window._kvDecorIntroPatch4) return;
+    window._kvDecorIntroPatch4 = true;
+    window.maybeShowRoomDecorIntroHint = function () {
+      const newBadge = $('roomDecorNewBadge');
+      if (newBadge) { newBadge.style.display = ''; newBadge.style.opacity = '1'; }
+      const bubble = $('roomDecorIntroBubble');
+      const tab = document.querySelector('#roomBottomTabs [data-room-tab="decor"]');
+      if (tab) tab.classList.add('highlight-intro');
+      if (bubble) bubble.classList.add('show');
+      clearTimeout(window._kvDecorIntroTimer);
+      window._kvDecorIntroTimer = setTimeout(() => {
+        if (tab) tab.classList.remove('highlight-intro');
+        if (bubble) bubble.classList.remove('show');
+        if (newBadge) {
+          newBadge.style.transition = 'opacity .5s';
+          newBadge.style.opacity = '0';
+          setTimeout(() => { newBadge.style.display = 'none'; }, 600);
         }
-      }, 50);
+        if (window.state) state.roomDecorIntroPending = false;
+      }, 5000);
+    };
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     6. 배치된 방꾸미기 가구 클릭 → X버튼 → 제거 + 수치 복구
+  ────────────────────────────────────────────────────────── */
+  function removeDecorItem(decorKey) {
+    if (!window.state?.roomDecor) return;
+    if (!state.roomDecor[decorKey]) return;
+    const info = window.roomDecorConfig?.[decorKey];
+    if (info?.stats) {
+      Object.entries(info.stats).forEach(([key, val]) => {
+        if (typeof state.stats[key] === 'number') state.stats[key] = Math.max(0, state.stats[key] - val);
+      });
+    }
+    const refund = Math.floor(Number(info?.cost || 0) * 0.5);
+    if (refund > 0 && typeof addMoney === 'function') addMoney(refund);
+    state.roomDecor[decorKey] = false;
+    safe(() => renderStageDecor && renderStageDecor());
+    safe(() => renderRoomDecorButtons && renderRoomDecorButtons());
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
+    safe(() => renderFriendMenu && renderFriendMenu());
+    if (refund > 0) showStatFloat(`${info?.label || '소품'} 제거 (${refund}C 환불)`);
+    else showStatFloat(`${info?.label || '소품'} 제거됨`);
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     6. renderStageDecor 오버라이드 — decorKey 속성 + X버튼
+  ────────────────────────────────────────────────────────── */
+  function patchRenderStageDecor() {
+    if (window._kvRenderDecorPatch4) return;
+    window._kvRenderDecorPatch4 = true;
+
+    const origRender = window.renderStageDecor;
+    window.renderStageDecor = function () {
+      if (!origRender) return;
+      origRender.apply(this, arguments);
+
+      // 각 아이템에 decorKey 속성 주입
+      const mapping = { lpPlayer:'🎵', desk:'🪑', birdCage:'🕊️', mirrorBall:'🪩', vinylRack:'💿', plushSofa:'🛋️', neonSign:'💡', bookshelf:'📚' };
+      ['seedDecorLayer', 'roomDecorLayer'].forEach(layerId => {
+        const layer = $(layerId);
+        if (!layer) return;
+        const items = layer.querySelectorAll('.stage-decor-item');
+        let idx = 0;
+        Object.keys(mapping).forEach(key => {
+          if (window.state?.roomDecor?.[key]) {
+            if (items[idx]) { items[idx].dataset.decorKey = key; }
+            idx++;
+          }
+        });
+
+        // X버튼 추가
+        items.forEach(item => {
+          if (item._kvDecorBound) return;
+          item._kvDecorBound = true;
+          const xBtn = document.createElement('div');
+          xBtn.className = 'stage-decor-remove-btn';
+          xBtn.textContent = '×';
+          item.appendChild(xBtn);
+
+          item.addEventListener('click', (e) => {
+            if (e.target === xBtn) return;
+            layer.querySelectorAll('.stage-decor-item.selected').forEach(el => {
+              if (el !== item) el.classList.remove('selected');
+            });
+            item.classList.toggle('selected');
+            e.stopPropagation();
+          });
+          xBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dk = item.dataset.decorKey;
+            if (dk) removeDecorItem(dk);
+          });
+        });
+      });
+    };
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     7. 친구 후보 목록 수정
+     내 캐릭터와 다른 엔딩KEY 캐릭터들 + 복실이/북실이/꼼데가르송
+  ────────────────────────────────────────────────────────── */
+  const ALL_ENDING_NAMES = [
+    '가솔린 키','배드러브 키','프릭키','언릴키','오컬트키','왹져공주 키',
+    '헌터 키','굿앤그 인턴 키','꼼가 아빠 키','헌터 검정키','천사 키','잇범 키',
+    '백작 키','크리쳐 키','킬러 키','빌런 키','범동이 키','말랑콩떡 키'
+  ];
+  const SPECIAL_FRIENDS = [
+    { name: '복실이', desc: '복슬복슬한 털을 가진 귀여운 친구', trait: '귀여운 친구' },
+    { name: '북실이', desc: '책을 좋아하는 조용한 친구', trait: '조용한 친구' },
+    { name: '꼼데가르송', desc: '패션 감각이 뛰어난 스타일리시한 친구', trait: '패셔니스타' }
+  ];
+
+  function patchGetUnlockedFriends() {
+    if (window._kvFriendPatch4) return;
+    window._kvFriendPatch4 = true;
+
+    window.getUnlockedFriends = function (identityName) {
+      if (!window.state) return [];
+      const myName = identityName || state.awakened?.name || '';
+
+      // 다른 엔딩KEY 캐릭터들 (내 캐릭터 제외)
+      const otherKeys = ALL_ENDING_NAMES
+        .filter(name => name !== myName)
+        .map(name => ({
+          name,
+          desc: `${name}가 방문할 수 있어요.`,
+          when: ({ day }) => day >= 2
+        }));
+
+      // 기존 friendUnlockRules의 내 캐릭터 규칙도 포함
+      const origRules = window.friendUnlockRules?.[myName] || [];
+      const decorRules = window.friendUnlockRules?.['_decorBonus'] || [];
+
+      // 특별 친구들
+      const specialRules = SPECIAL_FRIENDS.map(f => ({
+        name: f.name, desc: f.desc,
+        when: ({ day }) => day >= 3
+      }));
+
+      // 합치기 (중복 제거)
+      const allRules = [...origRules, ...decorRules, ...otherKeys, ...specialRules];
+      const seen = new Set();
+      return allRules.filter(rule => {
+        if (!rule?.name || seen.has(rule.name)) return false;
+        if (rule.name === myName) return false;
+        const ok = rule.when ? rule.when(state) : true;
+        if (!ok) return false;
+        seen.add(rule.name);
+        return true;
+      });
     };
 
-    console.log('[v3.0 bugfix] 팬 반응 카드 패치 적용 완료');
-  }, 300);
+    // FRIEND_PROFILES에 특별 친구들 추가
+    if (window.FRIEND_PROFILES) {
+      SPECIAL_FRIENDS.forEach(f => {
+        if (!FRIEND_PROFILES[f.name]) {
+          FRIEND_PROFILES[f.name] = {
+            intro: `안녕! 나는 ${f.name}야.`,
+            enjoy: '같이 있으니까 너무 즐거워.',
+            leave: '다음에 또 올게!',
+            likes: '이 방 분위기가 정말 마음에 들어.',
+            trait: f.trait
+          };
+        }
+      });
+    }
+
+    // ALL_ENDING_NAMES 각각에 대한 프로필도 추가
+    if (window.FRIEND_PROFILES) {
+      ALL_ENDING_NAMES.forEach(name => {
+        if (!FRIEND_PROFILES[name]) {
+          FRIEND_PROFILES[name] = {
+            intro: `안녕~ 나는 ${name}야.`,
+            enjoy: '같이 있으니까 생각보다 즐겁다.',
+            leave: '다음에 또 올게.',
+            likes: '이 방 분위기',
+            trait: '친구'
+          };
+        }
+      });
+    }
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     8. 첫 번째 방문자도 우측에서 진입 (startOutside:true 강제)
+  ────────────────────────────────────────────────────────── */
+  function patchEnterRoomVisitor() {
+    if (window._kvVisitorPatch4) return;
+    window._kvVisitorPatch4 = true;
+    const origEnter = window.enterRoomVisitor;
+    window.enterRoomVisitor = function (friendName) {
+      if (!window.state) return origEnter && origEnter.apply(this, arguments);
+      // 항상 startOutside:true로 강제
+      clearRoomVisitTimers && clearRoomVisitTimers();
+      roomVisitFlow.phase = 'entering';
+      roomVisitFlow.candidate = friendName;
+      state.activeRoomVisitor = friendName;
+      if (!state.roomSeenFriendEvents.includes(friendName)) {
+        state.roomSeenFriendEvents.push(friendName);
+      }
+      // 반드시 startOutside:true
+      safe(() => renderRoomVisitor({ startOutside: true }));
+      const timerFn = () => {
+        hideRoomOwnerBubble && hideRoomOwnerBubble();
+        roomVisitFlow.phase = 'decision';
+        showRoomVisitorBubble && showRoomVisitorBubble(safe(() => getFriendGreeting(friendName)) || `안녕! 나 ${friendName}야.`);
+        showRoomChoicePanel && showRoomChoicePanel(friendName);
+        if (window.roomHint) roomHint.textContent = `${friendName}가 방에 찾아왔어요.`;
+        safe(() => syncRoomUI && syncRoomUI());
+        safe(() => saveLocal(serializeGameState()));
+      };
+      if (typeof queueRoomVisitTimer === 'function') queueRoomVisitTimer(timerFn, 650);
+      else setTimeout(timerFn, 650);
+    };
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     번아웃 (여행) 시스템
+  ────────────────────────────────────────────────────────── */
+  function ensureBurnoutOverlay() {
+    if ($('burnoutOverlay')) return;
+    const el = document.createElement('div');
+    el.id = 'burnoutOverlay'; el.className = 'burnout-overlay';
+    el.innerHTML = `
+      <div class="burnout-card">
+        <h3 class="burnout-title">🥱 번아웃이 왔어…</h3>
+        <p class="burnout-desc">스트레스가 너무 쌓였어. 잠깐 어딘가 다녀오는 게 좋을 것 같아.<br>어디로 떠날까?</p>
+        <div class="burnout-actions">
+          <button type="button" class="burnout-btn trip" id="burnoutTripBtn">🌊 속초 여행</button>
+          <button type="button" class="burnout-btn hotel" id="burnoutHotelBtn">🏨 호텔 휴식</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    $('burnoutTripBtn').addEventListener('click', e => { e.stopPropagation(); doTrip('sokcho'); });
+    $('burnoutHotelBtn').addEventListener('click', e => { e.stopPropagation(); doTrip('hotel'); });
+  }
+
+  function openBurnout() {
+    ensureBurnoutOverlay();
+    if (!window.state) return;
+    if (!state.burnout) state.burnout = {};
+    if (state.burnout.pending) return;
+    state.burnout.pending = true;
+    const ov = $('burnoutOverlay'); if (ov) ov.classList.add('show');
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
+  }
+  function closeBurnout() {
+    const ov = $('burnoutOverlay'); if (ov) ov.classList.remove('show');
+    if (window.state?.burnout) state.burnout.pending = false;
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+  }
+
+  const TRIP_CFG = {
+    sokcho: { statDelta:{ mystery:2, scary:1 }, stressDown:6, energyUp:18, bubble:'즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.', pills:['Mystery +2','Scary +1','Stress -6','에너지 +18'] },
+    hotel:  { statDelta:{ cute:2, social:1 }, stressDown:7, energyUp:22, bubble:'즐거웠다~ 푹 쉬고 오니 몸도 마음도 가벼워졌어.', pills:['Cute +2','Social +1','Stress -7','에너지 +22'] }
+  };
+
+  function showTripToast(pills) {
+    let t = $('kvTripToast');
+    if (!t) { t = document.createElement('div'); t.id = 'kvTripToast'; t.className = 'kv-trip-toast'; document.body.appendChild(t); }
+    t.innerHTML = `<div class="kv-trip-toast-title">📊 여행 후 변화</div><div class="kv-trip-pills">${pills.map(p => `<span class="kv-trip-pill">${p}</span>`).join('')}</div>`;
+    t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  async function doTrip(kind) {
+    const cfg = TRIP_CFG[kind]; if (!cfg || !window.state?.stats) return;
+    closeBurnout();
+    await sleep(200);
+    Object.entries(cfg.statDelta).forEach(([k, v]) => { state.stats[k] = clamp((state.stats[k]||0)+v, 0, 100); });
+    state.stats.stress = clamp((state.stats.stress||0) - cfg.stressDown, 0, 100);
+    if (typeof state.energy === 'number') state.energy = clamp(state.energy + cfg.energyUp, 0, state.maxEnergy||100);
+    syncExtraStatBars();
+    safe(() => updateScheduleUI && updateScheduleUI());
+    showLine(cfg.bubble);
+    showTripToast(cfg.pills);
+    showStatFloat(cfg.pills.join(' · '));
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  // 전역 노출
+  window.openBurnout = openBurnout;
+  window.openBurnoutVacation = openBurnout;
+  window.maybeTriggerBurnoutVacation = () => { if ((window.state?.stats?.stress || 0) >= 10 && !window.state?.burnout?.pending) openBurnout(); };
+
+  /* ──────────────────────────────────────────────────────────
+     통합 초기화 & 주기적 패치 적용
+  ────────────────────────────────────────────────────────── */
+  function ensureExtraStats() {
+    if (!window.state?.stats) return;
+    if (state.stats.popularity == null) state.stats.popularity = 0;
+    if (state.stats.stress == null) state.stats.stress = 0;
+    syncExtraStatBars();
+  }
+
+  function boot() {
+    ensureExtraStats();
+    ensureBurnoutOverlay();
+    patchRenderStageDecor();
+
+    let tries = 0;
+    const tick = setInterval(() => {
+      tries++;
+      let done = 0;
+      if (patchFinishAction()) done++;
+      if (patchConcertReward()) done++;
+      ensureExtraStats();
+      if (done === 2 || tries > 40) clearInterval(tick);
+    }, 100);
+
+    // awards / canAwaken / friend / visitor / decorIntro 패치
+    const tick2 = setInterval(() => {
+      if (typeof canAwaken === 'function' && !window._kvAwakenPatch4) patchCanAwaken();
+      if (typeof maybeTriggerAwardsCeremony === 'function' && !window._kvAwardsPatch4) patchAwardsTrigger();
+      if (typeof getUnlockedFriends === 'function' && !window._kvFriendPatch4) patchGetUnlockedFriends();
+      if (typeof enterRoomVisitor === 'function' && !window._kvVisitorPatch4) patchEnterRoomVisitor();
+      if (typeof maybeShowRoomDecorIntroHint === 'function' && !window._kvDecorIntroPatch4) patchDecorIntro();
+      const allDone = window._kvAwakenPatch4 && window._kvAwardsPatch4 && window._kvFriendPatch4 && window._kvVisitorPatch4 && window._kvDecorIntroPatch4;
+      if (allDone) clearInterval(tick2);
+    }, 150);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else setTimeout(boot, 0);
 
 })();
 </script>
-
-
 
 </body>
 </html>
