@@ -3728,11 +3728,6 @@ font-size:24px;
         <button class="secondary-btn" id="resetBtn">새로 시작</button>
         <button class="primary-btn" id="debugModeBtn">디버그 모드</button>
       </div>
-
-      <!-- DAY5 각성 버튼 -->
-      <div id="day5AwakenRow" style="display:none;margin-top:10px;">
-        <button class="primary-btn" id="day5AwakenBtn" style="background:linear-gradient(135deg,#f1a7c8,#c9c3e8);font-size:15px;letter-spacing:.04em;">✨ 각성하기</button>
-      </div>
       </div>
 
       <div class="room-bottom-pane" id="seedPaneGift">
@@ -5717,17 +5712,6 @@ document.getElementById('awakenBtn').addEventListener('click', async () => {
   await triggerSaveNow();
 });
 
-/* DAY5 하단 각성 버튼 — awakenBtn과 동일한 동작 */
-(function(){
-  const btn = document.getElementById('day5AwakenBtn');
-  if (btn) {
-    btn.addEventListener('click', async () => {
-      doAwaken();
-      await triggerSaveNow();
-    });
-  }
-})();
-
 document.getElementById('toRoomBtn').addEventListener('click', async () => {
   closeAwakenOverlay();
   showScreen('room');
@@ -6592,21 +6576,15 @@ function positionAwakenButton(){
 
 function updateAwakenButtonUI(){
   const visible = canAwaken() && !state.isActing && !state.awakened;
-
-  /* 스테이지 내부 플로팅 버튼 */
   seedAwakenAnchor.classList.toggle('hidden', !visible);
   if (!visible) {
     seedAwakenAnchor.classList.remove('placed');
-  } else {
-    requestAnimationFrame(() => {
-      positionAwakenButton();
-      seedAwakenAnchor.classList.add('placed');
-    });
+    return;
   }
-
-  /* 스테이지 하단 고정 각성 버튼 (DAY5+) */
-  const day5Row = document.getElementById('day5AwakenRow');
-  if (day5Row) day5Row.style.display = visible ? '' : 'none';
+  requestAnimationFrame(() => {
+    positionAwakenButton();
+    seedAwakenAnchor.classList.add('placed');
+  });
 }
 
 function formatGameTime(hour = state.gameHour, minute = state.gameMinute || 0){
@@ -8406,95 +8384,85 @@ bootGame();
   box-shadow:0 10px 22px rgba(188,160,194,.22);
 }
 
-/* ── 번아웃 오버레이 (재설계) ── */
+/* ── 번아웃 오버레이 ── */
 .burnout-overlay{
   position:fixed;inset:0;z-index:10020;
-  display:none;align-items:flex-start;justify-content:center;
-  padding:0;background:rgba(31,25,38,.46);backdrop-filter:blur(8px);
-  flex-direction:column;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(31,25,38,.52);backdrop-filter:blur(8px);
 }
 .burnout-overlay.show{display:flex;}
-
-/* 상단 상태바 */
-.burnout-topbar{
-  width:100%;height:7px;background:rgba(255,255,255,.16);
-  flex:0 0 auto;position:relative;overflow:hidden;
+/* 상단 진행바 */
+.burnout-progress-bar{
+  position:absolute;top:0;left:0;right:0;height:5px;
+  background:rgba(255,255,255,.15);
 }
-.burnout-topbar-fill{
+.burnout-progress-fill{
   height:100%;width:0%;
   background:linear-gradient(90deg,var(--pink),var(--violet));
-  transition:width .1s linear;
+  transition:width .12s linear;
 }
-
-/* 대화 카드 */
+/* 카드 */
 .burnout-card{
-  width:min(440px,calc(100% - 32px));
-  margin:auto;
-  padding:26px 22px 22px;border-radius:24px;
+  position:relative;
+  width:min(400px,calc(100vw - 32px));
+  padding:22px 20px 20px;border-radius:24px;
   background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,247,250,.96));
-  border:1px solid rgba(120,104,87,.14);box-shadow:0 28px 64px rgba(0,0,0,.28);
-  display:flex;flex-direction:column;gap:0;
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 24px 60px rgba(0,0,0,.28);
 }
-.burnout-char-row{
-  display:flex;align-items:flex-end;gap:14px;margin-bottom:14px;
+/* 캐릭터+말풍선 행 */
+.burnout-talk-row{
+  display:flex;align-items:flex-end;gap:12px;margin-bottom:14px;
 }
-.burnout-char-img{
-  width:64px;height:88px;object-fit:contain;image-rendering:pixelated;
-  filter:drop-shadow(0 4px 10px rgba(109,94,79,.22));flex:0 0 auto;
+.burnout-char{
+  width:56px;height:78px;flex:0 0 auto;
+  object-fit:contain;image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(109,94,79,.22));
 }
 .burnout-bubble{
-  position:relative;flex:1;min-height:52px;
-  padding:13px 15px;border-radius:18px;
-  background:rgba(248,244,239,.95);
+  position:relative;flex:1;
+  padding:11px 14px;border-radius:16px;
+  background:rgba(246,242,237,.97);
   border:1px solid rgba(182,160,137,.16);
-  font-size:13px;line-height:1.6;font-weight:800;color:#5b4d42;
-  box-shadow:0 6px 14px rgba(120,104,87,.08);
+  font-size:13px;font-weight:800;line-height:1.55;color:#5b4d42;
+  box-shadow:0 4px 12px rgba(120,104,87,.08);
 }
-.burnout-bubble::after{
-  content:"";position:absolute;left:-7px;bottom:18px;
-  width:13px;height:13px;
-  background:rgba(248,244,239,.95);
+.burnout-bubble::before{
+  content:"";position:absolute;left:-7px;bottom:14px;
+  width:12px;height:12px;
+  background:rgba(246,242,237,.97);
   border-left:1px solid rgba(182,160,137,.16);
   border-bottom:1px solid rgba(182,160,137,.16);
   transform:rotate(45deg);border-radius:2px;
 }
-.burnout-title{margin:0 0 4px;font-size:17px;font-weight:950;color:#5b4d42;}
-.burnout-desc{margin:0;font-size:13px;line-height:1.65;color:#8c7d71;}
-
 /* 여행 이미지 */
-.burnout-scene{
-  width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
-  margin:14px 0 0;display:none;background:#f4efe7;
-  border:1px solid rgba(120,104,87,.12);
+.burnout-scene-img{
+  display:none;width:100%;aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  object-fit:cover;margin-bottom:12px;
+  border:1px solid rgba(120,104,87,.10);
 }
-.burnout-scene.show{display:block;}
-.burnout-scene img{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
-
-/* 복귀 진행바 (장면 안에 오버레이) */
-.burnout-return-bar-wrap{
-  display:none;margin-top:10px;
-}
-.burnout-return-bar-wrap.show{display:block;}
+.burnout-scene-img.show{display:block;}
+/* 복귀 진행바 */
+.burnout-return-wrap{display:none;margin-bottom:14px;}
+.burnout-return-wrap.show{display:block;}
 .burnout-return-label{font-size:11px;font-weight:900;color:#8c7d71;margin-bottom:5px;}
 .burnout-return-track{
   width:100%;height:8px;border-radius:999px;
   background:rgba(214,200,185,.40);overflow:hidden;
-  border:1px solid rgba(255,255,255,.5);
 }
 .burnout-return-fill{
   height:100%;width:0%;border-radius:999px;
   background:linear-gradient(90deg,var(--pink),var(--violet));
-  transition:width .1s linear;
+  transition:width .12s linear;
 }
-
-.burnout-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
-.burnout-btn{min-height:52px;padding:12px 14px;border-radius:16px;font-size:13px;font-weight:900;}
-.burnout-btn.trip{background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;
-  box-shadow:0 10px 22px rgba(188,160,194,.22);}
+/* 선택 버튼 */
+.burnout-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.burnout-btn{min-height:52px;padding:12px 14px;border-radius:16px;font-size:13px;font-weight:900;transition:.15s ease;}
+.burnout-btn.trip{background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;box-shadow:0 8px 20px rgba(188,160,194,.22);}
 .burnout-btn.hotel{background:rgba(255,255,255,.88);border:1px solid rgba(120,104,87,.12);}
-.burnout-btn:disabled{opacity:.45;cursor:default;}
+.burnout-btn:disabled{opacity:.4;cursor:default;}
 @media(max-width:640px){.burnout-actions{grid-template-columns:1fr;}}
 
 /* ── 여행 토스트 ── */
@@ -8635,18 +8603,11 @@ bootGame();
     if (orig._kvFinal) return true;
 
     if (orig._stressBuiltIn) {
-      /* 원본에 스트레스가 이미 내장됨 → 스트레스는 건드리지 않고
-         syncExtraStatBars + 번아웃 체크만 래핑 */
+      /* 원본에 스트레스가 이미 내장됨 → syncExtraStatBars + 번아웃 체크만 래핑 */
       window.finishAction = function (type) {
         const r = orig.apply(this, arguments);
         safe(() => syncExtraStatBars && syncExtraStatBars());
-        try {
-          if (window.state?.stats != null &&
-              (state.stats.stress || 0) >= 50 &&
-              !state.burnout?.pending) {
-            openBurnoutV5();
-          }
-        } catch(e) { console.error('[burnout finishAction]', e); }
+        checkBurnout();
         return r;
       };
       window.finishAction._kvFinal = true;
@@ -8663,11 +8624,7 @@ bootGame();
           state.stats.stress = clamp((state.stats.stress || 0) + delta, 0, 100);
         }
         syncExtraStatBars();
-
-        /* 번아웃 체크 */
-        if ((state.stats.stress || 0) >= 50 && !state.burnout?.pending) {
-          safe(() => openBurnoutV5());
-        }
+        checkBurnout();
       }
 
       return r;
@@ -8676,23 +8633,17 @@ bootGame();
     return true;
   }
 
-  /* updateScheduleUI 래퍼: 시상식 + 번아웃 트리거 추가 */
+  /* updateScheduleUI 래퍼: 시상식 트리거 추가 */
   function patchUpdateScheduleUI() {
     const orig = window.updateScheduleUI;
     if (!orig) return false;
+    /* 이미 패치됐으면 건너뜀 (단, _kvFinal 없으면 다시 패치) */
     if (orig._kvFinal) return true;
     window.updateScheduleUI = function () {
       const r = orig.apply(this, arguments);
-      /* 시상식 트리거 */
+      /* 추가: 시상식 트리거 + 번아웃 체크 */
       safe(() => checkAwardsTrigger());
-      /* 번아웃 트리거: safe() 없이 직접 호출해서 에러 묵힘 방지 */
-      try {
-        if (window.state?.stats != null &&
-            (window.state.stats.stress || 0) >= 50 &&
-            !window.state.burnout?.pending) {
-          openBurnoutV5();
-        }
-      } catch(e) { console.error('[burnout check]', e); }
+      checkBurnout();
       return r;
     };
     window.updateScheduleUI._kvFinal = true;
@@ -8873,171 +8824,193 @@ bootGame();
   }
 
   /* ────────────────────────────────────────────────
-     4. 번아웃 시스템 (재설계: stress >= 50 트리거,
-        여행 선택 → 이미지 + 10초 복귀 바 → 닫기)
+     4. 번아웃 시스템 (완전 재작성)
+        stress >= 50 → 오버레이 표시
+        선택 → 이미지 + 10초 복귀바 → 닫힘
+        닫힌 후 stress=0, 말풍선 출력
   ──────────────────────────────────────────────── */
-  const BURNOUT_STRESS_THRESHOLD = 50;
+  const BURNOUT_THRESHOLD = 50;
+  const BURNOUT_RETURN_MS = 10000;
 
-  function ensureBurnoutOverlay() {
-    if ($('burnoutOverlay')) return;
-    const el = document.createElement('div');
-    el.id = 'burnoutOverlay';
-    el.className = 'burnout-overlay';
-    el.innerHTML = `
-      <div class="burnout-topbar"><div class="burnout-topbar-fill" id="burnoutTopbarFill"></div></div>
+  /* 오버레이 DOM 생성 (최초 1회) */
+  function buildBurnoutOverlay() {
+    if (document.getElementById('burnoutOverlay')) return;
+    const div = document.createElement('div');
+    div.id = 'burnoutOverlay';
+    div.className = 'burnout-overlay';
+    div.innerHTML = `
+      <div class="burnout-progress-bar">
+        <div class="burnout-progress-fill" id="boPFill"></div>
+      </div>
       <div class="burnout-card">
-        <div class="burnout-char-row">
-          <img class="burnout-char-img" id="burnoutCharImg" src="img/KEY_default_s.png" alt="KEY" />
-          <div class="burnout-bubble" id="burnoutBubble">번아웃이 온 것 같아.</div>
+        <div class="burnout-talk-row">
+          <img class="burnout-char" id="boChar" src="img/KEY_default_s.png" alt="KEY"/>
+          <div class="burnout-bubble" id="boBubble">번아웃이 온 것 같아.</div>
         </div>
-        <div class="burnout-scene" id="burnoutScene">
-          <img id="burnoutSceneImg" src="" alt="여행 장면" />
+        <img class="burnout-scene-img" id="boScene" src="" alt="여행 사진"/>
+        <div class="burnout-return-wrap" id="boReturnWrap">
+          <div class="burnout-return-label" id="boReturnLabel">돌아오는 중…</div>
+          <div class="burnout-return-track">
+            <div class="burnout-return-fill" id="boRFill"></div>
+          </div>
         </div>
-        <div class="burnout-return-bar-wrap" id="burnoutReturnWrap">
-          <div class="burnout-return-label" id="burnoutReturnLabel">돌아오는 중…</div>
-          <div class="burnout-return-track"><div class="burnout-return-fill" id="burnoutReturnFill"></div></div>
-        </div>
-        <div class="burnout-actions" id="burnoutActions">
-          <button type="button" class="burnout-btn trip" id="burnoutTripBtn">🌊 속초에 다녀온다</button>
-          <button type="button" class="burnout-btn hotel" id="burnoutHotelBtn">🏨 호캉스를 다녀온다</button>
+        <div class="burnout-actions" id="boActions">
+          <button type="button" class="burnout-btn trip" id="boSokcho">🌊 속초에 다녀온다</button>
+          <button type="button" class="burnout-btn hotel" id="boHotel">🏨 호캉스를 다녀온다</button>
         </div>
       </div>`;
-    document.body.appendChild(el);
-    $('burnoutTripBtn').addEventListener('click', e => { e.stopPropagation(); doTripV5('sokcho'); });
-    $('burnoutHotelBtn').addEventListener('click', e => { e.stopPropagation(); doTripV5('hotel'); });
+    document.body.appendChild(div);
+    document.getElementById('boSokcho').addEventListener('click', () => startTrip('sokcho'));
+    document.getElementById('boHotel').addEventListener('click',  () => startTrip('hotel'));
   }
 
+  /* 오버레이 열기 */
   function openBurnoutV5() {
-    ensureBurnoutOverlay();
+    buildBurnoutOverlay();
     if (!window.state) return;
     if (!state.burnout) state.burnout = {};
     if (state.burnout.pending) return;
     state.burnout.pending = true;
 
-    /* 초기 상태 리셋 */
-    const scene = $('burnoutScene');
-    const returnWrap = $('burnoutReturnWrap');
-    const actions = $('burnoutActions');
-    const fill = $('burnoutTopbarFill');
-    const returnFill = $('burnoutReturnFill');
-    const bubble = $('burnoutBubble');
+    /* 초기 상태 */
+    document.getElementById('boBubble').textContent = '번아웃이 온 것 같아.';
+    document.getElementById('boScene').className = 'burnout-scene-img';
+    document.getElementById('boReturnWrap').className = 'burnout-return-wrap';
+    document.getElementById('boActions').style.display = '';
+    document.getElementById('boPFill').style.width = '0%';
+    document.getElementById('boRFill').style.width = '0%';
+    ['boSokcho','boHotel'].forEach(id => { document.getElementById(id).disabled = false; });
 
-    if (scene) scene.classList.remove('show');
-    if (returnWrap) returnWrap.classList.remove('show');
-    if (actions) { actions.style.display = ''; }
-    if (fill) fill.style.width = '0%';
-    if (returnFill) returnFill.style.width = '0%';
-    if (bubble) bubble.textContent = '번아웃이 온 것 같아.';
+    /* 캐릭터 이미지 동기화 */
+    const charSrc = window.state?.awakened?.roomImg || 'img/KEY_default_s.png';
+    document.getElementById('boChar').src = charSrc;
 
-    /* 선택지 버튼 활성화 */
-    [$('burnoutTripBtn'), $('burnoutHotelBtn')].forEach(btn => { if (btn) btn.disabled = false; });
-
-    const ov = $('burnoutOverlay');
-    if (ov) ov.classList.add('show');
-    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
+    document.getElementById('burnoutOverlay').classList.add('show');
+    if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(true);
   }
 
+  /* 오버레이 닫기 */
   function closeBurnoutV5() {
-    const ov = $('burnoutOverlay');
+    const ov = document.getElementById('burnoutOverlay');
     if (ov) ov.classList.remove('show');
     if (window.state?.burnout) state.burnout.pending = false;
-    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+    if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(false);
   }
 
+  /* 여행 설정 */
+  const TRIP_CFG = {
+    sokcho: {
+      img: 'img/sea.png',
+      returnLabel: '속초에서 돌아오는 중…',
+      afterBubble: '다시 열심히 달릴 기운이 생긴 것 같아!',
+      statDelta: { mystery: 2, scary: 1 },
+      energyUp: 20,
+      pills: ['Mystery +2', 'Scary +1', 'Stress 0', '에너지 +20']
+    },
+    hotel: {
+      img: 'img/hotel.png',
+      returnLabel: '호캉스에서 돌아오는 중…',
+      afterBubble: '다시 열심히 달릴 기운이 생긴 것 같아!',
+      statDelta: { cute: 2, social: 1 },
+      energyUp: 24,
+      pills: ['Cute +2', 'Social +1', 'Stress 0', '에너지 +24']
+    }
+  };
+
+  /* 여행 시작 */
+  function startTrip(kind) {
+    const cfg = TRIP_CFG[kind];
+    if (!cfg) return;
+
+    /* 버튼 잠금 */
+    ['boSokcho','boHotel'].forEach(id => { document.getElementById(id).disabled = true; });
+    document.getElementById('boActions').style.display = 'none';
+
+    /* 이미지 표시 */
+    const sceneEl = document.getElementById('boScene');
+    sceneEl.src = cfg.img;
+    sceneEl.className = 'burnout-scene-img show';
+
+    /* 복귀 바 표시 */
+    document.getElementById('boReturnLabel').textContent = cfg.returnLabel;
+    document.getElementById('boReturnWrap').className = 'burnout-return-wrap show';
+
+    /* 10초 진행 애니메이션 */
+    const pFill   = document.getElementById('boPFill');
+    const rFill   = document.getElementById('boRFill');
+    const startTs = performance.now();
+
+    function tick(now) {
+      const pct = Math.min(100, ((now - startTs) / BURNOUT_RETURN_MS) * 100);
+      pFill.style.width = pct + '%';
+      rFill.style.width = pct + '%';
+      if (pct < 100) {
+        requestAnimationFrame(tick);
+      } else {
+        finishTrip(cfg);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* 여행 완료 → 스탯 적용 → 창 닫기 → 말풍선 */
+  function finishTrip(cfg) {
+    if (!window.state?.stats) { closeBurnoutV5(); return; }
+
+    /* 스탯 적용 */
+    Object.entries(cfg.statDelta).forEach(([k, v]) => {
+      state.stats[k] = clamp((state.stats[k] || 0) + v, 0, 100);
+    });
+    state.stats.stress = 0;   /* stress 완전 초기화 */
+    if (typeof state.energy === 'number') {
+      state.energy = clamp(state.energy + cfg.energyUp, 0, state.maxEnergy || 100);
+    }
+
+    /* UI 갱신 */
+    if (typeof syncExtraStatBars === 'function') syncExtraStatBars();
+    if (typeof updateScheduleUI === 'function') updateScheduleUI();
+
+    /* 토스트 */
+    showTripToast(cfg.pills);
+    if (typeof showStatFloat === 'function') showStatFloat(cfg.pills.join(' · '));
+
+    /* 창 닫기 */
+    closeBurnoutV5();
+
+    /* 말풍선 */
+    setTimeout(() => {
+      if (typeof setSeedMessage === 'function') {
+        setSeedMessage(cfg.afterBubble, { autoClearMs: 5000, idleAfterMs: 12000 });
+      } else if (typeof showLine === 'function') {
+        showLine(cfg.afterBubble);
+      }
+    }, 150);
+
+    if (typeof triggerSaveNow === 'function') triggerSaveNow();
+  }
+
+  /* 여행 후 변화 토스트 */
   function showTripToast(pills) {
-    let t = $('kvTripToast');
+    let t = document.getElementById('kvTripToast');
     if (!t) {
       t = document.createElement('div');
       t.id = 'kvTripToast';
       t.className = 'kv-trip-toast';
       document.body.appendChild(t);
     }
-    t.innerHTML = `<div class="kv-trip-toast-title">📊 여행 후 변화</div><div class="kv-trip-pills">${pills.map(p => `<span class="kv-trip-pill">${p}</span>`).join('')}</div>`;
+    t.innerHTML = `<div class="kv-trip-toast-title">📊 여행 후 변화</div>
+      <div class="kv-trip-pills">${pills.map(p=>`<span class="kv-trip-pill">${p}</span>`).join('')}</div>`;
     t.classList.add('show');
     clearTimeout(t._t);
     t._t = setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  const TRIP_CFG = {
-    sokcho: { img: 'img/sea.png',   bubble: '바다 내음이 좋았어. 속초 다녀오길 잘했다.',   returnMsg: '속초에서 돌아오는 중…', statDelta: { mystery: 2, scary: 1 }, stressReset: true, energyUp: 20, pills: ['Mystery +2', 'Scary +1', 'Stress 0', '에너지 +20'] },
-    hotel:  { img: 'img/hotel.png', bubble: '푹 쉬고 왔어. 이제 다시 달릴 수 있을 것 같아.', returnMsg: '호캉스에서 돌아오는 중…', statDelta: { cute: 2, social: 1 }, stressReset: true, energyUp: 24, pills: ['Cute +2', 'Social +1', 'Stress 0', '에너지 +24'] }
-  };
-
-  const RETURN_DURATION_MS = 10000; /* 10초 */
-
-  async function doTripV5(kind) {
-    const cfg = TRIP_CFG[kind];
-    if (!cfg || !window.state?.stats) return;
-
-    /* 버튼 비활성화 */
-    [$('burnoutTripBtn'), $('burnoutHotelBtn')].forEach(btn => { if (btn) btn.disabled = true; });
-
-    /* 이미지 표시 */
-    const scene = $('burnoutScene');
-    const sceneImg = $('burnoutSceneImg');
-    if (sceneImg) sceneImg.src = cfg.img;
-    if (scene) scene.classList.add('show');
-
-    /* 액션 버튼 숨기기 */
-    const actions = $('burnoutActions');
-    if (actions) actions.style.display = 'none';
-
-    /* 복귀 진행바 시작 */
-    const returnWrap = $('burnoutReturnWrap');
-    const returnFill = $('burnoutReturnFill');
-    const returnLabel = $('burnoutReturnLabel');
-    const topbarFill = $('burnoutTopbarFill');
-    const bubble = $('burnoutBubble');
-
-    if (bubble) bubble.textContent = cfg.bubble;
-    if (returnLabel) returnLabel.textContent = cfg.returnMsg;
-    if (returnWrap) returnWrap.classList.add('show');
-
-    /* 10초 진행 */
-    const startTime = performance.now();
-    await new Promise(resolve => {
-      function tick() {
-        const elapsed = performance.now() - startTime;
-        const pct = Math.min(100, (elapsed / RETURN_DURATION_MS) * 100);
-        if (returnFill) returnFill.style.width = pct + '%';
-        if (topbarFill) topbarFill.style.width = pct + '%';
-        if (elapsed < RETURN_DURATION_MS) {
-          requestAnimationFrame(tick);
-        } else {
-          resolve();
-        }
-      }
-      requestAnimationFrame(tick);
-    });
-
-    /* 스탯 적용 */
-    Object.entries(cfg.statDelta).forEach(([k, v]) => {
-      if (window.state?.stats) state.stats[k] = clamp((state.stats[k] || 0) + v, 0, 100);
-    });
-    if (cfg.stressReset && window.state?.stats) state.stats.stress = 0;
-    if (typeof state.energy === 'number') {
-      state.energy = clamp(state.energy + cfg.energyUp, 0, state.maxEnergy || 100);
-    }
-
-    syncExtraStatBars();
-    safe(() => updateScheduleUI && updateScheduleUI());
-    showTripToast(cfg.pills);
-    showStatFloat(cfg.pills.join(' · '));
-
-    /* 창 닫기 */
-    closeBurnoutV5();
-
-    /* 복귀 말풍선 */
-    await sleep(120);
-    safe(() => {
-      if (typeof setSeedMessage === 'function') {
-        setSeedMessage('다시 열심히 달릴 기운이 생긴 것 같아!', { autoClearMs: 5000, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 12000 });
-      } else if (typeof showLine === 'function') {
-        showLine('다시 열심히 달릴 기운이 생긴 것 같아!');
-      }
-    });
-
-    safe(() => triggerSaveNow && triggerSaveNow());
+  /* 번아웃 체크 — finishAction / updateScheduleUI 완료 후 호출 */
+  function checkBurnout() {
+    if (!window.state?.stats) return;
+    if ((state.stats.stress || 0) < BURNOUT_THRESHOLD) return;
+    if (state.burnout?.pending) return;
+    openBurnoutV5();
   }
 
   /* ────────────────────────────────────────────────
@@ -9175,13 +9148,11 @@ bootGame();
   /* 전역 노출 */
   window.openBurnout = openBurnoutV5;
   window.openBurnoutVacation = openBurnoutV5;
-  window.maybeTriggerBurnoutVacation = () => {
-    if ((window.state?.stats?.stress || 0) >= 50 && !window.state?.burnout?.pending) openBurnoutV5();
-  };
+  window.maybeTriggerBurnoutVacation = () => { checkBurnout(); };
 
   function boot() {
     ensureExtraStatBars();
-    ensureBurnoutOverlay();
+    buildBurnoutOverlay();
     patchRenderStageDecor();
     patchAwardsTrigger(); /* 즉시 override */
 
