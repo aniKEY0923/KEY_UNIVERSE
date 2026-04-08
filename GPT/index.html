@@ -6316,13 +6316,25 @@ function openAwardsCeremony(){
 }
 
 function maybeTriggerAwardsCeremony(){
-  const AWARDS_DAY = 3;
-  if (state.day < AWARDS_DAY) return;
-  if ((state.awards.lastHeldDay || 0) >= state.day) return;
+  const FIRST_AWARDS_DAY = 3;
+  const AWARDS_INTERVAL = 7;
+  if (!state.awards) {
+    state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
+  }
+
+  const lastHeldDay = state.awards.lastHeldDay || 0;
+  const nextAwardsDay = lastHeldDay > 0 ? (lastHeldDay + AWARDS_INTERVAL) : FIRST_AWARDS_DAY;
+
+  if (state.day >= nextAwardsDay) {
+    state.awards.hasPending = true;
+  }
+
+  if (!state.awards.hasPending) return;
+
   const ov = document.getElementById('awardsOverlay');
   if (!ov || ov.classList.contains('show')) return;
+  if (state.isActing || (window.miniGame && window.miniGame.active)) return;
 
-  state.awards.hasPending = true;
   openAwardsCeremony();
 }
 
@@ -6549,12 +6561,13 @@ function positionStageEnergyBar(){
 }
 
 function positionAwakenButton(){
-  const btnWidth = seedAwakenAnchor.offsetWidth || 120;
+  const stageWidth = seedStage.clientWidth || seedStage.getBoundingClientRect().width || 360;
+  const btnWidth = seedAwakenAnchor.offsetWidth || document.getElementById('awakenBtn')?.offsetWidth || 120;
   const x = state.seedPlayer.x + state.seedPlayer.w / 2;
   const y = state.seedPlayer.y + state.seedPlayer.h + 10;
 
   const minX = btnWidth / 2 + 8;
-  const maxX = seedStage.clientWidth - btnWidth / 2 - 8;
+  const maxX = stageWidth - btnWidth / 2 - 8;
   const finalX = clamp(x, minX, maxX);
 
   seedAwakenAnchor.style.left = `${finalX}px`;
@@ -6565,7 +6578,14 @@ function positionAwakenButton(){
 function updateAwakenButtonUI(){
   const visible = canAwaken() && !state.isActing && !state.awakened;
   seedAwakenAnchor.classList.toggle('hidden', !visible);
-  if (visible) positionAwakenButton();
+  if (!visible) {
+    seedAwakenAnchor.classList.remove('placed');
+    return;
+  }
+  requestAnimationFrame(() => {
+    positionAwakenButton();
+    seedAwakenAnchor.classList.add('placed');
+  });
 }
 
 function formatGameTime(hour = state.gameHour, minute = state.gameMinute || 0){
@@ -7376,11 +7396,26 @@ window.finishAction = function(type){
       message = dialogues.sleep;
       break;
   };
+  const stressDeltaMap = {
+    practice: 4,
+    shoot: 1,
+    exhibit: 1,
+    meeting: 1,
+    netflix: -1,
+    walk: -2,
+    bath: -3,
+    sleep: -4
+  };
+  const stressDelta = stressDeltaMap[type];
+  if (stressDelta != null) {
+    state.stats.stress = clamp((state.stats.stress || 0) + stressDelta, 0, 100);
+  }
+
   state.energy = clamp(state.energy, 0, state.maxEnergy);
   const earnedCoins = actionCoinReward[type] || 0;
   if (earnedCoins) addMoney(earnedCoins);
 
-  if (!state.awakened && state.day >= 3) {
+  if (!state.awakened && canAwaken()) {
     message = dialogues.ready;
   } else if (type === 'sleep') {
     message = dialogues.sleep;
@@ -7395,6 +7430,7 @@ window.finishAction = function(type){
     updateSeedStageBackground('default');
   }
 }
+window.finishAction._stressBuiltIn = true;
 
 function canAwaken(){
   return state.day >= 5;
@@ -8501,7 +8537,13 @@ bootGame();
 
   function patchFinishAction() {
     const orig = window.finishAction;
-    if (!orig || orig._kvFinal) return false;
+    if (!orig) return false;
+    if (orig._stressBuiltIn) {
+      safe(() => syncExtraStatBars && syncExtraStatBars());
+      orig._kvFinal = true;
+      return true;
+    }
+    if (orig._kvFinal) return false;
 
     window.finishAction = function (type) {
       /* 1) walk일 때 배경이 'default'로 리셋되는 것을 막기 위해
