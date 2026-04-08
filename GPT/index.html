@@ -7928,7 +7928,7 @@ function applySaveToState(save){
     : 'schedule';
   showScreen(nextScreen);
 
-  setSeedMessage(state.day >= 3 && !state.awakened ? dialogues.ready : dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
+  setSeedMessage(canAwaken() && !state.awakened ? dialogues.ready : dialogues.intro, { idleAfterMs:SEED_IDLE_MS });
   return true;
 }
 
@@ -8854,11 +8854,12 @@ bootGame();
      5. 각성 버튼 - DAY5 조건
   ──────────────────────────────────────────────── */
   function patchCanAwaken() {
+    const AWAKEN_DAY = 5;
     /* 이미 패치됐으면 스킵 */
     if (window.canAwaken?._kvFinal) return true;
     /* 원본이 있든 없든, 항상 DAY5 조건으로 교체 */
     window.canAwaken = function () {
-      return window.state ? state.day >= 5 : false;
+      return window.state ? (state.day || 1) >= AWAKEN_DAY : false;
     };
     window.canAwaken._kvFinal = true;
     return true;
@@ -8868,7 +8869,8 @@ bootGame();
      6. 시상식 - DAY30마다 발동 (반복)
         updateScheduleUI가 호출될 때마다 체크
   ──────────────────────────────────────────────── */
-  const AWARDS_INTERVAL = 7; /* N일마다 시상식 */
+  const FIRST_AWARDS_DAY = 3;
+  const AWARDS_INTERVAL = 7; /* 첫 시상식 이후 N일마다 반복 */
 
   let _awardsOpening = false;
   function checkAwardsTrigger() {
@@ -8888,7 +8890,7 @@ bootGame();
     /* DAY3, 그 이후 AWARDS_INTERVAL(7)일마다 한 번씩 */
     let nextAwardsDay;
     if (lastHeld === 0) {
-      nextAwardsDay = 3; /* 첫 시상식은 DAY3 */
+      nextAwardsDay = FIRST_AWARDS_DAY; /* 첫 시상식은 DAY3 */
     } else {
       nextAwardsDay = lastHeld + AWARDS_INTERVAL;
     }
@@ -8995,6 +8997,8 @@ bootGame();
 
     /* canAwaken 즉시 패치 (원본이 이미 있으므로) */
     patchCanAwaken();
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncRoomUI && syncRoomUI());
 
     let tries = 0;
     const tick = setInterval(() => {
