@@ -8538,23 +8538,29 @@ bootGame();
   function patchFinishAction() {
     const orig = window.finishAction;
     if (!orig) return false;
+    if (orig._kvFinal) return true;
+
     if (orig._stressBuiltIn) {
-      safe(() => syncExtraStatBars && syncExtraStatBars());
-      orig._kvFinal = true;
+      /* 원본에 스트레스가 이미 내장됨 → 스트레스는 건드리지 않고
+         syncExtraStatBars + 번아웃 체크만 래핑 */
+      window.finishAction = function (type) {
+        const r = orig.apply(this, arguments);
+        safe(() => syncExtraStatBars && syncExtraStatBars());
+        if (window.state?.stats != null) {
+          if ((state.stats.stress || 0) >= 10 && !state.burnout?.pending) {
+            safe(() => openBurnoutV5());
+          }
+        }
+        return r;
+      };
+      window.finishAction._kvFinal = true;
       return true;
     }
-    if (orig._kvFinal) return false;
 
     window.finishAction = function (type) {
-      /* 1) walk일 때 배경이 'default'로 리셋되는 것을 막기 위해
-            원본 finishAction 내부에서 updateSeedStageBackground('default')를
-            호출하는 것을 일시적으로 차단하고 사후에 walk 배경을 복원 */
-      const isWalk = (type === 'walk');
-
-      /* 원본 실행 */
       const r = orig.apply(this, arguments);
 
-      /* 2) 스트레스 적용 */
+      /* 스트레스 적용 */
       if (window.state?.stats != null) {
         const delta = STRESS_DELTA[type];
         if (delta != null) {
@@ -8577,7 +8583,9 @@ bootGame();
   /* updateScheduleUI 래퍼: 시상식 트리거 추가 */
   function patchUpdateScheduleUI() {
     const orig = window.updateScheduleUI;
-    if (!orig || orig._kvFinal) return false;
+    if (!orig) return false;
+    /* 이미 패치됐으면 건너뜀 (단, _kvFinal 없으면 다시 패치) */
+    if (orig._kvFinal) return true;
     window.updateScheduleUI = function () {
       const r = orig.apply(this, arguments);
       /* 추가: 시상식 트리거 */
@@ -8717,7 +8725,8 @@ bootGame();
   /* applyConcertMiniGameRewards 래퍼 - 팬 카드 열기 */
   function patchConcertReward() {
     const orig = window.applyConcertMiniGameRewards;
-    if (!orig || orig._kvFinal) return false;
+    if (!orig) return false;
+    if (orig._kvFinal) return true;
     window.applyConcertMiniGameRewards = function () {
       /* orig 실행 전에 점수 저장 (orig가 miniGame 상태를 변경할 수 있으므로) */
       const savedScore   = (window.miniGame?.score   || 0);
@@ -8747,7 +8756,8 @@ bootGame();
   ──────────────────────────────────────────────── */
   function patchFinishConcertMiniGame() {
     const orig = window.finishConcertMiniGame;
-    if (!orig || orig._kvFinal) return false;
+    if (!orig) return false;
+    if (orig._kvFinal) return true;
     window.finishConcertMiniGame = function () {
       orig.apply(this, arguments);
       /* miniResultDesc 텍스트를 성패에 따라 교체 */
@@ -8842,19 +8852,11 @@ bootGame();
      5. 각성 버튼 - DAY5 조건
   ──────────────────────────────────────────────── */
   function patchCanAwaken() {
-    const orig = window.canAwaken;
-    if (!orig || orig._kvFinal) {
-      /* 원본이 없거나 이미 패치됨. 직접 교체 */
-      window.canAwaken = function () {
-        return window.state ? state.day >= 5 : false;
-      };
-      window.canAwaken._kvFinal = true;
-      return true;
-    }
+    /* 이미 패치됐으면 스킵 */
+    if (window.canAwaken?._kvFinal) return true;
+    /* 원본이 있든 없든, 항상 DAY5 조건으로 교체 */
     window.canAwaken = function () {
-      if (!window.state) return false;
-      if (state.day >= 5) return true;
-      return false;
+      return window.state ? state.day >= 5 : false;
     };
     window.canAwaken._kvFinal = true;
     return true;
@@ -8866,11 +8868,14 @@ bootGame();
   ──────────────────────────────────────────────── */
   const AWARDS_INTERVAL = 7; /* N일마다 시상식 */
 
+  let _awardsOpening = false;
   function checkAwardsTrigger() {
     if (!window.state) return;
+    if (_awardsOpening) return; /* 재귀 방지 */
     const awardsOv = document.getElementById('awardsOverlay');
     if (!awardsOv) return;
     if (awardsOv.classList.contains('show')) return;
+    if (state.isActing || (window.miniGame && window.miniGame.active)) return;
 
     const currentDay = state.day || 1;
     const lastHeld = state.awards?.lastHeldDay || 0;
@@ -8884,7 +8889,9 @@ bootGame();
     }
 
     if (currentDay >= nextAwardsDay) {
+      _awardsOpening = true;
       safe(() => openAwardsCeremony && openAwardsCeremony());
+      _awardsOpening = false;
     }
   }
 
