@@ -3736,6 +3736,11 @@ body.ending-modal-open{
             <button class="secondary-btn" id="resetBtn">새로 시작</button>
             <button class="primary-btn" id="debugModeBtn">디버그 모드</button>
           </div>
+
+          <!-- DAY5 각성 버튼 -->
+          <div id="day5AwakenRow" style="display:none;margin-top:10px;">
+            <button class="primary-btn" id="day5AwakenBtn" style="background:linear-gradient(135deg,#f1a7c8,#c9c3e8);font-size:15px;letter-spacing:.04em;">✨ 각성하기</button>
+          </div>
           </div>
 
           <div class="room-bottom-pane" id="seedPaneGift">
@@ -5714,6 +5719,17 @@ document.getElementById('awakenBtn').addEventListener('click', async () => {
   await triggerSaveNow();
 });
 
+/* DAY5 하단 각성 버튼 — awakenBtn과 동일한 동작 */
+(function(){
+  const btn = document.getElementById('day5AwakenBtn');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      doAwaken();
+      await triggerSaveNow();
+    });
+  }
+})();
+
 document.getElementById('toRoomBtn').addEventListener('click', async () => {
   closeAwakenOverlay();
   showScreen('room');
@@ -6578,15 +6594,21 @@ function positionAwakenButton(){
 
 function updateAwakenButtonUI(){
   const visible = canAwaken() && !state.isActing && !state.awakened;
+
+  /* 스테이지 내부 플로팅 버튼 */
   seedAwakenAnchor.classList.toggle('hidden', !visible);
   if (!visible) {
     seedAwakenAnchor.classList.remove('placed');
-    return;
+  } else {
+    requestAnimationFrame(() => {
+      positionAwakenButton();
+      seedAwakenAnchor.classList.add('placed');
+    });
   }
-  requestAnimationFrame(() => {
-    positionAwakenButton();
-    seedAwakenAnchor.classList.add('placed');
-  });
+
+  /* 스테이지 하단 고정 각성 버튼 (DAY5+) */
+  const day5Row = document.getElementById('day5AwakenRow');
+  if (day5Row) day5Row.style.display = visible ? '' : 'none';
 }
 
 function formatGameTime(hour = state.gameHour, minute = state.gameMinute || 0){
@@ -8385,24 +8407,95 @@ bootGame();
   box-shadow:0 10px 22px rgba(188,160,194,.22);
 }
 
-/* ── 번아웃 오버레이 ── */
+/* ── 번아웃 오버레이 (재설계) ── */
 .burnout-overlay{
   position:fixed;inset:0;z-index:10020;
-  display:none;align-items:center;justify-content:center;
-  padding:20px;background:rgba(31,25,38,.42);backdrop-filter:blur(8px);
+  display:none;align-items:flex-start;justify-content:center;
+  padding:0;background:rgba(31,25,38,.46);backdrop-filter:blur(8px);
+  flex-direction:column;
 }
 .burnout-overlay.show{display:flex;}
-.burnout-card{
-  width:min(420px,100%);padding:22px 20px 18px;border-radius:24px;
-  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,247,250,.96));
-  border:1px solid rgba(120,104,87,.14);box-shadow:0 24px 60px rgba(0,0,0,.24);
+
+/* 상단 상태바 */
+.burnout-topbar{
+  width:100%;height:7px;background:rgba(255,255,255,.16);
+  flex:0 0 auto;position:relative;overflow:hidden;
 }
-.burnout-title{margin:0 0 8px;font-size:22px;font-weight:950;color:#5b4d42;}
+.burnout-topbar-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--pink),var(--violet));
+  transition:width .1s linear;
+}
+
+/* 대화 카드 */
+.burnout-card{
+  width:min(440px,calc(100% - 32px));
+  margin:auto;
+  padding:26px 22px 22px;border-radius:24px;
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,247,250,.96));
+  border:1px solid rgba(120,104,87,.14);box-shadow:0 28px 64px rgba(0,0,0,.28);
+  display:flex;flex-direction:column;gap:0;
+}
+.burnout-char-row{
+  display:flex;align-items:flex-end;gap:14px;margin-bottom:14px;
+}
+.burnout-char-img{
+  width:64px;height:88px;object-fit:contain;image-rendering:pixelated;
+  filter:drop-shadow(0 4px 10px rgba(109,94,79,.22));flex:0 0 auto;
+}
+.burnout-bubble{
+  position:relative;flex:1;min-height:52px;
+  padding:13px 15px;border-radius:18px;
+  background:rgba(248,244,239,.95);
+  border:1px solid rgba(182,160,137,.16);
+  font-size:13px;line-height:1.6;font-weight:800;color:#5b4d42;
+  box-shadow:0 6px 14px rgba(120,104,87,.08);
+}
+.burnout-bubble::after{
+  content:"";position:absolute;left:-7px;bottom:18px;
+  width:13px;height:13px;
+  background:rgba(248,244,239,.95);
+  border-left:1px solid rgba(182,160,137,.16);
+  border-bottom:1px solid rgba(182,160,137,.16);
+  transform:rotate(45deg);border-radius:2px;
+}
+.burnout-title{margin:0 0 4px;font-size:17px;font-weight:950;color:#5b4d42;}
 .burnout-desc{margin:0;font-size:13px;line-height:1.65;color:#8c7d71;}
+
+/* 여행 이미지 */
+.burnout-scene{
+  width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
+  margin:14px 0 0;display:none;background:#f4efe7;
+  border:1px solid rgba(120,104,87,.12);
+}
+.burnout-scene.show{display:block;}
+.burnout-scene img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+
+/* 복귀 진행바 (장면 안에 오버레이) */
+.burnout-return-bar-wrap{
+  display:none;margin-top:10px;
+}
+.burnout-return-bar-wrap.show{display:block;}
+.burnout-return-label{font-size:11px;font-weight:900;color:#8c7d71;margin-bottom:5px;}
+.burnout-return-track{
+  width:100%;height:8px;border-radius:999px;
+  background:rgba(214,200,185,.40);overflow:hidden;
+  border:1px solid rgba(255,255,255,.5);
+}
+.burnout-return-fill{
+  height:100%;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,var(--pink),var(--violet));
+  transition:width .1s linear;
+}
+
 .burnout-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
 .burnout-btn{min-height:52px;padding:12px 14px;border-radius:16px;font-size:13px;font-weight:900;}
-.burnout-btn.trip{background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;}
+.burnout-btn.trip{background:linear-gradient(135deg,var(--pink),var(--violet));color:#4f4250;
+  box-shadow:0 10px 22px rgba(188,160,194,.22);}
 .burnout-btn.hotel{background:rgba(255,255,255,.88);border:1px solid rgba(120,104,87,.12);}
+.burnout-btn:disabled{opacity:.45;cursor:default;}
 @media(max-width:640px){.burnout-actions{grid-template-columns:1fr;}}
 
 /* ── 여행 토스트 ── */
@@ -8549,7 +8642,7 @@ bootGame();
         const r = orig.apply(this, arguments);
         safe(() => syncExtraStatBars && syncExtraStatBars());
         if (window.state?.stats != null) {
-          if ((state.stats.stress || 0) >= 40 && !state.burnout?.pending) {
+          if ((state.stats.stress || 0) >= 50 && !state.burnout?.pending) {
             safe(() => openBurnoutV5());
           }
         }
@@ -8571,7 +8664,7 @@ bootGame();
         syncExtraStatBars();
 
         /* 번아웃 체크 */
-        if ((state.stats.stress || 0) >= 40 && !state.burnout?.pending) {
+        if ((state.stats.stress || 0) >= 50 && !state.burnout?.pending) {
           safe(() => openBurnoutV5());
         }
       }
@@ -8772,20 +8865,33 @@ bootGame();
   }
 
   /* ────────────────────────────────────────────────
-     4. 번아웃 시스템
+     4. 번아웃 시스템 (재설계: stress >= 50 트리거,
+        여행 선택 → 이미지 + 10초 복귀 바 → 닫기)
   ──────────────────────────────────────────────── */
+  const BURNOUT_STRESS_THRESHOLD = 50;
+
   function ensureBurnoutOverlay() {
     if ($('burnoutOverlay')) return;
     const el = document.createElement('div');
     el.id = 'burnoutOverlay';
     el.className = 'burnout-overlay';
     el.innerHTML = `
+      <div class="burnout-topbar"><div class="burnout-topbar-fill" id="burnoutTopbarFill"></div></div>
       <div class="burnout-card">
-        <h3 class="burnout-title">🥱 번아웃이 왔어…</h3>
-        <p class="burnout-desc">스트레스가 너무 쌓였어. 잠깐 어딘가 다녀오는 게 좋을 것 같아.<br>어디로 떠날까?</p>
-        <div class="burnout-actions">
-          <button type="button" class="burnout-btn trip" id="burnoutTripBtn">🌊 속초 여행</button>
-          <button type="button" class="burnout-btn hotel" id="burnoutHotelBtn">🏨 호텔 휴식</button>
+        <div class="burnout-char-row">
+          <img class="burnout-char-img" id="burnoutCharImg" src="img/KEY_default_s.png" alt="KEY" />
+          <div class="burnout-bubble" id="burnoutBubble">번아웃이 온 것 같아.</div>
+        </div>
+        <div class="burnout-scene" id="burnoutScene">
+          <img id="burnoutSceneImg" src="" alt="여행 장면" />
+        </div>
+        <div class="burnout-return-bar-wrap" id="burnoutReturnWrap">
+          <div class="burnout-return-label" id="burnoutReturnLabel">돌아오는 중…</div>
+          <div class="burnout-return-track"><div class="burnout-return-fill" id="burnoutReturnFill"></div></div>
+        </div>
+        <div class="burnout-actions" id="burnoutActions">
+          <button type="button" class="burnout-btn trip" id="burnoutTripBtn">🌊 속초에 다녀온다</button>
+          <button type="button" class="burnout-btn hotel" id="burnoutHotelBtn">🏨 호캉스를 다녀온다</button>
         </div>
       </div>`;
     document.body.appendChild(el);
@@ -8799,6 +8905,25 @@ bootGame();
     if (!state.burnout) state.burnout = {};
     if (state.burnout.pending) return;
     state.burnout.pending = true;
+
+    /* 초기 상태 리셋 */
+    const scene = $('burnoutScene');
+    const returnWrap = $('burnoutReturnWrap');
+    const actions = $('burnoutActions');
+    const fill = $('burnoutTopbarFill');
+    const returnFill = $('burnoutReturnFill');
+    const bubble = $('burnoutBubble');
+
+    if (scene) scene.classList.remove('show');
+    if (returnWrap) returnWrap.classList.remove('show');
+    if (actions) { actions.style.display = ''; }
+    if (fill) fill.style.width = '0%';
+    if (returnFill) returnFill.style.width = '0%';
+    if (bubble) bubble.textContent = '번아웃이 온 것 같아.';
+
+    /* 선택지 버튼 활성화 */
+    [$('burnoutTripBtn'), $('burnoutHotelBtn')].forEach(btn => { if (btn) btn.disabled = false; });
+
     const ov = $('burnoutOverlay');
     if (ov) ov.classList.add('show');
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
@@ -8826,27 +8951,84 @@ bootGame();
   }
 
   const TRIP_CFG = {
-    sokcho: { statDelta: { mystery: 2, scary: 1 }, stressDown: 6, energyUp: 18, bubble: '즐거웠다~ 바다를 보고 오니 머리가 맑아졌어.', pills: ['Mystery +2', 'Scary +1', 'Stress -6', '에너지 +18'] },
-    hotel:  { statDelta: { cute: 2, social: 1 }, stressDown: 7, energyUp: 22, bubble: '즐거웠다~ 푹 쉬고 오니 몸도 마음도 가벼워졌어.', pills: ['Cute +2', 'Social +1', 'Stress -7', '에너지 +22'] }
+    sokcho: { img: 'img/sea.png',   bubble: '바다 내음이 좋았어. 속초 다녀오길 잘했다.',   returnMsg: '속초에서 돌아오는 중…', statDelta: { mystery: 2, scary: 1 }, stressReset: true, energyUp: 20, pills: ['Mystery +2', 'Scary +1', 'Stress 0', '에너지 +20'] },
+    hotel:  { img: 'img/hotel.png', bubble: '푹 쉬고 왔어. 이제 다시 달릴 수 있을 것 같아.', returnMsg: '호캉스에서 돌아오는 중…', statDelta: { cute: 2, social: 1 }, stressReset: true, energyUp: 24, pills: ['Cute +2', 'Social +1', 'Stress 0', '에너지 +24'] }
   };
+
+  const RETURN_DURATION_MS = 10000; /* 10초 */
 
   async function doTripV5(kind) {
     const cfg = TRIP_CFG[kind];
     if (!cfg || !window.state?.stats) return;
-    closeBurnoutV5();
-    await sleep(200);
-    Object.entries(cfg.statDelta).forEach(([k, v]) => {
-      state.stats[k] = clamp((state.stats[k] || 0) + v, 0, 100);
+
+    /* 버튼 비활성화 */
+    [$('burnoutTripBtn'), $('burnoutHotelBtn')].forEach(btn => { if (btn) btn.disabled = true; });
+
+    /* 이미지 표시 */
+    const scene = $('burnoutScene');
+    const sceneImg = $('burnoutSceneImg');
+    if (sceneImg) sceneImg.src = cfg.img;
+    if (scene) scene.classList.add('show');
+
+    /* 액션 버튼 숨기기 */
+    const actions = $('burnoutActions');
+    if (actions) actions.style.display = 'none';
+
+    /* 복귀 진행바 시작 */
+    const returnWrap = $('burnoutReturnWrap');
+    const returnFill = $('burnoutReturnFill');
+    const returnLabel = $('burnoutReturnLabel');
+    const topbarFill = $('burnoutTopbarFill');
+    const bubble = $('burnoutBubble');
+
+    if (bubble) bubble.textContent = cfg.bubble;
+    if (returnLabel) returnLabel.textContent = cfg.returnMsg;
+    if (returnWrap) returnWrap.classList.add('show');
+
+    /* 10초 진행 */
+    const startTime = performance.now();
+    await new Promise(resolve => {
+      function tick() {
+        const elapsed = performance.now() - startTime;
+        const pct = Math.min(100, (elapsed / RETURN_DURATION_MS) * 100);
+        if (returnFill) returnFill.style.width = pct + '%';
+        if (topbarFill) topbarFill.style.width = pct + '%';
+        if (elapsed < RETURN_DURATION_MS) {
+          requestAnimationFrame(tick);
+        } else {
+          resolve();
+        }
+      }
+      requestAnimationFrame(tick);
     });
-    state.stats.stress = clamp((state.stats.stress || 0) - cfg.stressDown, 0, 100);
+
+    /* 스탯 적용 */
+    Object.entries(cfg.statDelta).forEach(([k, v]) => {
+      if (window.state?.stats) state.stats[k] = clamp((state.stats[k] || 0) + v, 0, 100);
+    });
+    if (cfg.stressReset && window.state?.stats) state.stats.stress = 0;
     if (typeof state.energy === 'number') {
       state.energy = clamp(state.energy + cfg.energyUp, 0, state.maxEnergy || 100);
     }
+
     syncExtraStatBars();
     safe(() => updateScheduleUI && updateScheduleUI());
-    showLine(cfg.bubble);
     showTripToast(cfg.pills);
     showStatFloat(cfg.pills.join(' · '));
+
+    /* 창 닫기 */
+    closeBurnoutV5();
+
+    /* 복귀 말풍선 */
+    await sleep(120);
+    safe(() => {
+      if (typeof setSeedMessage === 'function') {
+        setSeedMessage('다시 열심히 달릴 기운이 생긴 것 같아!', { autoClearMs: 5000, idleAfterMs: typeof SEED_IDLE_MS !== 'undefined' ? SEED_IDLE_MS : 12000 });
+      } else if (typeof showLine === 'function') {
+        showLine('다시 열심히 달릴 기운이 생긴 것 같아!');
+      }
+    });
+
     safe(() => triggerSaveNow && triggerSaveNow());
   }
 
@@ -8986,7 +9168,7 @@ bootGame();
   window.openBurnout = openBurnoutV5;
   window.openBurnoutVacation = openBurnoutV5;
   window.maybeTriggerBurnoutVacation = () => {
-    if ((window.state?.stats?.stress || 0) >= 40 && !window.state?.burnout?.pending) openBurnoutV5();
+    if ((window.state?.stats?.stress || 0) >= 50 && !window.state?.burnout?.pending) openBurnoutV5();
   };
 
   function boot() {
@@ -9024,6 +9206,119 @@ bootGame();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else setTimeout(boot, 0);
 
+})();
+</script>
+
+
+
+<!-- KEY:VERSE event hotfix patch -->
+<script>
+(function(){
+  function safe(fn){ try{ return fn && fn(); }catch(_e){} }
+  function normalizeEventState(){
+    if (!window.state) return;
+    if (typeof state.day !== 'number' || !Number.isFinite(state.day) || state.day < 1) state.day = 1;
+    if (!state.awards || typeof state.awards !== 'object') {
+      state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
+    } else {
+      state.awards.season = Number.isFinite(state.awards.season) ? state.awards.season : 1;
+      state.awards.lastHeldDay = Number.isFinite(state.awards.lastHeldDay) ? state.awards.lastHeldDay : 0;
+      state.awards.hasPending = !!state.awards.hasPending;
+      if (!('lastResult' in state.awards)) state.awards.lastResult = null;
+    }
+    if (!state.burnout || typeof state.burnout !== 'object') state.burnout = { pending:false };
+    else state.burnout.pending = !!state.burnout.pending;
+    if (!state.stats || typeof state.stats !== 'object') state.stats = {};
+    if (typeof state.stats.stress !== 'number' || !Number.isFinite(state.stats.stress)) state.stats.stress = 0;
+    state.stats.stress = Math.max(0, Math.min(100, state.stats.stress));
+  }
+
+  function syncCriticalEvents(){
+    normalizeEventState();
+    safe(() => window.updateAwakenButtonUI && window.updateAwakenButtonUI());
+    safe(() => {
+      if (window.state && (state.stats.stress || 0) >= 50 && !state.burnout?.pending && !state.awakened && !state.isActing) {
+        window.openBurnoutV5 && window.openBurnoutV5();
+      }
+    });
+    safe(() => window.maybeTriggerAwardsCeremony && window.maybeTriggerAwardsCeremony());
+  }
+
+  function resetEventFlags(){
+    normalizeEventState();
+    state.awards.season = 1;
+    state.awards.lastHeldDay = 0;
+    state.awards.hasPending = false;
+    state.awards.lastResult = null;
+    state.burnout.pending = false;
+  }
+
+  const wrap = (name, after) => {
+    const orig = window[name];
+    if (typeof orig !== 'function' || orig._kvEventHotfixWrapped) return;
+    window[name] = function(){
+      const result = orig.apply(this, arguments);
+      after && after.apply(this, arguments);
+      return result;
+    };
+    window[name]._kvEventHotfixWrapped = true;
+  };
+
+  wrap('beginNewSeedRun', () => {
+    resetEventFlags();
+    safe(() => window.closeBurnoutV5 && window.closeBurnoutV5());
+    syncCriticalEvents();
+  });
+  wrap('resetAll', () => {
+    resetEventFlags();
+    safe(() => window.closeBurnoutV5 && window.closeBurnoutV5());
+    syncCriticalEvents();
+  });
+  wrap('hardResetToNewGame', () => {
+    resetEventFlags();
+    safe(() => window.closeBurnoutV5 && window.closeBurnoutV5());
+    syncCriticalEvents();
+  });
+  wrap('applySaveToState', () => {
+    normalizeEventState();
+    if (!document.getElementById('awardsOverlay')?.classList.contains('show')) {
+      state.awards.hasPending = !!state.awards.hasPending;
+    }
+    syncCriticalEvents();
+  });
+  wrap('showScreen', () => {
+    if (window.getCurrentScreenName && window.getCurrentScreenName() === 'schedule') {
+      syncCriticalEvents();
+    }
+  });
+
+  const origFinishAction = window.finishAction;
+  if (typeof origFinishAction === 'function' && !origFinishAction._kvEventHotfixPostWrapped) {
+    window.finishAction = function(){
+      const result = origFinishAction.apply(this, arguments);
+      setTimeout(syncCriticalEvents, 0);
+      return result;
+    };
+    window.finishAction._kvEventHotfixPostWrapped = true;
+  }
+
+  const origAdvance = window.advanceGameTimeStep;
+  if (typeof origAdvance === 'function' && !origAdvance._kvEventHotfixWrapped) {
+    window.advanceGameTimeStep = function(){
+      const beforeDay = window.state ? state.day : null;
+      const result = origAdvance.apply(this, arguments);
+      if (window.state && beforeDay !== null && state.day !== beforeDay) {
+        normalizeEventState();
+        if (state.day >= 3 && (state.awards.lastHeldDay || 0) < 3) state.awards.hasPending = true;
+      }
+      return result;
+    };
+    window.advanceGameTimeStep._kvEventHotfixWrapped = true;
+  }
+
+  normalizeEventState();
+  setTimeout(syncCriticalEvents, 0);
+  setTimeout(syncCriticalEvents, 120);
 })();
 </script>
 
