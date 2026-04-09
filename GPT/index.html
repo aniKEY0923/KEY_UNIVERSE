@@ -7476,14 +7476,9 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
   // ── 번아웃 체크 ──
   setTimeout(() => {
     if (!state.burnout || typeof state.burnout !== 'object') state.burnout = { pending: false };
-    const ov = document.getElementById('burnoutOverlay');
-    const overlayOpen = ov && ov.classList.contains('show');
-    // 오버레이가 닫혀 있는데 pending만 true로 남아있는 경우 리셋
-    if (state.burnout.pending && !overlayOpen) {
-      state.burnout.pending = false;
-    }
     if (!state.burnout.pending && (state.stats.stress || 0) >= 50) {
-      if (!overlayOpen) {
+      const ov = document.getElementById('burnoutOverlay');
+      if (!ov || !ov.classList.contains('show')) {
         if (typeof window.openBurnout === 'function') window.openBurnout();
       }
     }
@@ -8267,8 +8262,6 @@ function handleResizeSync(){
       renderStageDecor();
       return result;
     }
-    // 원본의 _stressBuiltIn 플래그를 래퍼에도 전파해서 kv7 래퍼가 스트레스를 중복 적용하지 않도록
-    window.finishAction._stressBuiltIn = !!originalFinishAction._stressBuiltIn;
   }
 })();
 (function(){
@@ -8386,8 +8379,9 @@ bootGame();
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Number(v) || 0));
   const safe = fn => { try { return fn(); } catch (e) { return null; } };
 
-  const BURNOUT_THRESHOLD = 50;   // 스트레스 최고치
+  const BURNOUT_THRESHOLD = 50;   // 번아웃 발동 기준치
   const TRIP_DURATION_MS  = 20000; // 20초
+  const BURNOUT_RETRY_MS  = 600;
 
   /* ── CSS 주입 ─────────────────────────────────────────── */
   const style = document.createElement('style');
@@ -8741,7 +8735,10 @@ bootGame();
       }
     }
 
-    if (window.state?.burnout) state.burnout.pending = false;
+    if (window.state?.burnout) {
+      state.burnout.pending = false;
+      clearBurnoutRetry();
+    }
 
     safe(() => updateScheduleUI && updateScheduleUI());
     safe(() => syncExtraStatBars());
@@ -8764,16 +8761,62 @@ bootGame();
   }
 
   /* ── 번아웃 체크 ──────────────────────────────────────── */
+  function ensureBurnoutState() {
+    if (!window.state) return null;
+    if (!state.burnout || typeof state.burnout !== 'object') {
+      state.burnout = { pending: false, retryTimer: null };
+    } else if (!Object.prototype.hasOwnProperty.call(state.burnout, 'pending')) {
+      state.burnout.pending = false;
+    }
+    return state.burnout;
+  }
+
+  function clearBurnoutRetry() {
+    const burnout = ensureBurnoutState();
+    if (!burnout?.retryTimer) return;
+    clearTimeout(burnout.retryTimer);
+    burnout.retryTimer = null;
+  }
+
+  function scheduleBurnoutRetry(delay = BURNOUT_RETRY_MS) {
+    const burnout = ensureBurnoutState();
+    if (!burnout || burnout.retryTimer) return;
+    burnout.retryTimer = setTimeout(() => {
+      const activeBurnout = ensureBurnoutState();
+      if (activeBurnout) activeBurnout.retryTimer = null;
+      safe(() => checkBurnout());
+    }, delay);
+  }
+
   function checkBurnout() {
-    if (!window.state?.stats) return;
-    if (!state.burnout || typeof state.burnout !== 'object') state.burnout = { pending: false };
-    if (state.burnout.pending) return;
-    if ((state.stats.stress || 0) < BURNOUT_THRESHOLD) return;
-    // 미니게임 중이거나 번아웃 오버레이가 이미 열려 있으면 스킵
+    if (!window.state?.stats) return false;
+    const burnout = ensureBurnoutState();
+    if (!burnout) return false;
+
+    const stress = Number(state.stats.stress) || 0;
     const ov = $('burnoutOverlay');
-    if (ov && ov.classList.contains('show')) return;
-    if (window.miniGame?.active) return;
-    window.openBurnout();
+
+    if (burnout.pending && (!ov || !ov.classList.contains('show'))) {
+      burnout.pending = false;
+    }
+    if (stress < BURNOUT_THRESHOLD) {
+      clearBurnoutRetry();
+      return false;
+    }
+    if (burnout.pending) return false;
+    // 미니게임 중에는 바로 띄우지 말고, 끝나면 다시 체크
+    if (window.miniGame?.active) {
+      scheduleBurnoutRetry();
+      return false;
+    }
+    if (ov && ov.classList.contains('show')) return false;
+
+    clearBurnoutRetry();
+    if (typeof window.openBurnout === 'function') {
+      window.openBurnout();
+      return true;
+    }
+    return false;
   }
   window.checkBurnout = checkBurnout;
   window.maybeTriggerBurnoutVacation = checkBurnout;
@@ -8820,6 +8863,7 @@ bootGame();
     window.updateScheduleUI = function () {
       const r = orig.apply(this, arguments);
       safe(() => syncExtraStatBars());
+      safe(() => checkBurnout());
       return r;
     };
     window.updateScheduleUI._kv7 = true;
@@ -8831,7 +8875,7 @@ bootGame();
     if (!orig) return;
     window.finishAction = function (type) {
       const r = orig.apply(this, arguments);
-      // _stressBuiltIn이 체인 어딘가에 있으면 스트레스 중복 적용 안 함
+      // 스트레스 delta (기존 코드에 없을 경우 보완)
       if (window.state?.stats && !orig._stressBuiltIn) {
         const delta = STRESS_DELTA[type] || 0;
         if (delta !== 0) {
@@ -8840,14 +8884,12 @@ bootGame();
         }
       }
       safe(() => syncExtraStatBars());
-      // 원본 finishAction에 _stressBuiltIn이 있으면 번아웃 체크는 원본에서 처리됨 — 중복 호출 생략
-      if (!orig._stressBuiltIn) {
-        setTimeout(() => safe(() => checkBurnout()), 300);
-      }
+      safe(() => checkBurnout());
+      // 상태 갱신/화면 전환 직후 한 번 더 체크
+      setTimeout(() => safe(() => checkBurnout()), 300);
       return r;
     };
     window.finishAction._kv7 = true;
-    window.finishAction._stressBuiltIn = !!orig._stressBuiltIn;
   }
 
   /* ── canAwaken: DAY5 이상 ─────────────────────────────── */
@@ -8966,6 +9008,7 @@ bootGame();
   function boot() {
     buildBurnoutOverlay();
     patchCanAwaken();
+    safe(() => ensureBurnoutState());
 
     let tries = 0;
     const tick = setInterval(() => {
@@ -8974,6 +9017,7 @@ bootGame();
       wrapFinishAction();
       wrapConcertReward();
       syncExtraStatBars();
+      safe(() => checkBurnout());
 
       const done = !!(
         window.updateScheduleUI?._kv7 &&
