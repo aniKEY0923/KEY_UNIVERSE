@@ -8754,7 +8754,7 @@ bootGame();
     const ov = $('burnoutOverlay');
     if (ov && ov.classList.contains('show')) return;
     if (window.miniGame?.active) return;
-    openBurnoutV7();
+  window.openBurnout();
   }
   window.checkBurnout = checkBurnout;
   window.maybeTriggerBurnoutVacation = checkBurnout;
