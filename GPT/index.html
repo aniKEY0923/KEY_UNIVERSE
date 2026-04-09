@@ -6380,6 +6380,7 @@ function maybeTriggerAwardsCeremony(){
 
   openAwardsCeremony();
 }
+window.maybeTriggerAwardsCeremony = maybeTriggerAwardsCeremony;
 
 if (awardsCloseBtn) awardsCloseBtn.addEventListener('click', closeAwardsCeremony);
 if (awardsConfirmBtn) awardsConfirmBtn.addEventListener('click', closeAwardsCeremony);
@@ -8770,6 +8771,16 @@ bootGame();
 
     if (!_burnoutOpen) openBurnoutV7();
   }, 300);
+
+  /* ── 시상식 폴링 트리거 ──────────────────────────────────────
+     500ms마다 조건 체크. updateScheduleUI 호출 여부에 의존 안 함.
+  ─────────────────────────────────────────────────────────── */
+  setInterval(() => {
+    if (typeof state === 'undefined') return;
+    if (typeof maybeTriggerAwardsCeremony === 'function') {
+      maybeTriggerAwardsCeremony();
+    }
+  }, 500);
 
   /* ── updateScheduleUI 래퍼 (스탯 바 동기화) ─────────────── */
   function wrapUpdateScheduleUI() {
