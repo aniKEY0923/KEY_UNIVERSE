@@ -8679,6 +8679,7 @@ bootGame();
       const r = orig.apply(this, arguments);
       /* 추가: 시상식 트리거 + 번아웃 체크 */
       safe(() => checkAwardsTrigger());
+      safe(() => checkBurnout());  // ← 이 줄 추가
      
       return r;
     };
@@ -9042,12 +9043,13 @@ bootGame();
   }
 
   /* 번아웃 체크 — finishAction / updateScheduleUI 완료 후 호출 */
-  function checkBurnout() {
-    if (!window.state?.stats) return;
-    if ((state.stats.stress || 0) < BURNOUT_THRESHOLD) return;
-    if (state.burnout?.pending) return;
-    openBurnoutV5();
-  }
+function checkBurnout() {
+  if (!window.state?.stats) return;
+  if (!state.burnout) state.burnout = { pending: false }; // ← 방어 초기화
+  if ((state.stats.stress || 0) < BURNOUT_THRESHOLD) return;
+  if (state.burnout?.pending) return;
+  openBurnoutV5();
+}
 
   /* ────────────────────────────────────────────────
      5. 각성 버튼 - DAY5 조건
