@@ -8379,12 +8379,13 @@ bootGame();
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Number(v) || 0));
   const safe = fn => { try { return fn(); } catch (e) { return null; } };
 
-  const BURNOUT_THRESHOLD = 50;
-  const TRIP_DURATION_MS  = 2600;
-  const TRIP_TIME_MINUTES = 720;
+  const BURNOUT_THRESHOLD = 50;   // 스트레스 최고치
+  const TRIP_DURATION_MS  = 20000; // 20초
 
+  /* ── CSS 주입 ─────────────────────────────────────────── */
   const style = document.createElement('style');
   style.textContent = `
+  /* 번아웃 오버레이 — 화면 전체를 덮는 카드 */
   #burnoutOverlay {
     position: fixed;
     inset: 0;
@@ -8397,30 +8398,36 @@ bootGame();
     backdrop-filter: blur(8px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity .24s ease;
+    transition: opacity .28s ease;
   }
   #burnoutOverlay.show {
     opacity: 1;
     pointer-events: auto;
   }
+
   .bo-card {
+    position: relative;
     width: min(460px, calc(100vw - 32px));
     border-radius: 28px;
     background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,246,250,.96));
     border: 1px solid rgba(120,104,87,.14);
     box-shadow: 0 28px 64px rgba(0,0,0,.28);
-    padding: 20px 20px 18px;
-    transform: translateY(20px) scale(.98);
-    transition: transform .24s ease;
+    overflow: hidden;
+    transform: translateY(32px) scale(.97);
+    transition: transform .28s ease;
+    padding: 0 0 20px;
   }
   #burnoutOverlay.show .bo-card {
     transform: translateY(0) scale(1);
   }
+
+  /* 상단 말풍선 + 캐릭터 영역 */
   .bo-talk-row {
     display: grid;
     grid-template-columns: 56px 1fr;
     gap: 12px;
     align-items: end;
+    padding: 20px 20px 0;
   }
   .bo-char {
     width: 56px;
@@ -8433,7 +8440,7 @@ bootGame();
     position: relative;
     padding: 12px 14px;
     border-radius: 18px;
-    background: rgba(255,255,255,.96);
+    background: rgba(255,255,255,.94);
     color: #5b4d42;
     font-size: 13px;
     font-weight: 800;
@@ -8448,23 +8455,60 @@ bootGame();
     bottom: 16px;
     width: 12px;
     height: 12px;
-    background: rgba(255,255,255,.96);
+    background: rgba(255,255,255,.94);
     border-left: 1px solid rgba(182,160,137,.14);
     border-bottom: 1px solid rgba(182,160,137,.14);
     transform: rotate(45deg);
     border-radius: 2px;
   }
-  .bo-sub {
-    margin: 12px 2px 0;
-    font-size: 12px;
-    color: #8c7d71;
-    line-height: 1.55;
+
+  /* 여행 이미지 */
+  .bo-scene {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    margin-top: 16px;
+    opacity: 0;
+    transition: opacity .6s ease;
   }
+  .bo-scene.show { opacity: 1; }
+
+  /* 진행 바 (여행 중) */
+  .bo-progress-wrap {
+    padding: 10px 20px 0;
+    display: none;
+  }
+  .bo-progress-wrap.show { display: block; }
+  .bo-progress-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #8c7d71;
+    margin-bottom: 5px;
+    letter-spacing: .04em;
+  }
+  .bo-progress-track {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(214,200,185,.38);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.5);
+  }
+  .bo-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #f1a7c8, #c9c3e8);
+    transition: width .12s linear;
+  }
+
+  /* 선택 버튼 */
   .bo-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    margin-top: 14px;
+    padding: 16px 20px 0;
   }
   .bo-btn {
     padding: 14px 10px;
@@ -8487,6 +8531,22 @@ bootGame();
     border-color: rgba(160,140,200,.24);
   }
 
+  /* 돌아간다 버튼 */
+  .bo-return-btn {
+    width: calc(100% - 40px);
+    margin: 14px 20px 0;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font-weight: 900;
+    font-size: 14px;
+    background: linear-gradient(135deg, #f1a7c8, #c9c3e8);
+    color: #4f4250;
+    box-shadow: 0 10px 22px rgba(188,160,194,.22);
+    display: none;
+  }
+  .bo-return-btn.show { display: block; }
+
+  /* 팬 반응 카드 — 기존 스타일 유지용 */
   .kv-fan-backdrop {
     position: fixed; inset: 0; z-index: 9994;
     display: flex; align-items: flex-end; justify-content: center;
@@ -8521,7 +8581,6 @@ bootGame();
   .kv-fan-chip.pos { background: rgba(168,216,199,.28); color: #3a7a66; border: 1px solid rgba(168,216,199,.40); }
   .kv-fan-chip.neg { background: rgba(255,160,160,.20); color: #943030; border: 1px solid rgba(255,160,160,.30); }
   .kv-fan-ok { width: 100%; padding: 14px 16px; border-radius: 16px; font-weight: 900; background: linear-gradient(135deg, #f1a7c8, #c9c3e8); color: #4f4250; }
-
   .kv-trip-toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(24px);
     z-index: 9999; padding: 12px 18px; border-radius: 18px;
@@ -8535,39 +8594,7 @@ bootGame();
   `;
   document.head.appendChild(style);
 
-  const TRIP_CFG = {
-    sokcho: {
-      bg: 'img/sea.png',
-      choiceLabel: '속초에 다녀온다',
-      comment: '바다 바람 쐬고 오니까 좀 괜찮아졌어.',
-      statDelta: { mystery: 2, scary: 1 },
-      energyUp: 20,
-      pills: ['Mystery +2', 'Scary +1', 'Stress → 0', '에너지 +20']
-    },
-    hotel: {
-      bg: 'img/hotel.png',
-      choiceLabel: '호캉스를 다녀온다',
-      comment: '푹 쉬고 왔어. 다시 달려볼 수 있을 것 같아!',
-      statDelta: { cute: 2, social: 1 },
-      energyUp: 24,
-      pills: ['Cute +2', 'Social +1', 'Stress → 0', '에너지 +24']
-    }
-  };
-
-  let _tripRaf = null;
-  let _tripSceneRestore = null;
-
-  function ensureBurnoutShape() {
-    if (!window.state) return null;
-    if (!state.burnout || typeof state.burnout !== 'object') {
-      state.burnout = {};
-    }
-    if (typeof state.burnout.pending !== 'boolean') state.burnout.pending = false;
-    if (typeof state.burnout.queued !== 'boolean') state.burnout.queued = false;
-    if (typeof state.burnout.running !== 'boolean') state.burnout.running = false;
-    return state.burnout;
-  }
-
+  /* ── DOM 생성 ─────────────────────────────────────────── */
   function buildBurnoutOverlay() {
     if ($('burnoutOverlay')) return;
     const div = document.createElement('div');
@@ -8576,224 +8603,189 @@ bootGame();
       <div class="bo-card">
         <div class="bo-talk-row">
           <img class="bo-char" id="boChar" src="img/KEY_default_s.png" alt="KEY"/>
-          <div class="bo-bubble" id="boBubble">번아웃이 온 것 같아. 하루 정도 푹 쉬고 올까?</div>
+          <div class="bo-bubble" id="boBubble">지쳐버린 것 같아. 어딘가 쉬고 싶어...</div>
         </div>
-        <div class="bo-sub">선택하면 바로 쉬러 다녀오고, 시간이 훅 지나간 뒤 다시 방으로 돌아와.</div>
+        <img class="bo-scene" id="boScene" src="" alt="여행 사진"/>
+        <div class="bo-progress-wrap" id="boProgressWrap">
+          <div class="bo-progress-label" id="boProgressLabel">이동 중...</div>
+          <div class="bo-progress-track"><div class="bo-progress-fill" id="boProgressFill"></div></div>
+        </div>
         <div class="bo-actions" id="boActions">
           <button type="button" class="bo-btn trip" id="boSokcho">🌊 속초에 다녀온다</button>
           <button type="button" class="bo-btn hotel" id="boHotel">🏨 호캉스를 다녀온다</button>
         </div>
+        <button type="button" class="bo-return-btn" id="boReturnBtn">돌아간다</button>
       </div>`;
     document.body.appendChild(div);
-    $('boSokcho').addEventListener('click', () => chooseBurnoutTrip('sokcho'));
-    $('boHotel').addEventListener('click', () => chooseBurnoutTrip('hotel'));
-    div.addEventListener('click', (e) => {
-      if (e.target === div) {
-        const meta = ensureBurnoutShape();
-        if (meta) meta.queued = true;
-        closeBurnoutPrompt(true);
-      }
-    });
+    $('boSokcho').addEventListener('click', () => startTrip('sokcho'));
+    $('boHotel').addEventListener('click',  () => startTrip('hotel'));
+    $('boReturnBtn').addEventListener('click', finishBurnout);
   }
 
-  function getBurnoutCharSrc() {
-    const awakened = window.state?.awakened;
-    if (awakened && typeof awakened === 'object' && awakened.roomImg) return awakened.roomImg;
-    return 'img/KEY_default_s.png';
-  }
-
-  function isAnyBlockingOverlayOpen() {
-    const burnoutOpen = $('burnoutOverlay')?.classList.contains('show');
-    const miniOpen = !!document.getElementById('miniGameLayer')?.classList.contains('active');
-    const fanOpen = !!document.getElementById('kvFanBackdrop')?.classList.contains('show');
-    const awakenOpen = !!document.querySelector('.awaken-overlay.show');
-    return burnoutOpen || miniOpen || fanOpen || awakenOpen;
-  }
-
-  function canStartBurnoutNow() {
-    if (!window.state?.stats) return false;
-    if (window.miniGame?.active) return false;
-    if (state.isActing) return false;
-    if (document.querySelector('.event-card.show')) return false;
-    return !isAnyBlockingOverlayOpen();
-  }
-
-  function queueBurnoutCheck() {
-    if (!window.state?.stats) return;
-    const meta = ensureBurnoutShape();
-    if (!meta || meta.pending || meta.running) return;
-    if ((state.stats.stress || 0) >= BURNOUT_THRESHOLD) {
-      meta.queued = true;
-    }
-  }
-
-  function closeBurnoutPrompt(keepQueued = false) {
-    const ov = $('burnoutOverlay');
-    if (ov) ov.classList.remove('show');
-    const meta = ensureBurnoutShape();
-    if (meta) {
-      meta.pending = false;
-      meta.queued = !!keepQueued;
-    }
-    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
-  }
-
-  function openBurnoutV8(force = false) {
+  /* ── 번아웃 열기 ──────────────────────────────────────── */
+  function openBurnoutV7() {
     buildBurnoutOverlay();
-    const meta = ensureBurnoutShape();
-    if (!meta) return false;
-    if (meta.running) return false;
-    if ((state.stats?.stress || 0) < BURNOUT_THRESHOLD && !force) return false;
-    if (!force && !canStartBurnoutNow()) {
-      meta.queued = true;
-      return false;
-    }
-    if (meta.pending) return true;
+    if (!window.state) return;
+    if (!state.burnout || typeof state.burnout !== 'object') state.burnout = {};
+    if (state.burnout.pending) return;
+    state.burnout.pending = true;
 
-    meta.pending = true;
-    meta.queued = false;
-    $('boChar').src = getBurnoutCharSrc();
-    $('boBubble').textContent = '번아웃이 온 것 같아. 하루 정도 푹 쉬고 올까?';
+    // 초기 상태 리셋
+    $('boBubble').textContent = '지쳐버린 것 같아. 어딘가 쉬고 싶어...';
+    $('boScene').className = 'bo-scene';
+    $('boScene').src = '';
+    $('boProgressWrap').className = 'bo-progress-wrap';
+    $('boProgressFill').style.width = '0%';
+    $('boActions').style.display = '';
+    $('boReturnBtn').className = 'bo-return-btn';
+    [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = false));
+    $('boChar').src = window.state?.awakened?.roomImg || 'img/KEY_default_s.png';
+
     $('burnoutOverlay').classList.add('show');
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
-    return true;
   }
-  window.openBurnout = openBurnoutV8;
-  window.openBurnoutVacation = openBurnoutV8;
+  window.openBurnout = openBurnoutV7;
+  window.openBurnoutVacation = openBurnoutV7;
 
-  function applyTripScene(kind) {
-    const cfg = TRIP_CFG[kind];
-    if (!cfg) return null;
-
-    const seedEl = $('seedStage');
-    const roomMapEl = $('roomMap');
-    const restore = {
-      seedStyle: seedEl ? seedEl.getAttribute('style') : null,
-      roomStyle: roomMapEl ? roomMapEl.getAttribute('style') : null
-    };
-
-    if (seedEl) {
-      seedEl.style.background = `linear-gradient(rgba(255,248,236,.10), rgba(190,185,180,.20)), url("${cfg.bg}") center center / 108% 108% no-repeat`;
+  /* ── 여행 시작 ────────────────────────────────────────── */
+  const TRIP_CFG = {
+    sokcho: {
+      img: 'img/sea.png',
+      label: '속초로 이동 중...',
+      statDelta: { mystery: 2, scary: 1 },
+      energyUp: 20,
+      pills: ['Mystery +2', 'Scary +1', 'Stress → 0', '에너지 +20']
+    },
+    hotel: {
+      img: 'img/hotel.png',
+      label: '호텔로 이동 중...',
+      statDelta: { cute: 2, social: 1 },
+      energyUp: 24,
+      pills: ['Cute +2', 'Social +1', 'Stress → 0', '에너지 +24']
     }
-    if (roomMapEl) {
-      roomMapEl.style.background = `linear-gradient(rgba(255,248,236,.10), rgba(190,185,180,.20)), url("${cfg.bg}") center center / 108% 108% no-repeat`;
-    }
-    return restore;
-  }
+  };
+  let _currentTripCfg = null;
+  let _tripRaf = null;
 
-  function restoreTripScene() {
-    const seedEl = $('seedStage');
-    const roomMapEl = $('roomMap');
-    if (_tripSceneRestore) {
-      if (seedEl) {
-        if (_tripSceneRestore.seedStyle == null) seedEl.removeAttribute('style');
-        else seedEl.setAttribute('style', _tripSceneRestore.seedStyle);
-      }
-      if (roomMapEl) {
-        if (_tripSceneRestore.roomStyle == null) roomMapEl.removeAttribute('style');
-        else roomMapEl.setAttribute('style', _tripSceneRestore.roomStyle);
-      }
-    }
-    _tripSceneRestore = null;
-    safe(() => updateSeedStageBackground && updateSeedStageBackground(state.currentStageBg));
-  }
-
-  function applyBurnoutTripResult(kind) {
-    const cfg = TRIP_CFG[kind];
-    if (!cfg || !window.state?.stats) return;
-
-    Object.entries(cfg.statDelta || {}).forEach(([k, v]) => {
-      if (typeof state.stats[k] !== 'number') state.stats[k] = 0;
-      state.stats[k] = clamp(state.stats[k] + v, 0, 100);
-    });
-    state.stats.stress = 0;
-    if (typeof state.energy !== 'number') state.energy = 0;
-    state.energy = clamp(state.energy + (cfg.energyUp || 0), 0, state.maxEnergy || 100);
-
-    const msg = cfg.comment || '푹 쉬고 왔어.';
-    if (safe(() => getCurrentScreenName && getCurrentScreenName()) === 'room') {
-      safe(() => showRoomOwnerBubble && showRoomOwnerBubble(msg));
-      setTimeout(() => safe(() => hideRoomOwnerBubble && hideRoomOwnerBubble()), 3200);
-    } else {
-      safe(() => setSeedMessage && setSeedMessage(msg, { autoClearMs: 4200, idleAfterMs: 180000 }));
-    }
-
-    if (cfg.pills) showTripToast(cfg.pills);
-    safe(() => updateScheduleUI && updateScheduleUI());
-    safe(() => syncExtraStatBars());
-    safe(() => triggerSaveNow && triggerSaveNow());
-  }
-
-  function completeBurnoutTrip(kind) {
-    cancelAnimationFrame(_tripRaf);
-    _tripRaf = null;
-    restoreTripScene();
-    applyBurnoutTripResult(kind);
-
-    const meta = ensureBurnoutShape();
-    if (meta) {
-      meta.pending = false;
-      meta.queued = false;
-      meta.running = false;
-    }
-    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
-  }
-
-  function runBurnoutTrip(kind) {
+  function startTrip(kind) {
     const cfg = TRIP_CFG[kind];
     if (!cfg) return;
+    _currentTripCfg = cfg;
 
-    const meta = ensureBurnoutShape();
-    if (!meta) return;
+    [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = true));
+    $('boActions').style.display = 'none';
 
-    meta.running = true;
-    meta.pending = false;
-    meta.queued = false;
+    // 이미지 전환
+    const sceneEl = $('boScene');
+    sceneEl.src = cfg.img;
+    sceneEl.onload = () => { sceneEl.className = 'bo-scene show'; };
+    sceneEl.onerror = () => { sceneEl.className = 'bo-scene show'; };
 
-    _tripSceneRestore = applyTripScene(kind);
-    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
+    // 진행바 표시
+    $('boProgressLabel').textContent = cfg.label;
+    $('boProgressWrap').className = 'bo-progress-wrap show';
+    $('boProgressFill').style.width = '0%';
 
-    const totalMinutes = typeof window.advanceGameTimeStep === 'function' ? TRIP_TIME_MINUTES : 0;
     const startTs = performance.now();
-    let appliedMinutes = 0;
-
     function tick(now) {
-      const progress = Math.min(1, (now - startTs) / TRIP_DURATION_MS);
-      const shouldApply = Math.floor(totalMinutes * progress);
-      const delta = shouldApply - appliedMinutes;
-      if (delta > 0 && typeof window.advanceGameTimeStep === 'function') {
-        for (let i = 0; i < delta; i++) {
-          window.advanceGameTimeStep(1);
-        }
-        appliedMinutes += delta;
-        safe(() => updateScheduleUI && updateScheduleUI());
-      }
-
-      if (progress < 1) {
+      const pct = Math.min(100, ((now - startTs) / TRIP_DURATION_MS) * 100);
+      $('boProgressFill').style.width = pct + '%';
+      if (pct < 100) {
         _tripRaf = requestAnimationFrame(tick);
       } else {
-        completeBurnoutTrip(kind);
+        arriveAtDestination();
       }
     }
-
     _tripRaf = requestAnimationFrame(tick);
   }
 
-  function chooseBurnoutTrip(kind) {
-    const cfg = TRIP_CFG[kind];
-    if (!cfg) return;
-    const ov = $('burnoutOverlay');
-    if (ov) ov.classList.remove('show');
-    runBurnoutTrip(kind);
+  /* ── 목적지 도착 ──────────────────────────────────────── */
+  function arriveAtDestination() {
+    // 진행바 숨기기
+    $('boProgressWrap').className = 'bo-progress-wrap';
+
+    // 말풍선 변경
+    $('boBubble').textContent = '푹 쉰 것 같아. 돌아갈까?';
+
+    // 돌아간다 버튼 표시
+    $('boReturnBtn').className = 'bo-return-btn show';
   }
 
+  /* ── 귀환 처리 ────────────────────────────────────────── */
+  function finishBurnout() {
+    cancelAnimationFrame(_tripRaf);
+    const cfg = _currentTripCfg;
+    _currentTripCfg = null;
+
+    // 오버레이 닫기
+    const ov = $('burnoutOverlay');
+    if (ov) ov.classList.remove('show');
+
+    // 스탯 적용
+    if (window.state?.stats && cfg) {
+      Object.entries(cfg.statDelta).forEach(([k, v]) => {
+        if (typeof state.stats[k] === 'number') {
+          state.stats[k] = clamp(state.stats[k] + v, 0, 100);
+        }
+      });
+      state.stats.stress = 0;
+      if (typeof state.energy === 'number') {
+        state.energy = clamp(state.energy + (cfg.energyUp || 0), 0, state.maxEnergy || 100);
+      }
+    }
+
+    if (window.state?.burnout) state.burnout.pending = false;
+
+    safe(() => updateScheduleUI && updateScheduleUI());
+    safe(() => syncExtraStatBars());
+    safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
+
+    // 말풍선
+    if (cfg) {
+      const msg = '충전하고 왔어. 다시 달려볼게!';
+      if (safe(() => getCurrentScreenName()) === 'room') {
+        safe(() => showRoomOwnerBubble(msg));
+        setTimeout(() => safe(() => hideRoomOwnerBubble()), 3000);
+      } else {
+        safe(() => setSeedMessage(msg, { autoClearMs: 4000, idleAfterMs: 180000 }));
+      }
+      // 토스트
+      if (cfg.pills) showTripToast(cfg.pills);
+    }
+
+    safe(() => triggerSaveNow && triggerSaveNow());
+  }
+
+  /* ── 번아웃 체크 ──────────────────────────────────────── */
   function checkBurnout() {
-    if (!window.state?.stats) return false;
-    queueBurnoutCheck();
-    const meta = ensureBurnoutShape();
-    if (!meta || meta.pending || meta.running) return false;
-    if (!meta.queued) return false;
-    return openBurnoutV8(false);
+    if (!window.state?.stats) return;
+    if (!state.burnout || typeof state.burnout !== 'object') state.burnout = {};
+
+    const ov = $('burnoutOverlay');
+    const overlayOpen = !!(ov && ov.classList.contains('show'));
+
+    if (state.burnout.pending && !overlayOpen) {
+      state.burnout.pending = false;
+    }
+    if (!state.burnout.pending && overlayOpen) {
+      state.burnout.pending = true;
+    }
+
+    const stress = Number(state.stats.stress || 0);
+    if (stress < BURNOUT_THRESHOLD) {
+      state.burnout.queued = false;
+      return;
+    }
+
+    if (overlayOpen || state.burnout.pending) return;
+
+    if (window.miniGame?.active || window.isPerformingAction) {
+      state.burnout.queued = true;
+      return;
+    }
+
+    state.burnout.queued = false;
+    window.openBurnout();
   }
   window.checkBurnout = checkBurnout;
   window.maybeTriggerBurnoutVacation = checkBurnout;
@@ -8809,6 +8801,7 @@ bootGame();
       if (fill) fill.style.width = clamp(val / maxVal * 100, 0, 100) + '%';
       if (valEl) valEl.textContent = val;
     });
+    setTimeout(() => safe(() => checkBurnout()), 0);
   }
 
   /* ── 토스트 ───────────────────────────────────────────── */
@@ -8840,6 +8833,7 @@ bootGame();
     window.updateScheduleUI = function () {
       const r = orig.apply(this, arguments);
       safe(() => syncExtraStatBars());
+      setTimeout(() => safe(() => checkBurnout()), 0);
       return r;
     };
     window.updateScheduleUI._kv7 = true;
@@ -9000,8 +8994,15 @@ bootGame();
       if (done || tries > 100) {
         clearInterval(tick);
         safe(() => updateScheduleUI && updateScheduleUI());
+        setTimeout(() => safe(() => checkBurnout()), 0);
       }
     }, 100);
+
+    if (!window.__kv7BurnoutHeartbeat) {
+      window.__kv7BurnoutHeartbeat = setInterval(() => {
+        safe(() => checkBurnout());
+      }, 500);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
