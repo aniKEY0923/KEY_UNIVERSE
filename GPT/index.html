@@ -3954,16 +3954,28 @@ body.ending-modal-open{
             </div>
 
             <div class="room-bottom-pane" id="roomPaneDecor">
-              <div class="room-decor-grid" id="roomDecorGrid">
-                <button class="decor-btn" type="button" data-decor="lpPlayer"><div class="emoji">🎵</div><strong>LP플레이어</strong></button>
-                <button class="decor-btn" type="button" data-decor="desk"><div class="emoji">🪑</div><strong>업무용 책상</strong></button>
-                <button class="decor-btn" type="button" data-decor="birdCage"><div class="emoji">🕊️</div><strong>작은 새장</strong></button>
-                <button class="decor-btn" type="button" data-decor="mirrorBall"><div class="emoji">🪩</div><strong>미러볼</strong></button>
-                <button class="decor-btn" type="button" data-decor="vinylRack"><div class="emoji">💿</div><strong>바이닐 랙</strong></button>
-                <button class="decor-btn" type="button" data-decor="plushSofa"><div class="emoji">🛋️</div><strong>폭신 소파</strong></button>
-                <button class="decor-btn" type="button" data-decor="neonSign"><div class="emoji">💡</div><strong>네온사인</strong></button>
-                <button class="decor-btn" type="button" data-decor="bookshelf"><div class="emoji">📚</div><strong>심야 책장</strong></button>
-              </div>
+<div class="room-decor-grid" id="roomDecorGrid">
+  <button class="decor-btn" type="button" data-decor="lpPlayer"><div class="emoji">🎵</div><strong>LP플레이어</strong></button>
+  <button class="decor-btn" type="button" data-decor="desk"><div class="emoji">🪑</div><strong>업무용 책상</strong></button>
+  <button class="decor-btn" type="button" data-decor="birdCage"><div class="emoji">🕊️</div><strong>작은 새장</strong></button>
+  <button class="decor-btn" type="button" data-decor="mirrorBall"><div class="emoji">🪩</div><strong>미러볼</strong></button>
+  <button class="decor-btn" type="button" data-decor="vinylRack"><div class="emoji">💿</div><strong>바이닐 랙</strong></button>
+  <button class="decor-btn" type="button" data-decor="plushSofa"><div class="emoji">🛋️</div><strong>폭신 소파</strong></button>
+  <button class="decor-btn" type="button" data-decor="neonSign"><div class="emoji">💡</div><strong>네온사인</strong></button>
+  <button class="decor-btn" type="button" data-decor="bookshelf"><div class="emoji">📚</div><strong>심야 책장</strong></button>
+  <button class="decor-btn" type="button" data-decor="crystalBall"><div class="emoji">🔮</div><strong>수정구슬</strong></button>
+  <button class="decor-btn" type="button" data-decor="punchingBag"><div class="emoji">🥊</div><strong>샌드백</strong></button>
+  <button class="decor-btn" type="button" data-decor="cactus"><div class="emoji">🌵</div><strong>선인장 화분</strong></button>
+  <button class="decor-btn" type="button" data-decor="redCarpet"><div class="emoji">🟥</div><strong>레드 러그</strong></button>
+  <button class="decor-btn" type="button" data-decor="coffeeBar"><div class="emoji">☕</div><strong>커피바 세트</strong></button>
+  <button class="decor-btn" type="button" data-decor="darkMirror"><div class="emoji">🖤</div><strong>블랙 거울</strong></button>
+  <button class="decor-btn" type="button" data-decor="fluffyRug"><div class="emoji">🧸</div><strong>폭신 러그</strong></button>
+  <button class="decor-btn" type="button" data-decor="yarnBasket"><div class="emoji">🧶</div><strong>털실 바구니</strong></button>
+  <button class="decor-btn" type="button" data-decor="accountBook"><div class="emoji">📒</div><strong>가계부 세트</strong></button>
+  <button class="decor-btn" type="button" data-decor="backtrack"><div class="emoji">⬛</div><strong>블랙 트랙패드</strong></button>
+  <button class="decor-btn" type="button" data-decor="flowerVase"><div class="emoji">💐</div><strong>꽃병</strong></button>
+  <button class="decor-btn" type="button" data-decor="oldCamera"><div class="emoji">📷</div><strong>필름 카메라</strong></button>
+</div>
             </div>
             </div>
           </div>
@@ -4195,7 +4207,20 @@ const state = {
     vinylRack: false,
     plushSofa: false,
     neonSign: false,
-    bookshelf: false
+    bookshelf: false,
+    // 기존 8개에 아래 12개 추가
+crystalBall: false,
+punchingBag: false,
+cactus: false,
+redCarpet: false,
+coffeeBar: false,
+darkMirror: false,
+fluffyRug: false,
+yarnBasket: false,
+accountBook: false,
+backtrack: false,
+flowerVase: false,
+oldCamera: false,
   },
   activeRoomVisitor: null,
   roomSeenFriendEvents: [],
@@ -4220,41 +4245,54 @@ const imageSet = {
 };
 
 const roomDecorConfig = {
-  lpPlayer: { label:'LP플레이어', friendName:'배드러브 키', desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1 } },
-  desk: { label:'업무용 책상', friendName:'굿앤그 인턴 키', desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ social:1 } },
-  birdCage: { label:'작은 새장', friendName:'천사 키', desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ cute:1 } },
-  mirrorBall: { label:'미러볼', friendName:'무대감독 KEY', desc:'반짝이는 조명에 무대감독 KEY가 리허설을 보러 와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ practice:1 } },
-  vinylRack: { label:'바이닐 랙', friendName:'새벽산책 KEY', desc:'바이닐을 고르다 보면 새벽산책 KEY가 생각나듯 찾아와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1, humor:1 } },
-  plushSofa: { label:'폭신 소파', friendName:'솜구름 KEY', desc:'푹신한 소파에 기대어 솜구름 KEY가 놀러 와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ cute:1, social:1 } },
-  neonSign: { label:'네온사인', friendName:'장난꾸러기 KEY', desc:'네온사인이 켜지면 장난꾸러기 KEY가 금방 들떠서 찾아와요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ humor:1 } },
-  bookshelf: { label:'심야 책장', friendName:'심야서점 KEY', desc:'조용한 책장 앞에서 심야서점 KEY와 어울릴 수 있어요.', cost:0, requirementText:'', isUnlocked:() => true, stats:{ mystery:1, scary:1 } }
+  lpPlayer:   { label:'LP플레이어',    friendName:'배드러브 키',   desc:'LP플레이어를 따라 배드러브 키가 찾아왔어요.',        cost:0, isUnlocked:()=>true, stats:{ mystery:1 } },
+  desk:       { label:'업무용 책상',   friendName:'굿앤그 인턴 키',desc:'업무용 책상을 보고 굿앤그 인턴 키가 찾아왔어요.',    cost:0, isUnlocked:()=>true, stats:{ social:1 } },
+  birdCage:   { label:'작은 새장',     friendName:'천사 키',       desc:'작은 새장을 보고 천사 키가 날아오듯 찾아왔어요.',    cost:0, isUnlocked:()=>true, stats:{ cute:1 } },
+  mirrorBall: { label:'미러볼',        friendName:'가솔린 키',     desc:'반짝이는 미러볼에 가솔린 키가 리허설을 보러 와요.',   cost:0, isUnlocked:()=>true, stats:{ practice:1 } },
+  vinylRack:  { label:'바이닐 랙',     friendName:'언릴키',        desc:'바이닐 랙을 고르다 보면 언릴키가 생각나듯 찾아와요.',cost:0, isUnlocked:()=>true, stats:{ mystery:1, humor:1 } },
+  plushSofa:  { label:'폭신 소파',     friendName:'말랑콩떡 키',   desc:'푹신한 소파에 기대어 말랑콩떡 키가 놀러 와요.',      cost:0, isUnlocked:()=>true, stats:{ cute:1, social:1 } },
+  neonSign:   { label:'네온사인',      friendName:'프릭키',        desc:'네온사인이 켜지면 프릭키가 금방 들떠서 찾아와요.',   cost:0, isUnlocked:()=>true, stats:{ humor:1 } },
+  bookshelf:  { label:'심야 책장',     friendName:'오컬트키',      desc:'조용한 책장 앞에서 오컬트키와 어울릴 수 있어요.',    cost:0, isUnlocked:()=>true, stats:{ mystery:1, scary:1 } },
+  // 추가 가구
+  crystalBall:{ label:'수정구슬',      friendName:'왹져공주 키',   desc:'수정구슬이 반짝이면 왹져공주 키가 이끌려 와요.',     cost:0, isUnlocked:()=>true, stats:{ mystery:2 } },
+  punchingBag:{ label:'샌드백',        friendName:'헌터 키',       desc:'샌드백 앞에서 헌터 키가 훈련 삼아 들를 수 있어요.', cost:0, isUnlocked:()=>true, stats:{ scary:1, practice:1 } },
+  cactus:     { label:'선인장 화분',   friendName:'킬러 키',       desc:'조용히 자라는 선인장을 보고 킬러 키가 찾아와요.',   cost:0, isUnlocked:()=>true, stats:{ scary:1, mystery:1 } },
+  redCarpet:  { label:'레드 러그',     friendName:'빌런 키',       desc:'화려한 레드 러그를 보고 빌런 키가 등장해요.',        cost:0, isUnlocked:()=>true, stats:{ social:1, scary:1 } },
+  coffeeBar:  { label:'커피바 세트',   friendName:'범동이 키',     desc:'커피 향에 이끌려 범동이 키가 찾아와요.',             cost:0, isUnlocked:()=>true, stats:{ social:2 } },
+  darkMirror: { label:'블랙 거울',     friendName:'헌터 검정키',   desc:'어두운 거울 앞에서 헌터 검정키가 나타나요.',         cost:0, isUnlocked:()=>true, stats:{ mystery:1, scary:1 } },
+  fluffyRug:  { label:'폭신 러그',     friendName:'복실이',        desc:'폭신폭신한 러그를 보고 복실이가 찾아와요.',          cost:0, isUnlocked:()=>true, stats:{ cute:2 } },
+  yarnBasket: { label:'털실 바구니',   friendName:'북실이',        desc:'북실북실한 털실 바구니에 이끌려 북실이가 와요.',     cost:0, isUnlocked:()=>true, stats:{ cute:1, humor:1 } },
+  accountBook:{ label:'가계부 세트',   friendName:'꼼가',          desc:'가계부 세트를 보고 꼼꼼한 꼼가가 찾아와요.',         cost:0, isUnlocked:()=>true, stats:{ social:1, practice:1 } },
+  backtrack:  { label:'블랙 트랙패드', friendName:'백작 키',       desc:'세련된 트랙패드를 보고 백작 키가 품위 있게 찾아와요.',cost:0, isUnlocked:()=>true, stats:{ mystery:1, social:1 } },
+  flowerVase: { label:'꽃병',          friendName:'꼼가 아빠 키',  desc:'꽃병을 꽂으면 꼼가 아빠 키가 다정하게 찾아와요.',   cost:0, isUnlocked:()=>true, stats:{ cute:1, social:1 } },
+  oldCamera:  { label:'필름 카메라',   friendName:'잇범 키',       desc:'필름 카메라를 보고 잇범 키가 웃으며 찾아와요.',      cost:0, isUnlocked:()=>true, stats:{ humor:1, cute:1 } }
 };
 
 const FRIEND_PROFILES = {
-  '배드러브 키': { intro:'...혼자 있는 줄 알았는데.', enjoy:'오늘은 이 공기가 꽤 좋네.', leave:'오늘은 이만 갈게.', likes:'LP플레이어', trait:'몽환 / 감성' },
-  '굿앤그 인턴 키': { intro:'안녕하세요. 잠깐 보고드릴 게 있어서 왔어요.', enjoy:'같이 있으니 의외로 마음이 편해지네요.', leave:'다음에도 일정 맞으면 또 올게요.', likes:'업무용 책상', trait:'성실 / 현실' },
-  '천사 키': { intro:'안녕~ 반짝이는 기운이 보여서 와봤어!', enjoy:'같이 있으니까 정말 따뜻하다.', leave:'다음에 또 놀러 올게!', likes:'작은 새장', trait:'상냥 / 밝음' },
-  '무대감독 KEY': { intro:'리허설 체크하러 왔어.', enjoy:'준비된 시간이 헛되지 않았네.', leave:'다음 무대도 기대할게.', trait:'든든 / 실전형' },
-  '드럼소년 KEY': { intro:'합주 감각이 좋아 보여서 와봤어.', enjoy:'이 리듬, 꽤 잘 맞는다.', leave:'다음엔 더 크게 놀아보자.', trait:'박자 / 열정' },
-  '새벽산책 KEY': { intro:'이 시간 공기가 좋아서 들렀어.', enjoy:'조용해서 더 좋네.', leave:'다음 새벽에도 마주치자.', trait:'야행성 / 감성' },
-  '장난꾸러기 KEY': { intro:'재밌는 냄새가 나서 왔지!', enjoy:'역시 너랑 있으면 안 심심해.', leave:'다음엔 더 재밌게 놀자!', trait:'유쾌 / 장난' },
-  '필름노트 KEY': { intro:'장면 하나가 떠올라서 찾아왔어.', enjoy:'이 분위기, 기억해둘래.', leave:'다음엔 다른 컷으로 보자.', trait:'기록 / 몽환' },
-  '심야서점 KEY': { intro:'밤에만 펼쳐지는 이야기가 있잖아.', enjoy:'오늘 페이지는 꽤 좋았어.', leave:'다음 장도 기대할게.', trait:'서늘 / 고요' },
-  '리본요정 KEY': { intro:'반짝이는 리본 따라 왔어!', enjoy:'너랑 있으면 세상이 더 귀여워져.', leave:'다음에 또 예쁜 거 보러 오자!', trait:'러블리 / 기묘' },
-  '블랙트랙 KEY': { intro:'집중력이 좋은 것 같아서 와봤어.', enjoy:'정적이 잘 어울리는 시간이네.', leave:'다음엔 더 날카롭게 만나자.', trait:'집중 / 차가움' },
-  '기획팀 KEY': { intro:'회의 전에 잠깐 들렀어요.', enjoy:'같이 있으면 아이디어가 잘 떠오르네요.', leave:'자료 정리해서 다시 올게요.', trait:'현실 / 팀워크' },
-  '포근친구 KEY': { intro:'따뜻한 기운이 나서 왔어.', enjoy:'이런 시간, 좋아.', leave:'푹 쉬고 또 보자.', trait:'다정 / 포근' },
-  '그림자 KEY': { intro:'조용히 와봤어.', enjoy:'말이 없어도 괜찮네.', leave:'다음엔 더 깊은 밤에.', trait:'그늘 / 신비' },
-  '햇살 KEY': { intro:'햇빛 같은 기운이 보여서 왔어!', enjoy:'정말 기분 좋은 시간이야.', leave:'미소 잊지 말기!', trait:'밝음 / 다정' },
-  '스마일 KEY': { intro:'웃는 소리가 들려서 왔지!', enjoy:'오늘 꽤 즐거웠어.', leave:'다음에도 웃게 해줘!', trait:'미소 / 센스' },
-  '로즈홀 KEY': { intro:'장미 향 같은 기분이 나서 들렀어.', enjoy:'꽤 우아한 시간이었다.', leave:'다음엔 더 근사하게.', trait:'고풍 / 품위' },
-  '문틈친구 KEY': { intro:'문틈 너머에서 기척을 느꼈어.', enjoy:'이상하게 편안하네.', leave:'또 올 수도 있어.', trait:'기묘 / 매혹' },
-  '적막 KEY': { intro:'조용한 농담이 필요해서 왔어.', enjoy:'이런 서늘한 웃음도 나쁘지 않네.', leave:'오늘은 충분해.', trait:'서늘 / 유머' },
-  '레드카펫 KEY': { intro:'주인공의 기운이 보여서 왔어.', enjoy:'역시 시선이 쏠리는 시간이지.', leave:'다음에도 화려하게 불러줘.', trait:'카리스마 / 화려함' },
-  '수다친구 KEY': { intro:'얘기하고 싶어져서 바로 왔어!', enjoy:'시간 가는 줄 몰랐다.', leave:'다음엔 더 긴 얘기 하자!', trait:'친화 / 수다' },
-  '솜구름 KEY': { intro:'말랑한 분위기에 이끌려 왔어.', enjoy:'포근해서 좋다.', leave:'다음에도 포근하게 맞아줘.', trait:'폭신 / 귀여움' }
+  // 각성 엔딩 캐릭터들
+  '가솔린 키': { intro:'리허설 체크하러 왔어.', enjoy:'준비된 시간이 헛되지 않았네.', leave:'다음 무대도 기대할게.', trait:'든든 / 실전형' },
+  '배드러브 키': { intro:'...혼자 있는 줄 알았는데.', enjoy:'오늘은 이 공기가 꽤 좋네.', leave:'오늘은 이만 갈게.', trait:'몽환 / 감성' },
+  '프릭키': { intro:'재밌는 냄새가 나서 왔지!', enjoy:'역시 너랑 있으면 안 심심해.', leave:'다음엔 더 재밌게 놀자!', trait:'유쾌 / 장난' },
+  '언릴키': { intro:'장면 하나가 떠올라서 찾아왔어.', enjoy:'이 분위기, 기억해둘래.', leave:'다음엔 다른 컷으로 보자.', trait:'기록 / 몽환' },
+  '오컬트키': { intro:'밤에만 펼쳐지는 이야기가 있잖아.', enjoy:'오늘 페이지는 꽤 좋았어.', leave:'다음 장도 기대할게.', trait:'서늘 / 고요' },
+  '왹져공주 키': { intro:'반짝이는 리본 따라 왔어!', enjoy:'너랑 있으면 세상이 더 귀여워져.', leave:'다음에 또 예쁜 거 보러 오자!', trait:'러블리 / 기묘' },
+  '헌터 키': { intro:'집중력이 좋은 것 같아서 와봤어.', enjoy:'정적이 잘 어울리는 시간이네.', leave:'다음엔 더 날카롭게 만나자.', trait:'집중 / 차가움' },
+  '굿앤그 인턴 키': { intro:'안녕하세요. 잠깐 보고드릴 게 있어서 왔어요.', enjoy:'같이 있으니 의외로 마음이 편해지네요.', leave:'다음에도 일정 맞으면 또 올게요.', trait:'성실 / 현실' },
+  '꼼가 아빠 키': { intro:'따뜻한 기운이 나서 왔어.', enjoy:'이런 시간, 좋아.', leave:'푹 쉬고 또 보자.', trait:'다정 / 포근' },
+  '헌터 검정키': { intro:'조용히 와봤어.', enjoy:'말이 없어도 괜찮네.', leave:'다음엔 더 깊은 밤에.', trait:'그늘 / 신비' },
+  '천사 키': { intro:'안녕~ 반짝이는 기운이 보여서 와봤어!', enjoy:'같이 있으니까 정말 따뜻하다.', leave:'다음에 또 놀러 올게!', trait:'상냥 / 밝음' },
+  '잇범 키': { intro:'웃는 소리가 들려서 왔지!', enjoy:'오늘 꽤 즐거웠어.', leave:'다음에도 웃게 해줘!', trait:'미소 / 센스' },
+  '백작 키': { intro:'장미 향 같은 기분이 나서 들렀어.', enjoy:'꽤 우아한 시간이었다.', leave:'다음엔 더 근사하게.', trait:'고풍 / 품위' },
+  '크리쳐 키': { intro:'문틈 너머에서 기척을 느꼈어.', enjoy:'이상하게 편안하네.', leave:'또 올 수도 있어.', trait:'기묘 / 매혹' },
+  '킬러 키': { intro:'조용한 농담이 필요해서 왔어.', enjoy:'이런 서늘한 웃음도 나쁘지 않네.', leave:'오늘은 충분해.', trait:'서늘 / 유머' },
+  '빌런 키': { intro:'주인공의 기운이 보여서 왔어.', enjoy:'역시 시선이 쏠리는 시간이지.', leave:'다음에도 화려하게 불러줘.', trait:'카리스마 / 화려함' },
+  '범동이 키': { intro:'얘기하고 싶어져서 바로 왔어!', enjoy:'시간 가는 줄 몰랐다.', leave:'다음엔 더 긴 얘기 하자!', trait:'친화 / 수다' },
+  '말랑콩떡 키': { intro:'말랑한 분위기에 이끌려 왔어.', enjoy:'포근해서 좋다.', leave:'다음에도 포근하게 맞아줘.', trait:'폭신 / 귀여움' },
+  // 친구 전용 캐릭터 (각성 엔딩 없음)
+  '복실이': { intro:'복실복실한 기운이 느껴져서 왔어요~', enjoy:'같이 있으니까 포근해서 좋아요.', leave:'또 놀러올게요! 복실복실하게~', trait:'보들 / 포근' },
+  '북실이': { intro:'북실북실... 왔어요.', enjoy:'여기 있으면 괜히 마음이 북실해져.', leave:'다음에 또 올게요. 조용히.', trait:'북실 / 조용함' },
+  '꼼가': { intro:'꼼꼼하게 살펴보러 왔어요.', enjoy:'역시 여기가 제일 정돈된 것 같아.', leave:'다음에도 잘 부탁드려요.', trait:'꼼꼼 / 살뜰함' }
 };
-
 const MAIN_ENDINGS = [
   { name:'가솔린 키', group:'메인', summary:'연습과 무대 에너지가 폭발한 퍼포먼스 각성.' },
   { name:'배드러브 키', group:'메인', summary:'몽환적인 잔상이 깊게 남는 감성 각성.' },
@@ -4506,70 +4544,49 @@ function queueRoomVisitTimer(fn, delay){
 }
 
 const friendUnlockRules = {
-  '가솔린 키': [
-    { name:'무대감독 KEY', desc:'리허설을 챙겨주는 든든한 친구', when:({day}) => day >= 4 },
-    { name:'드럼소년 KEY', desc:'연습량이 충분할 때 합주하러 와요', when:({stats}) => (stats.practice || 0) >= 55 }
-  ],
-  '배드러브 키': [
-    { name:'새벽산책 KEY', desc:'늦은 밤 감성에 반응해 나타나요', when:({day, stats}) => day >= 4 && (stats.mystery || 0) >= 30 }
-  ],
-  '프릭키': [
-    { name:'장난꾸러기 KEY', desc:'유머가 높아지면 같이 놀러 옵니다', when:({stats}) => (stats.humor || 0) >= 35 }
-  ],
-  '언릴키': [
-    { name:'필름노트 KEY', desc:'연습과 신비가 쌓일수록 가까워져요', when:({stats}) => (stats.practice || 0) + (stats.mystery || 0) >= 70 }
-  ],
-  '오컬트키': [
-    { name:'심야서점 KEY', desc:'밤의 분위기를 좋아하는 친구', when:({day}) => day >= 5 }
-  ],
-  '왹져공주 키': [
-    { name:'리본요정 KEY', desc:'귀엽고 기묘한 취향이 맞는 친구', when:({stats}) => (stats.cute || 0) >= 35 }
-  ],
-  '헌터 키': [
-    { name:'블랙트랙 KEY', desc:'날카로운 집중력을 알아보는 친구', when:({stats}) => (stats.scary || 0) >= 35 }
-  ],
-  '굿앤그 인턴 키': [
-    { name:'기획팀 KEY', desc:'사교성과 연습이 쌓이면 찾아옵니다', when:({stats}) => (stats.social || 0) + (stats.practice || 0) >= 75 }
-  ],
-  '꼼가 아빠 키': [
-    { name:'포근친구 KEY', desc:'다정한 분위기에 끌려 와요', when:({day}) => day >= 4 }
-  ],
-  '헌터 검정키': [
-    { name:'그림자 KEY', desc:'깊은 밤의 공기를 공유하는 친구', when:({stats}) => (stats.mystery || 0) + (stats.scary || 0) >= 75 }
-  ],
-  '천사 키': [
-    { name:'햇살 KEY', desc:'상냥한 무드에 반응하는 친구', when:({stats}) => (stats.cute || 0) + (stats.social || 0) >= 70 }
-  ],
-  '잇범 키': [
-    { name:'스마일 KEY', desc:'귀여움과 유쾌함이 올라가면 등장', when:({stats}) => (stats.humor || 0) + (stats.cute || 0) >= 65 }
-  ],
-  '백작 키': [
-    { name:'로즈홀 KEY', desc:'고풍스러운 무드에 이끌려 옵니다', when:({day}) => day >= 5 }
-  ],
-  '크리쳐 키': [
-    { name:'문틈친구 KEY', desc:'기묘한 분위기가 짙어질 때 등장', when:({stats}) => (stats.mystery || 0) + (stats.scary || 0) >= 70 }
-  ],
-  '킬러 키': [
-    { name:'적막 KEY', desc:'서늘한 농담을 알아듣는 친구', when:({stats}) => (stats.scary || 0) + (stats.humor || 0) >= 70 }
-  ],
-  '빌런 키': [
-    { name:'레드카펫 KEY', desc:'카리스마가 충분할 때 합류해요', when:({day, stats}) => day >= 4 && (stats.scary || 0) >= 40 }
-  ],
-  '범동이 키': [
-    { name:'수다친구 KEY', desc:'사교성과 유머가 쌓이면 나타나요', when:({stats}) => (stats.social || 0) + (stats.humor || 0) >= 70 }
-  ],
-  '말랑콩떡 키': [
-    { name:'솜구름 KEY', desc:'말랑한 무드가 높아지면 찾아와요', when:({stats}) => (stats.cute || 0) + (stats.humor || 0) >= 70 }
-  ],
+  '가솔린 키':    [{ name:'가솔린 키',    desc:'미러볼 또는 DAY4 이상이면 찾아와요.', when:({day})=>day>=4 }],
+  '배드러브 키':  [{ name:'배드러브 키',  desc:'LP플레이어가 있거나 Mystery가 높으면 찾아와요.', when:({day,stats})=>day>=4&&(stats.mystery||0)>=30 }],
+  '프릭키':       [{ name:'프릭키',       desc:'Humor가 높아지면 같이 놀러 옵니다.', when:({stats})=>(stats.humor||0)>=35 }],
+  '언릴키':       [{ name:'언릴키',       desc:'Practice+Mystery가 쌓일수록 가까워져요.', when:({stats})=>(stats.practice||0)+(stats.mystery||0)>=70 }],
+  '오컬트키':     [{ name:'오컬트키',     desc:'밤의 분위기를 좋아하는 친구.', when:({day})=>day>=5 }],
+  '왹져공주 키':  [{ name:'왹져공주 키',  desc:'Cute가 높으면 이끌려 찾아와요.', when:({stats})=>(stats.cute||0)>=35 }],
+  '헌터 키':      [{ name:'헌터 키',      desc:'날카로운 집중력을 알아보는 친구.', when:({stats})=>(stats.scary||0)>=35 }],
+  '굿앤그 인턴 키':[{ name:'굿앤그 인턴 키',desc:'Social+Practice가 쌓이면 찾아옵니다.', when:({stats})=>(stats.social||0)+(stats.practice||0)>=75 }],
+  '꼼가 아빠 키': [{ name:'꼼가 아빠 키', desc:'다정한 분위기에 끌려 와요.', when:({day})=>day>=4 }],
+  '헌터 검정키':  [{ name:'헌터 검정키',  desc:'Mystery+Scary가 높으면 깊은 밤에 찾아와요.', when:({stats})=>(stats.mystery||0)+(stats.scary||0)>=75 }],
+  '천사 키':      [{ name:'천사 키',      desc:'Cute+Social 분위기에 반응하는 친구.', when:({stats})=>(stats.cute||0)+(stats.social||0)>=70 }],
+  '잇범 키':      [{ name:'잇범 키',      desc:'Humor+Cute가 올라가면 등장.', when:({stats})=>(stats.humor||0)+(stats.cute||0)>=65 }],
+  '백작 키':      [{ name:'백작 키',      desc:'고풍스러운 무드에 이끌려 옵니다.', when:({day})=>day>=5 }],
+  '크리쳐 키':    [{ name:'크리쳐 키',    desc:'기묘한 분위기가 짙어질 때 등장.', when:({stats})=>(stats.mystery||0)+(stats.scary||0)>=70 }],
+  '킬러 키':      [{ name:'킬러 키',      desc:'서늘한 농담을 알아듣는 친구.', when:({stats})=>(stats.scary||0)+(stats.humor||0)>=70 }],
+  '빌런 키':      [{ name:'빌런 키',      desc:'카리스마가 충분할 때 합류해요.', when:({day,stats})=>day>=4&&(stats.scary||0)>=40 }],
+  '범동이 키':    [{ name:'범동이 키',    desc:'Social+Humor가 쌓이면 나타나요.', when:({stats})=>(stats.social||0)+(stats.humor||0)>=70 }],
+  '말랑콩떡 키':  [{ name:'말랑콩떡 키',  desc:'Cute+Humor 무드가 높아지면 찾아와요.', when:({stats})=>(stats.cute||0)+(stats.humor||0)>=70 }],
   '_decorBonus': [
-    { name:'무대감독 KEY', desc:'미러볼을 두면 리허설을 보러 와요', when:() => !!state.roomDecor?.mirrorBall },
-    { name:'새벽산책 KEY', desc:'바이닐 랙에 이끌려 방문해요', when:() => !!state.roomDecor?.vinylRack },
-    { name:'솜구름 KEY', desc:'폭신 소파를 좋아해요', when:() => !!state.roomDecor?.plushSofa },
-    { name:'장난꾸러기 KEY', desc:'네온사인을 보면 그냥 못 지나쳐요', when:() => !!state.roomDecor?.neonSign },
-    { name:'심야서점 KEY', desc:'심야 책장을 보고 방문해요', when:() => !!state.roomDecor?.bookshelf }
+    { name:'가솔린 키',    desc:'미러볼을 두면 리허설을 보러 와요.',         when:()=>!!state.roomDecor?.mirrorBall },
+    { name:'배드러브 키',  desc:'LP플레이어에 이끌려 방문해요.',              when:()=>!!state.roomDecor?.lpPlayer },
+    { name:'프릭키',       desc:'네온사인을 보면 그냥 못 지나쳐요.',          when:()=>!!state.roomDecor?.neonSign },
+    { name:'언릴키',       desc:'바이닐 랙 앞에서 영감을 받아요.',            when:()=>!!state.roomDecor?.vinylRack },
+    { name:'오컬트키',     desc:'심야 책장을 보고 방문해요.',                 when:()=>!!state.roomDecor?.bookshelf },
+    { name:'왹져공주 키',  desc:'수정구슬이 반짝이면 이끌려 와요.',           when:()=>!!state.roomDecor?.crystalBall },
+    { name:'헌터 키',      desc:'샌드백 앞에서 훈련 삼아 들러요.',            when:()=>!!state.roomDecor?.punchingBag },
+    { name:'굿앤그 인턴 키',desc:'업무용 책상을 보고 찾아와요.',              when:()=>!!state.roomDecor?.desk },
+    { name:'꼼가 아빠 키', desc:'꽃병을 꽂으면 다정하게 찾아와요.',           when:()=>!!state.roomDecor?.flowerVase },
+    { name:'헌터 검정키',  desc:'블랙 거울 앞에서 나타나요.',                 when:()=>!!state.roomDecor?.darkMirror },
+    { name:'천사 키',      desc:'작은 새장을 보고 날아오듯 찾아와요.',        when:()=>!!state.roomDecor?.birdCage },
+    { name:'잇범 키',      desc:'필름 카메라를 보고 웃으며 찾아와요.',        when:()=>!!state.roomDecor?.oldCamera },
+    { name:'백작 키',      desc:'블랙 트랙패드를 보고 품위 있게 찾아와요.',  when:()=>!!state.roomDecor?.backtrack },
+    { name:'크리쳐 키',    desc:'수정구슬+책장의 기묘한 조합에 이끌려요.',   when:()=>!!state.roomDecor?.crystalBall&&!!state.roomDecor?.bookshelf },
+    { name:'킬러 키',      desc:'선인장 화분의 조용함이 마음에 들어요.',      when:()=>!!state.roomDecor?.cactus },
+    { name:'빌런 키',      desc:'레드 러그를 보고 등장해요.',                 when:()=>!!state.roomDecor?.redCarpet },
+    { name:'범동이 키',    desc:'커피 향에 이끌려 찾아와요.',                 when:()=>!!state.roomDecor?.coffeeBar },
+    { name:'말랑콩떡 키',  desc:'폭신 소파가 있으면 놀러 와요.',              when:()=>!!state.roomDecor?.plushSofa },
+    // 친구 전용 3인방
+    { name:'복실이',       desc:'폭신 러그를 보고 찾아와요.',                 when:()=>!!state.roomDecor?.fluffyRug },
+    { name:'북실이',       desc:'털실 바구니에 이끌려 와요.',                 when:()=>!!state.roomDecor?.yarnBasket },
+    { name:'꼼가',         desc:'가계부 세트를 보고 찾아와요.',               when:()=>!!state.roomDecor?.accountBook }
   ]
 };
-
 function getUnlockedFriends(identityName){
   const awakenedRules = friendUnlockRules[identityName] || [];
   const decorRules = friendUnlockRules['_decorBonus'] || [];
@@ -5981,7 +5998,20 @@ function hardResetToNewGame(){
   state.concertEventResolved = false;
   state.roomDecor = {
     lpPlayer:false, desk:false, birdCage:false,
-    mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false
+    mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
+      // 기존 8개에 아래 12개 추가
+crystalBall: false,
+punchingBag: false,
+cactus: false,
+redCarpet: false,
+coffeeBar: false,
+darkMirror: false,
+fluffyRug: false,
+yarnBasket: false,
+accountBook: false,
+backtrack: false,
+flowerVase: false,
+oldCamera: false,
   };
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
@@ -6028,16 +6058,28 @@ function showStageStatFloat(target, message){
 
 function renderStageDecor(){
   const items = [];
-  const mapping = {
-    lpPlayer:['🎵','LP'],
-    desk:['🪑','책상'],
-    birdCage:['🕊️','새장'],
-    mirrorBall:['🪩','미러볼'],
-    vinylRack:['💿','랙'],
-    plushSofa:['🛋️','소파'],
-    neonSign:['💡','네온'],
-    bookshelf:['📚','책장']
-  };
+const mapping = {
+  lpPlayer:   ['🎵','LP'],
+  desk:       ['🪑','책상'],
+  birdCage:   ['🕊️','새장'],
+  mirrorBall: ['🪩','미러볼'],
+  vinylRack:  ['💿','랙'],
+  plushSofa:  ['🛋️','소파'],
+  neonSign:   ['💡','네온'],
+  bookshelf:  ['📚','책장'],
+  crystalBall:['🔮','수정구슬'],
+  punchingBag:['🥊','샌드백'],
+  cactus:     ['🌵','선인장'],
+  redCarpet:  ['🟥','레드러그'],
+  coffeeBar:  ['☕','커피바'],
+  darkMirror: ['🖤','블랙거울'],
+  fluffyRug:  ['🧸','폭신러그'],
+  yarnBasket: ['🧶','털실'],
+  accountBook:['📒','가계부'],
+  backtrack:  ['⬛','트랙패드'],
+  flowerVase: ['💐','꽃병'],
+  oldCamera:  ['📷','필름카메라']
+};
   Object.keys(mapping).forEach((key, idx)=>{
     if (state.roomDecor && state.roomDecor[key]) {
       items.push({key, icon:mapping[key][0], label:mapping[key][1], idx});
@@ -7700,7 +7742,19 @@ function resetAll(){
   state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
-  state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false };
+  state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,// 기존 8개에 아래 12개 추가
+crystalBall: false,
+punchingBag: false,
+cactus: false,
+redCarpet: false,
+coffeeBar: false,
+darkMirror: false,
+fluffyRug: false,
+yarnBasket: false,
+accountBook: false,
+backtrack: false,
+flowerVase: false,
+oldCamera: false, };
   state.activeRoomVisitor = null;
   state.roomSeenFriendEvents = [];
   state.roomDecorIntroPending = false;
@@ -7811,7 +7865,13 @@ function migrateSave(save){
   if (typeof p.gameMinute !== 'number') p.gameMinute = 0;
   if (typeof p.concertEventOffered !== 'boolean') p.concertEventOffered = false;
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
-  if (!p.roomDecor) p.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false };
+if (!p.roomDecor) p.roomDecor = {
+  lpPlayer:false, desk:false, birdCage:false, mirrorBall:false,
+  vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
+  crystalBall:false, punchingBag:false, cactus:false, redCarpet:false,
+  coffeeBar:false, darkMirror:false, fluffyRug:false, yarnBasket:false,
+  accountBook:false, backtrack:false, flowerVase:false, oldCamera:false
+};
   if (typeof p.activeRoomVisitor === 'undefined') p.activeRoomVisitor = null;
   if (!Array.isArray(p.roomSeenFriendEvents)) p.roomSeenFriendEvents = [];
   if (!p.affection || typeof p.affection !== 'object') p.affection = {};
