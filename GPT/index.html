@@ -8576,10 +8576,7 @@ bootGame();
   function openBurnoutV7() {
     if (_burnoutOpen) return;
     buildBurnoutOverlay();
-
-    // DOM 요소 null 체크 — 없으면 플래그 세팅 없이 return (다음 폴링에서 재시도)
-    const overlay = $('burnoutOverlay');
-    if (!overlay || !$('boBubble') || !$('boScene')) return;
+    _burnoutOpen = true;
 
     $('boBubble').textContent = '지쳐버린 것 같아. 어딘가 쉬고 싶어...';
     $('boScene').src = '';
@@ -8588,11 +8585,9 @@ bootGame();
     $('boActions').style.display = '';
     $('boReturnBtn').className = 'bo-return-btn';
     [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = false));
-    $('boChar').src = window.state?.awakened?.roomImg || 'img/KEY_default_s.png';
+    $('boChar').src = state?.awakened?.roomImg || 'img/KEY_default_s.png';
 
-    // 모든 준비 완료 후 플래그 세팅 + 표시
-    _burnoutOpen = true;
-    overlay.classList.add('show');
+    $('burnoutOverlay').classList.add('show');
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
   }
   window.openBurnout = openBurnoutV7;
@@ -8666,7 +8661,7 @@ bootGame();
     const ov = $('burnoutOverlay');
     if (ov) ov.classList.remove('show');
 
-    if (window.state?.stats && cfg) {
+    if (state?.stats && cfg) {
       Object.entries(cfg.statDelta).forEach(([k, v]) => {
         if (typeof state.stats[k] === 'number') {
           state.stats[k] = clamp(state.stats[k] + v, 0, 100);
@@ -8696,7 +8691,7 @@ bootGame();
 
   /* ── 추가 스탯 바 동기화 ─────────────────────────────────── */
   function syncExtraStatBars() {
-    if (!window.state?.stats) return;
+    if (!state?.stats) return;
     ['popularity', 'stress'].forEach(key => {
       const val = state.stats[key] || 0;
       const fill = $('fill-' + key);
@@ -8729,8 +8724,8 @@ bootGame();
      finishAction 래핑 순서나 타이밍에 전혀 의존하지 않음.
   ─────────────────────────────────────────────────────────── */
   setInterval(() => {
-    if (!window.state?.stats) return;
-    if ((window.state.stats.stress || 0) < 50) return;
+    if (typeof state === 'undefined' || !state.stats) return;
+    if ((state.stats.stress || 0) < 50) return;
 
     buildBurnoutOverlay();
 
@@ -8816,7 +8811,7 @@ bootGame();
     const delta = data.delta;
     const pos = delta >= 0;
     $('kvFanDelta').innerHTML = `<span class="kv-fan-chip ${pos ? 'pos' : 'neg'}">인기 ${pos ? '+' : ''}${delta} ${pos ? '상승' : '하락'}했습니다.</span>`;
-    if (window.state?.stats != null) {
+    if (state?.stats != null) {
       if (typeof state.stats.popularity !== 'number') state.stats.popularity = 0;
       state.stats.popularity = clamp(state.stats.popularity + delta, 0, 100);
       syncExtraStatBars();
