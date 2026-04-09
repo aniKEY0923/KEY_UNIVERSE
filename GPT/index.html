@@ -7478,8 +7478,8 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
 window.finishAction._stressBuiltIn = true;
 
 function canAwaken(){
-  if (!window.state) return false;
-  return (window.state.day || 1) >= 5;
+  if (typeof state === 'undefined') return false;
+  return (state.day || 1) >= 5;
 }
 
 function getTopStatName(){
@@ -8799,7 +8799,7 @@ bootGame();
   function patchCanAwaken() {
     if (window.canAwaken?._kv7) return;
     window.canAwaken = function () {
-      return window.state ? (state.day || 1) >= 5 : false;
+      return (typeof state !== 'undefined') ? (state.day || 1) >= 5 : false;
     };
     window.canAwaken._kv7 = true;
   }
@@ -8880,9 +8880,9 @@ bootGame();
     });
     document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
     if (window.miniGame) { miniGame.active = false; miniGame.playing = false; }
-    if (window.state) { state.concertEventResolved = true; state.concertEventOffered = true; }
+    if (typeof state !== 'undefined') { state.concertEventResolved = true; state.concertEventOffered = true; }
     safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
-    if (window.state?.awakened && typeof showScreen === 'function') showScreen('room');
+    if (state?.awakened && typeof showScreen === 'function') showScreen('room');
     else if (typeof showScreen === 'function') showScreen('schedule');
     safe(() => updateScheduleUI && updateScheduleUI());
     safe(() => syncRoomUI && syncRoomUI());
