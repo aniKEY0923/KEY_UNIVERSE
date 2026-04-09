@@ -7004,7 +7004,7 @@ function updateScheduleUI(){
     const val = state.stats[key] || 0;
     const fillEl = document.getElementById('fill-' + key);
     const valEl  = document.getElementById('val-'  + key);
-    if (fillEl) fillEl.style.width = Math.min(100, val) + '%';
+if (fillEl) fillEl.style.width = (key === 'stress' ? Math.min(100, val / 50 * 100) : Math.min(100, val)) + '%';
     if (valEl)  valEl.textContent  = val;
   });
 
