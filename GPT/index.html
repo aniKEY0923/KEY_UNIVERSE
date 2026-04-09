@@ -7476,9 +7476,14 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
   // ── 번아웃 체크 ──
   setTimeout(() => {
     if (!state.burnout || typeof state.burnout !== 'object') state.burnout = { pending: false };
+    const ov = document.getElementById('burnoutOverlay');
+    const overlayOpen = ov && ov.classList.contains('show');
+    // 오버레이가 닫혀 있는데 pending만 true로 남아있는 경우 리셋
+    if (state.burnout.pending && !overlayOpen) {
+      state.burnout.pending = false;
+    }
     if (!state.burnout.pending && (state.stats.stress || 0) >= 50) {
-      const ov = document.getElementById('burnoutOverlay');
-      if (!ov || !ov.classList.contains('show')) {
+      if (!overlayOpen) {
         if (typeof window.openBurnout === 'function') window.openBurnout();
       }
     }
@@ -8262,6 +8267,8 @@ function handleResizeSync(){
       renderStageDecor();
       return result;
     }
+    // 원본의 _stressBuiltIn 플래그를 래퍼에도 전파해서 kv7 래퍼가 스트레스를 중복 적용하지 않도록
+    window.finishAction._stressBuiltIn = !!originalFinishAction._stressBuiltIn;
   }
 })();
 (function(){
@@ -8824,7 +8831,7 @@ bootGame();
     if (!orig) return;
     window.finishAction = function (type) {
       const r = orig.apply(this, arguments);
-      // 스트레스 delta (기존 코드에 없을 경우 보완)
+      // _stressBuiltIn이 체인 어딘가에 있으면 스트레스 중복 적용 안 함
       if (window.state?.stats && !orig._stressBuiltIn) {
         const delta = STRESS_DELTA[type] || 0;
         if (delta !== 0) {
@@ -8833,11 +8840,14 @@ bootGame();
         }
       }
       safe(() => syncExtraStatBars());
-      // 스트레스 50 이상이면 번아웃 체크 (액션 완료 직후)
-      setTimeout(() => safe(() => checkBurnout()), 300);
+      // 원본 finishAction에 _stressBuiltIn이 있으면 번아웃 체크는 원본에서 처리됨 — 중복 호출 생략
+      if (!orig._stressBuiltIn) {
+        setTimeout(() => safe(() => checkBurnout()), 300);
+      }
       return r;
     };
     window.finishAction._kv7 = true;
+    window.finishAction._stressBuiltIn = !!orig._stressBuiltIn;
   }
 
   /* ── canAwaken: DAY5 이상 ─────────────────────────────── */
