@@ -7377,7 +7377,7 @@ function startAction(type){
 
   state.actionFinishTimer = setTimeout(async () => {
     if (!inRoom) finalizeActionClock(type);
-    window.finishAction(type);
+    finishAction(type);
     hideSeedStatus();
     clearActionProgress();
     state.isActing = false;
@@ -7474,6 +7474,15 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
   }
 
   // ── 번아웃 체크 ──
+  setTimeout(() => {
+    if (!state.burnout || typeof state.burnout !== 'object') state.burnout = { pending: false };
+    if (!state.burnout.pending && (state.stats.stress || 0) >= 50) {
+      const ov = document.getElementById('burnoutOverlay');
+      if (!ov || !ov.classList.contains('show')) {
+        if (typeof window.openBurnout === 'function') window.openBurnout();
+      }
+    }
+  }, 300);
 
 }
 window.finishAction._stressBuiltIn = true;
