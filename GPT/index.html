@@ -8576,7 +8576,10 @@ bootGame();
   function openBurnoutV7() {
     if (_burnoutOpen) return;
     buildBurnoutOverlay();
-    _burnoutOpen = true;
+
+    // DOM 요소 null 체크 — 없으면 플래그 세팅 없이 return (다음 폴링에서 재시도)
+    const overlay = $('burnoutOverlay');
+    if (!overlay || !$('boBubble') || !$('boScene')) return;
 
     $('boBubble').textContent = '지쳐버린 것 같아. 어딘가 쉬고 싶어...';
     $('boScene').src = '';
@@ -8587,7 +8590,9 @@ bootGame();
     [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = false));
     $('boChar').src = window.state?.awakened?.roomImg || 'img/KEY_default_s.png';
 
-    $('burnoutOverlay').classList.add('show');
+    // 모든 준비 완료 후 플래그 세팅 + 표시
+    _burnoutOpen = true;
+    overlay.classList.add('show');
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
   }
   window.openBurnout = openBurnoutV7;
