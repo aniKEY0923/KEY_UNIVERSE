@@ -7474,10 +7474,7 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
   }
 
   // ── 번아웃 체크 ──
-  if ((state.stats.stress || 0) >= 50 && !state.burnout?.pending) {
-    if (typeof openBurnoutV5 === 'function') openBurnoutV5();
-    else if (typeof openBurnout === 'function') openBurnout();
-  }
+
 }
 window.finishAction._stressBuiltIn = true;
 
@@ -8366,11 +8363,6 @@ bootGame();
 
 
 <script>
-/* ================================================================
-   BURNOUT SYSTEM v7 — 교체용 스크립트 블록
-   기존 번아웃 관련 <script> 블록을 통째로 이것으로 교체하세요.
-   위치: 마지막 </script> 바로 앞에 새 <script> 태그로 추가
-================================================================ */
 (function () {
   'use strict';
 
