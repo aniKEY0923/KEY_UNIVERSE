@@ -7472,6 +7472,9 @@ if (earnedCoins) message += ` (+${earnedCoins}코인)`;
     setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
     updateSeedStageBackground('default');
   }
+
+  // ── 번아웃 체크 ──
+
 }
 window.finishAction._stressBuiltIn = true;
 
@@ -8754,7 +8757,7 @@ bootGame();
     const ov = $('burnoutOverlay');
     if (ov && ov.classList.contains('show')) return;
     if (window.miniGame?.active) return;
-  window.openBurnout();
+    window.openBurnout();
   }
   window.checkBurnout = checkBurnout;
   window.maybeTriggerBurnoutVacation = checkBurnout;
@@ -8766,7 +8769,8 @@ bootGame();
       const val = state.stats[key] || 0;
       const fill = $('fill-' + key);
       const valEl = $('val-' + key);
-      if (fill) fill.style.width = clamp(val, 0, 100) + '%';
+      const maxVal = key === 'stress' ? 50 : 100;
+      if (fill) fill.style.width = clamp(val / maxVal * 100, 0, 100) + '%';
       if (valEl) valEl.textContent = val;
     });
   }
