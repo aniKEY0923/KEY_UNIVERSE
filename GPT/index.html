@@ -7464,13 +7464,19 @@ window.finishAction = function(type){
     message = dialogues.sleep;
   }
 
-  if (earnedCoins) message += ` (+${earnedCoins}코인)`;
+if (earnedCoins) message += ` (+${earnedCoins}코인)`;
   if (state.awakened && getCurrentScreenName() === 'room') {
     showRoomOwnerBubble(message);
     setTimeout(() => hideRoomOwnerBubble(), 3200);
   } else {
     setSeedMessage(message, { autoClearMs:5000, idleAfterMs:SEED_IDLE_MS });
     updateSeedStageBackground('default');
+  }
+
+  // ── 번아웃 체크 ──
+  if ((state.stats.stress || 0) >= 50 && !state.burnout?.pending) {
+    if (typeof openBurnoutV5 === 'function') openBurnoutV5();
+    else if (typeof openBurnout === 'function') openBurnout();
   }
 }
 window.finishAction._stressBuiltIn = true;
@@ -8659,38 +8665,7 @@ bootGame();
   };
 
   function patchFinishAction() {
-    const orig = window.finishAction;
-    if (!orig) return false;
-    if (orig._kvFinal) return true;
-
-    if (orig._stressBuiltIn) {
-      /* 원본에 스트레스가 이미 내장됨 → syncExtraStatBars + 번아웃 체크만 래핑 */
-      window.finishAction = function (type) {
-        const r = orig.apply(this, arguments);
-        safe(() => syncExtraStatBars && syncExtraStatBars());
-        checkBurnout();
-        return r;
-      };
-      window.finishAction._kvFinal = true;
-      return true;
-    }
-
-    window.finishAction = function (type) {
-      const r = orig.apply(this, arguments);
-
-      /* 스트레스 적용 */
-      if (window.state?.stats != null) {
-        const delta = STRESS_DELTA[type];
-        if (delta != null) {
-          state.stats.stress = clamp((state.stats.stress || 0) + delta, 0, 100);
-        }
-        syncExtraStatBars();
-        checkBurnout();
-      }
-
-      return r;
-    };
-    window.finishAction._kvFinal = true;
+ 
     return true;
   }
 
@@ -8704,7 +8679,7 @@ bootGame();
       const r = orig.apply(this, arguments);
       /* 추가: 시상식 트리거 + 번아웃 체크 */
       safe(() => checkAwardsTrigger());
-      checkBurnout();
+     
       return r;
     };
     window.updateScheduleUI._kvFinal = true;
