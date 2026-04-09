@@ -7377,7 +7377,7 @@ function startAction(type){
 
   state.actionFinishTimer = setTimeout(async () => {
     if (!inRoom) finalizeActionClock(type);
-    finishAction(type);
+    window.finishAction(type);
     hideSeedStatus();
     clearActionProgress();
     state.isActing = false;
