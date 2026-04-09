@@ -3583,6 +3583,7 @@ body.ending-modal-open{
 
 </style>
 </head>
+<script src="https://www.youtube.com/iframe_api"></script>
 <body>
 <div class="app">
 
@@ -8938,6 +8939,103 @@ bootGame();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else setTimeout(boot, 0);
 
+})();
+</script>
+
+<script>
+/* ── 콘서트 미니게임 BGM (YouTube IFrame API) ──────────────────
+   영상: https://www.youtube.com/watch?v=UNFk6_to5_0
+   - "공연 시작" 버튼 클릭 → 재생
+   - 미니게임 종료 / 포기 → 정지
+─────────────────────────────────────────────────────────── */
+(function () {
+  const VIDEO_ID = 'UNFk6_to5_0';
+  let _ytPlayer = null;
+  let _ytReady = false;
+
+  /* YouTube IFrame API 콜백 */
+  window.onYouTubeIframeAPIReady = function () {
+    const container = document.createElement('div');
+    container.id = 'ytBgmHolder';
+    container.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
+    document.body.appendChild(container);
+
+    _ytPlayer = new YT.Player('ytBgmHolder', {
+      width: '1',
+      height: '1',
+      videoId: VIDEO_ID,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1
+      },
+      events: {
+        onReady: () => { _ytReady = true; }
+      }
+    });
+  };
+
+  /* 외부에서 호출할 인터페이스 */
+  window.kvBgm = {
+    play() {
+      if (!_ytReady || !_ytPlayer) return;
+      try { _ytPlayer.seekTo(0); _ytPlayer.playVideo(); } catch(e) {}
+    },
+    stop() {
+      if (!_ytReady || !_ytPlayer) return;
+      try { _ytPlayer.stopVideo(); } catch(e) {}
+    }
+  };
+
+  /* beginConcertMiniGamePlay 래핑 → 재생 */
+  function hookBgmStart() {
+    if (typeof window.beginConcertMiniGamePlay !== 'function') return false;
+    if (window.beginConcertMiniGamePlay._bgmHooked) return true;
+    const orig = window.beginConcertMiniGamePlay;
+    window.beginConcertMiniGamePlay = function () {
+      const r = orig.apply(this, arguments);
+      window.kvBgm.play();
+      return r;
+    };
+    window.beginConcertMiniGamePlay._bgmHooked = true;
+    return true;
+  }
+
+  /* finishConcertMiniGame 래핑 → 정지 */
+  function hookBgmStop() {
+    if (typeof window.finishConcertMiniGame !== 'function') return false;
+    if (window.finishConcertMiniGame._bgmHooked) return true;
+    const orig = window.finishConcertMiniGame;
+    window.finishConcertMiniGame = function () {
+      window.kvBgm.stop();
+      return orig.apply(this, arguments);
+    };
+    window.finishConcertMiniGame._bgmHooked = true;
+    return true;
+  }
+
+  /* 포기 버튼도 정지 */
+  function hookAbortStop() {
+    const btn = document.getElementById('miniAbortConfirmBtn');
+    if (!btn || btn._bgmHooked) return;
+    btn.addEventListener('click', () => window.kvBgm.stop(), { capture: true });
+    btn._bgmHooked = true;
+  }
+
+  /* 폴링으로 함수 로드 대기 */
+  let tries = 0;
+  const tick = setInterval(() => {
+    tries++;
+    const s = hookBgmStart();
+    const e = hookBgmStop();
+    hookAbortStop();
+    if ((s && e) || tries > 100) clearInterval(tick);
+  }, 100);
 })();
 </script>
 </body>
