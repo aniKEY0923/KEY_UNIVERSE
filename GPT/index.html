@@ -3690,62 +3690,67 @@ body.ending-modal-open{
 </style>
 </head>
 <script>
-/* ── YouTube IFrame API 콜백을 API 로드 전에 미리 선언 ──────────
-   YouTube iframe_api 스크립트는 로드 완료 즉시 이 콜백을 실행하므로
-   반드시 script 태그보다 앞에 정의되어야 합니다.
-──────────────────────────────────────────────────────────── */
-window._ytBgmInit = {
-  player: null,
-  ready: false,
-  loadedId: null,
+/* ══════════════════════════════════════════════════════════════
+   YouTube BGM — onYouTubeIframeAPIReady를 iframe_api 스크립트보다
+   반드시 먼저 정의해야 합니다.
+══════════════════════════════════════════════════════════════ */
+window._ytBgm = {
+  player:    null,
+  ready:     false,
+  loadedId:  null,
+  pendingPlay: false,   /* onReady 전에 play()가 호출됐을 때 대기 플래그 */
 
-  applyDuration: function(){
-    try {
-      var dur = this.player.getDuration();
-      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-        miniGame.duration = Math.floor(dur * 1000);
-      }
-    } catch(e) {}
-  },
-
+  /* 현재 concertLevel에 맞는 videoId 반환 */
   getVideoId: function(){
     var tracks = window.CONCERT_TRACKS;
     if (!tracks || !tracks.length) return null;
     var level = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-    /* 7단계 이후는 마지막 트랙 반복 */
-    var idx = Math.min(level, tracks.length - 1);
-    return tracks[idx].videoId;
+    return tracks[Math.min(level, tracks.length - 1)].videoId;
+  },
+
+  /* 재생 중인 영상의 duration을 miniGame.duration에 반영 */
+  syncDuration: function(){
+    try {
+      var dur = this.player && this.player.getDuration ? this.player.getDuration() : 0;
+      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+        miniGame.duration = Math.floor(dur * 1000);
+        console.log('[BGM] duration synced:', dur, 's →', miniGame.duration, 'ms');
+      }
+    } catch(e) {}
   }
 };
 
 window.onYouTubeIframeAPIReady = function(){
-  var B = window._ytBgmInit;
-  var container = document.createElement('div');
-  container.id = 'ytBgmHolder';
-  container.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
-  document.body.appendChild(container);
-
-  /* CONCERT_TRACKS가 아직 정의되지 않았을 수 있으므로 첫 트랙 ID를 fallback */
-  var initId = (window.CONCERT_TRACKS && window.CONCERT_TRACKS[0])
-    ? window.CONCERT_TRACKS[0].videoId
-    : 'OYWWnd9ACMI';
-  B.loadedId = initId;
+  var B = window._ytBgm;
+  var holder = document.createElement('div');
+  holder.id = 'ytBgmHolder';
+  holder.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
+  document.body.appendChild(holder);
 
   B.player = new YT.Player('ytBgmHolder', {
     width: '1', height: '1',
-    videoId: initId,
+    /* 초기 videoId 없이 생성 — play() 호출 시 loadVideoById로 로드 */
     playerVars: {
       autoplay: 0, controls: 0, disablekb: 1,
       fs: 0, iv_load_policy: 3, modestbranding: 1,
       rel: 0, playsinline: 1
     },
     events: {
-      onReady: function(e){
+      onReady: function(){
         B.ready = true;
-        B.applyDuration();
+        console.log('[BGM] YouTube player ready');
+        /* onReady 전에 play() 요청이 왔으면 지금 실행 */
+        if (B.pendingPlay) {
+          B.pendingPlay = false;
+          window.kvBgm.play();
+        }
       },
       onStateChange: function(e){
-        /* ENDED(0) → 미니게임 종료 */
+        /* PLAYING(1): 실제 재생 시작 직후 duration이 확정됨 */
+        if (e.data === 1) {
+          B.syncDuration();
+        }
+        /* ENDED(0): 미니게임 종료 */
         if (e.data === 0) {
           try {
             if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
@@ -3758,32 +3763,27 @@ window.onYouTubeIframeAPIReady = function(){
   });
 };
 
-/* kvBgm 인터페이스 — 게임 코드에서 호출 */
 window.kvBgm = {
   play: function(){
-    var B = window._ytBgmInit;
-    if (!B.ready || !B.player) return;
+    var B = window._ytBgm;
+    /* 플레이어가 아직 준비 안 됐으면 pendingPlay 세팅 후 대기 */
+    if (!B.player || !B.ready) {
+      B.pendingPlay = true;
+      console.log('[BGM] player not ready, queued');
+      return;
+    }
     try {
       var vid = B.getVideoId();
       if (!vid) return;
-      if (vid !== B.loadedId) {
-        B.loadedId = vid;
-        B.player.cueVideoById(vid);
-        setTimeout(function(){
-          B.applyDuration();
-          B.player.seekTo(0);
-          B.player.playVideo();
-        }, 600);
-      } else {
-        B.applyDuration();
-        B.player.seekTo(0);
-        B.player.playVideo();
-      }
-    } catch(e) { console.warn('kvBgm.play error:', e); }
+      console.log('[BGM] play:', vid, '(loaded:', B.loadedId, ')');
+      /* loadVideoById: 곡이 같아도 seekTo(0)부터 재생, 다르면 자동 교체 */
+      B.loadedId = vid;
+      B.player.loadVideoById({ videoId: vid, startSeconds: 0 });
+    } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
-    var B = window._ytBgmInit;
-    if (!B.ready || !B.player) return;
+    var B = window._ytBgm;
+    if (!B.player) return;
     try { B.player.stopVideo(); } catch(e) {}
   }
 };
