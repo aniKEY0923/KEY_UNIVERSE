@@ -3308,9 +3308,10 @@ body.ending-modal-open{
   inset:0;
   z-index:9996;
   display:flex;
-  align-items:flex-end;
+  align-items:flex-start;
   justify-content:center;
-  padding:16px 12px max(16px, env(safe-area-inset-bottom));
+  padding:max(16px, env(safe-area-inset-top)) 12px 16px;
+  overflow-y:auto;
   opacity:0;
   pointer-events:none;
   transition:opacity .24s ease;
@@ -3321,25 +3322,26 @@ body.ending-modal-open{
 }
 .awards-overlay::before{
   content:"";
-  position:absolute;
+  position:fixed;
   inset:0;
   background:
     radial-gradient(circle at top, rgba(255,255,255,.12), transparent 28%),
     rgba(18,14,25,.56);
   backdrop-filter:blur(8px);
+  z-index:-1;
 }
 
 .awards-card{
   position:relative;
   width:min(520px, calc(100vw - 24px));
-  max-height:min(82vh, 860px);
-  overflow:auto;
-  border-radius:26px 26px 18px 18px;
+  max-height:none;
+  overflow:visible;
+  border-radius:18px 18px 26px 26px;
   background:
     linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,247,240,.96));
   border:1px solid rgba(120,104,87,.14);
   box-shadow:0 28px 64px rgba(0,0,0,.28);
-  transform:translateY(36px);
+  transform:translateY(-36px);
   opacity:0;
   transition:transform .28s ease, opacity .24s ease;
 }
@@ -3590,6 +3592,91 @@ body.ending-modal-open{
     font-size:24px;
   }
 }
+
+/* =========================
+   Awards Confirm Dialog
+========================= */
+.awards-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(18,14,25,.48);
+  backdrop-filter:blur(7px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease;
+}
+.awards-confirm-overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.awards-confirm-card{
+  width:min(360px, calc(100vw - 40px));
+  border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.99), rgba(255,249,245,.97));
+  border:1px solid rgba(120,104,87,.14);
+  box-shadow:0 24px 56px rgba(0,0,0,.26);
+  padding:28px 24px 22px;
+  text-align:center;
+  transform:scale(.94) translateY(-8px);
+  opacity:0;
+  transition:transform .24s ease, opacity .22s ease;
+}
+.awards-confirm-overlay.show .awards-confirm-card{
+  transform:scale(1) translateY(0);
+  opacity:1;
+}
+.awards-confirm-emoji{
+  font-size:36px;
+  line-height:1;
+  margin-bottom:12px;
+}
+.awards-confirm-title{
+  margin:0 0 8px;
+  font-size:17px;
+  font-weight:950;
+  color:#5b4d42;
+}
+.awards-confirm-sub{
+  margin:0 0 20px;
+  font-size:13px;
+  color:#8c7d71;
+  line-height:1.55;
+}
+.awards-confirm-btns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.awards-confirm-yes{
+  padding:13px;
+  border-radius:14px;
+  font-size:14px;
+  font-weight:900;
+  background:linear-gradient(135deg,#f1a7c8,#c9c3e8);
+  color:#4c3f4f;
+  border:none;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(188,160,194,.22);
+  transition:.16s ease;
+}
+.awards-confirm-yes:hover{ transform:translateY(-2px); }
+.awards-confirm-no{
+  padding:13px;
+  border-radius:14px;
+  font-size:14px;
+  font-weight:900;
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(120,104,87,.14);
+  color:#8c7d71;
+  cursor:pointer;
+  transition:.16s ease;
+}
+.awards-confirm-no:hover{ transform:translateY(-2px); background:rgba(255,255,255,.96); }
 
 </style>
 </head>
@@ -6398,6 +6485,54 @@ function renderAwardsCeremony(result){
   awardsResultBox.textContent = result.resultText;
 }
 
+/* ── 시상식 참가 확인 다이얼로그 ── */
+let _awardsConfirmOpen = false;
+
+function buildAwardsConfirmDOM(){
+  if (document.getElementById('awardsConfirmOverlay')) return;
+  const div = document.createElement('div');
+  div.id = 'awardsConfirmOverlay';
+  div.className = 'awards-confirm-overlay';
+  div.innerHTML = `
+    <div class="awards-confirm-card">
+      <div class="awards-confirm-emoji">🏆</div>
+      <h3 class="awards-confirm-title">연말 시상식이 열립니다</h3>
+      <p class="awards-confirm-sub">올 한 해를 빛낸 KEY를 가릴 시간이에요.<br>시상식에 참가할까요?</p>
+      <div class="awards-confirm-btns">
+        <button type="button" class="awards-confirm-yes" id="awardsConfirmYes">참가한다</button>
+        <button type="button" class="awards-confirm-no" id="awardsConfirmNo">다음에</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  document.getElementById('awardsConfirmYes').addEventListener('click', function(){
+    closeAwardsConfirm();
+    openAwardsCeremony();
+  });
+  document.getElementById('awardsConfirmNo').addEventListener('click', function(){
+    closeAwardsConfirm();
+    // 아니오 선택 시 hasPending 해제 — 이번 연도 스킵
+    if (state.awards) {
+      state.awards.hasPending = false;
+      state.awards.lastHeldYear = state.calYear || 1;
+    }
+    triggerSaveNow();
+  });
+}
+
+function openAwardsConfirm(){
+  if (_awardsConfirmOpen) return;
+  buildAwardsConfirmDOM();
+  _awardsConfirmOpen = true;
+  const ov = document.getElementById('awardsConfirmOverlay');
+  if (ov) requestAnimationFrame(() => ov.classList.add('show'));
+}
+
+function closeAwardsConfirm(){
+  _awardsConfirmOpen = false;
+  const ov = document.getElementById('awardsConfirmOverlay');
+  if (ov) ov.classList.remove('show');
+}
+
 function openAwardsCeremony(){
   if (!state.awards) state.awards = { season: 1, lastHeldDay: 0, hasPending: false, lastResult: null };
   const result = buildAwardsResult();
@@ -6440,7 +6575,8 @@ function maybeTriggerAwardsCeremony(){
   if (!ov || ov.classList.contains('show')) return;
   if (state.isActing || (window.miniGame && window.miniGame.active)) return;
 
-  openAwardsCeremony();
+  // 시상식 참가 확인 다이얼로그 먼저 표시
+  openAwardsConfirm();
 }
 window.maybeTriggerAwardsCeremony = maybeTriggerAwardsCeremony;
 
