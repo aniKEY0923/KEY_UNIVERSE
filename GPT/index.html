@@ -986,13 +986,72 @@ img{
   display:flex;
   flex-direction:column;
 }
-.mini-talkbar{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 68px;
-  align-items:end;
-  gap:8px;
-  padding:6px 14px 2px;
+.mini-game-body{
+  flex:1;
+  min-height:0;
+  padding:0 10px 0;
 }
+.mini-rhythm-stage{
+  position:relative;
+  height:100%;
+  min-height:min(440px, 52dvh);
+  border-radius:18px;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(28,23,36,.46), rgba(19,16,26,.70)),
+    radial-gradient(circle at top, rgba(255,255,255,.16), transparent 32%),
+    url("img/keyland.jpg") center center / cover no-repeat;
+  border:1px solid rgba(255,255,255,.10);
+  transform-origin:50% 56%;
+}
+.mini-info-bar{
+  position:absolute;
+  left:10px;
+  right:10px;
+  top:48px;
+  z-index:7;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+}
+.mini-info-left{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.mini-talkbox{
+  position:relative;
+  padding:8px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.90);
+  color:#5a4a3f;
+  font-size:11px;
+  line-height:1.4;
+  font-weight:800;
+  box-shadow:0 4px 12px rgba(0,0,0,.14);
+}
+.mini-talk-char{
+  flex:0 0 auto;
+  width:56px;
+  height:78px;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.22));
+}
+.mini-game-stats{
+  display:flex;
+  gap:6px;
+}
+.mini-hit-buttons{
+  flex:0 0 auto;
+  padding:8px 10px 10px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+}
+/* mini-talkbar, mini-game-top: 새 레이아웃에서 mini-info-bar로 통합됨 */
 .mini-talkbox{
   position:relative;
   min-height:52px;
@@ -1088,10 +1147,11 @@ img{
 }
 .mini-hit-line{
   position:absolute;
-  left:50%;
-  width:min(32%, 90px);
-  transform:translateX(-50%);
-  bottom:102px;
+  left:0;
+  right:0;
+  width:100%;
+  transform:none;
+  bottom:25%;
   height:5px;
   border-radius:999px;
   background:linear-gradient(90deg, rgba(241,167,200,.96), rgba(201,195,232,.96));
@@ -3980,19 +4040,10 @@ window.kvBgm = {
 
   <div class="mini-game-layer" id="miniGameLayer">
     <div class="mini-game-shell">
-      <div class="mini-talkbar">
-        <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼. 노트가 선에 닿는 순간에 맞춰보자.</div>
-        <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
-      </div>
-      <div class="mini-game-top">
-        <div class="mini-game-stats">
-          <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
-          <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
-        </div>
-      </div>
-
       <div class="mini-game-body">
         <div class="mini-rhythm-stage" id="miniRhythmStage">
+
+          <!-- 상단: 포기 + 진행바 -->
           <div class="mini-stage-topline">
             <button type="button" class="mini-abort-btn" id="miniAbortBtn">포기</button>
             <div class="mini-progress-wrap">
@@ -4000,19 +4051,30 @@ window.kvBgm = {
               <div class="mini-progress-track"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
             </div>
           </div>
+
+          <!-- 말풍선 + 캐릭터 + 스코어 -->
+          <div class="mini-info-bar">
+            <div class="mini-info-left">
+              <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
+              <div class="mini-game-stats">
+                <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
+                <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
+              </div>
+            </div>
+            <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
+          </div>
+
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
+
           <div class="mini-start-overlay show" id="miniStartOverlay">
             <div class="mini-start-card">
               <div id="miniStartTrackTitle" style="font-size:13px;font-weight:800;color:#7a5a6a;margin-bottom:2px;text-align:center;"></div>
               <button type="button" class="mini-start-btn" id="miniStartBtn">공연 시작</button>
             </div>
-          </div>
-          <div class="mini-hit-buttons">
-            <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
           </div>
 
           <div class="mini-game-result" id="miniGameResult">
@@ -4040,6 +4102,11 @@ window.kvBgm = {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 하단 TAP 버튼 -->
+      <div class="mini-hit-buttons">
+        <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
       </div>
     </div>
   </div>
@@ -7114,7 +7181,7 @@ function spawnMiniHitFX(lane, type){
   const fx = document.createElement('div');
   fx.className = `mini-hit-fx ${type}`;
   fx.style.left = '50%';
-  fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 102}px`;
+  fx.style.top = `${Math.round((miniRhythmStage.clientHeight || 420) * 0.75)}px`;
   laneEl.appendChild(fx);
   setTimeout(() => fx.remove(), 420);
 }
@@ -7154,7 +7221,7 @@ function spawnMiniNote(altClass, isLong){
   const bpm = getBpm();
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
-  const hitLine = stageH - 102;
+  const hitLine = Math.round(stageH * 0.25);
   const baseH = 56;  /* 일반 노트 높이 */
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
@@ -7193,21 +7260,44 @@ function getBpm(){
 }
 
 function beginMiniGameSpawns(){
+  /* setInterval 대신 tickMiniGame의 RAF 루프에서 YouTube 시간 기반으로 처리 */
+  miniGame.lastSpawnMusicTime = -1;
+  miniGame.spawnBeat = 0;
+}
+
+/* YouTube 재생 위치를 읽어오는 헬퍼 */
+function getYtCurrentTime(){
+  try {
+    const B = window._ytBgm;
+    if (B && B.player && B.ready && typeof B.player.getCurrentTime === 'function') {
+      return B.player.getCurrentTime(); /* 초 단위 */
+    }
+  } catch(e) {}
+  /* YouTube 못 읽으면 performance 기반 fallback */
+  return (performance.now() - miniGame.startTime) / 1000;
+}
+
+function tickSpawnFromMusic(){
+  if (!miniGame.active || !miniGame.playing) return;
   const bpm  = getBpm();
-  const beat = 60000 / bpm;
-  let   beatIdx = 0;
+  const beat = 60 / bpm;          /* 한 박자 = 초 단위 */
+  const spawnEvery = beat * 2;    /* 2박마다 노트 하나 */
 
-  spawnMiniNote();
+  const musicTime = getYtCurrentTime();
+  if (musicTime < 0) return;
 
-  miniGame.spawnTimer = setInterval(() => {
-    beatIdx++;
-    const isLong = Math.random() < 0.20;   /* 20% 확률로 롱노트 */
+  /* 생성해야 할 박자 인덱스 계산 */
+  const currentBeat = Math.floor(musicTime / spawnEvery);
+  if (currentBeat > miniGame.spawnBeat) {
+    miniGame.spawnBeat = currentBeat;
+    const isLong = Math.random() < 0.20;
     const isAlt  = !isLong && Math.random() < 0.35;
     spawnMiniNote(isAlt ? 'alt' : null, isLong);
+    /* 간헐적 연속 노트 */
     if (!isLong && Math.random() < 0.20) {
-      setTimeout(() => spawnMiniNote('alt', false), beat * 0.5);
+      setTimeout(() => spawnMiniNote('alt', false), beat * 0.5 * 1000);
     }
-  }, beat * 2);
+  }
 }
 function triggerMiniStagePulse(){
   if (!miniRhythmStage) return;
@@ -7225,7 +7315,7 @@ function pressMiniLane(lane){
     /* pointerup은 releaseMiniLane에서 처리 */
   }
 
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
+  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
   const candidates = miniGame.notes
     .filter(note => note.lane === lane && !note.holding)
     .sort((a, b) => Math.abs(a.y - hitLine) - Math.abs(b.y - hitLine));
@@ -7304,7 +7394,7 @@ function releaseMiniLane(lane){
   if (note.lane !== lane) return;
 
   /* 롱노트 완료 — 끝까지 누른 경우 보너스 */
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
+  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
   const isComplete = note.y + note.height >= hitLine;
   if (isComplete) {
     miniGame.score += 200 + Math.min(80, miniGame.combo * 3);
@@ -7322,7 +7412,10 @@ function releaseMiniLane(lane){
 function tickMiniGame(now){
   if (!miniGame.active || !miniGame.playing) return;
 
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
+  /* YouTube 시간 기반 노트 스폰 */
+  tickSpawnFromMusic();
+
+  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
 
   miniGame.notes = miniGame.notes.filter(note => {
     note.y += note.speed * 16.666;
