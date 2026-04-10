@@ -6070,7 +6070,8 @@ if (roomSendAwayBtn) {
 }
 
 concertYesBtn.addEventListener('click', async () => {
-  state.concertEventResolved = true;
+  /* Resolved는 여기서 세팅하지 않음 — 미니게임 진행 중 카드 재등장은
+     maybeTriggerConcertEvent에서 miniGame.active 체크로 막음 */
   hideConcertEvent();
   setSeedMessage(dialogues.concertYes);
   updateScheduleUI();
@@ -7351,16 +7352,18 @@ function maybeTriggerConcertEvent(){
   const tracks = window.CONCERT_TRACKS || [];
   if (!tracks.length) return;
 
+  /* 미니게임 진행 중에는 카드 숨김 */
+  if (typeof miniGame !== 'undefined' && miniGame.active) { hideConcertEvent(); return; }
+
+  /* 이미 Yes를 눌러 진행 완료 대기 중이면 건드리지 않음 */
+  if (state.concertEventResolved) { hideConcertEvent(); return; }
+
   const level = state.concertLevel || 0;
-  /* 7단계 이후: 마지막 트랙을 반복, threshold는 10씩 증가 */
   const lastIdx = tracks.length - 1;
   const trackIdx = Math.min(level, lastIdx);
   const baseThreshold = tracks[lastIdx].threshold;
   const extra = level > lastIdx ? (level - lastIdx) * 10 : 0;
   const needed = (level <= lastIdx ? tracks[level].threshold : baseThreshold + extra);
-
-  /* 이미 Yes를 눌러 진행 중이면 건드리지 않음 */
-  if (state.concertEventResolved) { hideConcertEvent(); return; }
 
   if (state.stats.practice >= needed) {
     if (!state.concertEventOffered) {
