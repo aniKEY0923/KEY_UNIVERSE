@@ -7078,7 +7078,7 @@ function clearMiniNotes(){
 }
 
 /* 노트 낙하 시간 (ms) — 이 시간 동안 화면 위→ hit line 이동 */
-const NOTE_FALL_MS = 10000;
+const NOTE_FALL_MS = 14000;
 
 function spawnMiniNote(altClass){
   if (!miniGame.active || !miniGame.playing) return;
@@ -7122,32 +7122,23 @@ function getBpm(){
 }
 
 function beginMiniGameSpawns(){
-  const bpm      = getBpm();
-  const beat     = 60000 / bpm;   /* 한 박자 ms */
-  const half     = beat / 2;       /* 8분음표 간격 */
-  let   beatIdx  = 0;
+  const bpm  = getBpm();
+  const beat = 60000 / bpm;   /* 한 박자 ms */
+  let   beatIdx = 0;
 
   /* 첫 노트 즉시 생성 */
   spawnMiniNote();
 
-  /* 8분음표(half beat) 단위로 스케줄링
-     패턴: 4박 중 박자에 따라 노트 또는 쉼 */
+  /* 2박(2분음표) 단위로 노트 생성 — 여유있게 하나씩
+     가끔 확률로 추가 노트 삽입 */
   miniGame.spawnTimer = setInterval(() => {
     beatIdx++;
-    const beatInBar = beatIdx % 8;  /* 8분음표 기준 한 마디 */
-
-    /* 기본 패턴: 1, 3, 5, 7번째(4분음표 위치)에 노트
-       + 간헐적으로 추가 노트 삽입해 변화 */
-    const isOnBeat   = (beatInBar % 2 === 0);         /* 4분음표 */
-    const isOffBeat  = (beatInBar % 2 === 1);         /* 8분음표 사이 */
-    const extraChance = bpm >= 140 ? 0.30 : 0.18;     /* 빠른 곡은 더 많이 */
-
-    if (isOnBeat) {
-      spawnMiniNote();
-    } else if (isOffBeat && Math.random() < extraChance) {
-      spawnMiniNote('alt');  /* alt 스타일 노트 */
+    spawnMiniNote();
+    /* 4박에 한 번 꼴로 연속 노트 추가 */
+    if (Math.random() < 0.20) {
+      setTimeout(() => spawnMiniNote('alt'), beat * 0.5);
     }
-  }, half);
+  }, beat * 2);
 }
 function triggerMiniStagePulse(){
   if (!miniRhythmStage) return;
