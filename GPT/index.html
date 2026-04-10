@@ -7244,6 +7244,8 @@ function spawnMiniNote(altClass, isLong){
     isLong: !!isLong,
     holding: false,
     held: false,
+    /* 목표 히트 시간 = 생성 시점 음악 시간 + 낙하 시간(초) */
+    targetHitTime: getYtCurrentTime() + NOTE_FALL_MS / 1000,
     el: note
   });
 }
@@ -7304,15 +7306,14 @@ function pressMiniLane(lane){
   if (!miniGame.active || !miniGame.playing) return;
 
   const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
-  if (btn) {
-    btn.classList.add('active');
-    /* pointerup은 releaseMiniLane에서 처리 */
-  }
+  if (btn) btn.classList.add('active');
 
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
+  const now = getYtCurrentTime();
+
+  /* 가장 가까운 노트 찾기 — 시간 기준 */
   const candidates = miniGame.notes
     .filter(note => note.lane === lane && !note.holding)
-    .sort((a, b) => Math.abs(a.y - hitLine) - Math.abs(b.y - hitLine));
+    .sort((a, b) => Math.abs(a.targetHitTime - now) - Math.abs(b.targetHitTime - now));
 
   if (!candidates.length) {
     miniGame.combo = 0;
@@ -7324,11 +7325,25 @@ function pressMiniLane(lane){
   }
 
   const target = candidates[0];
-  const distance = Math.abs(target.y - hitLine);
+  const timeDiff = Math.abs(target.targetHitTime - now);
 
-  if (distance <= 54) {          /* PERFECT 판정 윈도우 확대 */
+  /* 판정 윈도우 (초 단위)
+     PERFECT : ±150ms
+     COOL    : ±300ms
+     판정 범위 밖이면 MISS (단, 아직 화면에 없는 노트는 제외) */
+  if (timeDiff > 0.35) {
+    /* 범위 밖 — MISS */
+    miniGame.combo = 0;
+    miniGame.miss += 1;
+    showMiniFeedback('MISS', 'miss');
+    spawnMiniHitFX(lane, 'miss');
+    updateMiniGameHUD();
+    return;
+  }
+
+  if (timeDiff <= 0.15) {
+    /* PERFECT */
     if (target.isLong) {
-      /* 롱노트: 누르기 시작 판정 */
       target.holding = true;
       target.held = true;
       target.el.classList.add('holding');
@@ -7348,7 +7363,8 @@ function pressMiniLane(lane){
       target.el.remove();
       miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
     }
-  } else if (distance <= 100) {  /* COOL 판정 윈도우 확대 */
+  } else {
+    /* COOL (±150~350ms) */
     if (target.isLong) {
       target.holding = true;
       target.held = true;
@@ -7367,13 +7383,6 @@ function pressMiniLane(lane){
       target.el.remove();
       miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
     }
-  } else {
-    miniGame.combo = 0;
-    miniGame.miss += 1;
-    showMiniFeedback('MISS', 'miss');
-    spawnMiniHitFX(lane, 'miss');
-    updateMiniGameHUD();
-    return;
   }
 
   updateMiniGameHUD();
@@ -7432,17 +7441,9 @@ function tickMiniGame(now){
       return true;
     }
 
-    /* 롱노트인데 안 잡힌 채로 라인 지남 → miss */
-    if (note.isLong && !note.held && note.y > hitLine + 60) {
-      note.el.remove();
-      miniGame.combo = 0;
-      miniGame.miss += 1;
-      showMiniFeedback('MISS', 'miss');
-      return false;
-    }
-
-    /* 일반 노트 miss */
-    if (!note.isLong && note.y > hitLine + 52) {
+    /* 판정 윈도우(+350ms)를 지나도 안 눌렀으면 MISS */
+    const noteNow = getYtCurrentTime();
+    if (noteNow > note.targetHitTime + 0.35) {
       note.el.remove();
       miniGame.combo = 0;
       miniGame.miss += 1;
