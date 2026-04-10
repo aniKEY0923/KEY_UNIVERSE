@@ -1148,7 +1148,7 @@ img{
   left:50%;
   width:min(22%, 64px);
   transform:translateX(-50%);
-  bottom:25%;
+  bottom:8px;
   height:5px;
   border-radius:999px;
   background:linear-gradient(90deg, rgba(241,167,200,.96), rgba(201,195,232,.96));
@@ -3894,7 +3894,7 @@ window.kvBgm = {
 
     <div class="main">
       <div class="layout">
-        <div class="card panel stage-card-sticky">
+        <div class="card panel stage-card-sticky" id="seedStageCard">
           <div class="stage-status-wrap">
             <div class="seed-side-status">
               <div class="seed-mini-title">오늘의 상태</div>
@@ -7125,7 +7125,7 @@ function abortConcertMiniGame(){
   /* 미니게임 레이어 완전 종료 — startOverlay 띄우지 않고 바로 닫음 */
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
-  miniGameLayer.classList.remove('active');
+  miniGameLayer.classList.remove('active'); const _sc1 = document.getElementById('seedStageCard'); if (_sc1) _sc1.style.visibility = '';
   updateMiniGameProgress(0);
 
   /* 인기도 패널티 */
@@ -7177,7 +7177,7 @@ function spawnMiniHitFX(lane, type){
   const fx = document.createElement('div');
   fx.className = `mini-hit-fx ${type}`;
   fx.style.left = '50%';
-  fx.style.top = `${Math.round((miniRhythmStage.clientHeight || 420) * 0.75)}px`;
+  fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 8}px`;
   laneEl.appendChild(fx);
   setTimeout(() => fx.remove(), 420);
 }
@@ -7217,7 +7217,7 @@ function spawnMiniNote(altClass, isLong){
   const bpm = getBpm();
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
-  const hitLine = Math.round(stageH * 0.25);
+  const hitLine = stageH - 8;
   const baseH = 56;  /* 일반 노트 높이 */
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
@@ -7277,21 +7277,19 @@ function tickSpawnFromMusic(){
   if (!miniGame.active || !miniGame.playing) return;
   const bpm  = getBpm();
   const beat = 60 / bpm;          /* 한 박자 = 초 단위 */
-  const spawnEvery = beat * 2;    /* 2박마다 노트 하나 */
+  const spawnEvery = beat * 4;    /* 4박마다 노트 하나 — 간격 여유 */
 
   const musicTime = getYtCurrentTime();
   if (musicTime < 0) return;
 
-  /* 생성해야 할 박자 인덱스 계산 */
   const currentBeat = Math.floor(musicTime / spawnEvery);
   if (currentBeat > miniGame.spawnBeat) {
     miniGame.spawnBeat = currentBeat;
     const isLong = Math.random() < 0.20;
-    const isAlt  = !isLong && Math.random() < 0.35;
-    spawnMiniNote(isAlt ? 'alt' : null, isLong);
-    /* 간헐적 연속 노트 */
-    if (!isLong && Math.random() < 0.20) {
-      setTimeout(() => spawnMiniNote('alt', false), beat * 0.5 * 1000);
+    spawnMiniNote(null, isLong);
+    /* 가끔 한 박 뒤에 추가 노트 */
+    if (!isLong && Math.random() < 0.25) {
+      setTimeout(() => spawnMiniNote(null, false), beat * 1000);
     }
   }
 }
@@ -7311,7 +7309,7 @@ function pressMiniLane(lane){
     /* pointerup은 releaseMiniLane에서 처리 */
   }
 
-  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
   const candidates = miniGame.notes
     .filter(note => note.lane === lane && !note.holding)
     .sort((a, b) => Math.abs(a.y - hitLine) - Math.abs(b.y - hitLine));
@@ -7390,7 +7388,7 @@ function releaseMiniLane(lane){
   if (note.lane !== lane) return;
 
   /* 롱노트 완료 — 끝까지 누른 경우 보너스 */
-  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
   const isComplete = note.y + note.height >= hitLine;
   if (isComplete) {
     miniGame.score += 200 + Math.min(80, miniGame.combo * 3);
@@ -7411,7 +7409,7 @@ function tickMiniGame(now){
   /* YouTube 시간 기반 노트 스폰 */
   tickSpawnFromMusic();
 
-  const hitLine = Math.round((miniRhythmStage.clientHeight || 420) * 0.25);
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
 
   miniGame.notes = miniGame.notes.filter(note => {
     note.y += note.speed * 16.666;
@@ -7497,6 +7495,8 @@ function openConcertMiniGame(){
   miniGameResult.classList.remove('show');
   miniGameLayer.classList.add('active');
   miniStartOverlay.classList.add('show');
+  const _sc = document.getElementById('seedStageCard');
+  if (_sc) _sc.style.visibility = 'hidden';
   if (miniTalkChar) miniTalkChar.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
   setMiniTalk(miniTalkLines.ready);
 
@@ -7618,6 +7618,8 @@ function applyConcertMiniGameRewards(){
   miniGameLayer.classList.remove('active');
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
+  const _sc2 = document.getElementById('seedStageCard');
+  if (_sc2) _sc2.style.visibility = '';
   updateMiniGameProgress(0);
   updateScheduleUI();
   triggerSaveNow();
