@@ -7244,6 +7244,7 @@ function spawnMiniNote(altClass, isLong){
     isLong: !!isLong,
     holding: false,
     held: false,
+    holdBroken: false,
     /* 목표 히트 시간 = 생성 시점 음악 시간 + 낙하 시간(초) */
     targetHitTime: getYtCurrentTime() + NOTE_FALL_MS / 1000,
     el: note
@@ -7396,20 +7397,34 @@ function releaseMiniLane(lane){
   const note = miniGame.holdingNote;
   if (note.lane !== lane) return;
 
-  /* 롱노트 완료 — 끝까지 누른 경우 보너스 */
+  /* 롱노트가 아직 끝나지 않은 상태에서 손을 뗌 → MISS */
   const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
-  const isComplete = note.y + note.height >= hitLine;
-  if (isComplete) {
+  const isComplete = note.y + note.height >= hitLine + 60;
+
+  if (!isComplete) {
+    /* 중간에 손 뗌 — 시각적으로 어두워지고 MISS 처리 */
+    note.holding = false;
+    note.holdBroken = true;   /* 더 이상 누를 수 없도록 */
+    note.el.classList.remove('holding');
+    note.el.style.opacity = '0.35';  /* 어두워짐 */
+    miniGame.combo = 0;
+    miniGame.miss += 1;
+    showMiniFeedback('MISS', 'miss');
+    miniGame.holdingNote = null;
+    updateMiniGameHUD();
+    /* 노트는 계속 내려가다가 tickMiniGame에서 사라짐 */
+  } else {
+    /* 끝까지 눌렀음 — 완료 보너스 */
     miniGame.score += 200 + Math.min(80, miniGame.combo * 3);
     spawnMiniHitFX(lane, 'perfect');
     triggerMiniStagePulse();
+    note.holding = false;
+    note.el.classList.remove('holding');
+    note.el.classList.add('hit');
+    miniGame.holdingNote = null;
+    miniGame.notes = miniGame.notes.filter(n => n.id !== note.id);
+    updateMiniGameHUD();
   }
-  note.holding = false;
-  note.el.classList.remove('holding');
-  note.el.classList.add('hit');
-  miniGame.holdingNote = null;
-  miniGame.notes = miniGame.notes.filter(n => n.id !== note.id);
-  updateMiniGameHUD();
 }
 
 function tickMiniGame(now){
@@ -7436,6 +7451,15 @@ function tickMiniGame(now){
           miniGame.holdingNote = null;
         }
         spawnMiniHitFX(note.lane, 'perfect');
+        return false;
+      }
+      return true;
+    }
+
+    /* 중간에 손을 뗀 롱노트 — 계속 내려가다 화면 밖으로 나가면 제거 */
+    if (note.isLong && note.holdBroken) {
+      if (note.y > hitLine + note.height + 20) {
+        note.el.remove();
         return false;
       }
       return true;
