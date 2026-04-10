@@ -1101,7 +1101,7 @@ img{
   position:absolute;
   left:50%;
   width:min(76%, 220px);
-  height:22px;
+  height:48px;
   border-radius:999px;
   background:linear-gradient(135deg, #fff4f8, #ffd2e7);
   box-shadow:0 8px 18px rgba(0,0,0,.18);
@@ -1109,6 +1109,16 @@ img{
 }
 .mini-note.alt{
   background:linear-gradient(135deg, #f5f0ff, #d9cffc);
+}
+.mini-note.long{
+  border-radius:24px;
+  background:linear-gradient(180deg, #ffd2e7, #ffadd0, #ffd2e7);
+  border:2px solid rgba(255,255,255,.6);
+  box-shadow:0 0 20px rgba(255,150,200,.4), 0 8px 18px rgba(0,0,0,.18);
+}
+.mini-note.long.holding{
+  background:linear-gradient(180deg, #ffe8f3, #ff85c0, #ffe8f3);
+  box-shadow:0 0 32px rgba(255,100,180,.6), 0 8px 18px rgba(0,0,0,.18);
 }
 .mini-note.hit{
   opacity:0;
@@ -4368,7 +4378,8 @@ const miniGame = {
   notes:[],
   talkTimer:null,
   progress:0,
-  aborted:false
+  aborted:false,
+  holdingNote:null
 };
 
 const state = {
@@ -6126,6 +6137,8 @@ miniLaneButtons.forEach(btn => {
     pressMiniLane(0);
   };
   btn.addEventListener('pointerdown', (e) => { registerUserActivity(); handler(e); });
+  btn.addEventListener('pointerup',   () => releaseMiniLane(0));
+  btn.addEventListener('pointerleave',() => releaseMiniLane(0));
 });
 
 miniStartBtn.addEventListener('click', (e) => {
@@ -6157,6 +6170,13 @@ window.addEventListener('keydown', (e) => {
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     pressMiniLane(0);
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (!miniGame.active || !miniGame.playing) return;
+  if (e.key === ' ' || e.key === 'Enter') {
+    releaseMiniLane(0);
   }
 });
 
@@ -7084,12 +7104,13 @@ function showMiniFeedback(text, type='perfect'){
 function clearMiniNotes(){
   miniGame.notes.forEach(note => note.el.remove());
   miniGame.notes = [];
+  miniGame.holdingNote = null;
 }
 
 /* 노트 낙하 시간 (ms) — 이 시간 동안 화면 위→ hit line 이동 */
 const NOTE_FALL_MS = 14000;
 
-function spawnMiniNote(altClass){
+function spawnMiniNote(altClass, isLong){
   if (!miniGame.active || !miniGame.playing) return;
 
   /* ── spawn cutoff: 게임 종료 전 fall time 이내엔 생성 금지 ── */
@@ -7100,25 +7121,33 @@ function spawnMiniNote(altClass){
   const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
   if (!laneEl) return;
 
-  const note = document.createElement('div');
-  note.className = 'mini-note' + (altClass ? ' ' + altClass : '');
-  note.style.transform = 'translate(-50%, -28px)';
-  laneEl.appendChild(note);
-
-  /* speed: fall time 동안 정확히 hit line까지 이동하도록 역산
-     stageHeight - 102 = hit line Y, 시작 Y = -28
-     total distance = hitLine + 28
-     speed = distance / (NOTE_FALL_MS / 16.666) px per frame */
+  /* 롱노트 높이: BPM 2박 길이만큼 픽셀로 변환 */
+  const bpm = getBpm();
+  const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
   const hitLine = stageH - 102;
-  const totalDist = hitLine + 28;
+  const totalDist = hitLine + 48;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
+  const longHeight = isLong ? Math.round(speed * (beat * 2 / 16.666)) : 48;
+
+  const note = document.createElement('div');
+  let cls = 'mini-note';
+  if (altClass) cls += ' ' + altClass;
+  if (isLong)   cls += ' long';
+  note.className = cls;
+  note.style.height = longHeight + 'px';
+  note.style.transform = 'translate(-50%, -' + (longHeight + 4) + 'px)';
+  laneEl.appendChild(note);
 
   miniGame.notes.push({
     id: ++miniGame.noteSeq,
     lane,
-    y: -28,
+    y: -(longHeight + 4),
+    height: longHeight,
     speed,
+    isLong: !!isLong,
+    holding: false,   /* 현재 누르고 있는 중인지 */
+    held: false,      /* 롱노트 판정 시작됐는지 */
     el: note
   });
 }
@@ -7132,20 +7161,18 @@ function getBpm(){
 
 function beginMiniGameSpawns(){
   const bpm  = getBpm();
-  const beat = 60000 / bpm;   /* 한 박자 ms */
+  const beat = 60000 / bpm;
   let   beatIdx = 0;
 
-  /* 첫 노트 즉시 생성 */
   spawnMiniNote();
 
-  /* 2박(2분음표) 단위로 노트 생성 — 여유있게 하나씩
-     가끔 확률로 추가 노트 삽입 */
   miniGame.spawnTimer = setInterval(() => {
     beatIdx++;
-    spawnMiniNote();
-    /* 4박에 한 번 꼴로 연속 노트 추가 */
-    if (Math.random() < 0.20) {
-      setTimeout(() => spawnMiniNote('alt'), beat * 0.5);
+    const isLong = Math.random() < 0.20;   /* 20% 확률로 롱노트 */
+    const isAlt  = !isLong && Math.random() < 0.35;
+    spawnMiniNote(isAlt ? 'alt' : null, isLong);
+    if (!isLong && Math.random() < 0.20) {
+      setTimeout(() => spawnMiniNote('alt', false), beat * 0.5);
     }
   }, beat * 2);
 }
@@ -7162,12 +7189,12 @@ function pressMiniLane(lane){
   const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
   if (btn) {
     btn.classList.add('active');
-    setTimeout(() => btn.classList.remove('active'), 90);
+    /* pointerup은 releaseMiniLane에서 처리 */
   }
 
   const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
   const candidates = miniGame.notes
-    .filter(note => note.lane === lane)
+    .filter(note => note.lane === lane && !note.holding)
     .sort((a, b) => Math.abs(a.y - hitLine) - Math.abs(b.y - hitLine));
 
   if (!candidates.length) {
@@ -7182,21 +7209,47 @@ function pressMiniLane(lane){
   const target = candidates[0];
   const distance = Math.abs(target.y - hitLine);
 
-  if (distance <= 34) {
-    miniGame.score += 120 + Math.min(60, miniGame.combo * 2);
-    miniGame.combo += 1;
-    miniGame.perfect += 1;
-    target.el.classList.add('hit');
-    showMiniFeedback('PERFECT', 'perfect');
-    spawnMiniHitFX(lane, 'perfect');
-    triggerMiniStagePulse();
-  } else if (distance <= 72) {
-    miniGame.score += 80;
-    miniGame.combo += 1;
-    miniGame.good += 1;
-    target.el.classList.add('hit');
-    showMiniFeedback('COOL', 'cool');
-    spawnMiniHitFX(lane, 'cool');
+  if (distance <= 54) {          /* PERFECT 판정 윈도우 확대 */
+    if (target.isLong) {
+      /* 롱노트: 누르기 시작 판정 */
+      target.holding = true;
+      target.held = true;
+      target.el.classList.add('holding');
+      miniGame.holdingNote = target;
+      miniGame.combo += 1;
+      miniGame.perfect += 1;
+      showMiniFeedback('HOLD!', 'perfect');
+      triggerMiniStagePulse();
+    } else {
+      miniGame.score += 120 + Math.min(60, miniGame.combo * 2);
+      miniGame.combo += 1;
+      miniGame.perfect += 1;
+      target.el.classList.add('hit');
+      showMiniFeedback('PERFECT', 'perfect');
+      spawnMiniHitFX(lane, 'perfect');
+      triggerMiniStagePulse();
+      target.el.remove();
+      miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
+    }
+  } else if (distance <= 100) {  /* COOL 판정 윈도우 확대 */
+    if (target.isLong) {
+      target.holding = true;
+      target.held = true;
+      target.el.classList.add('holding');
+      miniGame.holdingNote = target;
+      miniGame.combo += 1;
+      miniGame.good += 1;
+      showMiniFeedback('HOLD!', 'cool');
+    } else {
+      miniGame.score += 80;
+      miniGame.combo += 1;
+      miniGame.good += 1;
+      target.el.classList.add('hit');
+      showMiniFeedback('COOL', 'cool');
+      spawnMiniHitFX(lane, 'cool');
+      target.el.remove();
+      miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
+    }
   } else {
     miniGame.combo = 0;
     miniGame.miss += 1;
@@ -7206,8 +7259,30 @@ function pressMiniLane(lane){
     return;
   }
 
-  target.el.remove();
-  miniGame.notes = miniGame.notes.filter(note => note.id !== target.id);
+  updateMiniGameHUD();
+}
+
+function releaseMiniLane(lane){
+  const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
+  if (btn) btn.classList.remove('active');
+
+  if (!miniGame.holdingNote) return;
+  const note = miniGame.holdingNote;
+  if (note.lane !== lane) return;
+
+  /* 롱노트 완료 — 끝까지 누른 경우 보너스 */
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 102;
+  const isComplete = note.y + note.height >= hitLine;
+  if (isComplete) {
+    miniGame.score += 200 + Math.min(80, miniGame.combo * 3);
+    spawnMiniHitFX(lane, 'perfect');
+    triggerMiniStagePulse();
+  }
+  note.holding = false;
+  note.el.classList.remove('holding');
+  note.el.classList.add('hit');
+  miniGame.holdingNote = null;
+  miniGame.notes = miniGame.notes.filter(n => n.id !== note.id);
   updateMiniGameHUD();
 }
 
@@ -7220,7 +7295,34 @@ function tickMiniGame(now){
     note.y += note.speed * 16.666;
     note.el.style.transform = `translate(-50%, ${note.y}px)`;
 
-    if (note.y > hitLine + 52) {
+    /* 롱노트 누르는 중: 매 프레임 점수 누적 */
+    if (note.isLong && note.holding) {
+      miniGame.score += 2;
+      /* 롱노트 tail이 hitLine 아래로 완전히 내려가면 자동 완료 */
+      if (note.y + note.height > hitLine + 60) {
+        note.holding = false;
+        note.el.classList.remove('holding');
+        note.el.classList.add('hit');
+        if (miniGame.holdingNote && miniGame.holdingNote.id === note.id) {
+          miniGame.holdingNote = null;
+        }
+        spawnMiniHitFX(note.lane, 'perfect');
+        return false;
+      }
+      return true;
+    }
+
+    /* 롱노트인데 안 잡힌 채로 라인 지남 → miss */
+    if (note.isLong && !note.held && note.y > hitLine + 60) {
+      note.el.remove();
+      miniGame.combo = 0;
+      miniGame.miss += 1;
+      showMiniFeedback('MISS', 'miss');
+      return false;
+    }
+
+    /* 일반 노트 miss */
+    if (!note.isLong && note.y > hitLine + 52) {
       note.el.remove();
       miniGame.combo = 0;
       miniGame.miss += 1;
@@ -7353,6 +7455,21 @@ function applyConcertMiniGameRewards(){
   const cuteGain = rewardTier >= 2 ? 1 : 0;
   const humorGain = miniGame.good >= 6 ? 1 : 0;
 
+  /* 점수에 따른 인기도 보상/패널티 */
+  let popDelta = 0;
+  let popMsg = '';
+  if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
+    popDelta = +5;
+    popMsg = '팬들이 열광했어! (인기도 +5)';
+  } else if (miniGame.score >= 1500 || miniGame.perfect >= 8) {
+    popDelta = +2;
+    popMsg = '팬들 반응이 좋았어. (인기도 +2)';
+  } else {
+    popDelta = -1;
+    popMsg = '조금 아쉬운 무대였어. (인기도 -1)';
+  }
+  state.stats.popularity = Math.max(0, Math.min(100, (state.stats.popularity || 0) + popDelta));
+
   applyStatDelta({
     practice: practiceGain,
     social: socialGain,
@@ -7369,16 +7486,16 @@ function applyConcertMiniGameRewards(){
   state.concertEventResolved = false;
 
   if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
-    setSeedMessage(dialogues.concertPerfect);
+    setSeedMessage(`${dialogues.concertPerfect} ${popMsg}`);
   } else if (miniGame.score >= 1500 || miniGame.perfect >= 8) {
-    setSeedMessage(dialogues.concertGreat);
+    setSeedMessage(`${dialogues.concertGreat} ${popMsg}`);
   } else {
-    setSeedMessage(dialogues.concertOkay);
+    setSeedMessage(`${dialogues.concertOkay} ${popMsg}`);
   }
 
   miniGameLayer.classList.remove('active');
   miniGameResult.classList.remove('show');
-  miniStartOverlay.classList.add('show');
+  miniStartOverlay.classList.remove('show');
   updateMiniGameProgress(0);
   updateScheduleUI();
   triggerSaveNow();
