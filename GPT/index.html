@@ -990,13 +990,13 @@ img{
   display:grid;
   grid-template-columns:minmax(0,1fr) 68px;
   align-items:end;
-  gap:12px;
-  padding:8px 18px 2px;
+  gap:8px;
+  padding:6px 14px 2px;
 }
 .mini-talkbox{
   position:relative;
-  min-height:64px;
-  padding:14px 18px;
+  min-height:52px;
+  padding:10px 14px;
   border-radius:20px;
   background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,244,248,.88));
   color:#5b4d42;
@@ -1029,7 +1029,7 @@ img{
   align-items:center;
   justify-content:flex-end;
   gap:12px;
-  padding:6px 18px 10px;
+  padding:4px 14px 6px;
   color:#fff8fd;
 }
 .mini-game-stats{
@@ -1055,7 +1055,7 @@ img{
 .mini-rhythm-stage{
   position:relative;
   height:100%;
-  min-height:440px;
+  min-height:min(440px, 52dvh);
   border-radius:24px;
   overflow:hidden;
   background:
@@ -1118,7 +1118,7 @@ img{
 .mini-feedback{
   position:absolute;
   left:50%;
-  top:78px;
+  bottom:106px;
   transform:translateX(-50%);
   min-width:120px;
   text-align:center;
@@ -1135,7 +1135,7 @@ img{
 }
 .mini-feedback.show{
   opacity:1;
-  transform:translateX(-50%) translateY(-10px) scale(1.08);
+  transform:translateX(-50%) translateY(-14px) scale(1.08);
 }
 .mini-feedback.perfect{
   background:rgba(255,240,248,.22);
@@ -9390,6 +9390,7 @@ bootGame();
    영상: https://www.youtube.com/watch?v=UNFk6_to5_0
    - "공연 시작" 버튼 클릭 → 재생
    - 미니게임 종료 / 포기 → 정지
+   - 영상 재생 시간을 게임 duration에 자동 동기화
 ─────────────────────────────────────────────────────────── */
 (function () {
   const VIDEO_ID = 'UNFk6_to5_0';
@@ -9418,7 +9419,26 @@ bootGame();
         playsinline: 1
       },
       events: {
-        onReady: () => { _ytReady = true; }
+        onReady: (e) => {
+          _ytReady = true;
+          /* 영상 길이를 미니게임 duration에 동기화 (밀리초 변환) */
+          try {
+            const dur = e.target.getDuration();
+            if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+              miniGame.duration = Math.floor(dur * 1000);
+            }
+          } catch(err) {}
+        },
+        onStateChange: (e) => {
+          /* YT.PlayerState.ENDED === 0 → 영상 종료 시 미니게임도 종료 */
+          if (e.data === 0) {
+            try {
+              if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
+                if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
+              }
+            } catch(err) {}
+          }
+        }
       }
     });
   };
@@ -9427,7 +9447,14 @@ bootGame();
   window.kvBgm = {
     play() {
       if (!_ytReady || !_ytPlayer) return;
-      try { _ytPlayer.seekTo(0); _ytPlayer.playVideo(); } catch(e) {}
+      try {
+        /* 재생 직전에 최신 영상 길이를 다시 읽어 duration 갱신 */
+        const dur = _ytPlayer.getDuration();
+        if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+          miniGame.duration = Math.floor(dur * 1000);
+        }
+        _ytPlayer.seekTo(0); _ytPlayer.playVideo();
+      } catch(e) {}
     },
     stop() {
       if (!_ytReady || !_ytPlayer) return;
