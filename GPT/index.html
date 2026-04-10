@@ -654,6 +654,16 @@ img{
   letter-spacing:.05em;
   color:#6a584a;
 }
+.date-badge{
+  padding:5px 10px;
+  border-radius:999px;
+  background:rgba(241,167,200,.22);
+  border:1px solid rgba(241,167,200,.38);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.03em;
+  color:#9a5a7a;
+}
 
 .stage-clock-row{
   position:absolute;
@@ -3666,6 +3676,7 @@ body.ending-modal-open{
                 <div class="stage-clock-row seed-stage-clock">
                   <div class="seed-stage-left">
                     <div class="day-badge" id="seedDayBadge">DAY1</div>
+                    <div class="date-badge" id="seedDateBadge">9월 23일</div>
                     <div class="clock-badge" id="seedClockBadge">07:00</div>
                   </div>
                   <div class="coin-pill seed-stage-coin"><span class="coin-icon">🪙</span><strong id="seedMoneyValue">0</strong></div>
@@ -3874,6 +3885,7 @@ body.ending-modal-open{
               <div class="stage-clock-row room-stage-clock">
                 <div class="room-stage-left">
                   <div class="day-badge" id="roomDayBadge">DAY1</div>
+                  <div class="date-badge" id="roomDateBadge">9월 23일</div>
                   <div class="clock-badge" id="roomClockBadge">07:00</div>
                 </div>
                 <div class="coin-pill room-stage-coin"><span class="coin-icon">🪙</span><strong id="roomMoneyValue">0</strong></div>
@@ -4153,6 +4165,10 @@ const state = {
   day: 1,
   gameHour: 7,
   gameMinute: 0,
+  calMonth: 9,
+  calDay: 23,
+  calYear: 1,
+  birthEventSeenYear: 0,
   energy: 100,
   maxEnergy: 100,
   stats: {
@@ -5055,12 +5071,21 @@ debugOverlay.innerHTML = `
     <div class="debug-head">
       <div class="debug-title-wrap">
         <h3 class="debug-title" id="debugModalTitle">디버그 모드</h3>
-        <div class="debug-sub">엔딩 미리보기를 바로 열 수 있어요.</div>
+        <div class="debug-sub">엔딩 미리보기 및 날짜 이동을 할 수 있어요.</div>
       </div>
       <button type="button" class="debug-close-btn" id="debugCloseBtn" aria-label="디버그 모드 닫기">×</button>
     </div>
     <div class="debug-body">
       <div class="debug-status-text" id="debugStatusText"></div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:900;color:#5b4d42;margin-bottom:8px;">📅 날짜 바꾸기</div>
+        <div style="font-size:11px;color:#8c7d71;margin-bottom:8px;" id="debugDateDisplay">현재: 9월 23일 (1년차)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button type="button" class="debug-ending-btn" id="debugSkip1Day" style="text-align:center;">+1일</button>
+          <button type="button" class="debug-ending-btn" id="debugSkip1Month" style="text-align:center;">+1달</button>
+          <button type="button" class="debug-ending-btn" id="debugSkip1Year" style="text-align:center;">+1년</button>
+        </div>
+      </div>
       <div class="debug-ending-list" id="debugEndingList"></div>
     </div>
   </div>
@@ -5181,6 +5206,31 @@ debugCloseBtn.addEventListener('click', () => setDebugMode(false));
 debugOverlay.addEventListener('click', (e) => {
   if (e.target === debugOverlay) setDebugMode(false);
 });
+
+/* ── 디버그 날짜 이동 ── */
+function refreshDebugDateDisplay(){
+  const el = document.getElementById('debugDateDisplay');
+  if (!el) return;
+  const m = state.calMonth || 9, d = state.calDay || 23, y = state.calYear || 1;
+  el.textContent = `현재: ${m}월 ${d}일 (${y}년차) · DAY${state.day}`;
+}
+(function(){
+  const btn1d = document.getElementById('debugSkip1Day');
+  const btn1m = document.getElementById('debugSkip1Month');
+  const btn1y = document.getElementById('debugSkip1Year');
+  function doSkip(fn){ fn(); state.gameHour=7; state.gameMinute=0; refreshDebugDateDisplay(); updateScheduleUI(); triggerSaveNow(); }
+  if (btn1d) btn1d.addEventListener('click', function(){ doSkip(function(){ state.day+=1; if(typeof kvAdvanceCalDay==='function') kvAdvanceCalDay(); }); });
+  if (btn1m) btn1m.addEventListener('click', function(){
+    doSkip(function(){
+      var m=state.calMonth||9;
+      var days=[0,31,28,31,30,31,30,31,31,30,31,30,31][m]||30;
+      state.day+=days;
+      if(typeof kvAdvanceCalMonth==='function') kvAdvanceCalMonth();
+    });
+  });
+  if (btn1y) btn1y.addEventListener('click', function(){ doSkip(function(){ state.day+=365; if(typeof kvAdvanceCalYear==='function') kvAdvanceCalYear(); }); });
+  if (debugModeBtn) debugModeBtn.addEventListener('click', function(){ setTimeout(refreshDebugDateDisplay,20); });
+})();
 
 if (endingBtn) {
   endingBtn.addEventListener('click', openEndingModal);
@@ -5985,12 +6035,17 @@ function hardResetToNewGame(){
   state.day = 1;
   state.gameHour = 7;
   state.gameMinute = 0;
+  state.calMonth = 9;
+  state.calDay = 23;
+  state.calYear = 1;
+  state.birthEventSeenYear = 0;
   state.energy = 100;
   state.maxEnergy = 100;
   state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
   state.awakened = null;
   state.awards.season = 1;
   state.awards.lastHeldDay = 0;
+  state.awards.lastHeldYear = 0;
   state.awards.hasPending = false;
   state.awards.lastResult = null;
   state.isActing = false;
@@ -6349,6 +6404,7 @@ function openAwardsCeremony(){
   state.awards.lastResult = result;
   state.awards.hasPending = false;
   state.awards.lastHeldDay = state.day;
+  state.awards.lastHeldYear = state.calYear || 1;
   state.awards.season += 1;
 
   renderAwardsCeremony(result);
@@ -6360,16 +6416,21 @@ function openAwardsCeremony(){
 }
 
 function maybeTriggerAwardsCeremony(){
-  const FIRST_AWARDS_DAY = 3;
-  const AWARDS_INTERVAL = 7;
   if (!state.awards) {
     state.awards = { season:1, lastHeldDay:0, hasPending:false, lastResult:null };
   }
 
-  const lastHeldDay = state.awards.lastHeldDay || 0;
-  const nextAwardsDay = lastHeldDay > 0 ? (lastHeldDay + AWARDS_INTERVAL) : FIRST_AWARDS_DAY;
+  // 달력 기준: 매년 12월 30일에 시상식 개최
+  // lastHeldDay 대신 lastHeldYear(calYear)를 사용해 연 1회 보장
+  if (!state.awards.lastHeldYear) state.awards.lastHeldYear = 0;
 
-  if (state.day >= nextAwardsDay) {
+  const curYear  = state.calYear  || 1;
+  const curMonth = state.calMonth || 9;
+  const curDay   = state.calDay   || 23;
+
+  // 12월 30일 이상이고 올해 아직 열지 않았으면 pending
+  const isAwardsDate = (curMonth === 12 && curDay >= 30) || (curMonth > 12);
+  if (isAwardsDate && state.awards.lastHeldYear < curYear) {
     state.awards.hasPending = true;
   }
 
@@ -6988,6 +7049,11 @@ function updateScheduleUI(){
   seedClockBadge.textContent = formatGameTime(state.gameHour, state.gameMinute);
   if (roomDayBadge) roomDayBadge.textContent = `DAY${state.day}`;
   if (roomClockBadge) roomClockBadge.textContent = formatGameTime(state.gameHour, state.gameMinute);
+  const _dateStr = kvGetCalDateString ? kvGetCalDateString() : ((state.calMonth||9)+'월 '+(state.calDay||23)+'일');
+  const _sd = document.getElementById('seedDateBadge');
+  const _rd = document.getElementById('roomDateBadge');
+  if (_sd) _sd.textContent = _dateStr;
+  if (_rd) _rd.textContent = _dateStr;
   stageEnergyFill.style.width = `${clamp((state.energy / state.maxEnergy) * 100, 0, 100)}%`;
 
   Object.keys(state.stats).forEach(key => {
@@ -7151,6 +7217,7 @@ function advanceGameTimeStep(stepMinutes = 1){
       if (state.gameHour >= 24) {
         state.gameHour = 0;
         state.day += 1;
+        if (typeof kvAdvanceCalDay === 'function') kvAdvanceCalDay();
         crossedMidnight = true;
         touchedMidnight = true;
       }
@@ -7658,6 +7725,10 @@ function beginNewSeedRun(){
   state.day = 1;
   state.gameHour = 7;
   state.gameMinute = 0;
+  state.calMonth = 9;
+  state.calDay = 23;
+  state.calYear = 1;
+  state.birthEventSeenYear = 0;
   state.energy = 100;
   state.maxEnergy = 100;
   state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
@@ -7831,7 +7902,7 @@ function serializeGameState(){
       maxEnergy: state.maxEnergy,
       stats: { ...state.stats },
       awakened: state.awakened ? deepClone(state.awakened) : null,
-      awards: deepClone(state.awards || { season:1, lastHeldDay:0, hasPending:false, lastResult:null }),
+      awards: deepClone(state.awards || { season:1, lastHeldDay:0, lastHeldYear:0, hasPending:false, lastResult:null }),
       currentStageBg: state.currentStageBg,
       concertEventOffered: state.concertEventOffered,
       concertEventResolved: state.concertEventResolved,
@@ -7849,7 +7920,11 @@ function serializeGameState(){
       keyCollection: (state.keyCollection || []).map(item => deepClone(item)),
       currentKeyName: state.currentKeyName || null,
       roomDecorIntroPending: !!state.roomDecorIntroPending,
-      currentScreen: getCurrentScreenName()
+      currentScreen: getCurrentScreenName(),
+      calMonth: state.calMonth != null ? state.calMonth : 9,
+      calDay:   state.calDay   != null ? state.calDay   : 23,
+      calYear:  state.calYear  != null ? state.calYear  : 1,
+      birthEventSeenYear: state.birthEventSeenYear || 0
     }
   };
 }
@@ -7886,6 +7961,10 @@ if (!p.roomDecor) p.roomDecor = {
   if (!Array.isArray(p.keyCollection)) p.keyCollection = [];
   if (typeof p.currentKeyName !== 'string' && p.currentKeyName !== null) p.currentKeyName = null;
   if (typeof p.roomDecorIntroPending !== 'boolean') p.roomDecorIntroPending = false;
+  if (typeof p.calMonth !== 'number') p.calMonth = 9;
+  if (typeof p.calDay   !== 'number') p.calDay   = 23;
+  if (typeof p.calYear  !== 'number') p.calYear  = 1;
+  if (typeof p.birthEventSeenYear !== 'number') p.birthEventSeenYear = 0;
 
   p.stats = {
     practice:   oldStats.practice   ?? 0,
@@ -7931,6 +8010,7 @@ function applySaveToState(save){
   state.awards = {
     season: p.awards?.season ?? 1,
     lastHeldDay: p.awards?.lastHeldDay ?? 0,
+    lastHeldYear: p.awards?.lastHeldYear ?? 0,
     hasPending: p.awards?.hasPending ?? false,
     lastResult: p.awards?.lastResult ?? null
   };
@@ -7947,6 +8027,10 @@ function applySaveToState(save){
   state.keyCollection = Array.isArray(p.keyCollection) ? p.keyCollection.map(item => deepClone(item)).filter(Boolean) : [];
   state.currentKeyName = p.currentKeyName ?? null;
   state.roomDecorIntroPending = !!p.roomDecorIntroPending;
+  state.calMonth = p.calMonth != null ? p.calMonth : 9;
+  state.calDay   = p.calDay   != null ? p.calDay   : 23;
+  state.calYear  = p.calYear  != null ? p.calYear  : 1;
+  state.birthEventSeenYear = p.birthEventSeenYear || 0;
   ensureKeyCollectionShape();
   if (state.awakened) addKeyToCollection(state.awakened);
   if (!state.awakened && state.currentKeyName) {
@@ -8938,6 +9022,209 @@ bootGame();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else setTimeout(boot, 0);
+
+})();
+</script>
+
+<script>
+/* ================================================================
+   달력 유틸 (window.kv* 로 노출 — 메인 스크립트에서 호출)
+================================================================ */
+(function(){
+  var MONTH_DAYS = [0,31,28,31,30,31,30,31,31,30,31,30,31];
+  function daysIn(m){ return MONTH_DAYS[m] || 30; }
+
+  window.kvAdvanceCalDay = function(){
+    var m=state.calMonth||9, d=(state.calDay||23)+1, y=state.calYear||1;
+    if(d>daysIn(m)){ d=1; m+=1; if(m>12){m=1;y+=1;} }
+    state.calMonth=m; state.calDay=d; state.calYear=y;
+  };
+  window.kvAdvanceCalMonth = function(){
+    var m=(state.calMonth||9)+1, y=state.calYear||1;
+    if(m>12){m=1;y+=1;}
+    var d=state.calDay||23;
+    if(d>daysIn(m)) d=daysIn(m);
+    state.calMonth=m; state.calDay=d; state.calYear=y;
+  };
+  window.kvAdvanceCalYear = function(){
+    state.calYear=(state.calYear||1)+1;
+  };
+  window.kvGetCalDateString = function(){
+    return (state.calMonth||9)+'월 '+(state.calDay||23)+'일';
+  };
+})();
+
+/* ================================================================
+   🎂 생일 이벤트 시스템 — 매년 9월 23일 자동 발동
+================================================================ */
+(function(){
+  /* ── CSS ── */
+  var bStyle=document.createElement('style');
+  bStyle.textContent=[
+    '#birthdayOverlay{position:fixed;inset:0;z-index:9997;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(24,14,38,.55);backdrop-filter:blur(9px);opacity:0;pointer-events:none;transition:opacity .28s ease}',
+    '#birthdayOverlay.show{opacity:1;pointer-events:auto}',
+    '.bd-card{position:relative;width:min(460px,calc(100vw - 32px));border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,242,252,.96));border:1px solid rgba(241,167,200,.28);box-shadow:0 28px 64px rgba(0,0,0,.28);overflow:hidden;transform:translateY(32px) scale(.97);transition:transform .28s ease;padding:0 0 20px}',
+    '#birthdayOverlay.show .bd-card{transform:translateY(0) scale(1)}',
+    '.bd-header{background:linear-gradient(135deg,rgba(241,167,200,.35),rgba(201,195,232,.35));padding:18px 20px 14px;text-align:center;border-bottom:1px solid rgba(241,167,200,.20)}',
+    '.bd-emoji{font-size:32px;line-height:1;margin-bottom:6px}',
+    '.bd-title{font-size:15px;font-weight:950;color:#5b4252;margin:0;line-height:1.4}',
+    '.bd-talk-row{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:end;padding:16px 20px 0}',
+    '.bd-char{width:56px;height:78px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 8px rgba(109,94,79,.22))}',
+    '.bd-bubble{position:relative;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.94);color:#5b4d42;font-size:13px;font-weight:800;line-height:1.5;box-shadow:0 8px 20px rgba(120,104,87,.10);border:1px solid rgba(241,167,200,.22)}',
+    '.bd-bubble::after{content:"";position:absolute;left:20px;bottom:-10px;width:16px;height:16px;background:rgba(255,255,255,.94);border-right:1px solid rgba(241,167,200,.22);border-bottom:1px solid rgba(241,167,200,.22);transform:rotate(45deg)}',
+    '.bd-scene{display:block;width:calc(100% - 40px);margin:14px 20px 0;height:150px;object-fit:cover;border-radius:18px;background:#f4efe7}',
+    '.bd-scene[src=""]{display:none}',
+    '.bd-progress-wrap{margin:12px 20px 0;display:none}',
+    '.bd-progress-wrap.active{display:block}',
+    '.bd-progress-label{font-size:12px;font-weight:700;color:#8c7d71;margin-bottom:6px}',
+    '.bd-progress-track{height:8px;border-radius:999px;background:rgba(241,167,200,.18);overflow:hidden}',
+    '.bd-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#f1a7c8,#c9c3e8);width:0%;transition:width .1s linear}',
+    '.bd-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 20px 0}',
+    '.bd-btn{padding:11px 8px;border-radius:16px;font-size:12px;font-weight:800;border:1px solid rgba(120,104,87,.14);background:rgba(255,255,255,.86);cursor:pointer;transition:.16s ease;text-align:center}',
+    '.bd-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(120,104,87,.12)}',
+    '.bd-btn.full-width{grid-column:1 / -1}',
+    '.bd-return-btn{display:none;margin:14px 20px 0;width:calc(100% - 40px);padding:13px;border-radius:16px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#f1a7c8,#c9c3e8);color:#4c3f4f;border:none;cursor:pointer;box-shadow:0 10px 22px rgba(188,160,194,.22)}',
+    '.bd-return-btn.show{display:block}',
+    '.bd-stat-pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 20px 0;padding:0}',
+    '.bd-stat-pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:linear-gradient(135deg,rgba(241,167,200,.25),rgba(201,195,232,.25));border:1px solid rgba(241,167,200,.30);color:#7a4a6a}'
+  ].join('');
+  document.head.appendChild(bStyle);
+
+  /* ── 선택지 설정 ── */
+  var BD_CHOICES = [
+    { id:'party',   label:'🎉 친구들과 파티', img:'img/party.png',   prog:'파티장으로 이동 중...', bubble:'신나게 놀았어! 역시 생일엔 친구들이 최고야.',        statDelta:{social:3,humor:2,cute:1},         energyChange:-10, pills:['Social +3','Humor +2','Cute +1','에너지 -10'] },
+    { id:'vacation',label:'✈️ 여행을 간다',   img:'img/vacation.png',prog:'여행지로 이동 중...',   bubble:'새로운 곳에서 나를 다시 발견한 느낌이야.',              statDelta:{mystery:2,scary:1,social:1},      energyChange:+15, pills:['Mystery +2','Scary +1','Social +1','에너지 +15'] },
+    { id:'fanmeet', label:'🎤 팬미팅을 한다', img:'img/fanmeet.png', prog:'팬미팅 준비 중...',     bubble:'팬들의 에너지가 그대로 전달됐어. 감동이었어.',           statDelta:{practice:2,social:2,popularity:3},energyChange:-15, pills:['Practice +2','Social +2','인기 +3','에너지 -15'] },
+    { id:'work',    label:'💼 일을 한다',     img:'img/work.png',    prog:'촬영 현장으로 이동 중...',bubble:'생일에도 일을 하다니... 그래도 뭔가 뿌듯해.',        statDelta:{practice:3,mystery:1},            energyChange:-20, pills:['Practice +3','Mystery +1','에너지 -20'] },
+    { id:'rest',    label:'🏠 집에서 쉰다',   img:'',                prog:'',                      bubble:'조용한 내 방에서 나만의 시간. 이것도 나쁘지 않아.',    statDelta:{},                                energyChange:+20, pills:[] }
+  ];
+  var BD_DURATION_MS = 2200;
+
+  /* ── DOM 빌드 ── */
+  var _bdBuilt = false;
+  function buildBd(){
+    if(_bdBuilt) return; _bdBuilt=true;
+    var div=document.createElement('div');
+    div.id='birthdayOverlay';
+    div.innerHTML='<div class="bd-card">'
+      +'<div class="bd-header"><div class="bd-emoji">🎂</div>'
+      +'<h3 class="bd-title">오늘은 KEY의 생일입니다.<br>어떤 하루를 보내볼까요?</h3></div>'
+      +'<div class="bd-talk-row"><img class="bd-char" id="bdChar" src="img/KEY_default_s.png" alt="KEY"/>'
+      +'<div class="bd-bubble" id="bdBubble">오늘은 내 생일이야. 어떤 하루가 될까?</div></div>'
+      +'<img class="bd-scene" id="bdScene" src="" alt=""/>'
+      +'<div class="bd-progress-wrap" id="bdProgressWrap"><div class="bd-progress-label" id="bdProgressLabel">이동 중...</div>'
+      +'<div class="bd-progress-track"><div class="bd-progress-fill" id="bdProgressFill"></div></div></div>'
+      +'<div class="bd-actions" id="bdActions">'
+      +BD_CHOICES.map(function(c){ return '<button type="button" class="bd-btn'+(c.id==='rest'?' full-width':'')+'" data-bd="'+c.id+'">'+c.label+'</button>'; }).join('')
+      +'</div>'
+      +'<div class="bd-stat-pills" id="bdStatPills" style="display:none"></div>'
+      +'<button type="button" class="bd-return-btn" id="bdReturnBtn">돌아간다</button>'
+      +'</div>';
+    document.body.appendChild(div);
+    div.querySelectorAll('[data-bd]').forEach(function(btn){
+      btn.addEventListener('click', function(){ chooseBd(btn.getAttribute('data-bd')); });
+    });
+    document.getElementById('bdReturnBtn').addEventListener('click', finishBd);
+  }
+
+  /* ── 열기 ── */
+  var _bdOpen=false, _bdRaf=null;
+  window.openBirthdayEvent = function(){
+    if(_bdOpen) return;
+    buildBd(); _bdOpen=true;
+    document.getElementById('bdChar').src=(typeof state!=='undefined'&&state.awakened&&state.awakened.roomImg)||'img/KEY_default_s.png';
+    document.getElementById('bdBubble').textContent='오늘은 내 생일이야. 어떤 하루가 될까?';
+    document.getElementById('bdScene').src='';
+    document.getElementById('bdProgressWrap').className='bd-progress-wrap';
+    document.getElementById('bdProgressFill').style.width='0%';
+    document.getElementById('bdActions').style.display='';
+    document.getElementById('bdStatPills').style.display='none';
+    document.getElementById('bdStatPills').innerHTML='';
+    document.getElementById('bdReturnBtn').className='bd-return-btn';
+    document.getElementById('birthdayOverlay').classList.add('show');
+    if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(true);
+  };
+
+  /* ── 선택 ── */
+  function chooseBd(id){
+    var choice=null;
+    for(var i=0;i<BD_CHOICES.length;i++){ if(BD_CHOICES[i].id===id){choice=BD_CHOICES[i];break;} }
+    if(!choice) return;
+    document.getElementById('bdActions').style.display='none';
+
+    /* 집에서 쉰다 → 즉시 종료 */
+    if(id==='rest'){
+      if(typeof state!=='undefined'){
+        state.energy=Math.min((state.energy||0)+choice.energyChange, state.maxEnergy||100);
+        if(typeof updateScheduleUI==='function') updateScheduleUI();
+      }
+      document.getElementById('bdBubble').textContent=choice.bubble;
+      setTimeout(finishBd,1200); return;
+    }
+
+    /* 이미지 + 프로그레스 */
+    document.getElementById('bdScene').src=choice.img;
+    document.getElementById('bdBubble').textContent='잠깐 다녀올게!';
+    var wrap=document.getElementById('bdProgressWrap');
+    wrap.className='bd-progress-wrap active';
+    document.getElementById('bdProgressLabel').textContent=choice.prog;
+    document.getElementById('bdProgressFill').style.width='0%';
+    var start=performance.now(); cancelAnimationFrame(_bdRaf);
+    function tick(now){
+      var pct=Math.min(100,(now-start)/BD_DURATION_MS*100);
+      document.getElementById('bdProgressFill').style.width=pct+'%';
+      if(pct<100){ _bdRaf=requestAnimationFrame(tick); } else { arriveBd(choice); }
+    }
+    _bdRaf=requestAnimationFrame(tick);
+  }
+
+  /* ── 도착 ── */
+  function arriveBd(choice){
+    document.getElementById('bdProgressWrap').className='bd-progress-wrap';
+    document.getElementById('bdBubble').textContent=choice.bubble;
+    if(typeof state!=='undefined'){
+      /* 스탯 */
+      var delta={};
+      Object.keys(choice.statDelta).forEach(function(k){ if(k!=='popularity') delta[k]=choice.statDelta[k]; });
+      if(typeof applyStatDelta==='function') applyStatDelta(delta);
+      if((choice.statDelta.popularity||0)>0)
+        state.stats.popularity=Math.min(100,(state.stats.popularity||0)+choice.statDelta.popularity);
+      /* 에너지 */
+      state.energy=Math.min(Math.max((state.energy||0)+choice.energyChange,0),state.maxEnergy||100);
+      /* 시간 8시간 경과 */
+      if(typeof advanceGameTime==='function') advanceGameTime(480);
+      if(typeof updateScheduleUI==='function') updateScheduleUI();
+    }
+    /* 스탯 알약 */
+    if(choice.pills&&choice.pills.length){
+      var p=document.getElementById('bdStatPills');
+      p.innerHTML=choice.pills.map(function(t){ return '<span class="bd-stat-pill">'+t+'</span>'; }).join('');
+      p.style.display='flex';
+    }
+    document.getElementById('bdReturnBtn').className='bd-return-btn show';
+  }
+
+  /* ── 종료 ── */
+  function finishBd(){
+    cancelAnimationFrame(_bdRaf); _bdOpen=false;
+    var ov=document.getElementById('birthdayOverlay');
+    if(ov) ov.classList.remove('show');
+    if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(false);
+    if(typeof updateScheduleUI==='function') updateScheduleUI();
+    if(typeof triggerSaveNow==='function') triggerSaveNow();
+  }
+
+  /* ── 폴링 500ms — state 안전 참조 ── */
+  setInterval(function(){
+    try{
+      if(typeof state==='undefined'||!state) return;
+      if(state.calMonth!==9||state.calDay!==23) return;
+      var y=state.calYear||1;
+      if((state.birthEventSeenYear||0)>=y) return;
+      state.birthEventSeenYear=y;
+      if(!_bdOpen) window.openBirthdayEvent();
+    }catch(e){}
+  }, 500);
 
 })();
 </script>
