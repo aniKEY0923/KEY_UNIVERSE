@@ -3689,6 +3689,104 @@ body.ending-modal-open{
 
 </style>
 </head>
+<script>
+/* ── YouTube IFrame API 콜백을 API 로드 전에 미리 선언 ──────────
+   YouTube iframe_api 스크립트는 로드 완료 즉시 이 콜백을 실행하므로
+   반드시 script 태그보다 앞에 정의되어야 합니다.
+──────────────────────────────────────────────────────────── */
+window._ytBgmInit = {
+  player: null,
+  ready: false,
+  loadedId: null,
+
+  applyDuration: function(){
+    try {
+      var dur = this.player.getDuration();
+      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+        miniGame.duration = Math.floor(dur * 1000);
+      }
+    } catch(e) {}
+  },
+
+  getVideoId: function(){
+    var tracks = window.CONCERT_TRACKS;
+    if (!tracks) return null;
+    var level = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
+    var track = tracks[Math.min(level, tracks.length - 1)];
+    return track ? track.videoId : null;
+  }
+};
+
+window.onYouTubeIframeAPIReady = function(){
+  var B = window._ytBgmInit;
+  var container = document.createElement('div');
+  container.id = 'ytBgmHolder';
+  container.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
+  document.body.appendChild(container);
+
+  /* CONCERT_TRACKS가 아직 정의되지 않았을 수 있으므로 첫 트랙 ID를 fallback */
+  var initId = (window.CONCERT_TRACKS && window.CONCERT_TRACKS[0])
+    ? window.CONCERT_TRACKS[0].videoId
+    : 'OYWWnd9ACMI';
+  B.loadedId = initId;
+
+  B.player = new YT.Player('ytBgmHolder', {
+    width: '1', height: '1',
+    videoId: initId,
+    playerVars: {
+      autoplay: 0, controls: 0, disablekb: 1,
+      fs: 0, iv_load_policy: 3, modestbranding: 1,
+      rel: 0, playsinline: 1
+    },
+    events: {
+      onReady: function(e){
+        B.ready = true;
+        B.applyDuration();
+      },
+      onStateChange: function(e){
+        /* ENDED(0) → 미니게임 종료 */
+        if (e.data === 0) {
+          try {
+            if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
+              if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
+            }
+          } catch(err) {}
+        }
+      }
+    }
+  });
+};
+
+/* kvBgm 인터페이스 — 게임 코드에서 호출 */
+window.kvBgm = {
+  play: function(){
+    var B = window._ytBgmInit;
+    if (!B.ready || !B.player) return;
+    try {
+      var vid = B.getVideoId();
+      if (!vid) return;
+      if (vid !== B.loadedId) {
+        B.loadedId = vid;
+        B.player.cueVideoById(vid);
+        setTimeout(function(){
+          B.applyDuration();
+          B.player.seekTo(0);
+          B.player.playVideo();
+        }, 600);
+      } else {
+        B.applyDuration();
+        B.player.seekTo(0);
+        B.player.playVideo();
+      }
+    } catch(e) { console.warn('kvBgm.play error:', e); }
+  },
+  stop: function(){
+    var B = window._ytBgmInit;
+    if (!B.ready || !B.player) return;
+    try { B.player.stopVideo(); } catch(e) {}
+  }
+};
+</script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <body>
 <div class="app">
@@ -6019,6 +6117,7 @@ miniStartBtn.addEventListener('click', (e) => {
   registerUserActivity();
   e.preventDefault();
   beginConcertMiniGamePlay();
+  if (window.kvBgm) window.kvBgm.play();
 });
 
 window.addEventListener('keydown', (e) => {
@@ -6036,6 +6135,7 @@ window.addEventListener('keydown', (e) => {
   if (!miniGame.playing && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
     beginConcertMiniGamePlay();
+    if (window.kvBgm) window.kvBgm.play();
     return;
   }
   if (!miniGame.playing) return;
@@ -7133,6 +7233,7 @@ function beginConcertMiniGamePlay(){
 }
 
 function finishConcertMiniGame(){
+  if (window.kvBgm) window.kvBgm.stop();
   miniGame.active = false;
   miniGame.playing = false;
   closeMiniAbortConfirm();
@@ -9468,137 +9569,11 @@ window.CONCERT_TRACKS = [
   { videoId: 'UNFk6_to5_0', title: '두 번째 콘서트',  threshold: 20 }
 ];
 
-/* ── 콘서트 미니게임 BGM (YouTube IFrame API) ──────────────────
-   - "공연 시작" 버튼 클릭 → state.concertLevel에 맞는 곡 재생
-   - 미니게임 종료 / 포기 → 정지
-   - 영상 재생 시간을 게임 duration에 자동 동기화
-   - 영상 종료 시 게임 자동 종료
-─────────────────────────────────────────────────────────── */
-(function () {
-  let _ytPlayer = null;
-  let _ytReady = false;
-  let _loadedVideoId = null;
-
-  function getCurrentVideoId(){
-    const tracks = window.CONCERT_TRACKS;
-    const level = (typeof state !== 'undefined' ? (state.concertLevel || 0) : 0);
-    const track = tracks[Math.min(level, tracks.length - 1)];
-    return track ? track.videoId : tracks[0].videoId;
-  }
-
-  function applyDuration(player){
-    try {
-      const dur = player.getDuration();
-      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-        miniGame.duration = Math.floor(dur * 1000);
-      }
-    } catch(e) {}
-  }
-
-  window.onYouTubeIframeAPIReady = function () {
-    const container = document.createElement('div');
-    container.id = 'ytBgmHolder';
-    container.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
-    document.body.appendChild(container);
-
-    const initId = getCurrentVideoId();
-    _loadedVideoId = initId;
-
-    _ytPlayer = new YT.Player('ytBgmHolder', {
-      width: '1', height: '1',
-      videoId: initId,
-      playerVars: { autoplay:0, controls:0, disablekb:1, fs:0, iv_load_policy:3, modestbranding:1, rel:0, playsinline:1 },
-      events: {
-        onReady: (e) => {
-          _ytReady = true;
-          applyDuration(e.target);
-        },
-        onStateChange: (e) => {
-          /* YT.PlayerState.ENDED === 0 */
-          if (e.data === 0) {
-            try {
-              if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
-                if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
-              }
-            } catch(err) {}
-          }
-        }
-      }
-    });
-  };
-
-  window.kvBgm = {
-    play() {
-      if (!_ytReady || !_ytPlayer) return;
-      try {
-        const vid = getCurrentVideoId();
-        /* 곡이 바뀐 경우 cueVideoById로 교체 후 재생 */
-        if (vid !== _loadedVideoId) {
-          _loadedVideoId = vid;
-          _ytPlayer.cueVideoById(vid);
-          /* cue 후 바로 duration 읽기는 신뢰할 수 없으므로 짧게 대기 후 읽음 */
-          setTimeout(() => {
-            applyDuration(_ytPlayer);
-            _ytPlayer.seekTo(0);
-            _ytPlayer.playVideo();
-          }, 600);
-        } else {
-          applyDuration(_ytPlayer);
-          _ytPlayer.seekTo(0);
-          _ytPlayer.playVideo();
-        }
-      } catch(e) {}
-    },
-    stop() {
-      if (!_ytReady || !_ytPlayer) return;
-      try { _ytPlayer.stopVideo(); } catch(e) {}
-    }
-  };
-
-  /* beginConcertMiniGamePlay 래핑 → 재생 */
-  function hookBgmStart() {
-    if (typeof window.beginConcertMiniGamePlay !== 'function') return false;
-    if (window.beginConcertMiniGamePlay._bgmHooked) return true;
-    const orig = window.beginConcertMiniGamePlay;
-    window.beginConcertMiniGamePlay = function () {
-      const r = orig.apply(this, arguments);
-      window.kvBgm.play();
-      return r;
-    };
-    window.beginConcertMiniGamePlay._bgmHooked = true;
-    return true;
-  }
-
-  /* finishConcertMiniGame 래핑 → 정지 */
-  function hookBgmStop() {
-    if (typeof window.finishConcertMiniGame !== 'function') return false;
-    if (window.finishConcertMiniGame._bgmHooked) return true;
-    const orig = window.finishConcertMiniGame;
-    window.finishConcertMiniGame = function () {
-      window.kvBgm.stop();
-      return orig.apply(this, arguments);
-    };
-    window.finishConcertMiniGame._bgmHooked = true;
-    return true;
-  }
-
-  /* 포기 버튼도 정지 */
-  function hookAbortStop() {
-    const btn = document.getElementById('miniAbortConfirmBtn');
-    if (!btn || btn._bgmHooked) return;
-    btn.addEventListener('click', () => window.kvBgm.stop(), { capture: true });
-    btn._bgmHooked = true;
-  }
-
-  let tries = 0;
-  const tick = setInterval(() => {
-    tries++;
-    const s = hookBgmStart();
-    const e = hookBgmStop();
-    hookAbortStop();
-    if ((s && e) || tries > 100) clearInterval(tick);
-  }, 100);
-})();
+/* 포기 버튼 → BGM 정지 (DOM 준비 후 연결) */
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('miniAbortConfirmBtn');
+  if (btn) btn.addEventListener('click', function(){ window.kvBgm && window.kvBgm.stop(); }, { capture: true });
+});
 </script>
 </body>
 </html>
