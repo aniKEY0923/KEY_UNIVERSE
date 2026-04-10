@@ -7014,6 +7014,11 @@ function abortConcertMiniGame(){
   /* 포기 후 플래그 리셋 → 조건 충족 시 다시 콘서트 카드 표시 가능 */
   state.concertEventOffered  = false;
   state.concertEventResolved = false;
+  /* 액션/버튼 상태 완전 초기화 */
+  if (state.actionFinishTimer) { clearTimeout(state.actionFinishTimer); state.actionFinishTimer = null; }
+  state.isActing = false;
+  clearActionProgress();
+  setScheduleButtonsDisabled(false);
   setSeedMessage('공연을 중간에 멈췄어. 팬들이 조금 아쉬워하는 것 같아.', { idleAfterMs:SEED_IDLE_MS });
   updateScheduleUI();
   triggerSaveNow();
@@ -7072,32 +7077,85 @@ function clearMiniNotes(){
   miniGame.notes = [];
 }
 
-function spawnMiniNote(){
+/* 노트 낙하 시간 (ms) — 이 시간 동안 화면 위→ hit line 이동 */
+const NOTE_FALL_MS = 1400;
+
+function spawnMiniNote(altClass){
   if (!miniGame.active || !miniGame.playing) return;
+
+  /* ── spawn cutoff: 게임 종료 전 fall time 이내엔 생성 금지 ── */
+  const elapsed = performance.now() - miniGame.startTime;
+  if (elapsed > miniGame.duration - NOTE_FALL_MS) return;
+
   const lane = 0;
   const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
   if (!laneEl) return;
 
   const note = document.createElement('div');
-  note.className = 'mini-note';
+  note.className = 'mini-note' + (altClass ? ' ' + altClass : '');
   note.style.transform = 'translate(-50%, -28px)';
   laneEl.appendChild(note);
+
+  /* speed: fall time 동안 정확히 hit line까지 이동하도록 역산
+     stageHeight - 102 = hit line Y, 시작 Y = -28
+     total distance = hitLine + 28
+     speed = distance / (NOTE_FALL_MS / 16.666) px per frame */
+  const stageH = miniRhythmStage.clientHeight || 420;
+  const hitLine = stageH - 102;
+  const totalDist = hitLine + 28;
+  const speed = totalDist / (NOTE_FALL_MS / 16.666);
 
   miniGame.notes.push({
     id: ++miniGame.noteSeq,
     lane,
     y: -28,
-    speed: (miniRhythmStage.clientHeight || 420) * (0.00042 + Math.random() * 0.00008),
+    speed,
     el: note
   });
 }
-  function triggerMiniStagePulse(){
-    if (!miniRhythmStage) return;
-    miniRhythmStage.classList.remove('perfect-pulse');
-    void miniRhythmStage.offsetWidth;
-    miniRhythmStage.classList.add('perfect-pulse');
-    setTimeout(() => miniRhythmStage.classList.remove('perfect-pulse'), 280);
-  }
+
+function getBpm(){
+  const tracks = window.CONCERT_TRACKS || [];
+  const level  = state.concertLevel || 0;
+  const track  = tracks[Math.min(level, tracks.length - 1)];
+  return (track && track.bpm) ? track.bpm : 120;
+}
+
+function beginMiniGameSpawns(){
+  const bpm      = getBpm();
+  const beat     = 60000 / bpm;   /* 한 박자 ms */
+  const half     = beat / 2;       /* 8분음표 간격 */
+  let   beatIdx  = 0;
+
+  /* 첫 노트 즉시 생성 */
+  spawnMiniNote();
+
+  /* 8분음표(half beat) 단위로 스케줄링
+     패턴: 4박 중 박자에 따라 노트 또는 쉼 */
+  miniGame.spawnTimer = setInterval(() => {
+    beatIdx++;
+    const beatInBar = beatIdx % 8;  /* 8분음표 기준 한 마디 */
+
+    /* 기본 패턴: 1, 3, 5, 7번째(4분음표 위치)에 노트
+       + 간헐적으로 추가 노트 삽입해 변화 */
+    const isOnBeat   = (beatInBar % 2 === 0);         /* 4분음표 */
+    const isOffBeat  = (beatInBar % 2 === 1);         /* 8분음표 사이 */
+    const extraChance = bpm >= 140 ? 0.30 : 0.18;     /* 빠른 곡은 더 많이 */
+
+    if (isOnBeat) {
+      spawnMiniNote();
+    } else if (isOffBeat && Math.random() < extraChance) {
+      spawnMiniNote('alt');  /* alt 스타일 노트 */
+    }
+  }, half);
+}
+function triggerMiniStagePulse(){
+  if (!miniRhythmStage) return;
+  miniRhythmStage.classList.remove('perfect-pulse');
+  void miniRhythmStage.offsetWidth;
+  miniRhythmStage.classList.add('perfect-pulse');
+  setTimeout(() => miniRhythmStage.classList.remove('perfect-pulse'), 280);
+}
 function pressMiniLane(lane){
   if (!miniGame.active || !miniGame.playing) return;
 
@@ -7189,18 +7247,13 @@ function tickMiniGame(now){
   miniGame.rafId = requestAnimationFrame(tickMiniGame);
 }
 
-function beginMiniGameSpawns(){
-  spawnMiniNote();
-  miniGame.spawnTimer = setInterval(() => {
-    spawnMiniNote();
-    if (Math.random() < 0.18) {
-      setTimeout(spawnMiniNote, 760);
-    }
-  }, 1180);
-}
-
 function openConcertMiniGame(){
   if (miniGame.active) return;
+
+  /* 진행 중인 스케줄 액션이 있으면 취소 */
+  if (state.actionFinishTimer) { clearTimeout(state.actionFinishTimer); state.actionFinishTimer = null; }
+  state.isActing = false;
+  clearActionProgress();
 
   miniGame.active = true;
   miniGame.playing = false;
@@ -9584,13 +9637,13 @@ bootGame();
    게임 내 duration은 YouTube onReady에서 자동으로 읽어옴
 ══════════════════════════════════════════════════════════════ */
 window.CONCERT_TRACKS = [
-  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',       threshold: 10 },
-  { videoId: 'UNFk6_to5_0', title: '가솔린 (Gasoline)', threshold: 20 },
-  { videoId: 'dUd_9R_qJSg', title: 'Killer',          threshold: 30 },
-  { videoId: 'ZYHBKvNUmk0', title: 'Good & Great',    threshold: 40 },
-  { videoId: 'LgQRl5qED6c', title: 'Pleasure Shop',   threshold: 50 },
-  { videoId: 'aH0zux6WOM4', title: 'Tongue Tied',     threshold: 60 },
-  { videoId: 'ktCF5D6ECk0', title: 'HUNTER',          threshold: 70 }
+  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',         threshold: 10, bpm: 120 },
+  { videoId: 'UNFk6_to5_0', title: '가솔린 (Gasoline)', threshold: 20, bpm: 150 },
+  { videoId: 'dUd_9R_qJSg', title: 'Killer',            threshold: 30, bpm: 130 },
+  { videoId: 'ZYHBKvNUmk0', title: 'Good & Great',      threshold: 40, bpm: 118 },
+  { videoId: 'LgQRl5qED6c', title: 'Pleasure Shop',     threshold: 50, bpm: 122 },
+  { videoId: 'aH0zux6WOM4', title: 'Tongue Tied',       threshold: 60, bpm: 120 },
+  { videoId: 'ktCF5D6ECk0', title: 'HUNTER',            threshold: 70, bpm: 128 }
 ];
 
 /* 포기 버튼 → BGM 정지 (DOM 준비 후 연결) */
