@@ -3722,10 +3722,21 @@ window._ytBgm = {
 
 window.onYouTubeIframeAPIReady = function(){
   var B = window._ytBgm;
-  var holder = document.createElement('div');
-  holder.id = 'ytBgmHolder';
-  holder.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
-  document.body.appendChild(holder);
+  /* holder는 body에 미리 박아둔 div 사용 — body가 없는 시점 오류 방지 */
+  var holder = document.getElementById('ytBgmHolder');
+  if (!holder) {
+    /* 혹시 못 찾으면 body 준비될 때까지 대기 후 재시도 */
+    if (document.body) {
+      holder = document.createElement('div');
+      holder.id = 'ytBgmHolder';
+      document.body.appendChild(holder);
+    } else {
+      document.addEventListener('DOMContentLoaded', function(){
+        window.onYouTubeIframeAPIReady();
+      });
+      return;
+    }
+  }
 
   B.player = new YT.Player('ytBgmHolder', {
     width: '1', height: '1',
@@ -3790,6 +3801,8 @@ window.kvBgm = {
 </script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <body>
+<!-- YouTube BGM 플레이어 holder — head 스크립트에서 참조하므로 body 최상단에 위치 -->
+<div id="ytBgmHolder" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;"></div>
 <div class="app">
 
   <section class="screen active" id="screen-schedule">
