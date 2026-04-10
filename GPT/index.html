@@ -9220,6 +9220,8 @@ bootGame();
       if(typeof state==='undefined'||!state) return;
       if(state.calMonth!==9||state.calDay!==23) return;
       var y=state.calYear||1;
+      // 1년차 9월 23일은 게임 시작일 — 생일 이벤트 발동하지 않음
+      if(y===1&&state.day===1) return;
       if((state.birthEventSeenYear||0)>=y) return;
       state.birthEventSeenYear=y;
       if(!_bdOpen) window.openBirthdayEvent();
