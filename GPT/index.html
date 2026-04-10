@@ -1160,7 +1160,7 @@ img{
   position:absolute;
   left:50%;
   width:min(18%, 52px);
-  height:32px;
+  height:56px;
   border-radius:10px;
   background:linear-gradient(180deg, #ffb3d4, #ff7eb3);
   box-shadow:0 6px 16px rgba(255,100,170,.30);
@@ -7217,9 +7217,9 @@ function clearMiniNotes(){
 }
 
 /* 노트 낙하 시간 (ms) */
-const NOTE_FALL_MS = 3800;
+const NOTE_FALL_MS = 3000;
 
-function spawnMiniNote(altClass, isLong, lengthBeats){
+function spawnMiniNote(altClass, isLong){
   if (!miniGame.active || !miniGame.playing) return;
 
   const elapsed = performance.now() - miniGame.startTime;
@@ -7233,15 +7233,13 @@ function spawnMiniNote(altClass, isLong, lengthBeats){
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
   const hitLine = stageH - 8;
-  const baseH = 32;
+  const baseH = 56;
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
-  const holdBeats = Math.max(1.5, Number(lengthBeats) || 0);
 
-  /* 롱노트는 차트 길이를 반영하되 지나치게 두껍지 않게 제한 */
-  const longHeightRaw = Math.round(speed * (beat * holdBeats / 16.666));
-  const longHeight = isLong ? Math.max(baseH + 20, Math.min(longHeightRaw, Math.round(stageH * 0.45))) : baseH;
-  const startY = -(longHeight + 10);
+  /* 롱노트 높이: 4박 분량 */
+  const longHeight = isLong ? Math.round(speed * (beat * 4 / 16.666)) : baseH;
+  const startY = -(longHeight + 4);
 
   const note = document.createElement('div');
   let cls = 'mini-note';
@@ -7294,6 +7292,7 @@ function buildBadLoveChart(){
     ],
     [
       { beat: 0.0, type: 'tap' },
+      { beat: 0.5, type: 'tap' },
       { beat: 1.0, type: 'tap' },
       { beat: 1.5, type: 'tap' },
       { beat: 2.0, type: 'tap' },
@@ -7313,6 +7312,7 @@ function buildBadLoveChart(){
       { beat: 0.0, type: 'tap' },
       { beat: 1.0, type: 'tap' },
       { beat: 2.0, type: 'tap' },
+      { beat: 2.5, type: 'tap' },
       { beat: 3.0, type: 'tap' },
       { beat: 3.5, type: 'tap' }
     ],
@@ -7400,10 +7400,9 @@ function tickSpawnFromMusic(){
   const chart = Array.isArray(miniGame.chart) ? miniGame.chart : [];
   while (miniGame.chartIndex < chart.length) {
     const entry = chart[miniGame.chartIndex];
-    if (entry.beat < 1) { miniGame.chartIndex += 1; continue; }
     const targetTime = entry.beat * beatSeconds;
     if (musicTime + 0.0001 < targetTime) break;
-    spawnMiniNote(null, !!entry.isLong, entry.lengthBeats || 0);
+    spawnMiniNote(null, !!entry.isLong);
     miniGame.chartIndex += 1;
   }
 }
