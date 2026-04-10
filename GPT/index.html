@@ -1160,10 +1160,10 @@ img{
   position:absolute;
   left:50%;
   width:min(18%, 52px);
-  height:56px;
-  border-radius:10px;
+  height:18px;
+  border-radius:6px;
   background:linear-gradient(180deg, #ffb3d4, #ff7eb3);
-  box-shadow:0 6px 16px rgba(255,100,170,.30);
+  box-shadow:0 4px 12px rgba(255,100,170,.30);
   border:1px solid rgba(255,255,255,.55);
 }
 .mini-note.alt{
@@ -1171,14 +1171,14 @@ img{
 }
 .mini-note.long{
   width:min(18%, 52px);
-  border-radius:10px;
+  border-radius:8px;
   background:linear-gradient(180deg, #c9b8f8, #9b7ef5, #c9b8f8);
   border:2px solid rgba(255,255,255,.65);
-  box-shadow:0 0 24px rgba(155,126,245,.45), 0 6px 16px rgba(0,0,0,.18);
+  box-shadow:0 0 24px rgba(155,126,245,.45), 0 4px 12px rgba(0,0,0,.18);
 }
 .mini-note.long.holding{
   background:linear-gradient(180deg, #ddd0ff, #7c4df0, #ddd0ff);
-  box-shadow:0 0 36px rgba(124,77,240,.65), 0 6px 16px rgba(0,0,0,.18);
+  box-shadow:0 0 36px rgba(124,77,240,.65), 0 4px 12px rgba(0,0,0,.18);
 }
 .mini-note.hit{
   opacity:0;
@@ -7129,7 +7129,7 @@ function abortConcertMiniGame(){
   miniStartOverlay.classList.remove('show');
   miniGameLayer.classList.remove('active');
   const _sc1 = document.getElementById('seedStageCard');
-  if (_sc1) _sc1.style.visibility = '';
+  if (_sc1) _sc1.style.display = '';
   updateMiniGameProgress(0);
 
   /* 인기도 패널티 */
@@ -7219,7 +7219,7 @@ function clearMiniNotes(){
 /* 노트 낙하 시간 (ms) */
 const NOTE_FALL_MS = 3000;
 
-function spawnMiniNote(altClass, isLong){
+function spawnMiniNote(altClass, isLong, targetSec){
   if (!miniGame.active || !miniGame.playing) return;
 
   const elapsed = performance.now() - miniGame.startTime;
@@ -7233,7 +7233,7 @@ function spawnMiniNote(altClass, isLong){
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
   const hitLine = stageH - 8;
-  const baseH = 56;
+  const baseH = 18;   /* 일반 노트 세로 높이 (가로:세로 3:1) */
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
 
@@ -7249,6 +7249,11 @@ function spawnMiniNote(altClass, isLong){
   note.style.transform = `translate(-50%, ${startY}px)`;
   laneEl.appendChild(note);
 
+  /* targetHitTime: 채보의 정확한 히트 시각 (performance.now 기준 ms) */
+  const hitTimeMs = targetSec != null
+    ? miniGame.startTime + targetSec * 1000
+    : performance.now() + NOTE_FALL_MS;
+
   miniGame.notes.push({
     id: ++miniGame.noteSeq,
     lane,
@@ -7259,8 +7264,7 @@ function spawnMiniNote(altClass, isLong){
     holding: false,
     held: false,
     holdBroken: false,
-    /* 목표 히트 시간 = performance.now() 기준 (판정과 동일한 기준) */
-    targetHitTime: performance.now() + NOTE_FALL_MS,
+    targetHitTime: hitTimeMs,
     el: note
   });
 }
@@ -7393,16 +7397,20 @@ function getYtCurrentTime(){
 function tickSpawnFromMusic(){
   if (!miniGame.active || !miniGame.playing) return;
   const bpm = getBpm();
-  const beatSeconds = 60 / bpm;
-  const musicTime = getYtCurrentTime();
-  if (musicTime < 0) return;
+  const beatMs = 60000 / bpm;   /* 한 박자 = ms */
+
+  /* performance 기반 경과 시간(ms) — YouTube 시간과 무관하게 일관성 유지 */
+  const elapsedMs = performance.now() - miniGame.startTime;
+  const elapsedSec = elapsedMs / 1000;
 
   const chart = Array.isArray(miniGame.chart) ? miniGame.chart : [];
   while (miniGame.chartIndex < chart.length) {
     const entry = chart[miniGame.chartIndex];
-    const targetTime = entry.beat * beatSeconds;
-    if (musicTime + 0.0001 < targetTime) break;
-    spawnMiniNote(null, !!entry.isLong);
+    const targetSec = entry.beat * (60 / bpm);   /* 노트가 나와야 할 시간(초) */
+    /* NOTE_FALL_MS 전에 미리 스폰해야 hitLine에 정확히 도달 */
+    const spawnAtSec = targetSec - NOTE_FALL_MS / 1000;
+    if (elapsedSec < spawnAtSec) break;
+    spawnMiniNote(null, !!entry.isLong, targetSec);
     miniGame.chartIndex += 1;
   }
 }
@@ -7635,7 +7643,7 @@ function openConcertMiniGame(){
   miniGameLayer.classList.add('active');
   miniStartOverlay.classList.add('show');
   const _sc = document.getElementById('seedStageCard');
-  if (_sc) _sc.style.visibility = 'hidden';
+  if (_sc) _sc.style.display = 'none';
   if (miniTalkChar) miniTalkChar.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
   setMiniTalk(miniTalkLines.ready);
 
@@ -7759,7 +7767,7 @@ function applyConcertMiniGameRewards(){
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
   const _sc2 = document.getElementById('seedStageCard');
-  if (_sc2) _sc2.style.visibility = '';
+  if (_sc2) _sc2.style.display = '';
   updateMiniGameProgress(0);
   updateScheduleUI();
   triggerSaveNow();
