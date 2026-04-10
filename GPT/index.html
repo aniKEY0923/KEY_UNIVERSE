@@ -3883,6 +3883,7 @@ body.ending-modal-open{
           <div class="mini-hit-line"></div>
           <div class="mini-start-overlay show" id="miniStartOverlay">
             <div class="mini-start-card">
+              <div id="miniStartTrackTitle" style="font-size:13px;font-weight:800;color:#7a5a6a;margin-bottom:2px;text-align:center;"></div>
               <button type="button" class="mini-start-btn" id="miniStartBtn">공연 시작</button>
             </div>
           </div>
@@ -3892,6 +3893,7 @@ body.ending-modal-open{
 
           <div class="mini-game-result" id="miniGameResult">
             <div class="mini-result-card">
+              <div id="miniResultTrackName" style="font-size:12px;font-weight:800;color:#a07890;margin-bottom:6px;"></div>
               <div class="mini-result-title" id="miniResultTitle">좋은 무대였어요</div>
               <div class="mini-result-desc" id="miniResultDesc">오늘 무대, 진짜 뜨거웠어.</div>
               <div class="mini-result-grid">
@@ -4288,6 +4290,8 @@ const state = {
   currentStageBg: 'default',
   concertEventOffered: false,
   concertEventResolved: false,
+  concertLevel: 0,          /* 다음으로 개최할 콘서트 인덱스 (0=첫번째) */
+  concertsDone: 0,          /* 지금까지 완료한 콘서트 횟수 */
   seedPlayer: {
     x: 80,
     y: 170,
@@ -5962,7 +5966,7 @@ concertYesBtn.addEventListener('click', async () => {
 });
 
 concertNoBtn.addEventListener('click', async () => {
-  state.concertEventResolved = true;
+  /* "아니오" → 지금은 숨기되 practice 조건이 유지되는 한 다음 번에 다시 나타남 */
   hideConcertEvent();
   setSeedMessage(dialogues.concertNo);
   updateScheduleUI();
@@ -6157,6 +6161,8 @@ function hardResetToNewGame(){
   state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
+  state.concertLevel = 0;
+  state.concertsDone = 0;
   state.roomDecor = {
     lpPlayer:false, desk:false, birdCage:false,
     mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
@@ -7097,6 +7103,16 @@ function openConcertMiniGame(){
   miniStartOverlay.classList.add('show');
   if (miniTalkChar) miniTalkChar.src = state.awakened ? (state.awakened.roomImg || imageSet.defaultRoom) : imageSet.defaultRoom;
   setMiniTalk(miniTalkLines.ready);
+
+  /* 현재 콘서트 트랙 제목 표시 */
+  const _startTitleEl = document.getElementById('miniStartTrackTitle');
+  if (_startTitleEl) {
+    const _tracks = window.CONCERT_TRACKS || [];
+    const _level  = state.concertLevel || 0;
+    const _track  = _tracks[Math.min(_level, _tracks.length - 1)];
+    _startTitleEl.textContent = _track ? `🎤 ${_track.title}` : '';
+  }
+
   updateMiniGameHUD();
   updateMiniGameProgress(0);
 }
@@ -7139,6 +7155,15 @@ function finishConcertMiniGame(){
   else if (miniGame.score >= 1500 || miniGame.perfect >= 8) speakMiniTalk('finishGood');
   else speakMiniTalk('finishOkay');
 
+  /* 결과 화면에 콘서트 트랙 이름 표시 */
+  const _resTrackEl = document.getElementById('miniResultTrackName');
+  if (_resTrackEl) {
+    const _trks = window.CONCERT_TRACKS || [];
+    const _lv   = state.concertLevel || 0;
+    const _trk  = _trks[Math.min(_lv, _trks.length - 1)];
+    _resTrackEl.textContent = _trk ? `🎤 ${_trk.title}` : '';
+  }
+
   miniResultTitle.textContent = title;
   miniResultDesc.textContent = desc;
   miniResultScore.textContent = miniGame.score;
@@ -7163,6 +7188,12 @@ function applyConcertMiniGameRewards(){
 
   state.energy = clamp(state.energy - (rewardTier === 3 ? 10 : 12), 0, state.maxEnergy);
 
+  /* 콘서트 완료 → 다음 레벨로 진행, 플래그 리셋 */
+  state.concertsDone = (state.concertsDone || 0) + 1;
+  state.concertLevel = (state.concertLevel || 0) + 1;
+  state.concertEventOffered  = false;
+  state.concertEventResolved = false;
+
   if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
     setSeedMessage(dialogues.concertPerfect);
   } else if (miniGame.score >= 1500 || miniGame.perfect >= 8) {
@@ -7181,6 +7212,15 @@ function applyConcertMiniGameRewards(){
 
 function showConcertEvent(){
   if (state.concertEventResolved) return;
+  const tracks = window.CONCERT_TRACKS || [];
+  const level  = state.concertLevel || 0;
+  const track  = tracks[Math.min(level, tracks.length - 1)];
+  const titleEl = document.querySelector('#concertEventCard .event-title');
+  const descEl  = document.querySelector('#concertEventCard .event-desc');
+  if (titleEl) titleEl.textContent = `${track ? track.title : '콘서트'}를 개최하시겠습니까?`;
+  if (descEl)  descEl.textContent  = track
+    ? `Practice ${track.threshold} 달성! 지금 바로 무대에 올라가 볼까요?`
+    : '연습 점수가 쌓였어요. 지금 바로 무대에 올라가 볼까요?';
   concertEventCard.classList.add('show');
 }
 
@@ -7189,11 +7229,30 @@ function hideConcertEvent(){
 }
 
 function maybeTriggerConcertEvent(){
-  if (state.stats.practice >= 10 && !state.concertEventOffered && !state.concertEventResolved) {
+  const tracks = window.CONCERT_TRACKS || [];
+  const level  = state.concertLevel || 0;
+
+  /* 아직 남은 콘서트가 있는지 확인 */
+  if (level >= tracks.length) {
+    /* 모든 콘서트 완료 → 카드 숨김 */
+    hideConcertEvent();
+    return;
+  }
+
+  const needed = tracks[level].threshold;
+
+  /* 이미 오퍼됐거나 해결됐으면 숨기기만 */
+  if (state.concertEventOffered || state.concertEventResolved) {
+    if (!state.concertEventOffered) hideConcertEvent();
+    return;
+  }
+
+  if (state.stats.practice >= needed) {
     state.concertEventOffered = true;
-    setSeedMessage(dialogues.concertReady);
+    const track = tracks[level];
+    setSeedMessage(`${track.title} 준비가 됐어. 이제 무대에 올라볼 수 있을 것 같아.`);
     showConcertEvent();
-  } else if (!state.concertEventResolved) {
+  } else {
     hideConcertEvent();
   }
 }
@@ -7212,13 +7271,14 @@ function updateScheduleUI(){
 
   Object.keys(state.stats).forEach(key => {
     const el = statEls[key];
+    const statMax = (key === 'practice') ? 100 : 10;
     if (!el) return;
     if (el.val) el.val.textContent = state.stats[key];
-    if (el.fill) el.fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+    if (el.fill) el.fill.style.width = `${Math.min(100, state.stats[key] / statMax * 100)}%`;
 
     const rel = roomStatEls[key];
     if (rel?.val) rel.val.textContent = state.stats[key];
-    if (rel?.fill) rel.fill.style.width = `${Math.min(100, state.stats[key] / 10 * 100)}%`;
+    if (rel?.fill) rel.fill.style.width = `${Math.min(100, state.stats[key] / statMax * 100)}%`;
   });
 
   /* stress / popularity 바 직접 업데이트 (statEls에 없는 경우 대비) */
@@ -7891,6 +7951,8 @@ function beginNewSeedRun(){
   state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
+  state.concertLevel = 0;
+  state.concertsDone = 0;
   state.activeRoomVisitor = null;
   state.seedPlayer.facing = 'right';
   state.roomPlayer.facing = 'right';
@@ -7970,6 +8032,8 @@ function resetAll(){
   state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
+  state.concertLevel = 0;
+  state.concertsDone = 0;
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,// 기존 8개에 아래 12개 추가
 crystalBall: false,
 punchingBag: false,
@@ -8060,6 +8124,8 @@ function serializeGameState(){
       currentStageBg: state.currentStageBg,
       concertEventOffered: state.concertEventOffered,
       concertEventResolved: state.concertEventResolved,
+      concertLevel: state.concertLevel || 0,
+      concertsDone: state.concertsDone || 0,
       seedPlayer: { ...state.seedPlayer },
       roomPlayer: { ...state.roomPlayer },
       roomDecor: { ...state.roomDecor },
@@ -8097,6 +8163,8 @@ function migrateSave(save){
   if (typeof p.gameMinute !== 'number') p.gameMinute = 0;
   if (typeof p.concertEventOffered !== 'boolean') p.concertEventOffered = false;
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
+  if (typeof p.concertLevel !== 'number') p.concertLevel = 0;
+  if (typeof p.concertsDone !== 'number') p.concertsDone = 0;
 if (!p.roomDecor) p.roomDecor = {
   lpPlayer:false, desk:false, birdCage:false, mirrorBall:false,
   vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
@@ -8172,6 +8240,8 @@ function applySaveToState(save){
   state.currentStageBg = p.currentStageBg ?? 'default';
   state.concertEventOffered = p.concertEventOffered ?? false;
   state.concertEventResolved = p.concertEventResolved ?? false;
+  state.concertLevel = p.concertLevel ?? 0;
+  state.concertsDone = p.concertsDone ?? 0;
   state.roomDecor = { lpPlayer:false, desk:false, birdCage:false, mirrorBall:false, vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false, ...(p.roomDecor || {}) };
   state.activeRoomVisitor = p.activeRoomVisitor ?? null;
   state.roomSeenFriendEvents = Array.isArray(p.roomSeenFriendEvents) ? [...p.roomSeenFriendEvents] : [];
@@ -9386,51 +9456,65 @@ bootGame();
 </script>
 
 <script>
+/* ══════════════════════════════════════════════════════════════
+   콘서트 트랙 목록
+   - videoId   : YouTube 영상 ID
+   - title     : 곡 제목 (UI 표시용)
+   - threshold : 이 콘서트를 개최하려면 필요한 practice 수치
+   게임 내 duration은 YouTube onReady에서 자동으로 읽어옴
+══════════════════════════════════════════════════════════════ */
+window.CONCERT_TRACKS = [
+  { videoId: 'OYWWnd9ACMI', title: '첫 번째 콘서트',  threshold: 10 },
+  { videoId: 'UNFk6_to5_0', title: '두 번째 콘서트',  threshold: 20 }
+];
+
 /* ── 콘서트 미니게임 BGM (YouTube IFrame API) ──────────────────
-   영상: https://www.youtube.com/watch?v=UNFk6_to5_0
-   - "공연 시작" 버튼 클릭 → 재생
+   - "공연 시작" 버튼 클릭 → state.concertLevel에 맞는 곡 재생
    - 미니게임 종료 / 포기 → 정지
    - 영상 재생 시간을 게임 duration에 자동 동기화
+   - 영상 종료 시 게임 자동 종료
 ─────────────────────────────────────────────────────────── */
 (function () {
-  const VIDEO_ID = 'UNFk6_to5_0';
   let _ytPlayer = null;
   let _ytReady = false;
+  let _loadedVideoId = null;
 
-  /* YouTube IFrame API 콜백 */
+  function getCurrentVideoId(){
+    const tracks = window.CONCERT_TRACKS;
+    const level = (typeof state !== 'undefined' ? (state.concertLevel || 0) : 0);
+    const track = tracks[Math.min(level, tracks.length - 1)];
+    return track ? track.videoId : tracks[0].videoId;
+  }
+
+  function applyDuration(player){
+    try {
+      const dur = player.getDuration();
+      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+        miniGame.duration = Math.floor(dur * 1000);
+      }
+    } catch(e) {}
+  }
+
   window.onYouTubeIframeAPIReady = function () {
     const container = document.createElement('div');
     container.id = 'ytBgmHolder';
     container.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;';
     document.body.appendChild(container);
 
+    const initId = getCurrentVideoId();
+    _loadedVideoId = initId;
+
     _ytPlayer = new YT.Player('ytBgmHolder', {
-      width: '1',
-      height: '1',
-      videoId: VIDEO_ID,
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        disablekb: 1,
-        fs: 0,
-        iv_load_policy: 3,
-        modestbranding: 1,
-        rel: 0,
-        playsinline: 1
-      },
+      width: '1', height: '1',
+      videoId: initId,
+      playerVars: { autoplay:0, controls:0, disablekb:1, fs:0, iv_load_policy:3, modestbranding:1, rel:0, playsinline:1 },
       events: {
         onReady: (e) => {
           _ytReady = true;
-          /* 영상 길이를 미니게임 duration에 동기화 (밀리초 변환) */
-          try {
-            const dur = e.target.getDuration();
-            if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-              miniGame.duration = Math.floor(dur * 1000);
-            }
-          } catch(err) {}
+          applyDuration(e.target);
         },
         onStateChange: (e) => {
-          /* YT.PlayerState.ENDED === 0 → 영상 종료 시 미니게임도 종료 */
+          /* YT.PlayerState.ENDED === 0 */
           if (e.data === 0) {
             try {
               if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
@@ -9443,17 +9527,26 @@ bootGame();
     });
   };
 
-  /* 외부에서 호출할 인터페이스 */
   window.kvBgm = {
     play() {
       if (!_ytReady || !_ytPlayer) return;
       try {
-        /* 재생 직전에 최신 영상 길이를 다시 읽어 duration 갱신 */
-        const dur = _ytPlayer.getDuration();
-        if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-          miniGame.duration = Math.floor(dur * 1000);
+        const vid = getCurrentVideoId();
+        /* 곡이 바뀐 경우 cueVideoById로 교체 후 재생 */
+        if (vid !== _loadedVideoId) {
+          _loadedVideoId = vid;
+          _ytPlayer.cueVideoById(vid);
+          /* cue 후 바로 duration 읽기는 신뢰할 수 없으므로 짧게 대기 후 읽음 */
+          setTimeout(() => {
+            applyDuration(_ytPlayer);
+            _ytPlayer.seekTo(0);
+            _ytPlayer.playVideo();
+          }, 600);
+        } else {
+          applyDuration(_ytPlayer);
+          _ytPlayer.seekTo(0);
+          _ytPlayer.playVideo();
         }
-        _ytPlayer.seekTo(0); _ytPlayer.playVideo();
       } catch(e) {}
     },
     stop() {
@@ -9497,7 +9590,6 @@ bootGame();
     btn._bgmHooked = true;
   }
 
-  /* 폴링으로 함수 로드 대기 */
   let tries = 0;
   const tick = setInterval(() => {
     tries++;
