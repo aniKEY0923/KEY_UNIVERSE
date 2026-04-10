@@ -3710,10 +3710,11 @@ window._ytBgmInit = {
 
   getVideoId: function(){
     var tracks = window.CONCERT_TRACKS;
-    if (!tracks) return null;
+    if (!tracks || !tracks.length) return null;
     var level = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-    var track = tracks[Math.min(level, tracks.length - 1)];
-    return track ? track.videoId : null;
+    /* 7단계 이후는 마지막 트랙 반복 */
+    var idx = Math.min(level, tracks.length - 1);
+    return tracks[idx].videoId;
   }
 };
 
@@ -6984,6 +6985,7 @@ function closeMiniAbortConfirm(){
 
 function abortConcertMiniGame(){
   if (!miniGame.active) return;
+  if (window.kvBgm) window.kvBgm.stop();
   miniGame.aborted = true;
   miniGame.active = false;
   miniGame.playing = false;
@@ -6995,6 +6997,9 @@ function abortConcertMiniGame(){
   miniGameLayer.classList.remove('active');
   miniStartOverlay.classList.add('show');
   updateMiniGameProgress(0);
+  /* 포기 후 플래그 리셋 → 조건 충족 시 다시 콘서트 카드 표시 가능 */
+  state.concertEventOffered  = false;
+  state.concertEventResolved = false;
   setSeedMessage('공연을 중간에 멈췄어. 팬들이 조금 아쉬워하는 것 같아.', { idleAfterMs:SEED_IDLE_MS });
   updateScheduleUI();
   triggerSaveNow();
@@ -7209,7 +7214,8 @@ function openConcertMiniGame(){
   if (_startTitleEl) {
     const _tracks = window.CONCERT_TRACKS || [];
     const _level  = state.concertLevel || 0;
-    const _track  = _tracks[Math.min(_level, _tracks.length - 1)];
+    const _trackIdx = Math.min(_level, _tracks.length - 1);
+    const _track  = _tracks[_trackIdx];
     _startTitleEl.textContent = _track ? `🎤 ${_track.title}` : '';
   }
 
@@ -7315,13 +7321,12 @@ function showConcertEvent(){
   if (state.concertEventResolved) return;
   const tracks = window.CONCERT_TRACKS || [];
   const level  = state.concertLevel || 0;
-  const track  = tracks[Math.min(level, tracks.length - 1)];
+  const trackIdx = Math.min(level, tracks.length - 1);
+  const track  = tracks[trackIdx];
   const titleEl = document.querySelector('#concertEventCard .event-title');
   const descEl  = document.querySelector('#concertEventCard .event-desc');
-  if (titleEl) titleEl.textContent = `${track ? track.title : '콘서트'}를 개최하시겠습니까?`;
-  if (descEl)  descEl.textContent  = track
-    ? `Practice ${track.threshold} 달성! 지금 바로 무대에 올라가 볼까요?`
-    : '연습 점수가 쌓였어요. 지금 바로 무대에 올라가 볼까요?';
+  if (titleEl) titleEl.textContent = track ? `🎤 ${track.title} 공연을 개최하시겠습니까?` : '콘서트를 개최하시겠습니까?';
+  if (descEl)  descEl.textContent  = track ? `지금 바로 무대에 올라가 볼까요?` : '연습 점수가 쌓였어요. 지금 바로 무대에 올라가 볼까요?';
   concertEventCard.classList.add('show');
 }
 
@@ -7331,27 +7336,25 @@ function hideConcertEvent(){
 
 function maybeTriggerConcertEvent(){
   const tracks = window.CONCERT_TRACKS || [];
-  const level  = state.concertLevel || 0;
+  if (!tracks.length) return;
 
-  /* 아직 남은 콘서트가 있는지 확인 */
-  if (level >= tracks.length) {
-    /* 모든 콘서트 완료 → 카드 숨김 */
-    hideConcertEvent();
-    return;
-  }
+  const level = state.concertLevel || 0;
+  /* 7단계 이후: 마지막 트랙을 반복, threshold는 10씩 증가 */
+  const lastIdx = tracks.length - 1;
+  const trackIdx = Math.min(level, lastIdx);
+  const baseThreshold = tracks[lastIdx].threshold;
+  const extra = level > lastIdx ? (level - lastIdx) * 10 : 0;
+  const needed = (level <= lastIdx ? tracks[level].threshold : baseThreshold + extra);
 
-  const needed = tracks[level].threshold;
-
-  /* 이미 오퍼됐거나 해결됐으면 숨기기만 */
-  if (state.concertEventOffered || state.concertEventResolved) {
-    if (!state.concertEventOffered) hideConcertEvent();
-    return;
-  }
+  /* 이미 Yes를 눌러 진행 중이면 건드리지 않음 */
+  if (state.concertEventResolved) { hideConcertEvent(); return; }
 
   if (state.stats.practice >= needed) {
-    state.concertEventOffered = true;
-    const track = tracks[level];
-    setSeedMessage(`${track.title} 준비가 됐어. 이제 무대에 올라볼 수 있을 것 같아.`);
+    if (!state.concertEventOffered) {
+      state.concertEventOffered = true;
+      const track = tracks[trackIdx];
+      setSeedMessage(`${track.title} 준비가 됐어. 이제 무대에 올라볼 수 있을 것 같아.`);
+    }
     showConcertEvent();
   } else {
     hideConcertEvent();
@@ -9565,8 +9568,13 @@ bootGame();
    게임 내 duration은 YouTube onReady에서 자동으로 읽어옴
 ══════════════════════════════════════════════════════════════ */
 window.CONCERT_TRACKS = [
-  { videoId: 'OYWWnd9ACMI', title: '첫 번째 콘서트',  threshold: 10 },
-  { videoId: 'UNFk6_to5_0', title: '두 번째 콘서트',  threshold: 20 }
+  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',       threshold: 10 },
+  { videoId: 'UNFk6_to5_0', title: '가솔린 (Gasoline)', threshold: 20 },
+  { videoId: 'dUd_9R_qJSg', title: 'Killer',          threshold: 30 },
+  { videoId: 'ZYHBKvNUmk0', title: 'Good & Great',    threshold: 40 },
+  { videoId: 'LgQRl5qED6c', title: 'Pleasure Shop',   threshold: 50 },
+  { videoId: 'aH0zux6WOM4', title: 'Tongue Tied',     threshold: 60 },
+  { videoId: 'ktCF5D6ECk0', title: 'HUNTER',          threshold: 70 }
 ];
 
 /* 포기 버튼 → BGM 정지 (DOM 준비 후 연결) */
