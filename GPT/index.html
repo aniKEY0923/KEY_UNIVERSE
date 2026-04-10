@@ -7122,19 +7122,32 @@ function abortConcertMiniGame(){
   clearMiniNotes();
   closeMiniAbortConfirm();
 
-  /* 미니게임 레이어 완전 종료 — startOverlay 띄우지 않고 바로 닫음 */
+  /* 미니게임 레이어 완전 종료 */
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
-  miniGameLayer.classList.remove('active'); const _sc1 = document.getElementById('seedStageCard'); if (_sc1) _sc1.style.visibility = '';
+  miniGameLayer.classList.remove('active');
+  const _sc1 = document.getElementById('seedStageCard');
+  if (_sc1) _sc1.style.visibility = '';
   updateMiniGameProgress(0);
 
   /* 인기도 패널티 */
   const popPenalty = 3;
   state.stats.popularity = Math.max(0, (state.stats.popularity || 0) - popPenalty);
 
-  /* 콘서트 플래그 리셋 → practice 조건 충족 시 다시 카드 뜸 */
-  state.concertEventOffered  = false;
+  /* 포기 후 콘서트 카드 재등장 방지 — Offered=true 유지, Resolved=false
+     → maybeTriggerConcertEvent에서 Offered=true면 카드를 show하므로
+       쿨다운 타이머로 일정 시간 뒤에만 다시 열리게 함 */
+  state.concertEventOffered  = true;   /* 카드 즉시 재등장 방지 */
   state.concertEventResolved = false;
+
+  /* 30초 뒤에 Offered 리셋 → 그때 조건 충족이면 카드 재등장 */
+  if (miniGame._abortCooldownTimer) clearTimeout(miniGame._abortCooldownTimer);
+  miniGame._abortCooldownTimer = setTimeout(() => {
+    if (!miniGame.active) {
+      state.concertEventOffered = false;
+      updateScheduleUI();
+    }
+  }, 30000);
 
   /* 액션/버튼 상태 완전 초기화 */
   if (state.actionFinishTimer) { clearTimeout(state.actionFinishTimer); state.actionFinishTimer = null; }
@@ -7430,13 +7443,18 @@ function releaseMiniLane(lane){
 function tickMiniGame(now){
   if (!miniGame.active || !miniGame.playing) return;
 
+  /* 실제 프레임 간격 계산 (주사율 독립) — 60fps 기준으로 정규화 */
+  const deltaMs = miniGame._lastFrameTime ? Math.min(now - miniGame._lastFrameTime, 50) : 16.666;
+  miniGame._lastFrameTime = now;
+  const deltaFactor = deltaMs / 16.666;  /* 60fps=1.0, 120fps=0.5, 30fps=2.0 */
+
   /* YouTube 시간 기반 노트 스폰 */
   tickSpawnFromMusic();
 
   const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
 
   miniGame.notes = miniGame.notes.filter(note => {
-    note.y += note.speed * 16.666;
+    note.y += note.speed * deltaFactor;   /* 주사율 무관하게 동일한 속도 */
     note.el.style.transform = `translate(-50%, ${note.y}px)`;
 
     /* 롱노트 누르는 중: 매 프레임 점수 누적 */
@@ -7543,6 +7561,7 @@ function beginConcertMiniGamePlay(){
   if (!miniGame.active || miniGame.playing) return;
   miniGame.playing = true;
   miniGame.startTime = performance.now();
+  miniGame._lastFrameTime = null;  /* delta time 초기화 */
   closeMiniAbortConfirm();
   miniStartOverlay.classList.remove('show');
   setMiniTalk(miniTalkLines.start);
@@ -8607,6 +8626,11 @@ function migrateSave(save){
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
   if (typeof p.concertLevel !== 'number') p.concertLevel = 0;
   if (typeof p.concertsDone !== 'number') p.concertsDone = 0;
+  /* 구버그로 Resolved=true가 저장된 경우 로드 시 강제 리셋 */
+  if (p.concertEventResolved === true) {
+    p.concertEventResolved = false;
+    p.concertEventOffered  = false;
+  }
 if (!p.roomDecor) p.roomDecor = {
   lpPlayer:false, desk:false, birdCage:false, mirrorBall:false,
   vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
