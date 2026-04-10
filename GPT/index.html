@@ -3183,32 +3183,39 @@ body.ending-modal-open{
   gap:6px;
   margin-bottom:-1px;
   padding:0 4px;
+  position:relative;
+  z-index:1;
 }
 .room-bottom-tab{
   position:relative;
   flex:0 0 auto;
   min-width:82px;
-  padding:10px 14px 9px;
+  padding:7px 14px 11px;
   border-radius:14px 14px 0 0;
-  background:linear-gradient(180deg, rgba(244,236,227,.96), rgba(232,223,214,.94));
-  border:1px solid rgba(120,104,87,.14);
+  background:linear-gradient(180deg, rgba(232,222,210,.96), rgba(220,210,198,.94));
+  border:1px solid rgba(120,104,87,.18);
   border-bottom:none;
-  color:#7c6d61;
+  color:#9c8d81;
   font-size:12px;
   font-weight:900;
-  box-shadow:0 6px 14px rgba(120,104,87,.06);
-  transform:translateY(6px);
+  box-shadow:0 4px 10px rgba(120,104,87,.08);
+  transform:translateY(0);
   transition:.18s ease;
+  z-index:0;
 }
 .room-bottom-tab:hover{
-  transform:translateY(3px);
+  background:linear-gradient(180deg, rgba(242,234,225,.98), rgba(230,221,211,.96));
+  color:#7c6d61;
 }
 .room-bottom-tab.active{
-  background:linear-gradient(180deg, rgba(255,251,246,.98), rgba(255,247,240,.98));
+  padding:12px 14px 11px;
+  background:linear-gradient(180deg, rgba(255,251,246,.98), rgba(255,249,243,.98));
   color:#5b4d42;
   transform:translateY(0);
-  z-index:2;
-  box-shadow:0 8px 18px rgba(120,104,87,.10);
+  z-index:3;
+  border-color:rgba(120,104,87,.14);
+  border-bottom:none;
+  box-shadow:0 -2px 10px rgba(120,104,87,.06);
 }
 
 .room-bottom-tab.highlight-intro{
@@ -3258,9 +3265,11 @@ body.ending-modal-open{
 .room-bottom-shell{
   border:1px solid rgba(120,104,87,.14);
   border-radius:0 18px 18px 18px;
-  background:linear-gradient(180deg, rgba(255,251,246,.98), rgba(255,247,240,.96));
+  background:linear-gradient(180deg, rgba(255,249,243,.98), rgba(255,247,240,.96));
   box-shadow:0 10px 24px rgba(120,104,87,.08);
   padding:12px;
+  position:relative;
+  z-index:2;
 }
 .room-bottom-pane{
   display:none;
@@ -3281,7 +3290,7 @@ body.ending-modal-open{
 @media (max-width:640px){
   .room-bottom-tab{
     min-width:74px;
-    padding:9px 12px 8px;
+    padding:9px 12px 10px;
     font-size:11px;
   }
   .room-tab-intro-bubble{
@@ -3700,7 +3709,7 @@ body.ending-modal-open{
           </div>
         </div>
       </div>
-      <div class="schedule-subline">[임시 안내 patch-test-4] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+      <div class="schedule-subline">KEY:VERSE — KEY의 하루를 함께 만들어가세요.</div>
     </div>
 
     <div class="main">
@@ -3806,9 +3815,9 @@ body.ending-modal-open{
           </div>
 
           <div class="room-bottom-pane active" id="seedPaneSchedule">
-          <div class="section-title-inline">
+          <div class="section-title-inline" style="margin-top:10px;">
             <h3 class="section-title">스케줄 수행</h3>
-            <div class="small">[임시 안내 patch-test-4] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+            <div class="small">오늘 KEY에게 시킬 일을 선택해주세요.</div>
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
@@ -3832,13 +3841,12 @@ body.ending-modal-open{
           </div>
 
           <div class="action-row">
-            <button class="secondary-btn" id="resetBtn">새로 시작</button>
             <button class="primary-btn" id="debugModeBtn">디버그 모드</button>
           </div>
           </div>
 
           <div class="room-bottom-pane" id="seedPaneGift">
-            <div class="section-title-inline seed-pane-heading gift-pane-heading">
+            <div class="section-title-inline seed-pane-heading gift-pane-heading" style="margin-top:10px;">
               <h3 class="section-title">선물</h3>
               <div class="small">KEY에게 선물을 해봅시다.</div>
             </div>
@@ -3938,6 +3946,7 @@ body.ending-modal-open{
           <div class="awaken-actions">
             <button class="primary-btn" id="toRoomBtn">이 캐릭터로 진행</button>
             <button class="secondary-btn" id="newRunBtn">다른 KEY 키워보기</button>
+            <button class="secondary-btn" id="awakenDebugModeBtn">디버그 모드</button>
           </div>
         </div>
       </div>
@@ -4030,9 +4039,9 @@ body.ending-modal-open{
 
             <div class="room-bottom-shell">
             <div class="room-bottom-pane active" id="roomPaneSchedule">
-              <div class="section-title-inline room-pane-heading schedule-pane-heading">
+              <div class="section-title-inline room-pane-heading schedule-pane-heading" style="margin-top:10px;">
                 <h3 class="section-title">스케쥴 수행</h3>
-                <div class="small">[임시 안내 patch-test-4] 주요 버그 수정 및 시스템 안정화 업데이트 적용됨 (리테일 시 원복 예정)</div>
+                <div class="small">오늘 KEY에게 시킬 일을 선택해주세요.</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
@@ -5852,13 +5861,22 @@ document.querySelectorAll('.schedule-btn').forEach(btn => {
   btn.addEventListener('click', () => startAction(btn.dataset.act));
 });
 
-document.getElementById('resetBtn').addEventListener('click', async () => {
+const _resetBtn = document.getElementById('resetBtn');
+if (_resetBtn) _resetBtn.addEventListener('click', async () => {
   resetAll();
   await triggerSaveNow();
 });
 
 if (debugModeBtn) {
   debugModeBtn.addEventListener('click', () => {
+    registerUserActivity();
+    setDebugMode(true);
+  });
+}
+
+const awakenDebugModeBtn = document.getElementById('awakenDebugModeBtn');
+if (awakenDebugModeBtn) {
+  awakenDebugModeBtn.addEventListener('click', () => {
     registerUserActivity();
     setDebugMode(true);
   });
