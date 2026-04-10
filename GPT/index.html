@@ -7007,19 +7007,28 @@ function abortConcertMiniGame(){
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
   closeMiniAbortConfirm();
+
+  /* 미니게임 레이어 완전 종료 — startOverlay 띄우지 않고 바로 닫음 */
   miniGameResult.classList.remove('show');
+  miniStartOverlay.classList.remove('show');
   miniGameLayer.classList.remove('active');
-  miniStartOverlay.classList.add('show');
   updateMiniGameProgress(0);
-  /* 포기 후 플래그 리셋 → 조건 충족 시 다시 콘서트 카드 표시 가능 */
+
+  /* 인기도 패널티 */
+  const popPenalty = 3;
+  state.stats.popularity = Math.max(0, (state.stats.popularity || 0) - popPenalty);
+
+  /* 콘서트 플래그 리셋 → practice 조건 충족 시 다시 카드 뜸 */
   state.concertEventOffered  = false;
   state.concertEventResolved = false;
+
   /* 액션/버튼 상태 완전 초기화 */
   if (state.actionFinishTimer) { clearTimeout(state.actionFinishTimer); state.actionFinishTimer = null; }
   state.isActing = false;
   clearActionProgress();
   setScheduleButtonsDisabled(false);
-  setSeedMessage('공연을 중간에 멈췄어. 팬들이 조금 아쉬워하는 것 같아.', { idleAfterMs:SEED_IDLE_MS });
+
+  setSeedMessage(`공연을 중간에 멈췄어... 팬들이 많이 실망한 것 같아. (인기도 -${popPenalty})`, { idleAfterMs: SEED_IDLE_MS });
   updateScheduleUI();
   triggerSaveNow();
 }
