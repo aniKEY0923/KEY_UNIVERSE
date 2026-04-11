@@ -8996,12 +8996,9 @@ function migrateSave(save){
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
   if (typeof p.concertLevel !== 'number') p.concertLevel = 0;
   if (typeof p.concertsDone !== 'number') p.concertsDone = 0;
-  /* Resolved=true 또는 Offered=true로 저장된 경우 로드 시 리셋
-     (abort 쿨다운 타이머는 페이지 재로드 시 사라지므로 Offered도 초기화) */
-  if (p.concertEventResolved === true || p.concertEventOffered === true) {
-    p.concertEventResolved = false;
-    p.concertEventOffered  = false;
-  }
+  /* 로드 시 Offered는 항상 리셋 (타이머 소멸)
+     Resolved는 건드리지 않음 — abort 상태 유지 */
+  p.concertEventOffered = false;
 if (!p.roomDecor) p.roomDecor = {
   lpPlayer:false, desk:false, birdCage:false, mirrorBall:false,
   vinylRack:false, plushSofa:false, neonSign:false, bookshelf:false,
@@ -10028,7 +10025,9 @@ bootGame();
     });
     document.querySelectorAll('.event-card.show').forEach(el => el.classList.remove('show'));
     if (window.miniGame) { miniGame.active = false; miniGame.playing = false; }
-    if (typeof state !== 'undefined') { state.concertEventResolved = true; state.concertEventOffered = true; }
+    /* Resolved/Offered는 건드리지 않음 —
+       applyConcertMiniGameRewards에서 이미 올바르게 리셋됨
+       여기서 덮어쓰면 다음 콘서트 카드가 안 뜨는 버그 발생 */
     safe(() => updateMiniGameProgress && updateMiniGameProgress(0));
     if (state?.awakened && typeof showScreen === 'function') showScreen('room');
     else if (typeof showScreen === 'function') showScreen('schedule');
