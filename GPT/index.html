@@ -10036,12 +10036,15 @@ bootGame();
   function wrapConcertReward() {
     if (window.applyConcertMiniGameRewards?._kv7) return;
     const orig = window.applyConcertMiniGameRewards;
-    if (!orig) return;
+    if (!orig) { console.warn('[WRAP] applyConcertMiniGameRewards not found!'); return; }
+    console.log('[WRAP] wrapping applyConcertMiniGameRewards');
     window.applyConcertMiniGameRewards = function () {
+      console.log('[WRAP] wrapped applyConcertMiniGameRewards called, score:', window.miniGame?.score);
       const savedScore   = window.miniGame?.score   || 0;
       const savedPerfect = window.miniGame?.perfect || 0;
       const savedGood    = window.miniGame?.good    || 0;
       orig.apply(this, arguments);
+      console.log('[WRAP] after orig — level:', window.state?.concertLevel, 'Resolved:', window.state?.concertEventResolved);
       if (window.miniGame) {
         miniGame._lastScore   = savedScore;
         miniGame._lastPerfect = savedPerfect;
