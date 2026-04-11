@@ -1061,8 +1061,11 @@ img{
   gap:6px;
 }
 .mini-hit-buttons{
-  flex:0 0 auto;
-  padding:4px 10px 8px;
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:8px;
+  z-index:6;
   display:grid;
   grid-template-columns:minmax(0,1fr);
   gap:8px;
@@ -1275,15 +1278,6 @@ img{
   0%{ opacity:0; transform:translateY(12px); }
   30%{ opacity:1; }
   100%{ opacity:0; transform:translateY(-8px); }
-}
-.mini-hit-buttons{
-  position:absolute;
-  left:14px;
-  right:14px;
-  bottom:14px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  gap:10px;
 }
 .mini-hit-btn{
   height:68px;
@@ -4081,6 +4075,11 @@ window.kvBgm = {
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
 
+          <!-- TAP 버튼 — stage 안 하단 고정 -->
+          <div class="mini-hit-buttons">
+            <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
+          </div>
+
           <div class="mini-start-overlay show" id="miniStartOverlay">
             <div class="mini-start-card">
               <div id="miniStartTrackTitle" style="font-size:13px;font-weight:800;color:#7a5a6a;margin-bottom:2px;text-align:center;"></div>
@@ -4132,11 +4131,6 @@ window.kvBgm = {
           <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
           <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
         </div>
-      </div>
-
-      <!-- TAP 버튼 -->
-      <div class="mini-hit-buttons">
-        <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
       </div>
     </div>
   </div>
@@ -6264,10 +6258,16 @@ document.addEventListener('click', (e) => {
 
 
 miniLaneButtons.forEach(btn => {
-  btn.addEventListener('pointerdown', (e) => { registerUserActivity(); e.preventDefault(); pressMiniLane(0); });
+  btn.addEventListener('pointerdown', (e) => {
+    registerUserActivity();
+    e.preventDefault();
+    /* 포인터 캡처 — 버튼 밖으로 나가도 up/cancel까지 추적 */
+    try { btn.setPointerCapture(e.pointerId); } catch(_) {}
+    pressMiniLane(0);
+  });
   btn.addEventListener('pointerup',    () => releaseMiniLane(0));
-  btn.addEventListener('pointerleave', () => releaseMiniLane(0));
   btn.addEventListener('pointercancel',() => releaseMiniLane(0));
+  /* pointerleave 제거 — 캡처 덕분에 불필요, hold 중 오작동 방지 */
 });
 
 miniStartBtn.addEventListener('click', (e) => {
@@ -7227,7 +7227,7 @@ function spawnMiniHitFX(lane, type){
   const fx = document.createElement('div');
   fx.className = `mini-hit-fx ${type}`;
   fx.style.left = '50%';
-  fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 8}px`;
+  fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 84}px`;
   laneEl.appendChild(fx);
   setTimeout(() => fx.remove(), 420);
 }
@@ -7264,7 +7264,7 @@ function spawnMiniNote(lane, isLong, targetSec, lengthBeats){
   const bpm = getBpm();
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
-  const hitLine = stageH - 8;
+  const hitLine = stageH - 84;
   const baseH = 20;   /* 블럭 세로 높이 — 가로(52px):세로(20px) ≈ 5:2 납작한 형태 */
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
@@ -7293,10 +7293,10 @@ function spawnMiniNote(lane, isLong, targetSec, lengthBeats){
 
   laneEl.appendChild(note);
 
-  /* targetHitTime: 채보의 정확한 히트 시각 (performance.now 기준 ms) */
-  const hitTimeMs = targetSec != null
-    ? miniGame.startTime + targetSec * 1000
-    : performance.now() + NOTE_FALL_MS;
+  /* targetHitTime: 노트가 실제 hitLine에 도달하는 시각
+     = 지금 스폰된 시각 + 낙하 시간(NOTE_FALL_MS)
+     채보 기반이든 아니든 동일한 기준으로 계산 */
+  const hitTimeMs = performance.now() + NOTE_FALL_MS;
 
   miniGame.notes.push({
     id: ++miniGame.noteSeq,
@@ -7588,7 +7588,7 @@ function releaseMiniLane(lane){
   if (!note) return;
 
   /* 롱노트가 아직 끝나지 않은 상태에서 손을 뗌 → MISS */
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 84;
   const isComplete = note.y + note.height >= hitLine + 60;
 
   if (!isComplete) {
@@ -7630,7 +7630,7 @@ function tickMiniGame(now){
   /* YouTube 시간 기반 노트 스폰 */
   tickSpawnFromMusic();
 
-  const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
+  const hitLine = (miniRhythmStage.clientHeight || 420) - 84;
 
   miniGame.notes = miniGame.notes.filter(note => {
     note.y += note.speed * deltaFactor;   /* 주사율 무관하게 동일한 속도 */
@@ -7675,13 +7675,19 @@ function tickMiniGame(now){
       return true;
     }
 
-    /* 판정 윈도우(+350ms)를 지나도 안 눌렀으면 MISS */
+    /* 판정 윈도우(+350ms)를 지났고, 노트가 시각적으로 판정선을 지난 경우만 MISS */
     const noteNow = performance.now();
-    if (noteNow > note.targetHitTime + 350) {
+    if (noteNow > note.targetHitTime + 350 && note.y + note.height > hitLine) {
       note.el.remove();
       miniGame.combo = 0;
       miniGame.miss += 1;
       showMiniFeedback('MISS', 'miss');
+      return false;
+    }
+
+    /* 노트가 화면 완전히 벗어나면 조용히 제거 (판정 없이) */
+    if (note.y > hitLine + note.height + 60) {
+      note.el.remove();
       return false;
     }
 
@@ -7761,7 +7767,8 @@ function positionHitLine(){
   const line  = stage ? stage.querySelector('.mini-hit-line') : null;
   if (!stage || !line) return;
   const stageH = stage.clientHeight || 420;
-  const hitLineY = stageH - 8;   /* JS hitLine과 동일한 기준 */
+  /* TAP 버튼(68px) + bottom(8px) + 여백(8px) = 84px 위 */
+  const hitLineY = stageH - 84;
   line.style.top = hitLineY + 'px';
 }
 
