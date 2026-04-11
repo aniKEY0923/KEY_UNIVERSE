@@ -8029,8 +8029,18 @@ function applyConcertMiniGameRewards(){
   const _sc2 = document.getElementById('seedStageCard');
   if (_sc2) _sc2.style.display = '';
   updateMiniGameProgress(0);
-  updateScheduleUI();
-  triggerSaveNow();
+
+  /* 팬 반응 카드 — 직접 호출 (래핑 패턴 불필요) */
+  if (typeof openFanCard === 'function') {
+    /* _lastScore 저장 후 팬카드 오픈 */
+    miniGame._lastScore   = miniGame.score;
+    miniGame._lastPerfect = miniGame.perfect;
+    miniGame._lastGood    = miniGame.good;
+    setTimeout(openFanCard, 80);
+  } else {
+    updateScheduleUI();
+    triggerSaveNow();
+  }
 }
 
 function showConcertEvent(){
@@ -10031,6 +10041,7 @@ bootGame();
     else if (typeof showScreen === 'function') showScreen('schedule');
     safe(() => updateScheduleUI && updateScheduleUI());
     safe(() => syncRoomUI && syncRoomUI());
+    safe(() => triggerSaveNow && triggerSaveNow());
   }
 
   function wrapConcertReward() {
