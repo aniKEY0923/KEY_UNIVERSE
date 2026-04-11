@@ -1009,47 +1009,52 @@ img{
   border:1px solid rgba(255,255,255,.10);
   transform-origin:50% 56%;
 }
-.mini-info-bar{
-  position:relative;
-  display:flex;
-  align-items:flex-end;
-  justify-content:flex-end;
-  padding:0 12px 4px;
+/* 하단 바: 공연진행바 + 캐릭터 */
+.mini-bottom-bar{
   flex:0 0 auto;
-  /* 말풍선이 위로 올라갈 공간 확보 */
-  margin-top:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px 2px;
 }
-.mini-info-left{
-  /* SCORE/COMBO 왼쪽 배치 */
-  position:absolute;
-  left:12px;
-  bottom:4px;
+.mini-bottom-bar .mini-progress-wrap{
+  flex:1;
+  min-width:0;
   display:flex;
   flex-direction:column;
   gap:4px;
 }
+/* 캐릭터 + 말풍선 묶음 */
+.mini-char-wrap{
+  position:relative;
+  flex:0 0 auto;
+  width:56px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
 .mini-talkbox{
   position:absolute;
-  right:8px;
-  bottom:68px;  /* 캐릭터 높이만큼 위 */
-  width:160px;  /* 우측 고정 너비 — 3줄 정도 수용 */
+  bottom:100%;  /* 캐릭터 머리 위 */
+  right:0;
+  width:150px;
   padding:7px 10px;
-  border-radius:12px 12px 0 12px;
+  border-radius:12px 12px 0 12px; /* 꼬리: 오른쪽 아래 */
   background:rgba(255,255,255,.92);
   color:#5a4a3f;
-  font-size:11px;
+  font-size:10px;
   line-height:1.5;
   font-weight:800;
   box-shadow:0 3px 8px rgba(0,0,0,.14);
   word-break:keep-all;
+  margin-bottom:4px;
 }
 .mini-talk-char{
-  flex:0 0 auto;
   width:52px;
-  height:72px;
+  height:68px;
   object-fit:contain;
   image-rendering:pixelated;
-  filter:drop-shadow(0 3px 8px rgba(0,0,0,.22));
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.22));
 }
 .mini-game-stats{
   display:flex;
@@ -1062,52 +1067,8 @@ img{
   grid-template-columns:minmax(0,1fr);
   gap:8px;
 }
-/* mini-talkbar, mini-game-top: 새 레이아웃에서 mini-info-bar로 통합됨 */
-.mini-talkbox{
-  position:relative;
-  min-height:52px;
-  padding:10px 14px;
-  border-radius:20px;
-  background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,244,248,.88));
-  color:#5b4d42;
-  font-size:13px;
-  line-height:1.5;
-  font-weight:800;
-  box-shadow:0 10px 24px rgba(0,0,0,.16);
-}
-.mini-talkbox::after{
-  content:"";
-  position:absolute;
-  right:-7px;
-  bottom:18px;
-  width:14px;
-  height:14px;
-  background:rgba(255,247,250,.92);
-  transform:rotate(45deg);
-  border-radius:2px;
-}
-.mini-talk-char{
-  align-self:end;
-  width:68px;
-  height:94px;
-  object-fit:contain;
-  image-rendering:pixelated;
-  filter:drop-shadow(0 6px 12px rgba(0,0,0,.22));
-}
-.mini-game-top{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:12px;
-  padding:4px 14px 6px;
-  color:#fff8fd;
-}
-.mini-game-stats{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
+/* mini-talkbar, mini-game-top: 새 레이아웃에서 mini-bottom-bar로 통합됨 */
+
 .mini-pill{
   padding:8px 12px;
   border-radius:999px;
@@ -1199,38 +1160,34 @@ img{
 .mini-feedback{
   position:absolute;
   left:50%;
-  bottom:106px;
+  bottom:calc(8px + 20px);  /* hitLine 바로 위 */
   transform:translateX(-50%);
-  min-width:120px;
   text-align:center;
-  padding:10px 14px;
-  border-radius:999px;
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.14);
   color:#fff;
+  font-size:16px;
   font-weight:900;
-  letter-spacing:.04em;
+  letter-spacing:.06em;
+  text-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 16px rgba(255,200,220,.6);
   opacity:0;
   transition:opacity .14s ease, transform .14s ease;
   pointer-events:none;
+  white-space:nowrap;
 }
 .mini-feedback.show{
   opacity:1;
-  transform:translateX(-50%) translateY(-14px) scale(1.08);
+  transform:translateX(-50%) translateY(-10px) scale(1.1);
 }
 .mini-feedback.perfect{
-  background:rgba(255,240,248,.22);
-  border-color:rgba(255,255,255,.34);
-  box-shadow:0 0 28px rgba(255,194,220,.26);
+  color:#ffcce8;
+  text-shadow:0 2px 12px rgba(255,100,180,.7), 0 0 24px rgba(255,150,200,.5);
 }
 .mini-feedback.cool{
-  background:rgba(232,244,255,.18);
-  border-color:rgba(255,255,255,.26);
-  box-shadow:0 0 24px rgba(168,216,199,.18);
+  color:#b8e8ff;
+  text-shadow:0 2px 12px rgba(100,200,255,.7), 0 0 24px rgba(150,220,255,.5);
 }
 .mini-feedback.miss{
-  background:rgba(255,120,120,.18);
-  border-color:rgba(255,160,160,.28);
+  color:#ff9999;
+  text-shadow:0 2px 12px rgba(255,80,80,.7);
 }
 .mini-hit-fx{
   position:absolute;
@@ -1407,6 +1364,12 @@ img{
   display:flex;
   align-items:center;
   gap:10px;
+}
+.mini-game-stats{
+  display:flex;
+  gap:6px;
+  flex:1;
+  justify-content:flex-end;
 }
 .mini-abort-btn{
   flex:0 0 auto;
@@ -4068,20 +4031,26 @@ window.kvBgm = {
   <!-- 미니게임 레이어 — .main 밖, screen-schedule 안에 위치해야 전체 화면을 채울 수 있음 -->
   <div class="mini-game-layer" id="miniGameLayer">
     <div class="mini-game-shell">
+
+      <!-- 스테이지 -->
       <div class="mini-game-body">
         <div class="mini-rhythm-stage" id="miniRhythmStage">
+
+          <!-- 상단: 포기 + SCORE + COMBO -->
           <div class="mini-stage-topline">
             <button type="button" class="mini-abort-btn" id="miniAbortBtn">포기</button>
-            <div class="mini-progress-wrap">
-              <div class="mini-progress-label"><span>공연 진행</span><strong id="miniProgressText">0%</strong></div>
-              <div class="mini-progress-track"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
+            <div class="mini-game-stats">
+              <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
+              <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
             </div>
           </div>
+
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
+
           <div class="mini-start-overlay show" id="miniStartOverlay">
             <div class="mini-start-card">
               <div id="miniStartTrackTitle" style="font-size:13px;font-weight:800;color:#7a5a6a;margin-bottom:2px;text-align:center;"></div>
@@ -4111,8 +4080,6 @@ window.kvBgm = {
               </div>
             </div>
           </div>
-
-          <!-- 백그라운드 복귀 일시정지 오버레이 -->
           <div class="mini-confirm-overlay" id="miniPauseOverlay">
             <div class="mini-confirm-card">
               <div class="mini-confirm-title">⏸ 일시정지</div>
@@ -4124,16 +4091,20 @@ window.kvBgm = {
           </div>
         </div>
       </div>
-      <div class="mini-info-bar">
-        <div class="mini-info-left">
-          <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
-          <div class="mini-game-stats">
-            <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
-            <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
-          </div>
+
+      <!-- 하단 바: 공연진행바 + 캐릭터(+말풍선) -->
+      <div class="mini-bottom-bar">
+        <div class="mini-progress-wrap">
+          <div class="mini-progress-label"><span>공연 진행</span><strong id="miniProgressText">0%</strong></div>
+          <div class="mini-progress-track"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
         </div>
-        <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
+        <div class="mini-char-wrap" id="miniCharWrap">
+          <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
+          <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
+        </div>
       </div>
+
+      <!-- TAP 버튼 -->
       <div class="mini-hit-buttons">
         <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
       </div>
