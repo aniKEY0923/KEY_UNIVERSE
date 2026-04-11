@@ -963,7 +963,9 @@ img{
   left:0;
   right:0;
   top:var(--top-h);
-  bottom:0;
+  /* 높이를 화면 전체가 아닌 적절한 카드 비율로 제한 */
+  height:calc(100dvh - var(--top-h));
+  max-height:680px;
   z-index:18;
   display:none;
   align-items:stretch;
@@ -1147,14 +1149,14 @@ img{
 }
 .mini-hit-line{
   position:absolute;
-  left:50%;
-  width:min(22%, 64px);
-  transform:translateX(-50%);
-  bottom:8px;
-  height:5px;
-  border-radius:999px;
-  background:linear-gradient(90deg, rgba(241,167,200,.96), rgba(201,195,232,.96));
-  box-shadow:0 0 16px rgba(241,167,200,.34);
+  left:0;
+  right:0;
+  width:100%;
+  height:3px;
+  background:linear-gradient(90deg, transparent, rgba(241,167,200,.96) 20%, rgba(201,195,232,.96) 80%, transparent);
+  box-shadow:0 0 12px rgba(241,167,200,.5);
+  pointer-events:none;
+  z-index:5;
 }
 .mini-note{
   position:absolute;
@@ -7651,6 +7653,17 @@ function openConcertMiniGame(){
 
   updateMiniGameHUD();
   updateMiniGameProgress(0);
+  /* 판정선을 실제 hitLine 픽셀 위치에 맞게 배치 */
+  requestAnimationFrame(positionHitLine);
+}
+
+function positionHitLine(){
+  const stage = document.getElementById('miniRhythmStage');
+  const line  = stage ? stage.querySelector('.mini-hit-line') : null;
+  if (!stage || !line) return;
+  const stageH = stage.clientHeight || 420;
+  const hitLineY = stageH - 8;   /* JS hitLine과 동일한 기준 */
+  line.style.top = hitLineY + 'px';
 }
 
 function beginConcertMiniGamePlay(){
