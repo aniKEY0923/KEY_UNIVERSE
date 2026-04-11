@@ -1010,29 +1010,38 @@ img{
   transform-origin:50% 56%;
 }
 .mini-info-bar{
+  position:relative;
   display:flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 12px 4px;
+  align-items:flex-end;
+  justify-content:flex-end;
+  padding:0 12px 4px;
   flex:0 0 auto;
+  /* 말풍선이 위로 올라갈 공간 확보 */
+  margin-top:44px;
 }
 .mini-info-left{
-  flex:1;
-  min-width:0;
+  /* SCORE/COMBO 왼쪽 배치 */
+  position:absolute;
+  left:12px;
+  bottom:4px;
   display:flex;
   flex-direction:column;
   gap:4px;
 }
 .mini-talkbox{
-  position:relative;
+  position:absolute;
+  right:8px;
+  bottom:68px;  /* 캐릭터 높이만큼 위 */
+  width:160px;  /* 우측 고정 너비 — 3줄 정도 수용 */
   padding:7px 10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.88);
+  border-radius:12px 12px 0 12px;
+  background:rgba(255,255,255,.92);
   color:#5a4a3f;
   font-size:11px;
-  line-height:1.4;
+  line-height:1.5;
   font-weight:800;
-  box-shadow:0 3px 8px rgba(0,0,0,.12);
+  box-shadow:0 3px 8px rgba(0,0,0,.14);
+  word-break:keep-all;
 }
 .mini-talk-char{
   flex:0 0 auto;
@@ -1050,7 +1059,7 @@ img{
   flex:0 0 auto;
   padding:4px 10px 8px;
   display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
+  grid-template-columns:minmax(0,1fr);
   gap:8px;
 }
 /* mini-talkbar, mini-game-top: 새 레이아웃에서 mini-info-bar로 통합됨 */
@@ -1133,7 +1142,7 @@ img{
   position:absolute;
   inset:0;
   display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
+  grid-template-columns:minmax(0,1fr);
 }
 .mini-lane{
   position:relative;
@@ -1286,7 +1295,7 @@ img{
   right:14px;
   bottom:14px;
   display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
+  grid-template-columns:minmax(0,1fr);
   gap:10px;
 }
 .mini-hit-btn{
@@ -3780,13 +3789,21 @@ window._ytBgm = {
     return tracks[Math.min(level, tracks.length - 1)].videoId;
   },
 
-  /* 재생 중인 영상의 duration을 miniGame.duration에 반영 */
+  /* 재생 중인 영상의 duration을 miniGame.duration에 반영
+     endSec가 설정된 경우 그 값을 우선 사용 */
   syncDuration: function(){
     try {
       var dur = this.player && this.player.getDuration ? this.player.getDuration() : 0;
       if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-        miniGame.duration = Math.floor(dur * 1000);
-        console.log('[BGM] duration synced:', dur, 's →', miniGame.duration, 'ms');
+        /* endSec가 있으면 실제 플레이 구간 길이로 계산 */
+        var tracks = window.CONCERT_TRACKS || [];
+        var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
+        var track  = tracks[Math.min(level, tracks.length - 1)] || {};
+        var startSec = track.startSec || 0;
+        var endSec   = track.endSec   || dur;
+        var playLen  = Math.min(endSec, dur) - startSec;
+        miniGame.duration = Math.floor(Math.max(playLen, 10) * 1000);
+        console.log('[BGM] duration synced: playLen=', playLen, 's →', miniGame.duration, 'ms');
       }
     } catch(e) {}
   }
@@ -3868,6 +3885,8 @@ window.kvBgm = {
       var loadOpts = { videoId: vid, startSeconds: startSeconds };
       if (endSeconds) loadOpts.endSeconds = endSeconds;
       B.player.loadVideoById(loadOpts);
+      /* iOS 음소거 방지 — 사용자 인터랙션 직후 호출되므로 언뮤트 가능 */
+      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
@@ -4060,7 +4079,6 @@ window.kvBgm = {
           </div>
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
-            <div class="mini-lane" data-lane="1"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
@@ -4108,7 +4126,7 @@ window.kvBgm = {
       </div>
       <div class="mini-info-bar">
         <div class="mini-info-left">
-          <div class="mini-talkbox" id="miniTalkBox">화면 아래 LEFT / RIGHT 버튼을 눌러줘.</div>
+          <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
           <div class="mini-game-stats">
             <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
             <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
@@ -4117,8 +4135,7 @@ window.kvBgm = {
         <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
       </div>
       <div class="mini-hit-buttons">
-        <button type="button" class="mini-hit-btn" data-lane="0">LEFT</button>
-        <button type="button" class="mini-hit-btn" data-lane="1">RIGHT</button>
+        <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
       </div>
     </div>
   </div>
@@ -4459,7 +4476,7 @@ const miniGame = {
   talkTimer:null,
   progress:0,
   aborted:false,
-  holdingNotes:{},
+  holdingNote:null,
   /* 일시정지 관련 */
   paused:false,
   pausedAt:0,       /* performance.now() 기준 일시정지 시각 */
@@ -6245,23 +6262,11 @@ document.addEventListener('click', (e) => {
 });
 
 
-function getMiniLaneFromKey(key){
-  const normalized = String(key || '').toLowerCase();
-  if (normalized === 'a' || normalized === 'f' || normalized === 'arrowleft') return 0;
-  if (normalized === 'l' || normalized === 'j' || normalized === 'arrowright') return 1;
-  return null;
-}
-
 miniLaneButtons.forEach(btn => {
-  const lane = Number(btn.dataset.lane || 0);
-  const handler = (e) => {
-    e.preventDefault();
-    pressMiniLane(lane);
-  };
-  btn.addEventListener('pointerdown', (e) => { registerUserActivity(); handler(e); });
-  btn.addEventListener('pointerup',   () => releaseMiniLane(lane));
-  btn.addEventListener('pointerleave',() => releaseMiniLane(lane));
-  btn.addEventListener('pointercancel',() => releaseMiniLane(lane));
+  btn.addEventListener('pointerdown', (e) => { registerUserActivity(); e.preventDefault(); pressMiniLane(0); });
+  btn.addEventListener('pointerup',    () => releaseMiniLane(0));
+  btn.addEventListener('pointerleave', () => releaseMiniLane(0));
+  btn.addEventListener('pointercancel',() => releaseMiniLane(0));
 });
 
 miniStartBtn.addEventListener('click', (e) => {
@@ -6290,20 +6295,15 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (!miniGame.playing || e.repeat) return;
-
-  const lane = getMiniLaneFromKey(e.key);
-  if (lane != null) {
+  if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
-    pressMiniLane(lane);
+    pressMiniLane(0);
   }
 });
 
 window.addEventListener('keyup', (e) => {
   if (!miniGame.active || !miniGame.playing) return;
-  const lane = getMiniLaneFromKey(e.key);
-  if (lane != null) {
-    releaseMiniLane(lane);
-  }
+  if (e.key === ' ' || e.key === 'Enter') releaseMiniLane(0);
 });
 
 miniFinishBtn.addEventListener('click', () => {
@@ -7247,7 +7247,7 @@ function showMiniFeedback(text, type='perfect'){
 function clearMiniNotes(){
   miniGame.notes.forEach(note => note.el.remove());
   miniGame.notes = [];
-  miniGame.holdingNotes = {};
+  miniGame.holdingNote = null;
 }
 
 /* 노트 낙하 시간 (ms) */
@@ -7334,40 +7334,6 @@ function sanitizeSingleLaneChart(entries){
   return result;
 }
 
-function buildTwoLaneChart(entries){
-  const base = sanitizeSingleLaneChart(entries);
-  const result = [];
-  const blockedUntil = [-Infinity, -Infinity];
-  let lastLane = 1;
-
-  base.forEach((entry, index) => {
-    const beat = Number(entry.beat || 0);
-    const isLong = !!entry.isLong;
-    const lengthBeats = Math.max(0, Number(entry.lengthBeats || 0));
-    const releaseBeat = isLong ? (beat + Math.max(1, lengthBeats) + 0.125) : (beat + 0.125);
-
-    const preferredLane = (index % 2 === 0) ? (1 - lastLane) : lastLane;
-    const laneOrder = [preferredLane, 1 - preferredLane];
-    let lane = laneOrder.find(v => beat >= blockedUntil[v] - 0.001);
-
-    if (lane == null) {
-      lane = blockedUntil[0] <= blockedUntil[1] ? 0 : 1;
-      if (beat < blockedUntil[lane] - 0.001) return;
-    }
-
-    blockedUntil[lane] = releaseBeat;
-    lastLane = lane;
-    result.push({
-      beat,
-      lane,
-      isLong,
-      lengthBeats
-    });
-  });
-
-  return result;
-}
-
 function buildBadLoveChart(){
   const measures = [
     [
@@ -7431,12 +7397,13 @@ function buildBadLoveChart(){
     pattern.forEach(item => {
       entries.push({
         beat: measureStart + item.beat,
+        lane: 0,
         isLong: item.type === 'hold',
         lengthBeats: item.lengthBeats || 0
       });
     });
   }
-  return buildTwoLaneChart(entries);
+  return sanitizeSingleLaneChart(entries);
 }
 
 function buildDefaultConcertChart(){
@@ -7457,13 +7424,13 @@ function buildDefaultConcertChart(){
     const measureStart = measure * 4;
     pattern.forEach(item => {
       if (typeof item === 'number') {
-        entries.push({ beat: measureStart + item, isLong: false, lengthBeats: 0 });
+        entries.push({ beat: measureStart + item, lane: 0, isLong: false, lengthBeats: 0 });
       } else {
-        entries.push({ beat: measureStart + item.beat, isLong: !!item.isLong, lengthBeats: item.lengthBeats || 0 });
+        entries.push({ beat: measureStart + item.beat, lane: 0, isLong: !!item.isLong, lengthBeats: item.lengthBeats || 0 });
       }
     });
   }
-  return buildTwoLaneChart(entries);
+  return sanitizeSingleLaneChart(entries);
 }
 
 function getConcertChart(){
@@ -7558,7 +7525,7 @@ function pressMiniLane(lane){
       target.holding = true;
       target.held = true;
       target.el.classList.add('holding');
-      miniGame.holdingNotes[lane] = target;
+      miniGame.holdingNote = target;
       miniGame.combo += 1;
       miniGame.perfect += 1;
       showMiniFeedback('HOLD!', 'perfect');
@@ -7579,7 +7546,7 @@ function pressMiniLane(lane){
       target.holding = true;
       target.held = true;
       target.el.classList.add('holding');
-      miniGame.holdingNotes[lane] = target;
+      miniGame.holdingNote = target;
       miniGame.combo += 1;
       miniGame.good += 1;
       showMiniFeedback('HOLD!', 'cool');
@@ -7602,7 +7569,7 @@ function releaseMiniLane(lane){
   const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
   if (btn) btn.classList.remove('active');
 
-  const note = miniGame.holdingNotes[lane];
+  const note = miniGame.holdingNote; if (note && note.lane !== lane) return;
   if (!note) return;
 
   /* 롱노트가 아직 끝나지 않은 상태에서 손을 뗌 → MISS */
@@ -7618,7 +7585,7 @@ function releaseMiniLane(lane){
     miniGame.combo = 0;
     miniGame.miss += 1;
     showMiniFeedback('MISS', 'miss');
-    delete miniGame.holdingNotes[lane];
+    miniGame.holdingNote = null;
     updateMiniGameHUD();
     /* 노트는 계속 내려가다가 tickMiniGame에서 사라짐 */
   } else {
@@ -7629,7 +7596,7 @@ function releaseMiniLane(lane){
     note.holding = false;
     note.el.classList.remove('holding');
     note.el.classList.add('hit');
-    delete miniGame.holdingNotes[lane];
+    miniGame.holdingNote = null;
     miniGame.notes = miniGame.notes.filter(n => n.id !== note.id);
     updateMiniGameHUD();
   }
@@ -7660,8 +7627,7 @@ function tickMiniGame(now){
         note.holding = false;
         note.el.classList.remove('holding');
         note.el.classList.add('hit');
-        if (miniGame.holdingNotes[note.lane] && miniGame.holdingNotes[note.lane].id === note.id) {
-          delete miniGame.holdingNotes[note.lane];
+        if (miniGame.holdingNote && miniGame.holdingNote.id === note.id) {
         }
         spawnMiniHitFX(note.lane, 'perfect');
         return false;
@@ -7728,7 +7694,7 @@ function openConcertMiniGame(){
   miniGame.aborted = false;
   miniGame.chart = [];
   miniGame.chartIndex = 0;
-  miniGame.holdingNotes = {};
+  miniGame.holdingNote = null;
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
@@ -7775,7 +7741,7 @@ function beginConcertMiniGamePlay(){
   miniGame._lastFrameTime = null;
   miniGame.paused = false;
   miniGame.totalPausedMs = 0;
-  miniGame.holdingNotes = {};
+  miniGame.holdingNote = null;
   closeMiniAbortConfirm();
   miniStartOverlay.classList.remove('show');
   setMiniTalk(miniTalkLines.start);
