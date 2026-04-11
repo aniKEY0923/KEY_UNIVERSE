@@ -1050,7 +1050,7 @@ img{
   flex:0 0 auto;
   padding:4px 10px 8px;
   display:grid;
-  grid-template-columns:minmax(0,1fr);
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:8px;
 }
 /* mini-talkbar, mini-game-top: 새 레이아웃에서 mini-info-bar로 통합됨 */
@@ -1133,7 +1133,7 @@ img{
   position:absolute;
   inset:0;
   display:grid;
-  grid-template-columns:minmax(0,1fr);
+  grid-template-columns:repeat(2, minmax(0,1fr));
 }
 .mini-lane{
   position:relative;
@@ -1286,7 +1286,7 @@ img{
   right:14px;
   bottom:14px;
   display:grid;
-  grid-template-columns:minmax(0,1fr);
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:10px;
 }
 .mini-hit-btn{
@@ -3849,7 +3849,6 @@ window.onYouTubeIframeAPIReady = function(){
 window.kvBgm = {
   play: function(){
     var B = window._ytBgm;
-    /* 플레이어가 아직 준비 안 됐으면 pendingPlay 세팅 후 대기 */
     if (!B.player || !B.ready) {
       B.pendingPlay = true;
       console.log('[BGM] player not ready, queued');
@@ -3858,10 +3857,17 @@ window.kvBgm = {
     try {
       var vid = B.getVideoId();
       if (!vid) return;
-      console.log('[BGM] play:', vid, '(loaded:', B.loadedId, ')');
-      /* loadVideoById: 곡이 같아도 seekTo(0)부터 재생, 다르면 자동 교체 */
+      /* 현재 트랙의 startSec / endSec 읽기 */
+      var tracks = window.CONCERT_TRACKS || [];
+      var level  = (typeof state !== 'undefined' && state.concertLevel) || 0;
+      var track  = tracks[Math.min(level, tracks.length - 1)] || {};
+      var startSeconds = track.startSec || 0;
+      var endSeconds   = track.endSec   || undefined;
+      console.log('[BGM] play:', vid, 'start:', startSeconds, 'end:', endSeconds);
       B.loadedId = vid;
-      B.player.loadVideoById({ videoId: vid, startSeconds: 0 });
+      var loadOpts = { videoId: vid, startSeconds: startSeconds };
+      if (endSeconds) loadOpts.endSeconds = endSeconds;
+      B.player.loadVideoById(loadOpts);
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
@@ -4054,6 +4060,7 @@ window.kvBgm = {
           </div>
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
+            <div class="mini-lane" data-lane="1"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
@@ -4101,7 +4108,7 @@ window.kvBgm = {
       </div>
       <div class="mini-info-bar">
         <div class="mini-info-left">
-          <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
+          <div class="mini-talkbox" id="miniTalkBox">화면 아래 LEFT / RIGHT 버튼을 눌러줘.</div>
           <div class="mini-game-stats">
             <div class="mini-pill">SCORE <strong id="miniScore">0</strong></div>
             <div class="mini-pill">COMBO <strong id="miniCombo">0</strong></div>
@@ -4110,7 +4117,8 @@ window.kvBgm = {
         <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
       </div>
       <div class="mini-hit-buttons">
-        <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
+        <button type="button" class="mini-hit-btn" data-lane="0">LEFT</button>
+        <button type="button" class="mini-hit-btn" data-lane="1">RIGHT</button>
       </div>
     </div>
   </div>
@@ -4451,7 +4459,7 @@ const miniGame = {
   talkTimer:null,
   progress:0,
   aborted:false,
-  holdingNote:null,
+  holdingNotes:{},
   /* 일시정지 관련 */
   paused:false,
   pausedAt:0,       /* performance.now() 기준 일시정지 시각 */
@@ -6237,14 +6245,23 @@ document.addEventListener('click', (e) => {
 });
 
 
+function getMiniLaneFromKey(key){
+  const normalized = String(key || '').toLowerCase();
+  if (normalized === 'a' || normalized === 'f' || normalized === 'arrowleft') return 0;
+  if (normalized === 'l' || normalized === 'j' || normalized === 'arrowright') return 1;
+  return null;
+}
+
 miniLaneButtons.forEach(btn => {
+  const lane = Number(btn.dataset.lane || 0);
   const handler = (e) => {
     e.preventDefault();
-    pressMiniLane(0);
+    pressMiniLane(lane);
   };
   btn.addEventListener('pointerdown', (e) => { registerUserActivity(); handler(e); });
-  btn.addEventListener('pointerup',   () => releaseMiniLane(0));
-  btn.addEventListener('pointerleave',() => releaseMiniLane(0));
+  btn.addEventListener('pointerup',   () => releaseMiniLane(lane));
+  btn.addEventListener('pointerleave',() => releaseMiniLane(lane));
+  btn.addEventListener('pointercancel',() => releaseMiniLane(lane));
 });
 
 miniStartBtn.addEventListener('click', (e) => {
@@ -6272,17 +6289,20 @@ window.addEventListener('keydown', (e) => {
     if (window.kvBgm) window.kvBgm.play();
     return;
   }
-  if (!miniGame.playing) return;
-  if (e.key === ' ' || e.key === 'Enter') {
+  if (!miniGame.playing || e.repeat) return;
+
+  const lane = getMiniLaneFromKey(e.key);
+  if (lane != null) {
     e.preventDefault();
-    pressMiniLane(0);
+    pressMiniLane(lane);
   }
 });
 
 window.addEventListener('keyup', (e) => {
   if (!miniGame.active || !miniGame.playing) return;
-  if (e.key === ' ' || e.key === 'Enter') {
-    releaseMiniLane(0);
+  const lane = getMiniLaneFromKey(e.key);
+  if (lane != null) {
+    releaseMiniLane(lane);
   }
 });
 
@@ -7129,6 +7149,7 @@ function abortConcertMiniGame(){
   miniGame.aborted = true;
   miniGame.active = false;
   miniGame.playing = false;
+  miniGame.paused = false;
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
@@ -7226,17 +7247,17 @@ function showMiniFeedback(text, type='perfect'){
 function clearMiniNotes(){
   miniGame.notes.forEach(note => note.el.remove());
   miniGame.notes = [];
-  miniGame.holdingNote = null;
+  miniGame.holdingNotes = {};
 }
 
 /* 노트 낙하 시간 (ms) */
 const NOTE_FALL_MS = 3000;
 
-function spawnMiniNote(altClass, isLong, targetSec, lengthBeats){
+function spawnMiniNote(lane, isLong, targetSec, lengthBeats){
   if (!miniGame.active || !miniGame.playing) return;
 
-  const lane = 0;
-  const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
+  const laneIndex = Math.max(0, Math.min(1, Number(lane || 0)));
+  const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${laneIndex}"]`);
   if (!laneEl) return;
 
   const bpm = getBpm();
@@ -7267,7 +7288,7 @@ function spawnMiniNote(altClass, isLong, targetSec, lengthBeats){
 
   miniGame.notes.push({
     id: ++miniGame.noteSeq,
-    lane,
+    lane: laneIndex,
     y: startY,
     height: longHeight,
     speed,
@@ -7310,6 +7331,40 @@ function sanitizeSingleLaneChart(entries){
     result.push({ beat, isLong, lengthBeats });
     blockedUntilBeat = isLong ? (beat + lengthBeats + 0.125) : (beat + 0.125);
   });
+  return result;
+}
+
+function buildTwoLaneChart(entries){
+  const base = sanitizeSingleLaneChart(entries);
+  const result = [];
+  const blockedUntil = [-Infinity, -Infinity];
+  let lastLane = 1;
+
+  base.forEach((entry, index) => {
+    const beat = Number(entry.beat || 0);
+    const isLong = !!entry.isLong;
+    const lengthBeats = Math.max(0, Number(entry.lengthBeats || 0));
+    const releaseBeat = isLong ? (beat + Math.max(1, lengthBeats) + 0.125) : (beat + 0.125);
+
+    const preferredLane = (index % 2 === 0) ? (1 - lastLane) : lastLane;
+    const laneOrder = [preferredLane, 1 - preferredLane];
+    let lane = laneOrder.find(v => beat >= blockedUntil[v] - 0.001);
+
+    if (lane == null) {
+      lane = blockedUntil[0] <= blockedUntil[1] ? 0 : 1;
+      if (beat < blockedUntil[lane] - 0.001) return;
+    }
+
+    blockedUntil[lane] = releaseBeat;
+    lastLane = lane;
+    result.push({
+      beat,
+      lane,
+      isLong,
+      lengthBeats
+    });
+  });
+
   return result;
 }
 
@@ -7381,7 +7436,7 @@ function buildBadLoveChart(){
       });
     });
   }
-  return sanitizeSingleLaneChart(entries);
+  return buildTwoLaneChart(entries);
 }
 
 function buildDefaultConcertChart(){
@@ -7408,7 +7463,7 @@ function buildDefaultConcertChart(){
       }
     });
   }
-  return sanitizeSingleLaneChart(entries);
+  return buildTwoLaneChart(entries);
 }
 
 function getConcertChart(){
@@ -7449,7 +7504,7 @@ function tickSpawnFromMusic(){
     /* NOTE_FALL_MS 전에 미리 스폰해야 hitLine에 정확히 도달 */
     const spawnAtSec = targetSec - NOTE_FALL_MS / 1000;
     if (elapsedSec < spawnAtSec) break;
-    spawnMiniNote(null, !!entry.isLong, targetSec, entry.lengthBeats);
+    spawnMiniNote(entry.lane, !!entry.isLong, targetSec, entry.lengthBeats);
     miniGame.chartIndex += 1;
   }
 }
@@ -7503,7 +7558,7 @@ function pressMiniLane(lane){
       target.holding = true;
       target.held = true;
       target.el.classList.add('holding');
-      miniGame.holdingNote = target;
+      miniGame.holdingNotes[lane] = target;
       miniGame.combo += 1;
       miniGame.perfect += 1;
       showMiniFeedback('HOLD!', 'perfect');
@@ -7524,7 +7579,7 @@ function pressMiniLane(lane){
       target.holding = true;
       target.held = true;
       target.el.classList.add('holding');
-      miniGame.holdingNote = target;
+      miniGame.holdingNotes[lane] = target;
       miniGame.combo += 1;
       miniGame.good += 1;
       showMiniFeedback('HOLD!', 'cool');
@@ -7547,9 +7602,8 @@ function releaseMiniLane(lane){
   const btn = document.querySelector(`.mini-hit-btn[data-lane="${lane}"]`);
   if (btn) btn.classList.remove('active');
 
-  if (!miniGame.holdingNote) return;
-  const note = miniGame.holdingNote;
-  if (note.lane !== lane) return;
+  const note = miniGame.holdingNotes[lane];
+  if (!note) return;
 
   /* 롱노트가 아직 끝나지 않은 상태에서 손을 뗌 → MISS */
   const hitLine = (miniRhythmStage.clientHeight || 420) - 8;
@@ -7564,7 +7618,7 @@ function releaseMiniLane(lane){
     miniGame.combo = 0;
     miniGame.miss += 1;
     showMiniFeedback('MISS', 'miss');
-    miniGame.holdingNote = null;
+    delete miniGame.holdingNotes[lane];
     updateMiniGameHUD();
     /* 노트는 계속 내려가다가 tickMiniGame에서 사라짐 */
   } else {
@@ -7575,7 +7629,7 @@ function releaseMiniLane(lane){
     note.holding = false;
     note.el.classList.remove('holding');
     note.el.classList.add('hit');
-    miniGame.holdingNote = null;
+    delete miniGame.holdingNotes[lane];
     miniGame.notes = miniGame.notes.filter(n => n.id !== note.id);
     updateMiniGameHUD();
   }
@@ -7606,8 +7660,8 @@ function tickMiniGame(now){
         note.holding = false;
         note.el.classList.remove('holding');
         note.el.classList.add('hit');
-        if (miniGame.holdingNote && miniGame.holdingNote.id === note.id) {
-          miniGame.holdingNote = null;
+        if (miniGame.holdingNotes[note.lane] && miniGame.holdingNotes[note.lane].id === note.id) {
+          delete miniGame.holdingNotes[note.lane];
         }
         spawnMiniHitFX(note.lane, 'perfect');
         return false;
@@ -7674,10 +7728,13 @@ function openConcertMiniGame(){
   miniGame.aborted = false;
   miniGame.chart = [];
   miniGame.chartIndex = 0;
+  miniGame.holdingNotes = {};
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
   closeMiniAbortConfirm();
+  const _po = document.getElementById('miniPauseOverlay');
+  if (_po) _po.classList.remove('show');
   miniGameResult.classList.remove('show');
   miniGameLayer.classList.add('active');
   miniStartOverlay.classList.add('show');
@@ -7718,6 +7775,7 @@ function beginConcertMiniGamePlay(){
   miniGame._lastFrameTime = null;
   miniGame.paused = false;
   miniGame.totalPausedMs = 0;
+  miniGame.holdingNotes = {};
   closeMiniAbortConfirm();
   miniStartOverlay.classList.remove('show');
   setMiniTalk(miniTalkLines.start);
@@ -7742,9 +7800,12 @@ function pauseMiniGame(){
     }
   } catch(e) {}
 
-  /* RAF 중단 + BGM 정지 */
+  /* RAF 중단 + BGM 일시정지 (stopVideo 아닌 pauseVideo — 위치 유지) */
   cancelAnimationFrame(miniGame.rafId);
-  if (window.kvBgm) window.kvBgm.stop();
+  try {
+    const B = window._ytBgm;
+    if (B && B.player) B.player.pauseVideo();
+  } catch(e) {}
 
   /* 일시정지 오버레이 표시 */
   const overlay = document.getElementById('miniPauseOverlay');
@@ -7768,6 +7829,7 @@ function resumeMiniGame(){
   try {
     const B = window._ytBgm;
     if (B && B.player && B.ready) {
+      /* pauseVideo로 멈췄으므로 seekTo로 정확한 위치 맞추고 play */
       B.player.seekTo(miniGame.pausedYtSec, true);
       B.player.playVideo();
     }
@@ -7799,7 +7861,10 @@ function finishConcertMiniGame(){
   if (window.kvBgm) window.kvBgm.stop();
   miniGame.active = false;
   miniGame.playing = false;
+  miniGame.paused = false;
   closeMiniAbortConfirm();
+  const _po2 = document.getElementById('miniPauseOverlay');
+  if (_po2) _po2.classList.remove('show');
   updateMiniGameProgress(1);
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
@@ -10152,7 +10217,7 @@ bootGame();
    게임 내 duration은 YouTube onReady에서 자동으로 읽어옴
 ══════════════════════════════════════════════════════════════ */
 window.CONCERT_TRACKS = [
-  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',         threshold: 10, bpm: 118 },
+  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',         threshold: 10, bpm: 118, startSec: 0, endSec: 201 },
   { videoId: 'UNFk6_to5_0', title: '가솔린 (Gasoline)', threshold: 20, bpm: 150 },
   { videoId: 'dUd_9R_qJSg', title: 'Killer',            threshold: 30, bpm: 130 },
   { videoId: 'ZYHBKvNUmk0', title: 'Good & Great',      threshold: 40, bpm: 118 },
