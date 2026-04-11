@@ -7238,20 +7238,17 @@ function abortConcertMiniGame(){
   const popPenalty = 3;
   state.stats.popularity = Math.max(0, (state.stats.popularity || 0) - popPenalty);
 
-  /* 포기 후 콘서트 카드 재등장 방지 — Offered=true 유지, Resolved=false
-     → maybeTriggerConcertEvent에서 Offered=true면 카드를 show하므로
-       쿨다운 타이머로 일정 시간 뒤에만 다시 열리게 함 */
-  state.concertEventOffered  = true;   /* 카드 즉시 재등장 방지 */
-  state.concertEventResolved = false;
+  /* 포기 후 콘서트 카드 완전 차단
+     Resolved=true → maybeTriggerConcertEvent에서 카드 숨김
+     다음 스케줄 행동 완료 시 리셋됨 */
+  state.concertEventOffered  = true;
+  state.concertEventResolved = true;
 
-  /* 30초 뒤에 Offered 리셋 → 그때 조건 충족이면 카드 재등장 */
-  if (miniGame._abortCooldownTimer) clearTimeout(miniGame._abortCooldownTimer);
-  miniGame._abortCooldownTimer = setTimeout(() => {
-    if (!miniGame.active) {
-      state.concertEventOffered = false;
-      updateScheduleUI();
-    }
-  }, 30000);
+  /* abort 쿨다운 타이머 제거 — Resolved로 관리하므로 불필요 */
+  if (miniGame._abortCooldownTimer) {
+    clearTimeout(miniGame._abortCooldownTimer);
+    miniGame._abortCooldownTimer = null;
+  }
 
   /* 액션/버튼 상태 완전 초기화 */
   if (state.actionFinishTimer) { clearTimeout(state.actionFinishTimer); state.actionFinishTimer = null; }
@@ -8494,6 +8491,11 @@ function startAction(type){
     clearActionProgress();
     state.isActing = false;
     setScheduleButtonsDisabled(false);
+    /* abort 후 차단된 콘서트 카드 — 다음 행동 완료 시 재평가 허용 */
+    if (state.concertEventResolved && state.concertEventOffered) {
+      state.concertEventResolved = false;
+      state.concertEventOffered  = false;
+    }
     updateScheduleUI();
     await triggerSaveNow();
   }, meta.duration);
