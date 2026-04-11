@@ -1226,6 +1226,37 @@ img{
   color:#ff9999;
   text-shadow:0 2px 12px rgba(255,80,80,.7);
 }
+/* 콤보 카운터 */
+.mini-combo-display{
+  position:absolute;
+  left:50%;
+  bottom:calc(84px + 48px);  /* hitLine 위, feedback보다 위 */
+  transform:translateX(-50%);
+  text-align:center;
+  color:rgba(255,255,255,.0);
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.08em;
+  pointer-events:none;
+  white-space:nowrap;
+  transition:opacity .2s ease, transform .2s ease;
+  opacity:0;
+}
+.mini-combo-display.show{
+  opacity:1;
+  color:rgba(255,240,180,.9);
+  text-shadow:0 0 12px rgba(255,200,80,.6);
+}
+.mini-combo-display.big{
+  font-size:17px;
+  color:rgba(255,210,100,.95);
+  text-shadow:0 0 18px rgba(255,180,50,.8), 0 2px 8px rgba(0,0,0,.4);
+  animation:comboScalePop .18s ease-out;
+}
+@keyframes comboScalePop{
+  0%  { transform:translateX(-50%) scale(1.4); }
+  100%{ transform:translateX(-50%) scale(1.0); }
+}
 .mini-hit-fx{
   position:absolute;
   width:118px;
@@ -4083,6 +4114,7 @@ window.kvBgm = {
             <div class="mini-lane" data-lane="0"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
+          <div class="mini-combo-display" id="miniComboDisplay"></div>
           <div class="mini-hit-line"></div>
 
           <!-- TAP 버튼 — stage 안 하단 고정 -->
@@ -5677,6 +5709,27 @@ const miniRhythmStage = document.getElementById('miniRhythmStage');
 const miniTalkBox = document.getElementById('miniTalkBox');
 const miniTalkChar = document.getElementById('miniTalkChar');
 const miniFeedback = document.getElementById('miniFeedback');
+const miniComboDisplay = document.getElementById('miniComboDisplay');
+
+let _comboHideTimer = null;
+function showMiniCombo(combo){
+  if (!miniComboDisplay) return;
+  if (combo < 2) {
+    /* 콤보 1 이하면 숨김 */
+    miniComboDisplay.classList.remove('show', 'big');
+    miniComboDisplay.textContent = '';
+    return;
+  }
+  miniComboDisplay.textContent = `${combo} COMBO`;
+  miniComboDisplay.classList.remove('big');
+  void miniComboDisplay.offsetWidth; /* reflow for animation */
+  miniComboDisplay.classList.add('show');
+  if (combo % 10 === 0 || combo >= 20) miniComboDisplay.classList.add('big');
+  if (_comboHideTimer) clearTimeout(_comboHideTimer);
+  _comboHideTimer = setTimeout(() => {
+    miniComboDisplay.classList.remove('show', 'big');
+  }, 1200);
+}
 const miniGameResult = document.getElementById('miniGameResult');
 const miniAbortBtn = document.getElementById('miniAbortBtn');
 const miniAbortConfirm = document.getElementById('miniAbortConfirm');
@@ -7525,7 +7578,7 @@ function pressMiniLane(lane){
   if (!candidates.length) {
     miniGame.combo = 0;
     miniGame.miss += 1;
-    showMiniFeedback('MISS', 'miss');
+    showMiniFeedback('MISS', 'miss'); showMiniCombo(0);
     spawnMiniHitFX(lane, 'miss');
     updateMiniGameHUD();
     return;
@@ -7541,7 +7594,7 @@ function pressMiniLane(lane){
   if (timeDiff > 350) {
     miniGame.combo = 0;
     miniGame.miss += 1;
-    showMiniFeedback('MISS', 'miss');
+    showMiniFeedback('MISS', 'miss'); showMiniCombo(0);
     spawnMiniHitFX(lane, 'miss');
     updateMiniGameHUD();
     return;
@@ -7558,6 +7611,7 @@ function pressMiniLane(lane){
       showMiniFeedback('HOLD!', 'perfect');
       triggerMiniStagePulse();
       console.log('[HOLD] started PERFECT, note id:', target.id, 'timeDiff:', timeDiff.toFixed(0)+'ms');
+      showMiniCombo(miniGame.combo);
     } else {
       miniGame.score += 120 + Math.min(60, miniGame.combo * 2);
       miniGame.combo += 1;
@@ -7566,6 +7620,7 @@ function pressMiniLane(lane){
       showMiniFeedback('PERFECT', 'perfect');
       spawnMiniHitFX(lane, 'perfect');
       triggerMiniStagePulse();
+      showMiniCombo(miniGame.combo);
       target.el.remove();
       miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
     }
@@ -7578,6 +7633,7 @@ function pressMiniLane(lane){
       miniGame.combo += 1;
       miniGame.good += 1;
       showMiniFeedback('HOLD!', 'cool');
+      showMiniCombo(miniGame.combo);
     } else {
       miniGame.score += 80;
       miniGame.combo += 1;
@@ -7585,6 +7641,7 @@ function pressMiniLane(lane){
       target.el.classList.add('hit');
       showMiniFeedback('COOL', 'cool');
       spawnMiniHitFX(lane, 'cool');
+      showMiniCombo(miniGame.combo);
       target.el.remove();
       miniGame.notes = miniGame.notes.filter(n => n.id !== target.id);
     }
@@ -7616,7 +7673,7 @@ function releaseMiniLane(lane){
     note.el.style.opacity = '0.45';
     miniGame.combo = 0;
     miniGame.miss += 1;
-    showMiniFeedback('MISS', 'miss');
+    showMiniFeedback('MISS', 'miss'); showMiniCombo(0);
     miniGame.holdingNote = null;
     updateMiniGameHUD();
   } else {
@@ -7695,7 +7752,7 @@ function tickMiniGame(now){
       note.el.remove();
       miniGame.combo = 0;
       miniGame.miss += 1;
-      showMiniFeedback('MISS', 'miss');
+      showMiniFeedback('MISS', 'miss'); showMiniCombo(0);
       return false;
     }
 
@@ -9896,9 +9953,11 @@ bootGame();
     const mg = window.miniGame || {};
     const score   = mg._lastScore   ?? mg.score   ?? 0;
     const perfect = mg._lastPerfect ?? mg.perfect ?? 0;
-    if (score >= 2400 || perfect >= 14) return 'S';
-    if (score >= 1500 || perfect >= 8)  return 'A';
-    if (score >= 900  || perfect >= 4)  return 'B';
+    const good    = mg._lastGood    ?? mg.good    ?? 0;
+    console.log('[FAN] rank check — score:', score, 'perfect:', perfect, 'good:', good);
+    if (score >= 30000 || perfect >= 150) return 'S';
+    if (score >= 15000 || perfect >= 80)  return 'A';
+    if (score >= 5000  || perfect >= 30)  return 'B';
     return 'C';
   }
   const FAN_DATA = {
