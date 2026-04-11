@@ -1144,13 +1144,43 @@ img{
 .mini-note.long{
   width:min(18%, 52px);
   border-radius:8px;
-  background:linear-gradient(180deg, #c9b8f8, #9b7ef5, #c9b8f8);
-  border:2px solid rgba(255,255,255,.65);
-  box-shadow:0 0 24px rgba(155,126,245,.45), 0 4px 12px rgba(0,0,0,.18);
+  background:rgba(155,126,245,.25);  /* 어두운 미채움 상태 */
+  border:2px solid rgba(155,126,245,.7);
+  box-shadow:0 0 16px rgba(155,126,245,.3), 0 4px 12px rgba(0,0,0,.18);
+  overflow:visible;
+}
+/* 롱노트 채움 레이어 — 위에서부터 채워짐 */
+.mini-note.long .long-fill{
+  position:absolute;
+  left:-2px; right:-2px; top:-2px;
+  height:0%;
+  border-radius:6px;
+  background:linear-gradient(180deg, #ddd0ff, #9b7ef5);
+  box-shadow:0 0 20px rgba(155,126,245,.6);
+  transition:none;
+  pointer-events:none;
+}
+/* 롱노트 머리 동그라미 — 맨 아래 (판정선에 먼저 닿는 쪽) */
+.mini-note.long .long-head{
+  position:absolute;
+  left:50%;
+  bottom:-14px;
+  transform:translateX(-50%);
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:linear-gradient(135deg, #ede0ff, #9b7ef5);
+  border:3px solid rgba(255,255,255,.8);
+  box-shadow:0 0 16px rgba(155,126,245,.7);
+  pointer-events:none;
+}
+.mini-note.long.holding .long-head{
+  background:linear-gradient(135deg, #fff, #c9b8f8);
+  box-shadow:0 0 24px rgba(200,180,255,.9);
 }
 .mini-note.long.holding{
-  background:linear-gradient(180deg, #ddd0ff, #7c4df0, #ddd0ff);
-  box-shadow:0 0 36px rgba(124,77,240,.65), 0 4px 12px rgba(0,0,0,.18);
+  border-color:rgba(200,180,255,.9);
+  box-shadow:0 0 28px rgba(155,126,245,.6), 0 4px 12px rgba(0,0,0,.18);
 }
 .mini-note.hit{
   opacity:0;
@@ -7250,6 +7280,17 @@ function spawnMiniNote(lane, isLong, targetSec, lengthBeats){
   note.className = cls;
   note.style.height = longHeight + 'px';
   note.style.transform = `translate(-50%, ${startY}px)`;
+
+  /* 롱노트 내부 요소: 머리 동그라미 + 채움 레이어 */
+  if (isLong) {
+    const head = document.createElement('div');
+    head.className = 'long-head';
+    note.appendChild(head);
+    const fill = document.createElement('div');
+    fill.className = 'long-fill';
+    note.appendChild(fill);
+  }
+
   laneEl.appendChild(note);
 
   /* targetHitTime: 채보의 정확한 히트 시각 (performance.now 기준 ms) */
@@ -7548,17 +7589,19 @@ function releaseMiniLane(lane){
   const isComplete = note.y + note.height >= hitLine + 60;
 
   if (!isComplete) {
-    /* 중간에 손 뗌 — 시각적으로 어두워지고 MISS 처리 */
+    /* 중간에 손 뗌 — fill 현재 위치 고정, 나머지 어둡게 */
     note.holding = false;
-    note.holdBroken = true;   /* 더 이상 누를 수 없도록 */
+    note.holdBroken = true;
     note.el.classList.remove('holding');
-    note.el.style.opacity = '0.35';  /* 어두워짐 */
+    /* fill은 그대로 유지(고정), 노트 본체만 어둡게 */
+    const fillEl = note.el.querySelector('.long-fill');
+    if (fillEl) fillEl.style.transition = 'none'; /* 더 이상 변하지 않음 */
+    note.el.style.opacity = '0.45';
     miniGame.combo = 0;
     miniGame.miss += 1;
     showMiniFeedback('MISS', 'miss');
     miniGame.holdingNote = null;
     updateMiniGameHUD();
-    /* 노트는 계속 내려가다가 tickMiniGame에서 사라짐 */
   } else {
     /* 끝까지 눌렀음 — 완료 보너스 */
     miniGame.score += 200 + Math.min(80, miniGame.combo * 3);
@@ -7590,15 +7633,27 @@ function tickMiniGame(now){
     note.y += note.speed * deltaFactor;   /* 주사율 무관하게 동일한 속도 */
     note.el.style.transform = `translate(-50%, ${note.y}px)`;
 
-    /* 롱노트 누르는 중: 매 프레임 점수 누적 */
+    /* 롱노트 누르는 중: 매 프레임 점수 누적 + fill 업데이트 */
     if (note.isLong && note.holding) {
       miniGame.score += 2;
+
+      /* fill 높이: 노트 바닥(head)이 hitLine에 닿은 순간부터 위로 채워짐 */
+      const fillEl = note.el.querySelector('.long-fill');
+      if (fillEl) {
+        const noteBottom = note.y + note.height;  /* 노트 바닥 y */
+        /* hitLine을 지난 만큼이 채워진 양 */
+        const passedPx = Math.max(0, Math.min(note.height, noteBottom - hitLine));
+        const fillPct = (passedPx / note.height) * 100;
+        fillEl.style.height = fillPct + '%';
+      }
+
       /* 롱노트 tail이 hitLine 아래로 완전히 내려가면 자동 완료 */
       if (note.y + note.height > hitLine + 60) {
         note.holding = false;
         note.el.classList.remove('holding');
         note.el.classList.add('hit');
         if (miniGame.holdingNote && miniGame.holdingNote.id === note.id) {
+          miniGame.holdingNote = null;
         }
         spawnMiniHitFX(note.lane, 'perfect');
         return false;
@@ -7606,7 +7661,7 @@ function tickMiniGame(now){
       return true;
     }
 
-    /* 중간에 손을 뗀 롱노트 — 계속 내려가다 화면 밖으로 나가면 제거 */
+    /* 중간에 손을 뗀 롱노트 — fill 고정, 나머지는 어둡게, 화면 밖에서 제거 */
     if (note.isLong && note.holdBroken) {
       if (note.y > hitLine + note.height + 20) {
         note.el.remove();
