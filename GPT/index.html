@@ -7213,11 +7213,8 @@ function clearMiniNotes(){
 /* 노트 낙하 시간 (ms) */
 const NOTE_FALL_MS = 3000;
 
-function spawnMiniNote(altClass, isLong, targetSec){
+function spawnMiniNote(altClass, isLong, targetSec, lengthBeats){
   if (!miniGame.active || !miniGame.playing) return;
-
-  const elapsed = performance.now() - miniGame.startTime;
-  if (elapsed > miniGame.duration - NOTE_FALL_MS) return;
 
   const lane = 0;
   const laneEl = miniRhythmStage.querySelector(`.mini-lane[data-lane="${lane}"]`);
@@ -7231,8 +7228,9 @@ function spawnMiniNote(altClass, isLong, targetSec){
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
 
-  /* 롱노트 높이: 4박 분량 */
-  const longHeight = isLong ? Math.round(speed * (beat * 4 / 16.666)) : baseH;
+  /* 롱노트 높이는 채보의 실제 lengthBeats를 반영 */
+  const longBeats = Math.max(1, Number(lengthBeats || 0) || 4);
+  const longHeight = isLong ? Math.max(baseH + 10, Math.round(speed * (beat * longBeats / 16.666))) : baseH;
   const startY = -(longHeight + 4);
 
   const note = document.createElement('div');
@@ -7255,6 +7253,7 @@ function spawnMiniNote(altClass, isLong, targetSec){
     height: longHeight,
     speed,
     isLong: !!isLong,
+    lengthBeats: longBeats,
     holding: false,
     held: false,
     holdBroken: false,
@@ -7272,6 +7271,27 @@ function getCurrentConcertTrack(){
 function getBpm(){
   const track = getCurrentConcertTrack();
   return (track && track.bpm) ? track.bpm : 120;
+}
+
+function getConcertChartDurationSec(fallbackSec){
+  const actualSec = Number(miniGame.duration || 0) / 1000;
+  if (actualSec >= 60) return actualSec;
+  return fallbackSec;
+}
+
+function sanitizeSingleLaneChart(entries){
+  const sorted = (entries || []).slice().sort((a, b) => a.beat - b.beat);
+  const result = [];
+  let blockedUntilBeat = -Infinity;
+  sorted.forEach(entry => {
+    const beat = Number(entry.beat || 0);
+    const isLong = !!entry.isLong;
+    const lengthBeats = Math.max(0, Number(entry.lengthBeats || 0));
+    if (beat < blockedUntilBeat - 0.001) return;
+    result.push({ beat, isLong, lengthBeats });
+    blockedUntilBeat = isLong ? (beat + lengthBeats + 0.125) : (beat + 0.125);
+  });
+  return result;
 }
 
 function buildBadLoveChart(){
@@ -7326,8 +7346,11 @@ function buildBadLoveChart(){
     ]
   ];
 
+  const bpm = getBpm();
+  const targetSec = Math.max(getConcertChartDurationSec(215) - 3, 64);
+  const targetBeats = Math.ceil(targetSec / (60 / bpm));
+  const totalMeasures = Math.ceil(targetBeats / 4);
   const entries = [];
-  const totalMeasures = 24;
   for (let measure = 0; measure < totalMeasures; measure += 1) {
     const pattern = measures[measure % measures.length];
     const measureStart = measure * 4;
@@ -7339,12 +7362,15 @@ function buildBadLoveChart(){
       });
     });
   }
-  return entries;
+  return sanitizeSingleLaneChart(entries);
 }
 
 function buildDefaultConcertChart(){
+  const bpm = getBpm();
+  const targetSec = Math.max(getConcertChartDurationSec(180) - 3, 48);
+  const targetBeats = Math.ceil(targetSec / (60 / bpm));
+  const totalMeasures = Math.ceil(targetBeats / 4);
   const entries = [];
-  const totalMeasures = 20;
   const templates = [
     [0, 2],
     [0, 1.5, 3],
@@ -7363,7 +7389,7 @@ function buildDefaultConcertChart(){
       }
     });
   }
-  return entries;
+  return sanitizeSingleLaneChart(entries);
 }
 
 function getConcertChart(){
@@ -7404,7 +7430,7 @@ function tickSpawnFromMusic(){
     /* NOTE_FALL_MS 전에 미리 스폰해야 hitLine에 정확히 도달 */
     const spawnAtSec = targetSec - NOTE_FALL_MS / 1000;
     if (elapsedSec < spawnAtSec) break;
-    spawnMiniNote(null, !!entry.isLong, targetSec);
+    spawnMiniNote(null, !!entry.isLong, targetSec, entry.lengthBeats);
     miniGame.chartIndex += 1;
   }
 }
