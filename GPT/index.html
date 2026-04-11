@@ -1160,7 +1160,7 @@ img{
   position:absolute;
   left:50%;
   width:min(18%, 52px);
-  height:18px;
+  height:20px;
   border-radius:6px;
   background:linear-gradient(180deg, #ffb3d4, #ff7eb3);
   box-shadow:0 4px 12px rgba(255,100,170,.30);
@@ -4035,13 +4035,14 @@ window.kvBgm = {
             <div class="room-gift-grid" id="seedGiftGrid"></div>
           </div>
         </div>
+      </div>
+    </div>
 
+  <!-- 미니게임 레이어 — .main 밖, screen-schedule 안에 위치해야 전체 화면을 채울 수 있음 -->
   <div class="mini-game-layer" id="miniGameLayer">
     <div class="mini-game-shell">
       <div class="mini-game-body">
         <div class="mini-rhythm-stage" id="miniRhythmStage">
-
-          <!-- 상단: 포기 + 진행바 -->
           <div class="mini-stage-topline">
             <button type="button" class="mini-abort-btn" id="miniAbortBtn">포기</button>
             <div class="mini-progress-wrap">
@@ -4049,20 +4050,17 @@ window.kvBgm = {
               <div class="mini-progress-track"><div class="mini-progress-fill" id="miniProgressFill"></div></div>
             </div>
           </div>
-
           <div class="mini-rhythm-lanes">
             <div class="mini-lane" data-lane="0"></div>
           </div>
           <div class="mini-feedback" id="miniFeedback">START</div>
           <div class="mini-hit-line"></div>
-
           <div class="mini-start-overlay show" id="miniStartOverlay">
             <div class="mini-start-card">
               <div id="miniStartTrackTitle" style="font-size:13px;font-weight:800;color:#7a5a6a;margin-bottom:2px;text-align:center;"></div>
               <button type="button" class="mini-start-btn" id="miniStartBtn">공연 시작</button>
             </div>
           </div>
-
           <div class="mini-game-result" id="miniGameResult">
             <div class="mini-result-card">
               <div id="miniResultTrackName" style="font-size:12px;font-weight:800;color:#a07890;margin-bottom:6px;"></div>
@@ -4076,7 +4074,6 @@ window.kvBgm = {
               <button type="button" class="mini-result-btn" id="miniFinishBtn">결과 적용하고 돌아가기</button>
             </div>
           </div>
-
           <div class="mini-confirm-overlay" id="miniAbortConfirm">
             <div class="mini-confirm-card">
               <div class="mini-confirm-title">공연을 중지할까요?</div>
@@ -4089,8 +4086,6 @@ window.kvBgm = {
           </div>
         </div>
       </div>
-
-      <!-- 말풍선 + 캐릭터 (stage 아래, TAP 위) -->
       <div class="mini-info-bar">
         <div class="mini-info-left">
           <div class="mini-talkbox" id="miniTalkBox">화면 아래 TAP 버튼을 누르면 돼.</div>
@@ -4101,15 +4096,12 @@ window.kvBgm = {
         </div>
         <img class="mini-talk-char" id="miniTalkChar" src="img/KEY_default_s.png" alt="KEY 캐릭터" />
       </div>
-
-      <!-- TAP 버튼 -->
       <div class="mini-hit-buttons">
         <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
       </div>
     </div>
   </div>
-      </div>
-    </div>
+
   </section>
 
   <section class="screen" id="screen-awaken" aria-hidden="true" style="display:none;"></section>
@@ -7233,7 +7225,7 @@ function spawnMiniNote(altClass, isLong, targetSec){
   const beat = 60000 / bpm;
   const stageH = miniRhythmStage.clientHeight || 420;
   const hitLine = stageH - 8;
-  const baseH = 18;   /* 일반 노트 세로 높이 (가로:세로 3:1) */
+  const baseH = 20;   /* 블럭 세로 높이 — 가로(52px):세로(20px) ≈ 5:2 납작한 형태 */
   const totalDist = hitLine + baseH;
   const speed = totalDist / (NOTE_FALL_MS / 16.666);
 
