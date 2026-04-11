@@ -8054,13 +8054,8 @@ function maybeTriggerConcertEvent(){
   const tracks = window.CONCERT_TRACKS || [];
   if (!tracks.length) return;
 
-  /* 미니게임 진행 중에는 카드 숨김 */
   if (typeof miniGame !== 'undefined' && miniGame.active) { hideConcertEvent(); return; }
-
-  /* 이미 Yes를 눌러 진행 완료 대기 중이면 건드리지 않음 */
   if (state.concertEventResolved) { hideConcertEvent(); return; }
-
-  /* abort 쿨다운 중 (Offered=true + 타이머 살아있음) → 카드 숨김 */
   if (state.concertEventOffered && miniGame._abortCooldownTimer) { hideConcertEvent(); return; }
 
   const level = state.concertLevel || 0;
@@ -8069,6 +8064,9 @@ function maybeTriggerConcertEvent(){
   const baseThreshold = tracks[lastIdx].threshold;
   const extra = level > lastIdx ? (level - lastIdx) * 10 : 0;
   const needed = level <= lastIdx ? tracks[level].threshold : baseThreshold + extra;
+
+  console.log('[CONCERT] check — level:', level, 'practice:', state.stats.practice, 'needed:', needed,
+    'Offered:', state.concertEventOffered, 'Resolved:', state.concertEventResolved);
 
   if (state.stats.practice >= needed) {
     if (!state.concertEventOffered) {
