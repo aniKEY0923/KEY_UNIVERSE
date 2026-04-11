@@ -7874,6 +7874,11 @@ function applyConcertMiniGameRewards(){
   state.concertLevel = (state.concertLevel || 0) + 1;
   state.concertEventOffered  = false;
   state.concertEventResolved = false;
+  /* abort 쿨다운 타이머가 남아있으면 취소 */
+  if (miniGame._abortCooldownTimer) {
+    clearTimeout(miniGame._abortCooldownTimer);
+    miniGame._abortCooldownTimer = null;
+  }
 
   if (miniGame.score >= 2400 || miniGame.perfect >= 14) {
     setSeedMessage(`${dialogues.concertPerfect} ${popMsg}`);
@@ -7920,6 +7925,9 @@ function maybeTriggerConcertEvent(){
   /* 이미 Yes를 눌러 진행 완료 대기 중이면 건드리지 않음 */
   if (state.concertEventResolved) { hideConcertEvent(); return; }
 
+  /* abort 쿨다운 중 (Offered=true + 타이머 살아있음) → 카드 숨김 */
+  if (state.concertEventOffered && miniGame._abortCooldownTimer) { hideConcertEvent(); return; }
+
   const level = state.concertLevel || 0;
   const lastIdx = tracks.length - 1;
   const trackIdx = Math.min(level, lastIdx);
@@ -7928,16 +7936,14 @@ function maybeTriggerConcertEvent(){
   const needed = level <= lastIdx ? tracks[level].threshold : baseThreshold + extra;
 
   if (state.stats.practice >= needed) {
-    /* 처음 조건 충족 시 대사 출력 */
     if (!state.concertEventOffered) {
       state.concertEventOffered = true;
       const track = tracks[trackIdx];
       setSeedMessage(`${track.title} 준비가 됐어. 이제 무대에 올라볼 수 있을 것 같아.`);
     }
-    /* 조건 충족이면 항상 카드 show (offered 여부 무관) */
     showConcertEvent();
   } else {
-    state.concertEventOffered = false;  /* 조건 미달이면 플래그도 초기화 */
+    state.concertEventOffered = false;
     hideConcertEvent();
   }
 }
@@ -8850,8 +8856,9 @@ function migrateSave(save){
   if (typeof p.concertEventResolved !== 'boolean') p.concertEventResolved = false;
   if (typeof p.concertLevel !== 'number') p.concertLevel = 0;
   if (typeof p.concertsDone !== 'number') p.concertsDone = 0;
-  /* 구버그로 Resolved=true가 저장된 경우 로드 시 강제 리셋 */
-  if (p.concertEventResolved === true) {
+  /* Resolved=true 또는 Offered=true로 저장된 경우 로드 시 리셋
+     (abort 쿨다운 타이머는 페이지 재로드 시 사라지므로 Offered도 초기화) */
+  if (p.concertEventResolved === true || p.concertEventOffered === true) {
     p.concertEventResolved = false;
     p.concertEventOffered  = false;
   }
