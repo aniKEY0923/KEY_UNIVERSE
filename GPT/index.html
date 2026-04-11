@@ -7587,9 +7587,9 @@ function releaseMiniLane(lane){
   const note = miniGame.holdingNote; if (note && note.lane !== lane) return;
   if (!note) return;
 
-  /* 롱노트가 아직 끝나지 않은 상태에서 손을 뗌 → MISS */
+  /* 롱노트 꼬리(top)가 판정선을 지났으면 완료로 판정 */
   const hitLine = (miniRhythmStage.clientHeight || 420) - 84;
-  const isComplete = note.y + note.height >= hitLine + 60;
+  const isComplete = note.y >= hitLine;
 
   if (!isComplete) {
     /* 중간에 손 뗌 — fill 현재 위치 고정, 나머지 어둡게 */
@@ -7652,8 +7652,8 @@ function tickMiniGame(now){
         fillEl.style.height = fillPct + '%';
       }
 
-      /* 롱노트 tail이 hitLine 아래로 완전히 내려가면 자동 완료 */
-      if (note.y + note.height > hitLine + 60) {
+      /* 롱노트 꼬리(top)가 hitLine을 지나면 자동 완료 */
+      if (note.y >= hitLine) {
         note.holding = false;
         note.el.classList.remove('holding');
         note.el.classList.add('hit');
