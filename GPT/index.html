@@ -7461,108 +7461,306 @@ function sanitizeSingleLaneChart(entries){
   return result;
 }
 
-function buildBadLoveChart(){
-  const measures = [
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 1.0, type: 'tap' },
-      { beat: 2.0, type: 'tap' },
-      { beat: 3.0, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 1.5, type: 'tap' },
-      { beat: 2.0, type: 'tap' },
-      { beat: 3.0, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 0.5, type: 'tap' },
-      { beat: 1.0, type: 'tap' },
-      { beat: 1.5, type: 'tap' },
-      { beat: 2.0, type: 'tap' },
-      { beat: 3.0, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'hold', lengthBeats: 2 },
-      { beat: 3.0, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 1.0, type: 'tap' },
-      { beat: 2.5, type: 'tap' },
-      { beat: 3.0, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 1.0, type: 'tap' },
-      { beat: 2.0, type: 'tap' },
-      { beat: 2.5, type: 'tap' },
-      { beat: 3.0, type: 'tap' },
-      { beat: 3.5, type: 'tap' }
-    ],
-    [
-      { beat: 0.0, type: 'hold', lengthBeats: 4 }
-    ],
-    [
-      { beat: 0.0, type: 'tap' },
-      { beat: 1.0, type: 'tap' },
-      { beat: 1.5, type: 'tap' },
-      { beat: 2.0, type: 'tap' },
-      { beat: 3.0, type: 'tap' }
-    ]
-  ];
-
+/* ─────────────────────────────────────────────────────────
+   채보 헬퍼: 섹션 배열 → beat 엔트리 변환
+   sections: [ { repeat, patterns: [ [...items] ] } ]
+───────────────────────────────────────────────────────── */
+function buildChartFromSections(sections, durationSec, fallbackSec){
   const bpm = getBpm();
-  const targetSec = Math.max(getConcertChartDurationSec(215) - 3, 64);
-  const targetBeats = Math.ceil(targetSec / (60 / bpm));
-  const totalMeasures = Math.ceil(targetBeats / 4);
+  const targetSec = Math.max(getConcertChartDurationSec(fallbackSec || durationSec) - 2, 32);
+  const totalBeats = targetSec * (bpm / 60);
   const entries = [];
-  for (let measure = 0; measure < totalMeasures; measure += 1) {
-    const pattern = measures[measure % measures.length];
-    const measureStart = measure * 4;
-    pattern.forEach(item => {
-      entries.push({
-        beat: measureStart + item.beat,
-        lane: 0,
-        isLong: item.type === 'hold',
-        lengthBeats: item.lengthBeats || 0
-      });
-    });
+  let curBeat = 0;
+
+  for (const sec of sections) {
+    const rep = sec.repeat || 1;
+    for (let r = 0; r < rep; r++) {
+      for (const pattern of sec.patterns) {
+        if (curBeat >= totalBeats) break;
+        for (const item of pattern) {
+          entries.push({
+            beat: curBeat + (item.beat !== undefined ? item.beat : item),
+            lane: 0,
+            isLong: !!(item.isLong || item.type === 'hold'),
+            lengthBeats: item.lengthBeats || 0
+          });
+        }
+        curBeat += sec.measureBeats || 4;
+      }
+    }
   }
   return sanitizeSingleLaneChart(entries);
 }
 
-function buildDefaultConcertChart(){
-  const bpm = getBpm();
-  const targetSec = Math.max(getConcertChartDurationSec(180) - 3, 48);
-  const targetBeats = Math.ceil(targetSec / (60 / bpm));
-  const totalMeasures = Math.ceil(targetBeats / 4);
-  const entries = [];
-  const templates = [
-    [0, 2],
-    [0, 1.5, 3],
-    [0, 1, 2, 3],
-    [0, 2.5, 3],
-    [{ beat: 0, isLong: true, lengthBeats: 2 }, 3]
+/* ──────────────────────────────────────
+   BAD LOVE (118bpm) — 몽환·감성
+   인트로: 여유, 버스: 보컬 라인,
+   프리코러스: 긴장 고조, 코러스: 롱노트 폭발,
+   브릿지: 쉬어가기, 아웃트로: 마무리
+────────────────────────────────────── */
+function buildBadLoveChart(){
+  const sections = [
+    /* 인트로 — 여유롭게 시작 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1.5}, {beat:3} ],
+      [ {beat:0}, {beat:2}, {beat:3} ],
+      [ {beat:0.5}, {beat:2}, {beat:3.5} ]
+    ]},
+    /* 버스 A — 보컬 라인 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2.5} ],
+      [ {beat:0}, {beat:2}, {beat:3} ],
+      [ {beat:0.5}, {beat:1.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3.5} ]
+    ]},
+    /* 프리코러스 — 긴장 고조 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2.5} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:1.5}, {beat:2}, {beat:3} ]
+    ]},
+    /* 코러스 — 롱노트 + 폭발 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0, isLong:true, lengthBeats:1.5}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:2}, {beat:3} ]
+    ]},
+    /* 버스 B — 살짝 쉬며 변주 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:1}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:1.5}, {beat:3} ],
+      [ {beat:0.5}, {beat:2}, {beat:3} ]
+    ]},
+    /* 클라이맥스 코러스 — 더 강하게 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0, isLong:true, lengthBeats:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3.5} ]
+    ]},
+    /* 아웃트로 — 여운 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0}, {beat:1.5} ],
+      [ {beat:0, isLong:true, lengthBeats:3.5} ]
+    ]}
   ];
-  for (let measure = 0; measure < totalMeasures; measure += 1) {
-    const pattern = templates[measure % templates.length];
-    const measureStart = measure * 4;
-    pattern.forEach(item => {
-      if (typeof item === 'number') {
-        entries.push({ beat: measureStart + item, lane: 0, isLong: false, lengthBeats: 0 });
-      } else {
-        entries.push({ beat: measureStart + item.beat, lane: 0, isLong: !!item.isLong, lengthBeats: item.lengthBeats || 0 });
-      }
-    });
-  }
-  return sanitizeSingleLaneChart(entries);
+  return buildChartFromSections(sections, 201, 201);
+}
+
+/* ──────────────────────────────────────
+   가솔린 (150bpm) — 강렬·비트
+   빠른 비트 위주, 드랍 구간 폭발,
+   쉬는 구간 확실히 주기
+────────────────────────────────────── */
+function buildGasolineChart(){
+  const sections = [
+    /* 인트로 — 비트 빌드업 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1}, {beat:2} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:3} ]
+    ]},
+    /* 버스 — 킥 비트 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:0.5}, {beat:2}, {beat:2.5} ],
+      [ {beat:0}, {beat:1}, {beat:1.5}, {beat:3} ],
+      [ {beat:0.5}, {beat:1.5}, {beat:2.5}, {beat:3.5} ]
+    ]},
+    /* 프리코러스 — 쉬어가기 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ]
+    ]},
+    /* 드랍 코러스 — 폭발 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:1.5}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:1}, {beat:2}, {beat:2.5}, {beat:3}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2}, {beat:3}, {beat:3.5} ]
+    ]},
+    /* 브레이크 — 확실히 쉬기 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0} ],
+      [ {beat:0, isLong:true, lengthBeats:3.5} ],
+      [ {beat:0} ],
+      [ {beat:0}, {beat:2} ]
+    ]},
+    /* 클라이맥스 — 최고조 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3} ],
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2}, {beat:3}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:2.5}, {beat:3}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:1.5}, {beat:2.5}, {beat:3.5} ]
+    ]},
+    /* 아웃트로 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0} ]
+    ]}
+  ];
+  return buildChartFromSections(sections, 200, 200);
+}
+
+/* ──────────────────────────────────────
+   Good & Great (118bpm) — 경쾌·팝
+   밝고 리듬감 있는 패턴,
+   후렴에서 경쾌한 연타, 쉬는 구간 있음
+────────────────────────────────────── */
+function buildGoodGreatChart(){
+  const sections = [
+    /* 인트로 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0.5}, {beat:1.5}, {beat:2.5}, {beat:3.5} ]
+    ]},
+    /* 버스 A (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2.5} ],
+      [ {beat:0.5}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:1.5}, {beat:2.5} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3.5} ]
+    ]},
+    /* 프리코러스 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:2}, {beat:2.5} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0, isLong:true, lengthBeats:1.5}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:3} ]
+    ]},
+    /* 코러스 — 경쾌 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0.5}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:3} ]
+    ]},
+    /* 버스 B — 쉬어가기 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0}, {beat:1.5} ],
+      [ {beat:0}, {beat:2}, {beat:3} ]
+    ]},
+    /* 클라이맥스 코러스 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:1.5}, {beat:2}, {beat:3}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:1.5}, {beat:2.5}, {beat:3.5} ]
+    ]},
+    /* 아웃트로 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:3.5} ]
+    ]}
+  ];
+  return buildChartFromSections(sections, 200, 200);
+}
+
+/* ──────────────────────────────────────
+   HUNTER (128bpm) — 날카롭·긴장
+   긴장-폭발-쉬기 반복,
+   브릿지에서 롱노트 긴장감
+────────────────────────────────────── */
+function buildHunterChart(){
+  const sections = [
+    /* 인트로 — 긴장 빌드 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1.5}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:3} ]
+    ]},
+    /* 버스 A — 날카로운 비트 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:0.5}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:1.5}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0.5}, {beat:1}, {beat:2}, {beat:3.5} ]
+    ]},
+    /* 프리코러스 — 쉬어가기 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:3} ],
+      [ {beat:0} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ]
+    ]},
+    /* 코러스 — 폭발 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:1.5}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:1}, {beat:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:3}, {beat:3.5} ]
+    ]},
+    /* 브릿지 — 롱노트 긴장감 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0, isLong:true, lengthBeats:3.5} ],
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:3} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ]
+    ]},
+    /* 클라이맥스 — 최고조 (8마디) */
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:1}, {beat:2}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:2.5}, {beat:3}, {beat:3.5} ],
+      [ {beat:0}, {beat:0.5}, {beat:1.5}, {beat:2}, {beat:3}, {beat:3.5} ],
+      [ {beat:0}, {beat:1}, {beat:1.5}, {beat:2.5}, {beat:3}, {beat:3.5} ]
+    ]},
+    /* 아웃트로 (4마디) */
+    { repeat:1, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1.5}, {beat:3} ],
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0, isLong:true, lengthBeats:2} ],
+      [ {beat:0} ]
+    ]}
+  ];
+  return buildChartFromSections(sections, 200, 200);
+}
+
+function buildDefaultConcertChart(){
+  const sections = [
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:2} ],
+      [ {beat:0}, {beat:1.5}, {beat:3} ]
+    ]},
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3} ],
+      [ {beat:0, isLong:true, lengthBeats:2}, {beat:3} ]
+    ]},
+    { repeat:2, measureBeats:4, patterns:[
+      [ {beat:0}, {beat:0.5}, {beat:2}, {beat:3} ],
+      [ {beat:0}, {beat:1.5}, {beat:2.5} ],
+      [ {beat:0, isLong:true, lengthBeats:1.5}, {beat:2.5}, {beat:3.5} ],
+      [ {beat:0}, {beat:1}, {beat:2}, {beat:3.5} ]
+    ]}
+  ];
+  return buildChartFromSections(sections, 180, 180);
 }
 
 function getConcertChart(){
   const track = getCurrentConcertTrack();
-  if (track && track.videoId === 'OYWWnd9ACMI') return buildBadLoveChart();
+  if (!track) return buildDefaultConcertChart();
+  const title = (track.title || '').toLowerCase();
+  if (title.includes('bad love'))    return buildBadLoveChart();
+  if (title.includes('gasoline') || title.includes('가솔린')) return buildGasolineChart();
+  if (title.includes('good'))        return buildGoodGreatChart();
+  if (title.includes('hunter'))      return buildHunterChart();
   return buildDefaultConcertChart();
 }
 
