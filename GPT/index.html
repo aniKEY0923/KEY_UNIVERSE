@@ -1506,8 +1506,6 @@ img{
   box-shadow:0 0 16px rgba(241,167,200,.24);
   transition:width .12s linear;
 }
-50%{ opacity:.55; }
-}
 .mini-confirm-overlay{
   position:absolute;
   inset:0;
@@ -3847,33 +3845,20 @@ window._ytBgm = {
   /* 재생 중인 영상의 duration을 miniGame.duration에 반영
      endSec가 설정된 경우 그 값을 우선 사용 */
   syncDuration: function(){
-    var self = this;
-    function _sync(){
-      try {
-        var dur = self.player && self.player.getDuration ? self.player.getDuration() : 0;
-        if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-          var tracks = window.CONCERT_TRACKS || [];
-          var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-          var track  = tracks[Math.min(level, tracks.length - 1)] || {};
-          var startSec = track.startSec || 0;
-          var endSec   = track.endSec   || dur;
-          var playLen  = Math.min(endSec, dur) - startSec;
-          var newDur = Math.floor(Math.max(playLen, 10) * 1000);
-          if (miniGame.duration !== newDur) {
-            miniGame.duration = newDur;
-            console.log('[BGM] duration synced: playLen=', playLen, 's →', newDur, 'ms');
-          }
-        }
-      } catch(e) {}
-    }
-    _sync();
-    /* endSec가 없는 트랙만 1초 후 재검증 (endSec 있는 트랙은 이미 확정값) */
-    var tracks2 = window.CONCERT_TRACKS || [];
-    var level2  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-    var track2  = tracks2[Math.min(level2, tracks2.length - 1)] || {};
-    if (!track2.endSec) {
-      setTimeout(_sync, 1000);
-    }
+    try {
+      var dur = this.player && this.player.getDuration ? this.player.getDuration() : 0;
+      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+        /* endSec가 있으면 실제 플레이 구간 길이로 계산 */
+        var tracks = window.CONCERT_TRACKS || [];
+        var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
+        var track  = tracks[Math.min(level, tracks.length - 1)] || {};
+        var startSec = track.startSec || 0;
+        var endSec   = track.endSec   || dur;
+        var playLen  = Math.min(endSec, dur) - startSec;
+        miniGame.duration = Math.floor(Math.max(playLen, 10) * 1000);
+        console.log('[BGM] duration synced: playLen=', playLen, 's →', miniGame.duration, 'ms');
+      }
+    } catch(e) {}
   }
 };
 
@@ -3914,7 +3899,7 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
-        /* PLAYING(1): duration 동기화 */
+        /* PLAYING(1): 실제 재생 시작 직후 duration이 확정됨 */
         if (e.data === 1) {
           B.syncDuration();
         }
@@ -3942,6 +3927,7 @@ window.kvBgm = {
     try {
       var vid = B.getVideoId();
       if (!vid) return;
+      /* 현재 트랙의 startSec / endSec 읽기 */
       var tracks = window.CONCERT_TRACKS || [];
       var level  = (typeof state !== 'undefined' && state.concertLevel) || 0;
       var track  = tracks[Math.min(level, tracks.length - 1)] || {};
@@ -3952,6 +3938,7 @@ window.kvBgm = {
       var loadOpts = { videoId: vid, startSeconds: startSeconds };
       if (endSeconds) loadOpts.endSeconds = endSeconds;
       B.player.loadVideoById(loadOpts);
+      /* iOS 음소거 방지 — 사용자 인터랙션 직후 호출되므로 언뮤트 가능 */
       try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
@@ -7265,7 +7252,12 @@ function abortConcertMiniGame(){
   miniGame.paused = false;
 
   /* 미니게임 레이어 완전 종료 */
-  _cleanupMiniGameLayer();
+  miniGameResult.classList.remove('show');
+  miniStartOverlay.classList.remove('show');
+  miniGameLayer.classList.remove('active');
+  /* iOS 터치 hitTest 캐시 방지 — 레이어 비활성화 후 pointer-events 명시 해제 */
+  miniGameLayer.style.pointerEvents = 'none';
+  requestAnimationFrame(() => { miniGameLayer.style.pointerEvents = ''; });
   const _sc1 = document.getElementById('seedStageCard');
   if (_sc1) _sc1.style.display = '';
   updateMiniGameProgress(0);
@@ -7331,21 +7323,6 @@ function spawnMiniHitFX(lane, type){
   setTimeout(() => fx.remove(), 420);
 }
 
-function _cleanupMiniGameLayer(){
-  /* 내부 오버레이 전체 초기화 — backdrop-filter 레이어 누적 방지 */
-  miniGameLayer.classList.remove('active');
-  miniGameResult.classList.remove('show');
-  miniStartOverlay.classList.remove('show');
-  if (miniAbortConfirm) miniAbortConfirm.classList.remove('show');
-  const _po = document.getElementById('miniPauseOverlay');
-  if (_po) _po.classList.remove('show');
-  /* iOS 터치 고착 방지: pointer-events 강제 초기화 */
-  miniGameLayer.style.pointerEvents = 'none';
-  requestAnimationFrame(() => {
-    miniGameLayer.style.pointerEvents = '';
-  });
-}
-
 function showScorePopup(amount, isBig){
   const stage = miniRhythmStage;
   if (!stage) return;
@@ -7358,7 +7335,6 @@ function showScorePopup(amount, isBig){
   stage.appendChild(el);
   setTimeout(() => el.remove(), 950);
 }
-
 
 function showMiniFeedback(text, type='perfect'){
   if (type === 'perfect') speakMiniTalk('perfect');
@@ -8092,7 +8068,9 @@ function applyConcertMiniGameRewards(){
     setSeedMessage(`${dialogues.concertOkay} ${popMsg}`);
   }
 
-  _cleanupMiniGameLayer();
+  miniGameLayer.classList.remove('active');
+  miniGameResult.classList.remove('show');
+  miniStartOverlay.classList.remove('show');
   const _sc2 = document.getElementById('seedStageCard');
   if (_sc2) _sc2.style.display = '';
   updateMiniGameProgress(0);
