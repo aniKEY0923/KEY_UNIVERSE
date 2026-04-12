@@ -3908,12 +3908,26 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
-        /* PLAYING(1): 실제 재생 시작 직후 duration이 확정됨 */
+        /* PLAYING(1) */
         if (e.data === 1) {
+          if (B.preloading) {
+            /* preload 중 — 광고 또는 본 영상이 재생 시작됨. 즉시 정지 */
+            console.log('[BGM] preload playing — pause to hide ad');
+            try { B.player.pauseVideo(); } catch(err2) {}
+          } else {
+            B.syncDuration();
+          }
+        }
+        /* PAUSED(2) — preload 중 pause 완료 시점 */
+        if (e.data === 2 && B.preloading) {
+          B.preloading = false;
+          console.log('[BGM] preload done — ready to play without ad');
+          /* duration 확정 */
           B.syncDuration();
         }
         /* ENDED(0): 미니게임 종료 */
         if (e.data === 0) {
+          if (B.preloading) { B.preloading = false; return; }
           try {
             if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
               if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
@@ -3926,11 +3940,27 @@ window.onYouTubeIframeAPIReady = function(){
 };
 
 window.kvBgm = {
+  /* 공연 카드 등장 시 미리 영상 로드 — 광고는 이 시점에 소진됨 */
+  preload: function(track){
+    var B = window._ytBgm;
+    if (!B.player || !B.ready) return;
+    var vid = track && track.videoId;
+    if (!vid || B.loadedId === vid) return;
+    console.log('[BGM] preload:', vid);
+    B.loadedId = vid;
+    var startSeconds = track.startSec || 0;
+    var loadOpts = { videoId: vid, startSeconds: startSeconds };
+    if (track.endSec) loadOpts.endSeconds = track.endSec;
+    /* 무음으로 로드 후 즉시 정지 — 광고를 이 타이밍에 처리 */
+    try { B.player.mute(); } catch(e) {}
+    B.player.loadVideoById(loadOpts);
+    /* 광고 끝날 때까지 대기 후 정지 (onStateChange에서 처리) */
+    B.preloading = true;
+  },
   play: function(){
     var B = window._ytBgm;
     if (!B.player || !B.ready) {
       B.pendingPlay = true;
-      console.log('[BGM] player not ready, queued');
       return;
     }
     try {
@@ -3940,18 +3970,18 @@ window.kvBgm = {
       var level  = (typeof state !== 'undefined' && state.concertLevel) || 0;
       var track  = tracks[Math.min(level, tracks.length - 1)] || {};
       var startSeconds = track.startSec || 0;
-      var endSeconds   = track.endSec   || undefined;
       try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
-      /* 같은 영상이 이미 로드된 상태면 seekTo+playVideo — 광고 재재생 방지 */
       if (B.loadedId === vid) {
-        console.log('[BGM] same video — seekTo:', startSeconds);
+        /* 이미 로드됨 — seekTo + playVideo (광고 없음) */
+        console.log('[BGM] play (preloaded): seekTo', startSeconds);
         B.player.seekTo(startSeconds, true);
         B.player.playVideo();
       } else {
-        console.log('[BGM] loadVideoById:', vid, 'start:', startSeconds);
+        /* 아직 로드 안 됨 — loadVideoById (광고 발생할 수 있음) */
+        console.log('[BGM] play (cold load):', vid);
         B.loadedId = vid;
         var loadOpts = { videoId: vid, startSeconds: startSeconds };
-        if (endSeconds) loadOpts.endSeconds = endSeconds;
+        if (track.endSec) loadOpts.endSeconds = track.endSec;
         B.player.loadVideoById(loadOpts);
       }
     } catch(e) { console.warn('[BGM] play error:', e); }
@@ -8109,6 +8139,9 @@ function showConcertEvent(){
   if (titleEl) titleEl.textContent = track ? `🎤 ${track.title} 공연을 개최하시겠습니까?` : '콘서트를 개최하시겠습니까?';
   if (descEl)  descEl.textContent  = track ? `지금 바로 무대에 올라가 볼까요?` : '연습 점수가 쌓였어요. 지금 바로 무대에 올라가 볼까요?';
   concertEventCard.classList.add('show');
+
+  /* 공연 카드가 뜨는 시점에 영상을 미리 로드 — 실제 시작 시 광고 없이 재생 가능 */
+  if (track) kvBgm.preload(track);
 }
 
 function hideConcertEvent(){
