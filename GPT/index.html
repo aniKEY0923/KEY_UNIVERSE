@@ -1506,6 +1506,38 @@ img{
   box-shadow:0 0 16px rgba(241,167,200,.24);
   transition:width .12s linear;
 }
+.mini-ad-overlay{
+  position:absolute;
+  inset:0;
+  z-index:25;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(16,13,22,.82);
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+}
+.mini-ad-overlay.show{ display:flex; }
+.mini-ad-text{
+  text-align:center;
+  color:#fff;
+  font-size:17px;
+  font-weight:900;
+  line-height:1.7;
+  letter-spacing:.02em;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
+  animation:adPulse 1.8s ease-in-out infinite;
+}
+.mini-ad-text span{
+  font-size:12px;
+  font-weight:500;
+  color:rgba(255,255,255,.6);
+}
+@keyframes adPulse{
+  0%,100%{ opacity:1; }
+  50%{ opacity:.55; }
+}
 .mini-confirm-overlay{
   position:absolute;
   inset:0;
@@ -3899,9 +3931,24 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
-        /* PLAYING(1): 실제 재생 시작 직후 duration이 확정됨 */
+        /* 광고 감지: 재생 중인 video_id가 로드한 트랙과 다르면 광고 중 */
+        if (e.data === 1 || e.data === 2 || e.data === 3) {
+          try {
+            var curId = B.player.getVideoData && B.player.getVideoData().video_id;
+            var isAd = !!(curId && B.loadedId && curId !== B.loadedId);
+            if (typeof setMiniAdState === 'function') setMiniAdState(isAd);
+          } catch(err) {}
+        }
         if (e.data === 1) {
-          B.syncDuration();
+          /* PLAYING: 광고 아닐 때만 duration 동기화 + 게임 시작 트리거 */
+          try {
+            var curId2 = B.player.getVideoData && B.player.getVideoData().video_id;
+            var isActualTrack = !B.loadedId || curId2 === B.loadedId;
+            if (isActualTrack) {
+              B.syncDuration();
+              if (typeof setMiniAdState === 'function') setMiniAdState(false);
+            }
+          } catch(err) { B.syncDuration(); }
         }
         /* ENDED(0): 미니게임 종료 */
         if (e.data === 0) {
@@ -4145,6 +4192,10 @@ window.kvBgm = {
           <!-- TAP 버튼 — stage 안 하단 고정 -->
           <div class="mini-hit-buttons">
             <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
+          </div>
+
+          <div class="mini-ad-overlay" id="miniAdOverlay">
+            <div class="mini-ad-text">📺 광고 중입니다<br><span>광고가 끝나면 자동으로 시작돼요</span></div>
           </div>
 
           <div class="mini-start-overlay show" id="miniStartOverlay">
@@ -7243,6 +7294,7 @@ function abortConcertMiniGame(){
   miniGame.active = false;
   miniGame.playing = false;
   miniGame.paused = false;
+  if (typeof setMiniAdState === 'function') setMiniAdState(false);
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
@@ -7252,12 +7304,7 @@ function abortConcertMiniGame(){
   miniGame.paused = false;
 
   /* 미니게임 레이어 완전 종료 */
-  miniGameResult.classList.remove('show');
-  miniStartOverlay.classList.remove('show');
-  miniGameLayer.classList.remove('active');
-  /* iOS 터치 hitTest 캐시 방지 — 레이어 비활성화 후 pointer-events 명시 해제 */
-  miniGameLayer.style.pointerEvents = 'none';
-  requestAnimationFrame(() => { miniGameLayer.style.pointerEvents = ''; });
+  _cleanupMiniGameLayer();
   const _sc1 = document.getElementById('seedStageCard');
   if (_sc1) _sc1.style.display = '';
   updateMiniGameProgress(0);
@@ -7323,6 +7370,22 @@ function spawnMiniHitFX(lane, type){
   setTimeout(() => fx.remove(), 420);
 }
 
+function _cleanupMiniGameLayer(){
+  /* 내부 오버레이 전체 초기화 — backdrop-filter 레이어 누적 방지 */
+  miniGameLayer.classList.remove('active');
+  miniGameResult.classList.remove('show');
+  miniStartOverlay.classList.remove('show');
+  if (miniAbortConfirm) miniAbortConfirm.classList.remove('show');
+  const _po = document.getElementById('miniPauseOverlay');
+  if (_po) _po.classList.remove('show');
+  if (miniAdOverlay) miniAdOverlay.classList.remove('show');
+  /* iOS 터치 고착 방지: pointer-events 강제 초기화 */
+  miniGameLayer.style.pointerEvents = 'none';
+  requestAnimationFrame(() => {
+    miniGameLayer.style.pointerEvents = '';
+  });
+}
+
 function showScorePopup(amount, isBig){
   const stage = miniRhythmStage;
   if (!stage) return;
@@ -7334,6 +7397,36 @@ function showScorePopup(amount, isBig){
   el.style.bottom = (stage.clientHeight - hitLine + 12) + 'px';
   stage.appendChild(el);
   setTimeout(() => el.remove(), 950);
+}
+
+const miniAdOverlay = document.getElementById('miniAdOverlay');
+let _miniAdActive = false;
+
+function setMiniAdState(isAd) {
+  if (_miniAdActive === isAd) return;
+  _miniAdActive = isAd;
+  if (!miniAdOverlay) return;
+  if (isAd) {
+    miniAdOverlay.classList.add('show');
+    /* 광고 중 노트 스폰 및 게임 진행 일시 중단 */
+    if (miniGame.active && miniGame.playing && !miniGame.paused) {
+      miniGame._pausedByAd = true;
+      miniGame.paused = true;
+      miniGame.pausedAt = performance.now();
+      cancelAnimationFrame(miniGame.rafId);
+    }
+  } else {
+    miniAdOverlay.classList.remove('show');
+    /* 광고 끝 — 게임이 광고로 인해 멈춰 있었으면 재개 */
+    if (miniGame.active && miniGame.playing && miniGame._pausedByAd) {
+      miniGame._pausedByAd = false;
+      miniGame.paused = false;
+      const pausedDuration = performance.now() - miniGame.pausedAt;
+      miniGame.startTime += pausedDuration;
+      miniGame.totalPausedMs = (miniGame.totalPausedMs || 0) + pausedDuration;
+      miniGame.rafId = requestAnimationFrame(tickMiniGame);
+    }
+  }
 }
 
 function showMiniFeedback(text, type='perfect'){
@@ -7979,6 +8072,7 @@ function finishConcertMiniGame(){
   miniGame.active = false;
   miniGame.playing = false;
   miniGame.paused = false;
+  if (typeof setMiniAdState === 'function') setMiniAdState(false);
   closeMiniAbortConfirm();
   const _po2 = document.getElementById('miniPauseOverlay');
   if (_po2) _po2.classList.remove('show');
@@ -8068,9 +8162,7 @@ function applyConcertMiniGameRewards(){
     setSeedMessage(`${dialogues.concertOkay} ${popMsg}`);
   }
 
-  miniGameLayer.classList.remove('active');
-  miniGameResult.classList.remove('show');
-  miniStartOverlay.classList.remove('show');
+  _cleanupMiniGameLayer();
   const _sc2 = document.getElementById('seedStageCard');
   if (_sc2) _sc2.style.display = '';
   updateMiniGameProgress(0);
