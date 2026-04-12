@@ -3877,20 +3877,28 @@ window._ytBgm = {
   /* 재생 중인 영상의 duration을 miniGame.duration에 반영
      endSec가 설정된 경우 그 값을 우선 사용 */
   syncDuration: function(){
-    try {
-      var dur = this.player && this.player.getDuration ? this.player.getDuration() : 0;
-      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-        /* endSec가 있으면 실제 플레이 구간 길이로 계산 */
-        var tracks = window.CONCERT_TRACKS || [];
-        var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-        var track  = tracks[Math.min(level, tracks.length - 1)] || {};
-        var startSec = track.startSec || 0;
-        var endSec   = track.endSec   || dur;
-        var playLen  = Math.min(endSec, dur) - startSec;
-        miniGame.duration = Math.floor(Math.max(playLen, 10) * 1000);
-        console.log('[BGM] duration synced: playLen=', playLen, 's →', miniGame.duration, 'ms');
-      }
-    } catch(e) {}
+    var self = this;
+    function _sync(){
+      try {
+        var dur = self.player && self.player.getDuration ? self.player.getDuration() : 0;
+        if (dur && dur > 10 && typeof miniGame !== 'undefined') {
+          var tracks = window.CONCERT_TRACKS || [];
+          var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
+          var track  = tracks[Math.min(level, tracks.length - 1)] || {};
+          var startSec = track.startSec || 0;
+          var endSec   = track.endSec   || dur;
+          var playLen  = Math.min(endSec, dur) - startSec;
+          var newDur = Math.floor(Math.max(playLen, 10) * 1000);
+          if (miniGame.duration !== newDur) {
+            miniGame.duration = newDur;
+            console.log('[BGM] duration synced: playLen=', playLen, 's →', newDur, 'ms');
+          }
+        }
+      } catch(e) {}
+    }
+    _sync();
+    /* 로딩 직후 getDuration()이 부정확할 수 있으므로 1초 후 재검증 */
+    setTimeout(_sync, 1000);
   }
 };
 
@@ -3931,24 +3939,27 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
-        /* 광고 감지: 재생 중인 video_id가 로드한 트랙과 다르면 광고 중 */
-        if (e.data === 1 || e.data === 2 || e.data === 3) {
+        if (e.data === 1) {
+          /* PLAYING: duration 동기화는 항상 먼저 실행 — 광고 조건에 막히지 않게 분리 */
+          B.syncDuration();
+
+          /* 광고 감지: video_id가 로드한 트랙과 다르면 광고 중 */
           try {
             var curId = B.player.getVideoData && B.player.getVideoData().video_id;
+            /* curId가 비어있으면 아직 메타 미확정 — 광고 아닌 것으로 간주 */
             var isAd = !!(curId && B.loadedId && curId !== B.loadedId);
             if (typeof setMiniAdState === 'function') setMiniAdState(isAd);
-          } catch(err) {}
+          } catch(err) {
+            if (typeof setMiniAdState === 'function') setMiniAdState(false);
+          }
         }
-        if (e.data === 1) {
-          /* PLAYING: 광고 아닐 때만 duration 동기화 + 게임 시작 트리거 */
+        if (e.data === 2 || e.data === 3) {
+          /* PAUSED/BUFFERING: 광고 상태만 체크 */
           try {
             var curId2 = B.player.getVideoData && B.player.getVideoData().video_id;
-            var isActualTrack = !B.loadedId || curId2 === B.loadedId;
-            if (isActualTrack) {
-              B.syncDuration();
-              if (typeof setMiniAdState === 'function') setMiniAdState(false);
-            }
-          } catch(err) { B.syncDuration(); }
+            var isAd2 = !!(curId2 && B.loadedId && curId2 !== B.loadedId);
+            if (typeof setMiniAdState === 'function') setMiniAdState(isAd2);
+          } catch(err) {}
         }
         /* ENDED(0): 미니게임 종료 */
         if (e.data === 0) {
@@ -3974,19 +3985,30 @@ window.kvBgm = {
     try {
       var vid = B.getVideoId();
       if (!vid) return;
-      /* 현재 트랙의 startSec / endSec 읽기 */
       var tracks = window.CONCERT_TRACKS || [];
       var level  = (typeof state !== 'undefined' && state.concertLevel) || 0;
       var track  = tracks[Math.min(level, tracks.length - 1)] || {};
       var startSeconds = track.startSec || 0;
       var endSeconds   = track.endSec   || undefined;
       console.log('[BGM] play:', vid, 'start:', startSeconds, 'end:', endSeconds);
+      /* iOS 음소거 방지 — loadVideoById 전에 unMute 먼저 */
+      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
       B.loadedId = vid;
       var loadOpts = { videoId: vid, startSeconds: startSeconds };
       if (endSeconds) loadOpts.endSeconds = endSeconds;
       B.player.loadVideoById(loadOpts);
-      /* iOS 음소거 방지 — 사용자 인터랙션 직후 호출되므로 언뮤트 가능 */
-      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
+      /* loadVideoById가 재생을 트리거 안 하는 경우(iOS 동일 영상 재시도 등) 폴백 */
+      setTimeout(function(){
+        try {
+          var s = B.player.getPlayerState && B.player.getPlayerState();
+          /* -1(미시작) 또는 2(일시정지) 상태면 직접 재생 트리거 */
+          if (s === -1 || s === 2 || s === 5) {
+            B.player.seekTo(startSeconds, true);
+            B.player.playVideo();
+            console.log('[BGM] fallback playVideo triggered, state was:', s);
+          }
+        } catch(e) {}
+      }, 1200);
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
