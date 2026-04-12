@@ -1506,37 +1506,7 @@ img{
   box-shadow:0 0 16px rgba(241,167,200,.24);
   transition:width .12s linear;
 }
-.mini-ad-overlay{
-  position:absolute;
-  inset:0;
-  z-index:25;
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  background:rgba(16,13,22,.82);
-  backdrop-filter:blur(6px);
-  pointer-events:none;
-}
-.mini-ad-overlay.show{ display:flex; }
-.mini-ad-text{
-  text-align:center;
-  color:#fff;
-  font-size:17px;
-  font-weight:900;
-  line-height:1.7;
-  letter-spacing:.02em;
-  text-shadow:0 2px 12px rgba(0,0,0,.5);
-  animation:adPulse 1.8s ease-in-out infinite;
-}
-.mini-ad-text span{
-  font-size:12px;
-  font-weight:500;
-  color:rgba(255,255,255,.6);
-}
-@keyframes adPulse{
-  0%,100%{ opacity:1; }
-  50%{ opacity:.55; }
+50%{ opacity:.55; }
 }
 .mini-confirm-overlay{
   position:absolute;
@@ -3897,8 +3867,13 @@ window._ytBgm = {
       } catch(e) {}
     }
     _sync();
-    /* 로딩 직후 getDuration()이 부정확할 수 있으므로 1초 후 재검증 */
-    setTimeout(_sync, 1000);
+    /* endSec가 없는 트랙만 1초 후 재검증 (endSec 있는 트랙은 이미 확정값) */
+    var tracks2 = window.CONCERT_TRACKS || [];
+    var level2  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
+    var track2  = tracks2[Math.min(level2, tracks2.length - 1)] || {};
+    if (!track2.endSec) {
+      setTimeout(_sync, 1000);
+    }
   }
 };
 
@@ -3939,27 +3914,9 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
+        /* PLAYING(1): duration 동기화 */
         if (e.data === 1) {
-          /* PLAYING: duration 동기화는 항상 먼저 실행 — 광고 조건에 막히지 않게 분리 */
           B.syncDuration();
-
-          /* 광고 감지: video_id가 로드한 트랙과 다르면 광고 중 */
-          try {
-            var curId = B.player.getVideoData && B.player.getVideoData().video_id;
-            /* curId가 비어있으면 아직 메타 미확정 — 광고 아닌 것으로 간주 */
-            var isAd = !!(curId && B.loadedId && curId !== B.loadedId);
-            if (typeof setMiniAdState === 'function') setMiniAdState(isAd);
-          } catch(err) {
-            if (typeof setMiniAdState === 'function') setMiniAdState(false);
-          }
-        }
-        if (e.data === 2 || e.data === 3) {
-          /* PAUSED/BUFFERING: 광고 상태만 체크 */
-          try {
-            var curId2 = B.player.getVideoData && B.player.getVideoData().video_id;
-            var isAd2 = !!(curId2 && B.loadedId && curId2 !== B.loadedId);
-            if (typeof setMiniAdState === 'function') setMiniAdState(isAd2);
-          } catch(err) {}
         }
         /* ENDED(0): 미니게임 종료 */
         if (e.data === 0) {
@@ -3991,24 +3948,11 @@ window.kvBgm = {
       var startSeconds = track.startSec || 0;
       var endSeconds   = track.endSec   || undefined;
       console.log('[BGM] play:', vid, 'start:', startSeconds, 'end:', endSeconds);
-      /* iOS 음소거 방지 — loadVideoById 전에 unMute 먼저 */
-      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
       B.loadedId = vid;
       var loadOpts = { videoId: vid, startSeconds: startSeconds };
       if (endSeconds) loadOpts.endSeconds = endSeconds;
       B.player.loadVideoById(loadOpts);
-      /* loadVideoById가 재생을 트리거 안 하는 경우(iOS 동일 영상 재시도 등) 폴백 */
-      setTimeout(function(){
-        try {
-          var s = B.player.getPlayerState && B.player.getPlayerState();
-          /* -1(미시작) 또는 2(일시정지) 상태면 직접 재생 트리거 */
-          if (s === -1 || s === 2 || s === 5) {
-            B.player.seekTo(startSeconds, true);
-            B.player.playVideo();
-            console.log('[BGM] fallback playVideo triggered, state was:', s);
-          }
-        } catch(e) {}
-      }, 1200);
+      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
@@ -4215,9 +4159,6 @@ window.kvBgm = {
           <div class="mini-hit-buttons">
             <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
           </div>
-
-          <div class="mini-ad-overlay" id="miniAdOverlay">
-            <div class="mini-ad-text">📺 광고 중입니다<br><span>광고가 끝나면 자동으로 시작돼요</span></div>
           </div>
 
           <div class="mini-start-overlay show" id="miniStartOverlay">
@@ -7316,7 +7257,6 @@ function abortConcertMiniGame(){
   miniGame.active = false;
   miniGame.playing = false;
   miniGame.paused = false;
-  if (typeof setMiniAdState === 'function') setMiniAdState(false);
   clearInterval(miniGame.spawnTimer);
   cancelAnimationFrame(miniGame.rafId);
   clearMiniNotes();
@@ -7400,7 +7340,6 @@ function _cleanupMiniGameLayer(){
   if (miniAbortConfirm) miniAbortConfirm.classList.remove('show');
   const _po = document.getElementById('miniPauseOverlay');
   if (_po) _po.classList.remove('show');
-  if (miniAdOverlay) miniAdOverlay.classList.remove('show');
   /* iOS 터치 고착 방지: pointer-events 강제 초기화 */
   miniGameLayer.style.pointerEvents = 'none';
   requestAnimationFrame(() => {
@@ -7421,35 +7360,6 @@ function showScorePopup(amount, isBig){
   setTimeout(() => el.remove(), 950);
 }
 
-const miniAdOverlay = document.getElementById('miniAdOverlay');
-let _miniAdActive = false;
-
-function setMiniAdState(isAd) {
-  if (_miniAdActive === isAd) return;
-  _miniAdActive = isAd;
-  if (!miniAdOverlay) return;
-  if (isAd) {
-    miniAdOverlay.classList.add('show');
-    /* 광고 중 노트 스폰 및 게임 진행 일시 중단 */
-    if (miniGame.active && miniGame.playing && !miniGame.paused) {
-      miniGame._pausedByAd = true;
-      miniGame.paused = true;
-      miniGame.pausedAt = performance.now();
-      cancelAnimationFrame(miniGame.rafId);
-    }
-  } else {
-    miniAdOverlay.classList.remove('show');
-    /* 광고 끝 — 게임이 광고로 인해 멈춰 있었으면 재개 */
-    if (miniGame.active && miniGame.playing && miniGame._pausedByAd) {
-      miniGame._pausedByAd = false;
-      miniGame.paused = false;
-      const pausedDuration = performance.now() - miniGame.pausedAt;
-      miniGame.startTime += pausedDuration;
-      miniGame.totalPausedMs = (miniGame.totalPausedMs || 0) + pausedDuration;
-      miniGame.rafId = requestAnimationFrame(tickMiniGame);
-    }
-  }
-}
 
 function showMiniFeedback(text, type='perfect'){
   if (type === 'perfect') speakMiniTalk('perfect');
@@ -8094,7 +8004,6 @@ function finishConcertMiniGame(){
   miniGame.active = false;
   miniGame.playing = false;
   miniGame.paused = false;
-  if (typeof setMiniAdState === 'function') setMiniAdState(false);
   closeMiniAbortConfirm();
   const _po2 = document.getElementById('miniPauseOverlay');
   if (_po2) _po2.classList.remove('show');
