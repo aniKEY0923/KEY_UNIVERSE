@@ -3860,161 +3860,95 @@ body.ending-modal-open{
 </head>
 <script>
 /* ══════════════════════════════════════════════════════════════
-   YouTube BGM — onYouTubeIframeAPIReady를 iframe_api 스크립트보다
-   반드시 먼저 정의해야 합니다.
+   HTML Audio BGM — 유튜브 대신 MP3 직접 재생
 ══════════════════════════════════════════════════════════════ */
-window._ytBgm = {
-  player:    null,
-  ready:     false,
-  loadedId:  null,
-  pendingPlay: false,
+window.kvBgm = (function(){
+  var _audio = null;
+  var _onEndedCb = null;
 
-  /* 현재 concertLevel에 맞는 videoId 반환 */
-  getVideoId: function(){
-    var tracks = window.CONCERT_TRACKS;
-    if (!tracks || !tracks.length) return null;
+  function _getTrack(){
+    var tracks = window.CONCERT_TRACKS || [];
     var level = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-    return tracks[Math.min(level, tracks.length - 1)].videoId;
-  },
+    return tracks[Math.min(level, tracks.length - 1)] || null;
+  }
 
-  /* 재생 중인 영상의 duration을 miniGame.duration에 반영
-     endSec가 설정된 경우 그 값을 우선 사용 */
-  syncDuration: function(){
-    try {
-      var tracks = window.CONCERT_TRACKS || [];
-      var level  = (typeof state !== 'undefined') ? (state.concertLevel || 0) : 0;
-      var track  = tracks[Math.min(level, tracks.length - 1)] || {};
-      var startSec = track.startSec || 0;
+  function _setup(){
+    if (!_audio) {
+      _audio = new Audio();
+      _audio.preload = 'auto';
+      _audio.addEventListener('ended', function(){
+        try {
+          if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
+            if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
+          }
+        } catch(e) {}
+      });
+      _audio.addEventListener('loadedmetadata', function(){
+        /* duration 확정 */
+        if (typeof miniGame !== 'undefined') {
+          var track = _getTrack();
+          var startSec = (track && track.startSec) || 0;
+          var dur = _audio.duration || 0;
+          if (dur > 10) {
+            miniGame.duration = Math.floor((dur - startSec) * 1000);
+            console.log('[BGM] duration from audio:', miniGame.duration, 'ms');
+          }
+        }
+      });
+    }
+  }
 
-      /* endSec가 명시된 트랙은 유튜브 duration 읽지 않고 고정값 사용
-         — 광고 duration에 오염되는 문제 방지 */
-      if (track.endSec) {
-        var playLen = track.endSec - startSec;
-        miniGame.duration = Math.floor(Math.max(playLen, 10) * 1000);
-        console.log('[BGM] duration fixed (endSec): playLen=', playLen, 's →', miniGame.duration, 'ms');
+  return {
+    play: function(){
+      _setup();
+      var track = _getTrack();
+      if (!track || !track.audioUrl) {
+        console.warn('[BGM] no audioUrl for track');
         return;
       }
-
-      /* endSec 없는 트랙은 유튜브 duration 읽기 */
-      var dur = this.player && this.player.getDuration ? this.player.getDuration() : 0;
-      if (dur && dur > 10 && typeof miniGame !== 'undefined') {
-        var playLen2 = dur - startSec;
-        miniGame.duration = Math.floor(Math.max(playLen2, 10) * 1000);
-        console.log('[BGM] duration synced (yt): playLen=', playLen2, 's →', miniGame.duration, 'ms');
+      var startSec = track.startSec || 0;
+      /* 같은 곡이면 seek만, 다른 곡이면 새로 로드 */
+      if (_audio.src !== track.audioUrl) {
+        _audio.src = track.audioUrl;
+        _audio.load();
       }
-    } catch(e) {}
-  }
-};
+      _audio.currentTime = startSec;
+      _audio.volume = 1.0;
+      var playPromise = _audio.play();
+      if (playPromise) playPromise.catch(function(e){ console.warn('[BGM] play error:', e); });
 
-window.onYouTubeIframeAPIReady = function(){
-  var B = window._ytBgm;
-  /* holder는 body에 미리 박아둔 div 사용 — body가 없는 시점 오류 방지 */
-  var holder = document.getElementById('ytBgmHolder');
-  if (!holder) {
-    /* 혹시 못 찾으면 body 준비될 때까지 대기 후 재시도 */
-    if (document.body) {
-      holder = document.createElement('div');
-      holder.id = 'ytBgmHolder';
-      document.body.appendChild(holder);
-    } else {
-      document.addEventListener('DOMContentLoaded', function(){
-        window.onYouTubeIframeAPIReady();
-      });
-      return;
-    }
-  }
-
-  B.player = new YT.Player('ytBgmHolder', {
-    width: '1', height: '1',
-    /* 초기 videoId 없이 생성 — play() 호출 시 loadVideoById로 로드 */
-    playerVars: {
-      autoplay: 0, controls: 0, disablekb: 1,
-      fs: 0, iv_load_policy: 3, modestbranding: 1,
-      rel: 0, playsinline: 1
+      /* duration 즉시 세팅 (duration 필드 있으면) */
+      if (track.duration && typeof miniGame !== 'undefined') {
+        miniGame.duration = track.duration * 1000;
+      }
+      /* 게임 시작 */
+      if (typeof miniGame !== 'undefined' && miniGame.active && !miniGame.playing) {
+        if (typeof beginConcertMiniGamePlay === 'function') beginConcertMiniGamePlay();
+      }
     },
-    events: {
-      onReady: function(){
-        B.ready = true;
-        console.log('[BGM] YouTube player ready');
-        /* onReady 전에 play() 요청이 왔으면 지금 실행 */
-        if (B.pendingPlay) {
-          B.pendingPlay = false;
-          window.kvBgm.play();
-        }
-      },
-      onStateChange: function(e){
-        if (e.data === 1) {
-          /* PLAYING — 광고인지 본 영상인지 판별 */
-          var curId = '';
-          try { curId = B.player.getVideoData().video_id; } catch(err2) {}
-          var isAd = curId && B.loadedId && curId !== B.loadedId;
-          if (isAd) {
-            /* 광고 재생 중 */
-            console.log('[BGM] AD playing, video_id:', curId);
-            if (typeof setMiniAdOverlay === 'function') setMiniAdOverlay(true);
-          } else {
-            /* 본 영상 재생 시작 */
-            console.log('[BGM] actual track playing');
-            if (typeof setMiniAdOverlay === 'function') setMiniAdOverlay(false);
-            B.syncDuration();
-            /* 게임이 시작 대기 중이면 자동으로 게임 시작 */
-            if (typeof miniGame !== 'undefined' && miniGame.active && !miniGame.playing) {
-              if (typeof beginConcertMiniGamePlay === 'function') beginConcertMiniGamePlay();
-            }
-          }
-        }
-        /* ENDED(0): 광고 끝 or 본 영상 끝 */
-        if (e.data === 0) {
-          var curId2 = '';
-          try { curId2 = B.player.getVideoData().video_id; } catch(err2) {}
-          var wasAd = curId2 && B.loadedId && curId2 !== B.loadedId;
-          if (!wasAd) {
-            /* 본 영상 종료 → 미니게임 종료 */
-            try {
-              if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
-                if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
-              }
-            } catch(err) {}
-          }
-        }
+    stop: function(){
+      if (_audio) {
+        _audio.pause();
+        _audio.currentTime = 0;
       }
+    },
+    pause: function(){
+      if (_audio) _audio.pause();
+    },
+    resume: function(seekSec){
+      if (_audio) {
+        if (typeof seekSec === 'number') _audio.currentTime = seekSec;
+        _audio.play().catch(function(e){ console.warn('[BGM] resume error:', e); });
+      }
+    },
+    getCurrentTime: function(){
+      return _audio ? _audio.currentTime : 0;
     }
-  });
-};
-
-window.kvBgm = {
-  play: function(){
-    var B = window._ytBgm;
-    if (!B.player || !B.ready) {
-      B.pendingPlay = true;
-      return;
-    }
-    try {
-      var vid = B.getVideoId();
-      if (!vid) return;
-      var tracks = window.CONCERT_TRACKS || [];
-      var level  = (typeof state !== 'undefined' && state.concertLevel) || 0;
-      var track  = tracks[Math.min(level, tracks.length - 1)] || {};
-      var startSeconds = track.startSec || 0;
-      try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
-      B.loadedId = vid;
-      var loadOpts = { videoId: vid, startSeconds: startSeconds };
-      if (track.endSec) loadOpts.endSeconds = track.endSec;
-      B.player.loadVideoById(loadOpts);
-      /* 게임 시작은 onStateChange에서 본 영상 감지 후 자동으로 시작됨 */
-    } catch(e) { console.warn('[BGM] play error:', e); }
-  },
-  stop: function(){
-    var B = window._ytBgm;
-    if (!B.player) return;
-    try { B.player.stopVideo(); } catch(e) {}
-  }
-};
+  };
+})();
 </script>
-<script src="https://www.youtube.com/iframe_api"></script>
 <body>
 <!-- YouTube BGM 플레이어 holder — head 스크립트에서 참조하므로 body 최상단에 위치 -->
-<div id="ytBgmHolder" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0;"></div>
 <div class="app">
 
   <section class="screen active" id="screen-schedule">
@@ -7648,12 +7582,7 @@ function beginMiniGameSpawns(){
 
 /* YouTube 재생 위치를 읽어오는 헬퍼 */
 function getYtCurrentTime(){
-  try {
-    const B = window._ytBgm;
-    if (B && B.player && B.ready && typeof B.player.getCurrentTime === 'function') {
-      return B.player.getCurrentTime(); /* 초 단위 */
-    }
-  } catch(e) {}
+  try { if (window.kvBgm) return window.kvBgm.getCurrentTime(); } catch(e) {}
   return (performance.now() - miniGame.startTime) / 1000;
 }
 
@@ -7994,20 +7923,10 @@ function pauseMiniGame(){
   miniGame.paused = true;
   miniGame.pausedAt = performance.now();
 
-  /* YouTube 현재 재생 위치 저장 */
-  try {
-    const B = window._ytBgm;
-    if (B && B.player && typeof B.player.getCurrentTime === 'function') {
-      miniGame.pausedYtSec = B.player.getCurrentTime();
-    }
-  } catch(e) {}
+  try { miniGame.pausedYtSec = window.kvBgm ? window.kvBgm.getCurrentTime() : 0; } catch(e) {}
 
-  /* RAF 중단 + BGM 일시정지 (stopVideo 아닌 pauseVideo — 위치 유지) */
   cancelAnimationFrame(miniGame.rafId);
-  try {
-    const B = window._ytBgm;
-    if (B && B.player) B.player.pauseVideo();
-  } catch(e) {}
+  try { if (window.kvBgm) window.kvBgm.pause(); } catch(e) {}
 
   /* 일시정지 오버레이 표시 */
   const overlay = document.getElementById('miniPauseOverlay');
@@ -8027,15 +7946,7 @@ function resumeMiniGame(){
   const overlay = document.getElementById('miniPauseOverlay');
   if (overlay) overlay.classList.remove('show');
 
-  /* BGM을 멈췄던 시점부터 재개 */
-  try {
-    const B = window._ytBgm;
-    if (B && B.player && B.ready) {
-      /* pauseVideo로 멈췄으므로 seekTo로 정확한 위치 맞추고 play */
-      B.player.seekTo(miniGame.pausedYtSec, true);
-      B.player.playVideo();
-    }
-  } catch(e) {}
+  try { if (window.kvBgm) window.kvBgm.resume(miniGame.pausedYtSec); } catch(e) {}
 
   /* RAF 재개 */
   miniGame.rafId = requestAnimationFrame(tickMiniGame);
@@ -10445,14 +10356,15 @@ bootGame();
    - threshold : 이 콘서트를 개최하려면 필요한 practice 수치
    게임 내 duration은 YouTube onReady에서 자동으로 읽어옴
 ══════════════════════════════════════════════════════════════ */
+const _AUDIO_BASE = 'https://anikey0923.github.io/KEYVERSE_RSC/BGM/';
 window.CONCERT_TRACKS = [
-  { videoId: 'OYWWnd9ACMI', title: 'BAD LOVE',         threshold: 10, bpm: 118, startSec: 0, endSec: 201 },
-  { videoId: 'UNFk6_to5_0', title: '가솔린 (Gasoline)', threshold: 20, bpm: 150 },
-  { videoId: 'dUd_9R_qJSg', title: 'Killer',            threshold: 30, bpm: 130 },
-  { videoId: 'ZYHBKvNUmk0', title: 'Good & Great',      threshold: 40, bpm: 118 },
-  { videoId: 'LgQRl5qED6c', title: 'Pleasure Shop',     threshold: 50, bpm: 122 },
-  { videoId: 'aH0zux6WOM4', title: 'Tongue Tied',       threshold: 60, bpm: 120 },
-  { videoId: 'ktCF5D6ECk0', title: 'HUNTER',            threshold: 70, bpm: 128 }
+  { title: 'BAD LOVE',         threshold: 10, bpm: 118, duration: 201, audioUrl: _AUDIO_BASE + 'KEY_BADLOVE.mp3' },
+  { title: '가솔린 (Gasoline)', threshold: 20, bpm: 150, audioUrl: _AUDIO_BASE + 'KEY_GASOLINE.mp3' },
+  { title: 'Killer',            threshold: 30, bpm: 130, audioUrl: _AUDIO_BASE + 'KEY_KILLER.mp3' },
+  { title: 'Good & Great',      threshold: 40, bpm: 118, audioUrl: _AUDIO_BASE + 'KEY_GOODGREAT.mp3' },
+  { title: 'Pleasure Shop',     threshold: 50, bpm: 122, audioUrl: _AUDIO_BASE + 'KEY_PLEASURESHOP.mp3' },
+  { title: 'Tongue Tied',       threshold: 60, bpm: 120, audioUrl: _AUDIO_BASE + 'KEY_TONGUETIED.mp3' },
+  { title: 'HUNTER',            threshold: 70, bpm: 128, audioUrl: _AUDIO_BASE + 'KEY_HUNTER.mp3' }
 ];
 
 /* 포기 버튼 → BGM 정지 (DOM 준비 후 연결) */
