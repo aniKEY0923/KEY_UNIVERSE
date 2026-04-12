@@ -6304,7 +6304,7 @@ concertYesBtn.addEventListener('click', async () => {
 });
 
 concertNoBtn.addEventListener('click', async () => {
-  /* "아니오" → 지금은 숨기되 practice 조건이 유지되는 한 다음 번에 다시 나타남 */
+  /* "아니오" → 카드만 숨김. practice 조건 유지되면 다음 스케줄 후 다시 나타남 (정상 동작) */
   hideConcertEvent();
   setSeedMessage(dialogues.concertNo);
   updateScheduleUI();
@@ -7255,6 +7255,9 @@ function abortConcertMiniGame(){
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
   miniGameLayer.classList.remove('active');
+  /* iOS 터치 hitTest 캐시 방지 — 레이어 비활성화 후 pointer-events 명시 해제 */
+  miniGameLayer.style.pointerEvents = 'none';
+  requestAnimationFrame(() => { miniGameLayer.style.pointerEvents = ''; });
   const _sc1 = document.getElementById('seedStageCard');
   if (_sc1) _sc1.style.display = '';
   updateMiniGameProgress(0);
@@ -7263,11 +7266,10 @@ function abortConcertMiniGame(){
   const popPenalty = 3;
   state.stats.popularity = Math.max(0, (state.stats.popularity || 0) - popPenalty);
 
-  /* 포기 후 콘서트 카드 완전 차단
-     Resolved=true → maybeTriggerConcertEvent에서 카드 숨김
-     다음 스케줄 행동 완료 시 리셋됨 */
-  state.concertEventOffered  = true;
-  state.concertEventResolved = true;
+  /* 포기한 공연은 영구 건너뜀 — 다음 레벨로 올려서 재등장 원천 차단 */
+  state.concertLevel = (state.concertLevel || 0) + 1;
+  state.concertEventOffered  = false;
+  state.concertEventResolved = false;
 
   /* abort 쿨다운 타이머 제거 — Resolved로 관리하므로 불필요 */
   if (miniGame._abortCooldownTimer) {
@@ -8542,11 +8544,6 @@ function startAction(type){
     clearActionProgress();
     state.isActing = false;
     setScheduleButtonsDisabled(false);
-    /* abort 후 차단된 콘서트 카드 — 다음 행동 완료 시 재평가 허용 */
-    if (state.concertEventResolved && state.concertEventOffered) {
-      state.concertEventResolved = false;
-      state.concertEventOffered  = false;
-    }
     updateScheduleUI();
     await triggerSaveNow();
   }, meta.duration);
