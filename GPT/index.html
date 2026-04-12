@@ -1360,6 +1360,41 @@ img{
   background:linear-gradient(180deg, rgba(241,167,200,.44), rgba(201,195,232,.28));
 }
 
+/* 광고 오버레이 */
+.mini-ad-overlay{
+  position:absolute;
+  inset:0;
+  z-index:10;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(16,13,22,.85);
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+}
+.mini-ad-overlay.show{ display:flex; }
+.mini-ad-text{
+  text-align:center;
+  color:#fff;
+  font-size:17px;
+  font-weight:900;
+  line-height:1.7;
+  letter-spacing:.02em;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
+  animation:adPulse 1.8s ease-in-out infinite;
+}
+.mini-ad-text span{
+  display:block;
+  font-size:12px;
+  font-weight:500;
+  color:rgba(255,255,255,.6);
+  margin-top:4px;
+}
+@keyframes adPulse{
+  0%,100%{ opacity:1; }
+  50%{ opacity:.5; }
+}
 .mini-start-overlay{
   position:absolute;
   inset:0;
@@ -3832,7 +3867,7 @@ window._ytBgm = {
   player:    null,
   ready:     false,
   loadedId:  null,
-  pendingPlay: false,   /* onReady 전에 play()가 호출됐을 때 대기 플래그 */
+  pendingPlay: false,
 
   /* 현재 concertLevel에 맞는 videoId 반환 */
   getVideoId: function(){
@@ -3908,31 +3943,39 @@ window.onYouTubeIframeAPIReady = function(){
         }
       },
       onStateChange: function(e){
-        /* PLAYING(1) */
         if (e.data === 1) {
-          if (B.preloading) {
-            /* preload 중 — 광고 또는 본 영상이 재생 시작됨. 즉시 정지 */
-            console.log('[BGM] preload playing — pause to hide ad');
-            try { B.player.pauseVideo(); } catch(err2) {}
+          /* PLAYING — 광고인지 본 영상인지 판별 */
+          var curId = '';
+          try { curId = B.player.getVideoData().video_id; } catch(err2) {}
+          var isAd = curId && B.loadedId && curId !== B.loadedId;
+          if (isAd) {
+            /* 광고 재생 중 */
+            console.log('[BGM] AD playing, video_id:', curId);
+            if (typeof setMiniAdOverlay === 'function') setMiniAdOverlay(true);
           } else {
+            /* 본 영상 재생 시작 */
+            console.log('[BGM] actual track playing');
+            if (typeof setMiniAdOverlay === 'function') setMiniAdOverlay(false);
             B.syncDuration();
+            /* 게임이 시작 대기 중이면 자동으로 게임 시작 */
+            if (typeof miniGame !== 'undefined' && miniGame.active && !miniGame.playing) {
+              if (typeof beginConcertMiniGamePlay === 'function') beginConcertMiniGamePlay();
+            }
           }
         }
-        /* PAUSED(2) — preload 중 pause 완료 시점 */
-        if (e.data === 2 && B.preloading) {
-          B.preloading = false;
-          console.log('[BGM] preload done — ready to play without ad');
-          /* duration 확정 */
-          B.syncDuration();
-        }
-        /* ENDED(0): 미니게임 종료 */
+        /* ENDED(0): 광고 끝 or 본 영상 끝 */
         if (e.data === 0) {
-          if (B.preloading) { B.preloading = false; return; }
-          try {
-            if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
-              if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
-            }
-          } catch(err) {}
+          var curId2 = '';
+          try { curId2 = B.player.getVideoData().video_id; } catch(err2) {}
+          var wasAd = curId2 && B.loadedId && curId2 !== B.loadedId;
+          if (!wasAd) {
+            /* 본 영상 종료 → 미니게임 종료 */
+            try {
+              if (typeof miniGame !== 'undefined' && miniGame.active && miniGame.playing) {
+                if (typeof finishConcertMiniGame === 'function') finishConcertMiniGame();
+              }
+            } catch(err) {}
+          }
         }
       }
     }
@@ -3940,23 +3983,6 @@ window.onYouTubeIframeAPIReady = function(){
 };
 
 window.kvBgm = {
-  /* 공연 카드 등장 시 미리 영상 로드 — 광고는 이 시점에 소진됨 */
-  preload: function(track){
-    var B = window._ytBgm;
-    if (!B.player || !B.ready) return;
-    var vid = track && track.videoId;
-    if (!vid || B.loadedId === vid) return;
-    console.log('[BGM] preload:', vid);
-    B.loadedId = vid;
-    var startSeconds = track.startSec || 0;
-    var loadOpts = { videoId: vid, startSeconds: startSeconds };
-    if (track.endSec) loadOpts.endSeconds = track.endSec;
-    /* 무음으로 로드 후 즉시 정지 — 광고를 이 타이밍에 처리 */
-    try { B.player.mute(); } catch(e) {}
-    B.player.loadVideoById(loadOpts);
-    /* 광고 끝날 때까지 대기 후 정지 (onStateChange에서 처리) */
-    B.preloading = true;
-  },
   play: function(){
     var B = window._ytBgm;
     if (!B.player || !B.ready) {
@@ -3971,19 +3997,11 @@ window.kvBgm = {
       var track  = tracks[Math.min(level, tracks.length - 1)] || {};
       var startSeconds = track.startSec || 0;
       try { B.player.unMute(); B.player.setVolume(100); } catch(e) {}
-      if (B.loadedId === vid) {
-        /* 이미 로드됨 — seekTo + playVideo (광고 없음) */
-        console.log('[BGM] play (preloaded): seekTo', startSeconds);
-        B.player.seekTo(startSeconds, true);
-        B.player.playVideo();
-      } else {
-        /* 아직 로드 안 됨 — loadVideoById (광고 발생할 수 있음) */
-        console.log('[BGM] play (cold load):', vid);
-        B.loadedId = vid;
-        var loadOpts = { videoId: vid, startSeconds: startSeconds };
-        if (track.endSec) loadOpts.endSeconds = track.endSec;
-        B.player.loadVideoById(loadOpts);
-      }
+      B.loadedId = vid;
+      var loadOpts = { videoId: vid, startSeconds: startSeconds };
+      if (track.endSec) loadOpts.endSeconds = track.endSec;
+      B.player.loadVideoById(loadOpts);
+      /* 게임 시작은 onStateChange에서 본 영상 감지 후 자동으로 시작됨 */
     } catch(e) { console.warn('[BGM] play error:', e); }
   },
   stop: function(){
@@ -4189,6 +4207,10 @@ window.kvBgm = {
           <!-- TAP 버튼 — stage 안 하단 고정 -->
           <div class="mini-hit-buttons">
             <button type="button" class="mini-hit-btn" data-lane="0">TAP</button>
+          </div>
+
+          <div class="mini-ad-overlay" id="miniAdOverlay">
+            <div class="mini-ad-text">📺 광고 중입니다<span>광고가 끝나면 공연이 자동으로 시작돼요</span></div>
           </div>
 
           <div class="mini-start-overlay show" id="miniStartOverlay">
@@ -6409,7 +6431,8 @@ if (miniGameLayer) {
 miniStartBtn.addEventListener('click', (e) => {
   registerUserActivity();
   e.preventDefault();
-  beginConcertMiniGamePlay();
+  /* 음악 재생 시작 — 광고 없으면 onStateChange(1)에서 beginConcertMiniGamePlay() 자동 호출
+     광고 있으면 광고 오버레이 표시 후 광고 끝날 때 자동 시작 */
   if (window.kvBgm) window.kvBgm.play();
 });
 
@@ -6427,7 +6450,6 @@ window.addEventListener('keydown', (e) => {
   }
   if (!miniGame.playing && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
-    beginConcertMiniGamePlay();
     if (window.kvBgm) window.kvBgm.play();
     return;
   }
@@ -7299,6 +7321,7 @@ function abortConcertMiniGame(){
   miniGameResult.classList.remove('show');
   miniStartOverlay.classList.remove('show');
   miniGameLayer.classList.remove('active');
+  if (typeof setMiniAdOverlay === 'function') setMiniAdOverlay(false);
   const _sc1 = document.getElementById('seedStageCard');
   if (_sc1) _sc1.style.display = '';
   updateMiniGameProgress(0);
@@ -7363,6 +7386,28 @@ function spawnMiniHitFX(lane, type){
   fx.style.top = `${(miniRhythmStage.clientHeight || 420) - 84}px`;
   laneEl.appendChild(fx);
   setTimeout(() => fx.remove(), 420);
+}
+
+const miniAdOverlay = document.getElementById('miniAdOverlay');
+
+function setMiniAdOverlay(isAd){
+  if (!miniAdOverlay) return;
+  if (isAd) {
+    miniAdOverlay.classList.add('show');
+    /* 광고 중 노트 스폰 중단 */
+    if (miniGame.active && miniGame.playing) {
+      cancelAnimationFrame(miniGame.rafId);
+      miniGame._adPaused = true;
+    }
+  } else {
+    miniAdOverlay.classList.remove('show');
+    /* 광고 끝 — 게임이 광고로 중단됐으면 재개 */
+    if (miniGame.active && miniGame._adPaused) {
+      miniGame._adPaused = false;
+      miniGame.startTime = performance.now() - (miniGame._adPausedElapsed || 0);
+      miniGame.rafId = requestAnimationFrame(tickMiniGame);
+    }
+  }
 }
 
 function showScorePopup(amount, isBig){
@@ -8140,8 +8185,7 @@ function showConcertEvent(){
   if (descEl)  descEl.textContent  = track ? `지금 바로 무대에 올라가 볼까요?` : '연습 점수가 쌓였어요. 지금 바로 무대에 올라가 볼까요?';
   concertEventCard.classList.add('show');
 
-  /* 공연 카드가 뜨는 시점에 영상을 미리 로드 — 실제 시작 시 광고 없이 재생 가능 */
-  if (track) kvBgm.preload(track);
+
 }
 
 function hideConcertEvent(){
