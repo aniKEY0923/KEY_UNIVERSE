@@ -442,13 +442,13 @@ img{
 }
 .seed-stage.bg-walk{
   background:
-    linear-gradient(rgba(255,248,236,.10), rgba(190,185,180,.20)),
-    url("img/walk.png") center center / 108% 108% no-repeat;
+    linear-gradient(rgba(255,248,236,.08), rgba(190,185,180,.14)),
+    url("img/walk.png") 0 center / auto 108% repeat-x;
 }
 .seed-stage.bg-walk-day{
   background:
-    linear-gradient(rgba(255,252,240,.10), rgba(200,220,180,.20)),
-    url("img/walk.png") center center / 108% 108% no-repeat;
+    linear-gradient(rgba(255,252,240,.08), rgba(200,220,180,.14)),
+    url("img/walk.png") 0 center / auto 108% repeat-x;
 }
 .seed-stage.bg-bathroom{
   background:
@@ -10920,28 +10920,57 @@ window.SMG = (function(){
       duration:8000,
       run(onDone){
         const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
+        const stage=$id('seedStage');
 
-        /* 배경 교체 (기존 방식) */
+        /* 배경 교체 */
         if(typeof updateSeedStageBackground==='function'){
           updateSeedStageBackground(isNight?'walk':'walk-day');
         }
 
-        let steps=0, dir=1, activeItem=null;
-        const stage=$id('seedStage');
-        const player=document.getElementById('seedPlayer');
+        /* 캐릭터를 스테이지 중앙에 고정 */
+        if(typeof state!=='undefined'&&stage){
+          const rect=stage.getBoundingClientRect();
+          state.seedPlayer.x=(rect.width-(state.seedPlayer.w||54))/2;
+          state.seedPlayer.facing='right';
+          if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
+        }
 
-        /* 조작 힌트 — 스테이지 상단 */
+        /* 배경 스크롤 상태 */
+        let bgPos=0;          /* px 단위 누적 이동량 */
+        let scrollVel=0;      /* 현재 속도 (탭 시 +, 관성으로 감속) */
+        let rafId=null;
+        let steps=0, activeItem=null, isWalking=false;
+
+        /* 관성 스크롤 루프 */
+        function scrollLoop(){
+          if(scrollVel>0.3){
+            bgPos+=scrollVel;
+            scrollVel*=0.88; /* 감속 */
+            if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
+            rafId=requestAnimationFrame(scrollLoop);
+            /* 걷는 중 표시 */
+            if(!isWalking){
+              isWalking=true;
+            }
+          } else {
+            scrollVel=0;
+            isWalking=false;
+            rafId=null;
+          }
+        }
+
+        /* 조작 힌트 */
         const hint=document.createElement('div');
         hint.style.cssText=`
-          position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-          font-size:10px;font-weight:900;color:rgba(255,255,255,.7);
-          background:rgba(0,0,0,.35);backdrop-filter:blur(3px);
-          padding:5px 10px;border-radius:8px;text-align:center;
-          pointer-events:none;
+          position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+          font-size:10px;font-weight:900;color:rgba(255,255,255,.8);
+          background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
+          padding:5px 12px;border-radius:8px;pointer-events:none;
+          transition:opacity .4s;
         `;
-        hint.textContent='탭할 때마다 한 걸음씩!';
+        hint.textContent='탭할 때마다 걸어가!';
         if(ctrl()) ctrl().appendChild(hint);
-        _t(()=>{ hint.style.opacity='0'; },2000);
+        _t(()=>{ hint.style.opacity='0'; },2200);
 
         /* 아이템 풀 */
         const ITEMS_DAY  =[{e:'🌸',b:'꽃을 발견했어!'},{e:'🐱',b:'고양이다!'},{e:'🍀',b:'네잎클로버!'}];
@@ -10952,67 +10981,60 @@ window.SMG = (function(){
           if(activeItem||!ctrl()) return;
           const item=itemPool[Math.floor(Math.random()*itemPool.length)];
           const el=document.createElement('div');
-          const rect=stage?stage.getBoundingClientRect():{width:320,height:214};
-          const lx=15+Math.random()*65;
-          const ly=20+Math.random()*45;
+          /* 아이템은 캐릭터 앞쪽(오른쪽) 영역에 등장 */
+          const lx=55+Math.random()*30;
+          const ly=25+Math.random()*40;
           el.style.cssText=`
             position:absolute;left:${lx}%;top:${ly}%;
-            font-size:20px;cursor:pointer;pointer-events:auto;
-            animation:smgItemPop .3s ease;
+            font-size:22px;cursor:pointer;pointer-events:auto;
+            animation:smgItemPop .3s ease;transition:left .5s ease;
           `;
           el.textContent=item.e;
           ctrl().appendChild(el);
           activeItem={el,bonus:item.b};
-          _t(()=>{ if(activeItem&&activeItem.el===el){el.remove();activeItem=null;} },3000);
+          _t(()=>{ if(activeItem&&activeItem.el===el){el.remove();activeItem=null;} },3500);
         }
-        function schedItem(){ _t(()=>{spawnItem();schedItem();},2000+Math.random()*1000); }
+        function schedItem(){ _t(()=>{spawnItem();schedItem();},2000+Math.random()*1200); }
         schedItem();
 
-        /* 탭 핸들러 — smgControls 전체 */
+        /* 탭 영역 */
         const tapArea=document.createElement('div');
         tapArea.style.cssText='position:absolute;inset:0;pointer-events:auto;cursor:pointer;';
         tapArea.addEventListener('pointerdown',e=>{
           /* 아이템 클릭 체크 */
           if(activeItem&&activeItem.el){
-            const rect=tapArea.getBoundingClientRect();
-            const ix=e.clientX-rect.left, iy=e.clientY-rect.top;
-            const elR=activeItem.el.getBoundingClientRect();
-            const elX=elR.left-rect.left+elR.width/2;
-            const elY=elR.top-rect.top+elR.height/2;
-            if(Math.abs(ix-elX)<40&&Math.abs(iy-elY)<40){
-              _flash(activeItem.bonus,900);
+            const cr=tapArea.getBoundingClientRect();
+            const ix=e.clientX-cr.left, iy=e.clientY-cr.top;
+            const er=activeItem.el.getBoundingClientRect();
+            const ex=er.left-cr.left+er.width/2;
+            const ey=er.top-cr.top+er.height/2;
+            if(Math.abs(ix-ex)<44&&Math.abs(iy-ey)<44){
+              _flash(activeItem.bonus,1000);
               _setScore(_score+15);
               activeItem.el.remove();
               activeItem=null;
               return;
             }
           }
-          /* 걸음 이동 — state.seedPlayer 좌표 직접 수정 */
-          if(typeof state!=='undefined'&&player){
-            const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
-            const step=stageRect.width*0.08;
-            state.seedPlayer.x+=dir*step;
-            /* 방향 전환 */
-            if(state.seedPlayer.x>stageRect.width-(state.seedPlayer.w||54)-8){
-              dir=-1; state.seedPlayer.facing='left';
-            }
-            if(state.seedPlayer.x<8){
-              dir=1; state.seedPlayer.facing='right';
-            }
-            state.seedPlayer.x=Math.max(8,Math.min(stageRect.width-(state.seedPlayer.w||54)-8,state.seedPlayer.x));
-            if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
-          }
+          /* 배경 스크롤 — 탭마다 속도 누적 */
+          scrollVel+=14;
           steps++;
           _setScore(_score+1.5);
-          if(steps%10===0) _flash(steps+'걸음!',500);
+          if(steps%10===0) _flash(steps+'걸음!',600);
+          if(!rafId) rafId=requestAnimationFrame(scrollLoop);
         });
         if(ctrl()) ctrl().appendChild(tapArea);
 
+        /* 종료 시 RAF 정리 */
+        const origOnDone=onDone;
         _t(()=>{
+          if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+          /* 배경 위치 초기화 */
+          if(stage) stage.style.backgroundPositionX='';
           const msg=isNight
             ?(steps>=15?'밤공기가 상쾌했어. 기분 전환 됐어.':'조용한 밤 산책이었어.')
             :(steps>=15?'햇살 받으며 잘 걸었어!':'가볍게 산책했어.');
-          onDone(_score,msg);
+          origOnDone(_score,msg);
         },this.duration);
       }
     },
@@ -11131,6 +11153,9 @@ window.SMG = (function(){
     _active=false;
     _clearAll();
     _closeLayer();
+    /* 배경 position 초기화 */
+    const stage=document.getElementById('seedStage');
+    if(stage) stage.style.backgroundPositionX='';
     /* 배경 원래대로 */
     if(typeof updateSeedStageBackground==='function'){
       updateSeedStageBackground('default');
