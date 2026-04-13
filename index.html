@@ -445,6 +445,16 @@ img{
     linear-gradient(rgba(255,248,236,.10), rgba(190,185,180,.20)),
     url("img/walk.png") center center / 108% 108% no-repeat;
 }
+.seed-stage.bg-walk-day{
+  background:
+    linear-gradient(rgba(255,252,240,.10), rgba(200,220,180,.20)),
+    url("img/walk.png") center center / 108% 108% no-repeat;
+}
+.seed-stage.bg-bathroom{
+  background:
+    linear-gradient(rgba(220,240,255,.10), rgba(180,210,240,.18)),
+    url("img/bathroom.png") center center / 108% 108% no-repeat;
+}
 /* 스트레스 경고/위험 구간 — 배경 붉은 오버레이 */
 .seed-stage.stress-tint::after{
   content:"";
@@ -7176,10 +7186,18 @@ function isNightTime(hour = state.gameHour){
 
 function updateSeedStageBackground(mode = state.currentStageBg){
   state.currentStageBg = mode;
-  seedStage.classList.remove('bg-default', 'bg-default-night', 'bg-walk');
+  seedStage.classList.remove('bg-default', 'bg-default-night', 'bg-walk', 'bg-walk-day', 'bg-bathroom');
 
   if (mode === 'walk') {
     seedStage.classList.add('bg-walk');
+    return;
+  }
+  if (mode === 'walk-day') {
+    seedStage.classList.add('bg-walk-day');
+    return;
+  }
+  if (mode === 'bathroom') {
+    seedStage.classList.add('bg-bathroom');
     return;
   }
 
@@ -10741,67 +10759,64 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   ScheduleMiniGame (SMG) — 스테이지 내부 미니게임 공통 엔진
-   모든 스케줄 미니게임은 seed-stage 안 #smgLayer 에서 동작.
-   큰 이벤트(콘서트/시상식/번아웃)는 기존 전체 오버레이 유지.
+   ScheduleMiniGame (SMG) v2
+   ─ 배경: updateSeedStageBackground() 로 교체 (기존 방식 유지)
+   ─ 캐릭터: 기존 seedPlayer 좌표 이동 (smgLayer 로 덮지 않음)
+   ─ 오브젝트/조작 UI: smgLayer (투명, z-index:10) 위에만 올림
+   ─ smgLayer 자체는 pointer-events:none 이 기본,
+     조작이 필요한 자식만 pointer-events:auto
 ══════════════════════════════════════════════════════════════ */
 window.SMG = (function(){
 
-  /* ── 내부 상태 ── */
-  let _active   = false;
-  let _type     = null;
-  let _score    = 0;
-  let _maxScore = 100;
-  let _timers   = [];
-  let _rafs     = [];
-  let _onDone   = null;
+  let _active  = false;
+  let _type    = null;
+  let _score   = 0;
+  let _timers  = [];
+  let _onDone  = null;
 
-  const layer    = () => document.getElementById('smgLayer');
-  const bg       = () => document.getElementById('smgBg');
-  const scene    = () => document.getElementById('smgScene');
-  const feedback = () => document.getElementById('smgFeedback');
-  const controls = () => document.getElementById('smgControls');
-  const fill     = () => document.getElementById('smgScoreFill');
+  /* DOM 참조 */
+  const $id  = id => document.getElementById(id);
+  const ctrl = () => $id('smgControls');
+  const fill = () => $id('smgScoreFill');
+  const feed = () => $id('smgFeedback');
 
+  /* 타이머 관리 */
   function _t(fn, ms){ const id=setTimeout(fn,ms); _timers.push(id); return id; }
-  function _clearAll(){ _timers.forEach(clearTimeout); _rafs.forEach(cancelAnimationFrame); _timers=[]; _rafs=[]; }
+  function _clearAll(){ _timers.forEach(clearTimeout); _timers=[]; }
 
   function _setScore(v){
-    _score = Math.max(0, Math.min(_maxScore, v));
-    if(fill()) fill().style.width = (_score/_maxScore*100)+'%';
+    _score = Math.max(0, Math.min(100, v));
+    if(fill()) fill().style.width = _score + '%';
   }
 
-  function _flash(text, duration){
+  function _flash(text, ms){
     if(!text) return;
-    duration = duration||900;
-    const el = feedback();
+    const el=feed();
     if(!el) return;
-    el.textContent = text;
-    el.style.opacity = '1';
-    _t(()=>{ if(el) el.style.opacity='0'; }, duration);
+    el.textContent=text;
+    el.style.opacity='1';
+    _t(()=>{ if(el) el.style.opacity='0'; }, ms||900);
   }
 
-  function _show(){
-    const l = layer();
-    if(l) l.style.display='block';
-    ['seedBubble','seedStatus','seedAwakenAnchor'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.style.opacity='0';
-    });
+  /* smgLayer 열기/닫기 — 배경 덮지 않음, 투명 레이어만 활성화 */
+  function _openLayer(){
+    const l=$id('smgLayer');
+    if(l){
+      l.style.display='block';
+      l.style.background='none'; /* 투명 유지 */
+    }
+    const b=$id('smgBg');
+    if(b) b.style.background='none';
+    const s=$id('smgScene');
+    if(s) s.innerHTML='';
   }
 
-  function _hide(){
-    const l = layer();
+  function _closeLayer(){
+    const l=$id('smgLayer');
     if(l) l.style.display='none';
-    if(bg()) bg().style.background='';
-    if(scene()) scene().innerHTML='';
-    if(controls()) controls().innerHTML='';
-    if(feedback()){ feedback().textContent=''; feedback().style.opacity='0'; }
+    if(ctrl()) ctrl().innerHTML='';
+    if(feed()){ feed().textContent=''; feed().style.opacity='0'; }
     if(fill()) fill().style.width='0%';
-    ['seedBubble','seedStatus','seedAwakenAnchor'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.style.opacity='';
-    });
   }
 
   function scoreToMult(score){
@@ -10811,60 +10826,76 @@ window.SMG = (function(){
     return 0.8;
   }
 
-  /* ── 스케줄별 CONFIG ── */
+  /* ══════════════════════════════════════════════════
+     스케줄별 CONFIG
+  ══════════════════════════════════════════════════ */
   const CONFIGS = {
 
-    /* 넷플릭스: 스테이지 안 포스터 선택 */
+    /* ── 넷플릭스: 기존 배경 유지, 포스터만 스테이지 위에 ── */
     netflix:{
-      bgColor:'linear-gradient(160deg,#0a0a18,#12121f)',
-      emoji:'📺', label:'넷플릭스',
+      duration:0,
       genres:[
-        {id:'drama', emoji:'🎭',label:'드라마',   hint:'★★★★',     stress:-2,stats:{social:2},           energy:-8,
-         lines:['몰입해서 봤더니 눈물이 좀 났어.','이야기가 생각보다 마음에 걸리네.']},
-        {id:'comedy',emoji:'😂',label:'코미디',   hint:'인기 급상승',stress:-5,stats:{humor:2,cute:1},     energy:-6,
+        {id:'drama', emoji:'🎭',label:'드라마',   hint:'★★★★',      stress:-2,stats:{social:2},            energy:-8,
+         lines:['몰입해서 봤더니 눈물이 좀 났어.','이야기가 마음에 걸리네.']},
+        {id:'comedy',emoji:'😂',label:'코미디',   hint:'인기 급상승', stress:-5,stats:{humor:2,cute:1},       energy:-6,
          lines:['너무 웃겨서 혼자 빵 터졌어.','기분이 확 풀렸어.']},
-        {id:'horror',emoji:'👻',label:'공포',     hint:'신작 공개', stress:3, stats:{scary:2,mystery:1},  energy:-10,
-         lines:['심장 쫄깃했어. 근데 또 보고 싶은 느낌.','무서운데 눈을 못 떼겠더라고.']},
-        {id:'docu',  emoji:'🎬',label:'다큐',     hint:'수상작',    stress:-1,stats:{mystery:2,practice:1},energy:-7,
-         lines:['이런 세계가 있는지 몰랐어. 영감 받았다.','왠지 뭔가 해보고 싶어졌어.']},
-        {id:'sleep', emoji:'💤',label:'보다가 잠듦',hint:'편안한 분위기',stress:-6,stats:{humor:-1},       energy:20,
-         lines:['정신 차려보니 엔딩 크레딧이 흐르고 있었어.','어느 순간 기억이 없네... 꿀잠이었나?']},
-        {id:'action',emoji:'💥',label:'액션',     hint:'화제작',    stress:1, stats:{scary:1,social:1},   energy:-12,
-         lines:['화면에서 눈을 못 뗐어. 완전 몰입.','손에 땀이 났다고.']},
+        {id:'horror',emoji:'👻',label:'공포',     hint:'신작 공개',   stress:3, stats:{scary:2,mystery:1},   energy:-10,
+         lines:['심장 쫄깃했어. 근데 또 보고 싶은 느낌.','눈을 못 떼겠더라고.']},
+        {id:'docu',  emoji:'🎬',label:'다큐',     hint:'수상작',      stress:-1,stats:{mystery:2,practice:1},energy:-7,
+         lines:['이런 세계가 있는지 몰랐어. 영감 받았다.','뭔가 해보고 싶어졌어.']},
+        {id:'sleep', emoji:'💤',label:'보다가 잠듦',hint:'편안한 분위기',stress:-6,stats:{humor:-1},          energy:20,
+         lines:['정신 차려보니 엔딩 크레딧이 흐르고 있었어.','어느 순간 기억이 없네...']},
+        {id:'action',emoji:'💥',label:'액션',     hint:'화제작',      stress:1, stats:{scary:1,social:1},    energy:-12,
+         lines:['완전 몰입했어.','손에 땀이 났다고.']},
       ],
       run(onDone){
-        const pool = this.genres.slice().sort(()=>Math.random()-.5).slice(0,5);
-        let chosen = null;
-        const bgColors={drama:'#1a3a5c',comedy:'#3d2a00',horror:'#2a0a2a',docu:'#0a2a1a',sleep:'#1a1a2a',action:'#3a1a00'};
+        const pool=this.genres.slice().sort(()=>Math.random()-.5).slice(0,5);
+        let chosen=null;
+        const bgMap={drama:'rgba(26,58,92,.82)',comedy:'rgba(61,42,0,.82)',horror:'rgba(42,10,42,.82)',
+                     docu:'rgba(10,42,26,.82)',sleep:'rgba(20,20,30,.82)',action:'rgba(58,26,0,.82)'};
 
-        const wrap = document.createElement('div');
-        wrap.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:10px;';
+        /* 포스터 래퍼 — 스테이지 하단 1/3 영역에 반투명하게 */
+        const wrap=document.createElement('div');
+        wrap.style.cssText=`
+          position:absolute;bottom:10px;left:8px;right:8px;
+          background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+          border-radius:12px;padding:8px;
+          display:flex;flex-direction:column;gap:6px;
+          pointer-events:auto;
+        `;
 
-        const ttl = document.createElement('div');
-        ttl.style.cssText='font-size:10px;font-weight:900;color:rgba(255,255,255,.55);text-align:center;';
-        ttl.textContent='뭐 볼지 골라봐. 뭐가 나올지는 몰라.';
+        const ttl=document.createElement('div');
+        ttl.style.cssText='font-size:9px;font-weight:900;color:rgba(255,255,255,.6);text-align:center;';
+        ttl.textContent='뭐 볼지 골라봐 — 뭐가 나올지는 몰라';
         wrap.appendChild(ttl);
 
-        const row = document.createElement('div');
-        row.style.cssText='display:flex;gap:7px;width:100%;justify-content:center;';
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;gap:5px;justify-content:center;';
 
         pool.forEach(g=>{
           const card=document.createElement('div');
-          card.style.cssText=`flex:0 0 calc(20% - 6px);min-width:50px;height:84px;border-radius:9px;
-            background:${bgColors[g.id]||'#111'};border:2px solid transparent;
-            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;
+          card.style.cssText=`
+            flex:0 0 calc(20% - 4px);height:60px;border-radius:8px;
+            background:${bgMap[g.id]||'rgba(20,20,30,.8)'};
+            border:1.5px solid transparent;
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;
             cursor:pointer;transition:border-color .15s,transform .15s;
-            filter:blur(1px) saturate(0.4);`;
-          card.innerHTML=`<div style="font-size:24px;filter:blur(2px)">${g.emoji}</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.45);font-weight:700;text-align:center;padding:0 3px;">${g.hint}</div>`;
+            filter:blur(0.5px) saturate(0.5);
+          `;
+          card.innerHTML=`
+            <div style="font-size:18px;filter:blur(1.5px)">${g.emoji}</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:0 2px">${g.hint}</div>
+          `;
           card.addEventListener('click',()=>{
             if(chosen) return;
             chosen=g;
             card.style.filter='none';
             card.style.borderColor='#e50914';
             card.style.transform='scale(1.08)';
-            card.innerHTML=`<div style="font-size:24px">${g.emoji}</div>
-              <div style="font-size:8px;color:rgba(255,255,255,.9);font-weight:900;text-align:center;">${g.label}</div>`;
+            card.innerHTML=`
+              <div style="font-size:18px">${g.emoji}</div>
+              <div style="font-size:7px;color:rgba(255,255,255,.95);font-weight:900;text-align:center">${g.label}</div>
+            `;
             row.querySelectorAll('div').forEach(c=>{ if(c!==card) c.style.opacity='.25'; });
             const line=g.lines[Math.floor(Math.random()*g.lines.length)];
             _flash(line,3000);
@@ -10880,118 +10911,200 @@ window.SMG = (function(){
           row.appendChild(card);
         });
         wrap.appendChild(row);
-        if(controls()) controls().appendChild(wrap);
+        if(ctrl()) ctrl().appendChild(wrap);
       }
     },
 
-    /* 목욕: 거품 탭 */
-    bath:{
-      bgColor:'linear-gradient(160deg,#1a2a3a,#0d1a2a)',
-      emoji:'🛁', label:'목욕 중',
-      duration:8000,
-      run(onDone){
-        let bubbleCount=0;
-        const MAX=40;
-        if(scene()) scene().innerHTML=`<div style="font-size:48px;opacity:.6">🛁</div><div style="font-size:10px;color:rgba(255,255,255,.45);font-weight:700;">화면을 탭해서 거품을 내봐!</div>`;
-        const ctrl=controls();
-        if(!ctrl) return;
-        ctrl.style.cursor='pointer';
-        function spawnBubble(x,y){
-          if(bubbleCount>=MAX) return;
-          const b=document.createElement('div');
-          const size=12+Math.random()*18;
-          const tx=(Math.random()-.5)*60;
-          const ty=-(20+Math.random()*50);
-          b.style.cssText=`position:absolute;left:${x-size/2}px;top:${y-size/2}px;
-            width:${size}px;height:${size}px;border-radius:50%;pointer-events:none;
-            background:rgba(255,255,255,${0.25+Math.random()*0.35});
-            border:1px solid rgba(255,255,255,.4);
-            animation:smgBubbleRise .9s ease-out forwards;--tx:${tx}px;--ty:${ty}px;`;
-          ctrl.appendChild(b);
-          bubbleCount++;
-          _setScore(_score+2.5);
-          setTimeout(()=>{ b.remove(); bubbleCount--; },900);
-        }
-        ctrl.addEventListener('pointerdown',e=>{
-          const rect=ctrl.getBoundingClientRect();
-          spawnBubble(e.clientX-rect.left,e.clientY-rect.top);
-          _flash(_score>=80?'거품이 풍성해!':_score>=40?'깨끗해지는 중~':'더 문질러봐!',600);
-        });
-        _t(()=>onDone(_score,_score>=80?'포근한 거품욕이었어. 완전 개운해!':'깔끔하게 씻었어.'),this.duration);
-      }
-    },
-
-    /* 산책: 걸음 탭 + 낮/밤 + 아이템 */
+    /* ── 산책: 기존 캐릭터 좌표 이동 + walk 배경 + 아이템 ── */
     walk:{
-      bgColor:'',
-      emoji:'', label:'산책 중',
       duration:8000,
       run(onDone){
-        const isNight=(state.gameHour||7)<6||(state.gameHour||7)>=18;
-        if(bg()) bg().style.background=isNight?'linear-gradient(160deg,#0a0a1a,#0d1020)':'linear-gradient(160deg,#1a3a1a,#2a5a2a)';
-        if(scene()) scene().innerHTML=`<div style="font-size:36px;opacity:.4">${isNight?'🌙':'☀️'}</div>`;
-        let steps=0,charX=30,dir=1,activeItem=null;
-        const charEl=document.createElement('div');
-        charEl.style.cssText=`position:absolute;bottom:28%;font-size:26px;transition:left .15s linear;left:${charX}%;`;
-        charEl.textContent='🚶';
-        const ctrl=controls();
-        if(ctrl){
-          ctrl.appendChild(charEl);
-          ctrl.style.cursor='pointer';
-          ctrl.addEventListener('pointerdown',e=>{
-            if(activeItem&&activeItem.el){
-              const rect=ctrl.getBoundingClientRect();
-              const ix=e.clientX-rect.left, iy=e.clientY-rect.top;
-              const elL=parseFloat(activeItem.el.style.left);
-              const elT=parseFloat(activeItem.el.style.top);
-              if(Math.abs(ix-elL)<36&&Math.abs(iy-elT)<36){
-                _flash(activeItem.bonus,900);
-                _setScore(_score+15);
-                activeItem.el.remove();
-                activeItem=null;
-                return;
-              }
-            }
-            steps++;
-            charX+=dir*7;
-            if(charX>80){dir=-1;charEl.style.transform='scaleX(-1)';}
-            if(charX<10){dir=1;charEl.style.transform='';}
-            charEl.style.left=charX+'%';
-            _setScore(_score+1);
-            if(steps%10===0) _flash(steps+'걸음!',400);
-          });
+        const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
+
+        /* 배경 교체 (기존 방식) */
+        if(typeof updateSeedStageBackground==='function'){
+          updateSeedStageBackground(isNight?'walk':'walk-day');
         }
-        const ITEMS_DAY=[{e:'🌸',bonus:'꽃을 발견했어!'},{e:'🐱',bonus:'고양이다!'},{e:'🍀',bonus:'네잎클로버!'}];
-        const ITEMS_NIGHT=[{e:'⭐',bonus:'별똥별이야!'},{e:'🏮',bonus:'가로등이 예쁘네.'},{e:'🦋',bonus:'밤 나비를 만났어!'}];
+
+        let steps=0, dir=1, activeItem=null;
+        const stage=$id('seedStage');
+        const player=document.getElementById('seedPlayer');
+
+        /* 조작 힌트 — 스테이지 상단 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+          font-size:10px;font-weight:900;color:rgba(255,255,255,.7);
+          background:rgba(0,0,0,.35);backdrop-filter:blur(3px);
+          padding:5px 10px;border-radius:8px;text-align:center;
+          pointer-events:none;
+        `;
+        hint.textContent='탭할 때마다 한 걸음씩!';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2000);
+
+        /* 아이템 풀 */
+        const ITEMS_DAY  =[{e:'🌸',b:'꽃을 발견했어!'},{e:'🐱',b:'고양이다!'},{e:'🍀',b:'네잎클로버!'}];
+        const ITEMS_NIGHT=[{e:'⭐',b:'별똥별이야!'},{e:'🏮',b:'가로등이 예쁘네.'},{e:'🦋',b:'밤 나비!'}];
         const itemPool=isNight?ITEMS_NIGHT:ITEMS_DAY;
+
         function spawnItem(){
-          if(activeItem) return;
+          if(activeItem||!ctrl()) return;
           const item=itemPool[Math.floor(Math.random()*itemPool.length)];
           const el=document.createElement('div');
-          const lx=15+Math.random()*65, ly=20+Math.random()*45;
-          el.style.cssText=`position:absolute;left:${lx}%;top:${ly}%;font-size:22px;cursor:pointer;animation:smgItemPop .3s ease;`;
+          const rect=stage?stage.getBoundingClientRect():{width:320,height:214};
+          const lx=15+Math.random()*65;
+          const ly=20+Math.random()*45;
+          el.style.cssText=`
+            position:absolute;left:${lx}%;top:${ly}%;
+            font-size:20px;cursor:pointer;pointer-events:auto;
+            animation:smgItemPop .3s ease;
+          `;
           el.textContent=item.e;
-          if(ctrl) ctrl.appendChild(el);
-          activeItem={el,bonus:item.bonus};
+          ctrl().appendChild(el);
+          activeItem={el,bonus:item.b};
           _t(()=>{ if(activeItem&&activeItem.el===el){el.remove();activeItem=null;} },3000);
         }
-        function sched(){ _t(()=>{spawnItem();sched();},2000+Math.random()*1000); }
-        sched();
+        function schedItem(){ _t(()=>{spawnItem();schedItem();},2000+Math.random()*1000); }
+        schedItem();
+
+        /* 탭 핸들러 — smgControls 전체 */
+        const tapArea=document.createElement('div');
+        tapArea.style.cssText='position:absolute;inset:0;pointer-events:auto;cursor:pointer;';
+        tapArea.addEventListener('pointerdown',e=>{
+          /* 아이템 클릭 체크 */
+          if(activeItem&&activeItem.el){
+            const rect=tapArea.getBoundingClientRect();
+            const ix=e.clientX-rect.left, iy=e.clientY-rect.top;
+            const elR=activeItem.el.getBoundingClientRect();
+            const elX=elR.left-rect.left+elR.width/2;
+            const elY=elR.top-rect.top+elR.height/2;
+            if(Math.abs(ix-elX)<40&&Math.abs(iy-elY)<40){
+              _flash(activeItem.bonus,900);
+              _setScore(_score+15);
+              activeItem.el.remove();
+              activeItem=null;
+              return;
+            }
+          }
+          /* 걸음 이동 — state.seedPlayer 좌표 직접 수정 */
+          if(typeof state!=='undefined'&&player){
+            const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
+            const step=stageRect.width*0.08;
+            state.seedPlayer.x+=dir*step;
+            /* 방향 전환 */
+            if(state.seedPlayer.x>stageRect.width-(state.seedPlayer.w||54)-8){
+              dir=-1; state.seedPlayer.facing='left';
+            }
+            if(state.seedPlayer.x<8){
+              dir=1; state.seedPlayer.facing='right';
+            }
+            state.seedPlayer.x=Math.max(8,Math.min(stageRect.width-(state.seedPlayer.w||54)-8,state.seedPlayer.x));
+            if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
+          }
+          steps++;
+          _setScore(_score+1.5);
+          if(steps%10===0) _flash(steps+'걸음!',500);
+        });
+        if(ctrl()) ctrl().appendChild(tapArea);
+
         _t(()=>{
-          const msg=isNight?(steps>=15?'밤공기가 상쾌했어. 기분 전환 됐어.':'조용한 밤 산책이었어.'):(steps>=15?'햇살 받으며 잘 걸었어!':'가볍게 산책했어.');
+          const msg=isNight
+            ?(steps>=15?'밤공기가 상쾌했어. 기분 전환 됐어.':'조용한 밤 산책이었어.')
+            :(steps>=15?'햇살 받으며 잘 걸었어!':'가볍게 산책했어.');
           onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
+    /* ── 목욕: bathroom 배경 + bathtub 오버레이 + 거품 탭 ── */
+    bath:{
+      duration:8000,
+      run(onDone){
+        /* 배경 교체 */
+        if(typeof updateSeedStageBackground==='function'){
+          updateSeedStageBackground('bathroom');
+        }
+
+        /* bathtub.png — 캐릭터 위에 겹쳐 배치 */
+        const player=document.getElementById('seedPlayer');
+        let tubEl=null;
+        if(player&&ctrl()){
+          tubEl=document.createElement('img');
+          tubEl.src='img/bathtub.png';
+          tubEl.alt='욕조';
+          const pw=state&&state.seedPlayer?state.seedPlayer.w||54:54;
+          const ph=state&&state.seedPlayer?state.seedPlayer.h||78:78;
+          const px=state&&state.seedPlayer?state.seedPlayer.x||80:80;
+          const py=state&&state.seedPlayer?state.seedPlayer.y||170:170;
+          /* 욕조는 캐릭터보다 살짝 크게, 캐릭터 발 위치 기준 */
+          const tw=pw*2.2, th=ph*1.4;
+          tubEl.style.cssText=`
+            position:absolute;pointer-events:none;z-index:11;
+            width:${tw}px;height:${th}px;
+            left:${px-(tw-pw)/2}px;top:${py+ph*0.3}px;
+            object-fit:contain;image-rendering:pixelated;
+          `;
+          ctrl().appendChild(tubEl);
+        }
+
+        /* 탭 힌트 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+          font-size:10px;font-weight:900;color:rgba(255,255,255,.75);
+          background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
+          padding:5px 12px;border-radius:8px;pointer-events:none;
+        `;
+        hint.textContent='탭해서 거품을 내봐! 🫧';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2200);
+
+        /* 거품 탭 */
+        let bubbleCount=0;
+        const MAX=40;
+        const tapArea=document.createElement('div');
+        tapArea.style.cssText='position:absolute;inset:0;pointer-events:auto;cursor:pointer;';
+        tapArea.addEventListener('pointerdown',e=>{
+          if(bubbleCount>=MAX) return;
+          const rect=tapArea.getBoundingClientRect();
+          const x=e.clientX-rect.left, y=e.clientY-rect.top;
+          const b=document.createElement('div');
+          const size=10+Math.random()*16;
+          const tx=(Math.random()-.5)*50;
+          const ty=-(15+Math.random()*45);
+          b.style.cssText=`
+            position:absolute;left:${x-size/2}px;top:${y-size/2}px;
+            width:${size}px;height:${size}px;border-radius:50%;
+            background:rgba(255,255,255,${0.3+Math.random()*0.35});
+            border:1px solid rgba(255,255,255,.5);pointer-events:none;
+            animation:smgBubbleRise .9s ease-out forwards;
+            --tx:${tx}px;--ty:${ty}px;
+          `;
+          tapArea.appendChild(b);
+          bubbleCount++;
+          _setScore(_score+2.5);
+          _flash(_score>=80?'거품이 풍성해! 🫧':_score>=40?'깨끗해지는 중~':'더 문질러봐!',600);
+          setTimeout(()=>{ b.remove(); bubbleCount--; },900);
+        });
+        if(ctrl()) ctrl().appendChild(tapArea);
+
+        _t(()=>{
+          onDone(_score,_score>=80?'포근한 거품욕이었어. 완전 개운해!':'깔끔하게 씻었어.');
         },this.duration);
       }
     },
 
   };
 
-  /* CSS */
+  /* CSS 애니메이션 */
   const smgStyle=document.createElement('style');
   smgStyle.textContent=`
+    #smgLayer{ pointer-events:none; }
+    #smgControls{ pointer-events:none; }
     @keyframes smgBubbleRise{
-      0%{transform:translate(0,0) scale(1);opacity:.8}
-      100%{transform:translate(var(--tx),var(--ty)) scale(.4);opacity:0}
+      0%{transform:translate(0,0) scale(1);opacity:.85}
+      100%{transform:translate(var(--tx),var(--ty)) scale(.35);opacity:0}
     }
     @keyframes smgItemPop{
       0%{transform:scale(0) rotate(-20deg);opacity:0}
@@ -11002,22 +11115,26 @@ window.SMG = (function(){
   document.head.appendChild(smgStyle);
 
   /* 공개 API */
-  function open(type,onDone){
+  function open(type, onDone){
     const cfg=CONFIGS[type];
     if(!cfg||_active) return false;
     _active=true; _type=type; _score=0; _onDone=onDone;
     _clearAll();
-    if(bg()&&cfg.bgColor) bg().style.background=cfg.bgColor;
-    if(scene()&&cfg.emoji) scene().innerHTML=`<div style="font-size:48px">${cfg.emoji}</div><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:700;">${cfg.label}</div>`;
-    if(controls()) controls().innerHTML='';
-    _show(); _setScore(0);
+    if(ctrl()) ctrl().innerHTML='';
+    _openLayer();
     cfg.run.call(cfg,(score,msg)=>close(score,msg));
     return true;
   }
 
   function close(score,msg){
     if(!_active) return;
-    _active=false; _clearAll(); _hide();
+    _active=false;
+    _clearAll();
+    _closeLayer();
+    /* 배경 원래대로 */
+    if(typeof updateSeedStageBackground==='function'){
+      updateSeedStageBackground('default');
+    }
     if(typeof _onDone==='function') _onDone(score||0,msg||'');
     _onDone=null; _type=null;
   }
@@ -11026,25 +11143,27 @@ window.SMG = (function(){
 })();
 
 
-/* startAction 가로채기 */
+/* startAction 가로채기 — netflix / bath / walk */
 (function(){
   const SMG_TYPES=['netflix','bath','walk'];
   const _orig=window.startAction;
+  window._origFinishAction=window.finishAction;
 
   window.startAction=function(type){
     if(!SMG_TYPES.includes(type)){
       if(typeof _orig==='function') _orig(type);
       return;
     }
-    if(typeof state!=='undefined'&&state.energy<12&&type!=='sleep'){
-      if(typeof setSeedMessage==='function') setSeedMessage((typeof dialogues!=='undefined'&&dialogues.lowEnergy)||'에너지가 부족해.');
+    if(typeof state!=='undefined'&&state.energy<12){
+      if(typeof setSeedMessage==='function')
+        setSeedMessage((typeof dialogues!=='undefined'&&dialogues.lowEnergy)||'에너지가 부족해.');
       return;
     }
     if(typeof state!=='undefined') state.isActing=true;
     if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(true);
     if(typeof updateAwakenButtonUI==='function') updateAwakenButtonUI();
 
-    const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
+    const isNight=typeof state!=='undefined'&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
     const startLines={
       netflix:'뭐 볼지 골라볼게.',
       bath:'따뜻하게 몸부터 풀어볼게.',
@@ -11052,26 +11171,28 @@ window.SMG = (function(){
     };
     if(typeof setSeedMessage==='function') setSeedMessage(startLines[type]||'');
 
-    const meta=(typeof actionMeta!=='undefined')?actionMeta[type]:null;
+    /* progress bar */
+    const meta=typeof actionMeta!=='undefined'?actionMeta[type]:null;
     if(meta&&typeof startActionProgress==='function') startActionProgress(type,meta.duration||8000);
 
     window.SMG.open(type,(score,msg)=>{
+      /* 시간 경과 */
       if(meta&&typeof advanceGameTime==='function') advanceGameTime(meta.minutes||60);
 
+      /* netflix는 SMG 내부에서 스탯 직접 적용 완료 */
       if(type!=='netflix'){
-        const mult=window.SMG.scoreToMult(score);
-        window._smgExtMult=mult;
+        window._smgExtMult=window.SMG.scoreToMult(score);
         if(typeof window._origFinishAction==='function') window._origFinishAction(type);
-        else if(typeof window.finishAction==='function') window.finishAction(type);
         window._smgExtMult=null;
       }
 
-      const coins=(typeof actionCoinReward!=='undefined')?(actionCoinReward[type]||0):0;
+      const coins=typeof actionCoinReward!=='undefined'?(actionCoinReward[type]||0):0;
       if(coins&&typeof addMoney==='function') addMoney(coins);
 
       const finalMsg=msg||((typeof dialogues!=='undefined')?dialogues[type]:'');
-      const coinSuffix=coins?` (+${coins}코인)`:'';
-      if(typeof setSeedMessage==='function') setSeedMessage(finalMsg+coinSuffix,{autoClearMs:5000,idleAfterMs:typeof SEED_IDLE_MS!=='undefined'?SEED_IDLE_MS:6000});
+      const suffix=coins?` (+${coins}코인)`:'';
+      if(typeof setSeedMessage==='function')
+        setSeedMessage(finalMsg+suffix,{autoClearMs:5000,idleAfterMs:typeof SEED_IDLE_MS!=='undefined'?SEED_IDLE_MS:6000});
 
       if(typeof state!=='undefined') state.isActing=false;
       if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(false);
@@ -11079,9 +11200,6 @@ window.SMG = (function(){
       if(typeof triggerSaveNow==='function') triggerSaveNow();
     });
   };
-
-  /* 원본 finishAction 보존 */
-  window._origFinishAction=window.finishAction;
 })();
 </script>
 </body>
