@@ -10923,19 +10923,12 @@ window.SMG = (function(){
         const stage=$id('seedStage');
 
         /* ── 1단계: 시작 대사 ── */
-        const startLines=[
-          '잠깐 좀 걷고 올께~',
-          '바람 좀 쐬고 올게!',
-          '잠깐 산책 다녀올게.',
-          '좀 걷고 싶어. 다녀올게!'
-        ];
+        const startLines=['잠깐 좀 걷고 올께~','바람 좀 쐬고 올게!','잠깐 산책 다녀올게.','좀 걷고 싶어. 다녀올게!'];
         if(typeof setSeedMessage==='function')
           setSeedMessage(startLines[Math.floor(Math.random()*startLines.length)]);
 
-        /* ── 2단계: 700ms 후 배경 디졸브 → 게임 시작 ── */
+        /* ── 2단계: 700ms 후 디졸브 → 게임 시작 ── */
         _t(()=>{
-
-          /* 디졸브 오버레이 — 현재 배경 위에 흰/검 막을 씌웠다가 새 배경으로 교체 */
           const dissolve=document.createElement('div');
           dissolve.style.cssText=`
             position:absolute;inset:0;z-index:20;border-radius:18px;
@@ -10943,45 +10936,40 @@ window.SMG = (function(){
             transition:background .35s ease;
           `;
           if(stage) stage.appendChild(dissolve);
-
-          /* fade-out (하얗게) */
-          requestAnimationFrame(()=>{
-            dissolve.style.background='rgba(255,255,255,.85)';
-          });
-
-          /* 배경 교체 후 fade-in */
+          requestAnimationFrame(()=>{ dissolve.style.background='rgba(255,255,255,.85)'; });
           _t(()=>{
             if(typeof updateSeedStageBackground==='function')
               updateSeedStageBackground(isNight?'walk':'walk-day');
-
             dissolve.style.background='rgba(255,255,255,0)';
             _t(()=>{ dissolve.remove(); },350);
-
-            /* ── 3단계: 게임 시작 ── */
             startWalkGame();
           },360);
-
         },700);
 
-        /* ── 실제 게임 로직 ── */
+        /* ── 게임 로직 ── */
         function startWalkGame(){
-          /* 캐릭터 왼쪽 고정 */
-          if(typeof state!=='undefined'&&stage){
-            const rect=stage.getBoundingClientRect();
-            state.seedPlayer.x=Math.max(8, rect.width*0.12);
+          const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
+          const playerW=state&&state.seedPlayer?state.seedPlayer.w||54:54;
+          const playerH=state&&state.seedPlayer?state.seedPlayer.h||78:78;
+
+          /* 캐릭터 왼쪽, 세로 중앙 배치 */
+          let charY=stageRect.height/2 - playerH/2;
+          const charX=Math.max(8, stageRect.width*0.12);
+          if(typeof state!=='undefined'){
+            state.seedPlayer.x=charX;
+            state.seedPlayer.y=charY;
             state.seedPlayer.facing='right';
             if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
           }
 
           /* 자동 배경 스크롤 */
-          let bgPos=0, rafId=null;
-          const BG_SPEED=2.4;
-          function scrollLoop(){
-            bgPos+=BG_SPEED;
+          let bgPos=0, bgRaf=null;
+          function bgLoop(){
+            bgPos+=2.4;
             if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
-            rafId=requestAnimationFrame(scrollLoop);
+            bgRaf=requestAnimationFrame(bgLoop);
           }
-          rafId=requestAnimationFrame(scrollLoop);
+          bgRaf=requestAnimationFrame(bgLoop);
 
           /* 아이템 풀 */
           const ITEMS_DAY=[
@@ -11002,81 +10990,99 @@ window.SMG = (function(){
           let caught=0;
           const activeItems=[];
 
+          /* 아이템 스폰 — 오른쪽에서 등장, 다양한 높이 */
           function spawnItem(){
             if(!ctrl()||!stage) return;
             const item=itemPool[Math.floor(Math.random()*itemPool.length)];
             const el=document.createElement('div');
-            const ly=15+Math.random()*55;
-            const speed=2.8+Math.random()*2.0;
+            const itemSize=28;
+            /* 캐릭터가 닿을 수 있는 세로 범위 내에 배치 */
+            const minY=stageRect.height*0.1;
+            const maxY=stageRect.height*0.82 - itemSize;
+            const iy=minY+Math.random()*(maxY-minY);
+            const speed=2.2+Math.random()*1.6;
             el.style.cssText=`
-              position:absolute;right:-32px;top:${ly}%;
-              font-size:26px;cursor:pointer;pointer-events:auto;
-              animation:smgItemPop .2s ease;
+              position:absolute;top:${iy}px;font-size:${itemSize}px;
+              pointer-events:none;animation:smgItemPop .2s ease;
             `;
             el.textContent=item.e;
             ctrl().appendChild(el);
-
-            const stageRect=stage.getBoundingClientRect();
-            const entry={el,item,speed,x:stageRect.width+32,alive:true};
+            const entry={el,item,speed,x:stageRect.width+itemSize,y:iy,alive:true};
             activeItems.push(entry);
-
-            el.addEventListener('pointerdown',e=>{
-              e.stopPropagation();
-              if(!entry.alive) return;
-              entry.alive=false;
-              el.style.transform='scale(1.7)';
-              el.style.opacity='0';
-              el.style.transition='transform .18s,opacity .18s';
-              setTimeout(()=>el.remove(),200);
-              caught++;
-              _setScore(Math.min(100,_score+entry.item.score));
-              _flash(entry.item.b,900);
-            });
           }
 
-          /* 아이템 이동 RAF */
-          let itemRafId=null;
+          /* 충돌 + 이동 RAF */
+          let itemRaf=null;
           function itemLoop(){
+            const cx=charX, cy=state&&state.seedPlayer?state.seedPlayer.y:charY;
             for(let i=activeItems.length-1;i>=0;i--){
-              const entry=activeItems[i];
-              if(!entry.alive){ activeItems.splice(i,1); continue; }
-              entry.x-=entry.speed;
-              entry.el.style.right='';
-              entry.el.style.left=entry.x+'px';
-              if(entry.x<-40){
-                entry.alive=false;
-                entry.el.remove();
+              const e=activeItems[i];
+              if(!e.alive){ activeItems.splice(i,1); continue; }
+              e.x-=e.speed;
+              e.el.style.left=e.x+'px';
+              /* 충돌 판정 — 캐릭터 박스와 아이템 박스 겹침 */
+              const itemSize=28;
+              const overlapX=e.x < cx+playerW && e.x+itemSize > cx;
+              const overlapY=e.y < cy+playerH && e.y+itemSize > cy;
+              if(overlapX&&overlapY){
+                e.alive=false;
+                e.el.style.transform='scale(1.8)';
+                e.el.style.opacity='0';
+                e.el.style.transition='transform .18s,opacity .18s';
+                setTimeout(()=>e.el.remove(),200);
                 activeItems.splice(i,1);
+                caught++;
+                _setScore(Math.min(100,_score+e.item.score));
+                _flash(e.item.b,900);
+                continue;
               }
+              if(e.x<-40){ e.alive=false; e.el.remove(); activeItems.splice(i,1); }
             }
-            itemRafId=requestAnimationFrame(itemLoop);
+            itemRaf=requestAnimationFrame(itemLoop);
           }
-          itemRafId=requestAnimationFrame(itemLoop);
+          itemRaf=requestAnimationFrame(itemLoop);
 
-          /* 스폰 스케줄 — 600~900ms 간격 */
-          function schedSpawn(){
-            spawnItem();
-            _t(()=>schedSpawn(),600+Math.random()*300);
-          }
-          _t(()=>schedSpawn(),400);
+          /* 스폰 스케줄 */
+          function schedSpawn(){ spawnItem(); _t(()=>schedSpawn(),700+Math.random()*400); }
+          _t(()=>schedSpawn(),300);
 
-          /* 힌트 */
-          const hint=document.createElement('div');
-          hint.style.cssText=`
-            position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-            font-size:10px;font-weight:900;color:rgba(255,255,255,.85);
+          /* 조작 힌트 */
+          const hintTop=document.createElement('div');
+          hintTop.style.cssText=`
+            position:absolute;top:10px;left:50%;transform:translateX(-50%);
+            font-size:9px;font-weight:900;color:rgba(255,255,255,.8);
             background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
-            padding:5px 12px;border-radius:8px;pointer-events:none;
-            transition:opacity .4s;white-space:nowrap;
+            padding:4px 10px;border-radius:7px;pointer-events:none;
+            white-space:nowrap;
           `;
-          hint.textContent='날아오는 것들을 탭해서 잡아봐!';
-          if(ctrl()) ctrl().appendChild(hint);
-          _t(()=>{ hint.style.opacity='0'; },2500);
+          hintTop.textContent='위 탭 ↑ · 아래 탭 ↓ 으로 아이템을 먹어봐!';
+          if(ctrl()) ctrl().appendChild(hintTop);
+          _t(()=>{ hintTop.style.opacity='0'; hintTop.style.transition='opacity .4s'; },2800);
 
-          /* 종료 (8000 - 700ms 딜레이 보정) */
+          /* 위/아래 탭 영역 */
+          const MOVE_STEP=stageRect.height*0.22;
+          const minY2=8, maxY2=stageRect.height-playerH-8;
+
+          function moveChar(dy){
+            if(typeof state==='undefined') return;
+            state.seedPlayer.y=Math.max(minY2,Math.min(maxY2,(state.seedPlayer.y||charY)+dy));
+            if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
+          }
+
+          const tapTop=document.createElement('div');
+          tapTop.style.cssText='position:absolute;top:0;left:0;right:0;height:50%;pointer-events:auto;cursor:pointer;';
+          tapTop.addEventListener('pointerdown',e=>{ e.stopPropagation(); moveChar(-MOVE_STEP); });
+
+          const tapBot=document.createElement('div');
+          tapBot.style.cssText='position:absolute;bottom:0;left:0;right:0;height:50%;pointer-events:auto;cursor:pointer;';
+          tapBot.addEventListener('pointerdown',e=>{ e.stopPropagation(); moveChar(MOVE_STEP); });
+
+          if(ctrl()){ ctrl().appendChild(tapTop); ctrl().appendChild(tapBot); }
+
+          /* 종료 */
           _t(()=>{
-            cancelAnimationFrame(rafId);
-            cancelAnimationFrame(itemRafId);
+            cancelAnimationFrame(bgRaf);
+            cancelAnimationFrame(itemRaf);
             if(stage) stage.style.backgroundPositionX='';
             activeItems.forEach(e=>{ if(e.el) e.el.remove(); });
             activeItems.length=0;
@@ -11084,7 +11090,7 @@ window.SMG = (function(){
               ?(caught>=6?'밤 산책하면서 별도 잡고 기분 최고야.':caught>=3?'밤공기 마시며 산책했어.':'조용한 밤 산책이었어.')
               :(caught>=6?'산책하면서 좋은 것들도 많이 발견했어!':caught>=3?'햇살 맞으며 잘 걸었어.':'가볍게 산책했어.');
             onDone(_score,msg);
-          },7200); /* 8000 - 700(대사) - 360(디졸브) ≈ 7200 */
+          },7200);
         }
       }
     },
