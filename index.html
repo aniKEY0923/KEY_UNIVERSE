@@ -4072,6 +4072,17 @@ window.kvBgm = (function(){
 
                 <div class="stage-decor-layer" id="seedDecorLayer"></div>
 
+                <!-- 스케줄 미니게임 레이어 -->
+                <div id="smgLayer" style="display:none;position:absolute;inset:0;z-index:10;border-radius:18px;overflow:hidden;">
+                  <div id="smgBg" style="position:absolute;inset:0;transition:background .4s ease;"></div>
+                  <div id="smgScene" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none;"></div>
+                  <div id="smgFeedback" style="position:absolute;top:14px;left:0;right:0;text-align:center;font-size:13px;font-weight:900;color:rgba(255,255,255,.92);text-shadow:0 2px 8px rgba(0,0,0,.4);pointer-events:none;opacity:0;transition:opacity .18s;"></div>
+                  <div id="smgControls" style="position:absolute;inset:0;"></div>
+                  <div id="smgScoreBar" style="position:absolute;bottom:10px;left:14px;right:14px;height:5px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden;">
+                    <div id="smgScoreFill" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,.6),rgba(255,255,255,.95));transition:width .2s ease;"></div>
+                  </div>
+                </div>
+
                 <div class="seed-label">
                   <div class="name">KEY의 방</div>
                 </div>
@@ -10729,263 +10740,348 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   넷플릭스 미니게임
-   - startAction('netflix') 가로채기 → 포스터 선택 오버레이
-   - 선택 후 블러 해제 → 장르 공개 → finishNetflix() → 기존 finishAction 흐름
-══════════════════════════════════════════════════════ */
-(function(){
+/* ══════════════════════════════════════════════════════════════
+   ScheduleMiniGame (SMG) — 스테이지 내부 미니게임 공통 엔진
+   모든 스케줄 미니게임은 seed-stage 안 #smgLayer 에서 동작.
+   큰 이벤트(콘서트/시상식/번아웃)는 기존 전체 오버레이 유지.
+══════════════════════════════════════════════════════════════ */
+window.SMG = (function(){
 
-  /* ── 장르 풀 ── */
-  var GENRES = [
-    { id:'drama',   label:'드라마',   emoji:'🎭', blur:'hue-rotate(200deg) saturate(1.4)',
-      stats:{ social:2 }, energy:-8,  stress:-2,
-      reveals:['몰입해서 봤더니 눈물이 좀 났어.','이야기가 생각보다 마음에 걸리네.','캐릭터가 너무 좋았어. 현실이었으면.'],
-      hint:'별점 ★★★★' },
-    { id:'comedy',  label:'코미디',   emoji:'😂', blur:'hue-rotate(40deg) saturate(1.2)',
-      stats:{ humor:2, cute:1 }, energy:-6, stress:-5,
-      reveals:['너무 웃겨서 혼자 빵 터졌어.','이거 다음 화도 봐야 할 것 같은데.','기분이 확 풀렸어.'],
-      hint:'인기 급상승' },
-    { id:'horror',  label:'공포',     emoji:'👻', blur:'hue-rotate(300deg) saturate(0.8)',
-      stats:{ scary:2, mystery:1 }, energy:-10, stress:3,
-      reveals:['심장 쫄깃했어. 근데 또 보고 싶은 느낌.','무서운데 눈을 못 떼겠더라고.','이런 분위기 나쁘지 않아.'],
-      hint:'신작 공개' },
-    { id:'docu',    label:'다큐',     emoji:'🎬', blur:'hue-rotate(160deg) saturate(1.1)',
-      stats:{ mystery:2, practice:1 }, energy:-7, stress:-1,
-      reveals:['이런 세계가 있는지 몰랐어. 영감 받았다.','생각지도 못한 시각으로 찍었더라.','왠지 뭔가 해보고 싶어졌어.'],
-      hint:'수상작' },
-    { id:'sleep',   label:'보다가 잠듦', emoji:'💤', blur:'saturate(0.4) brightness(0.85)',
-      stats:{ humor:-1 }, energy:+20, stress:-6,
-      reveals:['정신 차려보니 엔딩 크레딧이 흐르고 있었어.','어느 순간 기억이 없네... 꿀잠이었나?','화면 앞에서 그냥 쓰러졌어.'],
-      hint:'편안한 분위기' },
-    { id:'action',  label:'액션',     emoji:'💥', blur:'hue-rotate(20deg) saturate(1.6)',
-      stats:{ scary:1, social:1 }, energy:-12, stress:1,
-      reveals:['화면에서 눈을 못 뗐어. 완전 몰입.','액션 씬이 진짜였어. 손에 땀이 났다고.','이런 거 보면 나도 뭔가 하고 싶어져.'],
-      hint:'화제작' },
-  ];
+  /* ── 내부 상태 ── */
+  let _active   = false;
+  let _type     = null;
+  let _score    = 0;
+  let _maxScore = 100;
+  let _timers   = [];
+  let _rafs     = [];
+  let _onDone   = null;
 
-  /* ── CSS ── */
-  var s = document.createElement('style');
-  s.textContent = [
-    '#nfxOverlay{position:fixed;inset:0;z-index:9996;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;background:rgba(10,10,18,.88);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .28s ease}',
-    '#nfxOverlay.show{opacity:1;pointer-events:auto}',
-    '.nfx-card{width:min(440px,calc(100vw - 32px));border-radius:24px;background:linear-gradient(180deg,#1a1a2e,#16162a);border:1px solid rgba(255,255,255,.08);box-shadow:0 32px 72px rgba(0,0,0,.6);overflow:hidden;transform:translateY(28px) scale(.97);transition:transform .28s ease}',
-    '#nfxOverlay.show .nfx-card{transform:translateY(0) scale(1)}',
-    '.nfx-header{padding:18px 20px 12px;border-bottom:1px solid rgba(255,255,255,.07)}',
-    '.nfx-logo{font-size:18px;font-weight:900;letter-spacing:.04em;color:#e50914;margin-bottom:4px}',
-    '.nfx-sub{font-size:12px;color:rgba(255,255,255,.45)}',
-    '.nfx-posters{display:flex;gap:10px;padding:18px 20px;overflow-x:auto;scrollbar-width:none}',
-    '.nfx-posters::-webkit-scrollbar{display:none}',
-    '.nfx-poster{flex:0 0 100px;height:148px;border-radius:12px;position:relative;cursor:pointer;overflow:hidden;border:2px solid transparent;transition:border-color .18s,transform .18s}',
-    '.nfx-poster:hover{transform:scale(1.04);border-color:rgba(255,255,255,.35)}',
-    '.nfx-poster-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px;transition:filter .6s ease}',
-    '.nfx-poster-hint{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;font-size:9px;font-weight:700;color:rgba(255,255,255,.7);background:linear-gradient(transparent,rgba(0,0,0,.75));text-align:center}',
-    '.nfx-poster-title{position:absolute;top:0;left:0;right:0;padding:6px 8px;font-size:10px;font-weight:900;color:rgba(255,255,255,.0);text-align:center;transition:color .5s}',
-    '.nfx-poster.revealed .nfx-poster-title{color:rgba(255,255,255,.95)}',
-    '.nfx-poster.revealed .nfx-poster-bg{filter:none !important}',
-    '.nfx-poster.selected{border-color:#e50914;transform:scale(1.06)}',
-    '.nfx-poster.dimmed{opacity:.35;pointer-events:none;transform:none}',
-    '.nfx-bubble{margin:0 20px 16px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);font-size:13px;font-weight:700;line-height:1.5;min-height:44px;transition:opacity .2s}',
-    '.nfx-bubble.hidden{opacity:0}',
-    '.nfx-stats{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 16px}',
-    '.nfx-stat-pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15)}',
-    '.nfx-confirm-btn{display:none;margin:0 20px 20px;width:calc(100% - 40px);padding:13px;border-radius:14px;font-size:14px;font-weight:900;background:#e50914;color:#fff;border:none;cursor:pointer;transition:.16s ease}',
-    '.nfx-confirm-btn.show{display:block}',
-    '.nfx-confirm-btn:hover{background:#f01f2d}',
-  ].join('');
-  document.head.appendChild(s);
+  const layer    = () => document.getElementById('smgLayer');
+  const bg       = () => document.getElementById('smgBg');
+  const scene    = () => document.getElementById('smgScene');
+  const feedback = () => document.getElementById('smgFeedback');
+  const controls = () => document.getElementById('smgControls');
+  const fill     = () => document.getElementById('smgScoreFill');
 
-  /* ── DOM 빌드 ── */
-  var overlay = document.createElement('div');
-  overlay.id = 'nfxOverlay';
-  overlay.innerHTML = [
-    '<div class="nfx-card">',
-      '<div class="nfx-header">',
-        '<div class="nfx-logo">🎬 KEYVERSE</div>',
-        '<div class="nfx-sub">오늘 뭐 볼지 골라봐. 뭐가 나올지는... 열어봐야 알아.</div>',
-      '</div>',
-      '<div class="nfx-posters" id="nfxPosters"></div>',
-      '<div class="nfx-bubble hidden" id="nfxBubble"></div>',
-      '<div class="nfx-stats" id="nfxStats"></div>',
-      '<button type="button" class="nfx-confirm-btn" id="nfxConfirmBtn">다 봤어, 끝!</button>',
-    '</div>'
-  ].join('');
-  document.body.appendChild(overlay);
+  function _t(fn, ms){ const id=setTimeout(fn,ms); _timers.push(id); return id; }
+  function _clearAll(){ _timers.forEach(clearTimeout); _rafs.forEach(cancelAnimationFrame); _timers=[]; _rafs=[]; }
 
-  /* ── 상태 ── */
-  var _open = false;
-  var _chosen = null;
-  var _finishCallback = null;
+  function _setScore(v){
+    _score = Math.max(0, Math.min(_maxScore, v));
+    if(fill()) fill().style.width = (_score/_maxScore*100)+'%';
+  }
 
-  /* ── 포스터 렌더 ── */
-  function buildPosters(){
-    /* 풀에서 5개 랜덤 샘플 */
-    var pool = GENRES.slice().sort(function(){ return Math.random()-.5; }).slice(0,5);
-    var wrap = document.getElementById('nfxPosters');
-    if (!wrap) return;
-    wrap.innerHTML = pool.map(function(g){
-      /* 배경색은 장르마다 다른 그라디언트 */
-      var bgMap = {
-        drama:'linear-gradient(135deg,#1a3a5c,#0d2137)',
-        comedy:'linear-gradient(135deg,#3d2a00,#1a1200)',
-        horror:'linear-gradient(135deg,#2a0a2a,#120012)',
-        docu:'linear-gradient(135deg,#0a2a1a,#051209)',
-        sleep:'linear-gradient(135deg,#1a1a2a,#0a0a14)',
-        action:'linear-gradient(135deg,#3a1a00,#1a0900)',
-      };
-      return [
-        '<div class="nfx-poster" data-nfx="'+g.id+'">',
-          '<div class="nfx-poster-bg" style="background:'+( bgMap[g.id]||'#111')+';filter:'+g.blur+' blur(2px)">',
-            g.emoji,
-          '</div>',
-          '<div class="nfx-poster-title">'+g.label+'</div>',
-          '<div class="nfx-poster-hint">'+g.hint+'</div>',
-        '</div>'
-      ].join('');
-    }).join('');
-    /* 클릭 이벤트 */
-    wrap.querySelectorAll('.nfx-poster').forEach(function(el){
-      el.addEventListener('click', function(){ selectPoster(el, pool); });
+  function _flash(text, duration){
+    if(!text) return;
+    duration = duration||900;
+    const el = feedback();
+    if(!el) return;
+    el.textContent = text;
+    el.style.opacity = '1';
+    _t(()=>{ if(el) el.style.opacity='0'; }, duration);
+  }
+
+  function _show(){
+    const l = layer();
+    if(l) l.style.display='block';
+    ['seedBubble','seedStatus','seedAwakenAnchor'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.opacity='0';
     });
   }
 
-  function selectPoster(el, pool){
-    if (_chosen) return;
-    var id = el.getAttribute('data-nfx');
-    var genre = null;
-    for (var i=0;i<pool.length;i++){ if(pool[i].id===id){ genre=pool[i]; break; } }
-    if (!genre) return;
-    _chosen = genre;
-
-    /* 선택된 것만 reveal, 나머지 dimmed */
-    document.querySelectorAll('.nfx-poster').forEach(function(p){
-      if (p === el) {
-        p.classList.add('selected','revealed');
-      } else {
-        p.classList.add('dimmed');
-      }
-    });
-
-    /* 대사 */
-    var lines = genre.reveals;
-    var line = lines[Math.floor(Math.random()*lines.length)];
-    var bubble = document.getElementById('nfxBubble');
-    if (bubble) {
-      bubble.textContent = line;
-      bubble.classList.remove('hidden');
-    }
-
-    /* 스탯 pill */
-    var statsEl = document.getElementById('nfxStats');
-    if (statsEl) {
-      var pills = [];
-      Object.entries(genre.stats||{}).forEach(function(kv){
-        var k=kv[0], v=kv[1];
-        var sign = v>0?'+':'';
-        var labelMap={practice:'Performance',mystery:'Mystery',social:'Social',cute:'Cute',scary:'Scary',humor:'Humor'};
-        pills.push('<span class="nfx-stat-pill">'+(labelMap[k]||k)+' '+sign+v+'</span>');
-      });
-      if (genre.energy) {
-        var eSign = genre.energy>0?'+':'';
-        pills.push('<span class="nfx-stat-pill">에너지 '+eSign+genre.energy+'</span>');
-      }
-      statsEl.innerHTML = pills.join('');
-    }
-
-    /* 확인 버튼 */
-    var btn = document.getElementById('nfxConfirmBtn');
-    if (btn) btn.classList.add('show');
-  }
-
-  /* ── 열기 ── */
-  window.openNetflixMiniGame = function(onFinish){
-    if (_open) return;
-    _open = true;
-    _chosen = null;
-    _finishCallback = onFinish;
-    /* 초기화 */
-    var bubble = document.getElementById('nfxBubble');
-    if (bubble){ bubble.textContent=''; bubble.classList.add('hidden'); }
-    var statsEl = document.getElementById('nfxStats');
-    if (statsEl) statsEl.innerHTML='';
-    var btn = document.getElementById('nfxConfirmBtn');
-    if (btn) btn.classList.remove('show');
-    buildPosters();
-    overlay.classList.add('show');
-  };
-
-  /* ── 확인 버튼 ── */
-  var confirmBtn = document.getElementById('nfxConfirmBtn');
-  if (confirmBtn) {
-    confirmBtn.addEventListener('click', function(){
-      if (!_chosen) return;
-      overlay.classList.remove('show');
-      _open = false;
-      /* 스탯 적용 */
-      if (typeof state !== 'undefined') {
-        if (typeof applyStatDelta === 'function') applyStatDelta(_chosen.stats || {});
-        if (_chosen.energy) state.energy = Math.min(Math.max((state.energy||0)+_chosen.energy,0),state.maxEnergy||100);
-        if (_chosen.stress) state.stats.stress = Math.min(Math.max((state.stats.stress||0)+_chosen.stress,0),100);
-      }
-      if (typeof _finishCallback === 'function') _finishCallback(_chosen);
+  function _hide(){
+    const l = layer();
+    if(l) l.style.display='none';
+    if(bg()) bg().style.background='';
+    if(scene()) scene().innerHTML='';
+    if(controls()) controls().innerHTML='';
+    if(feedback()){ feedback().textContent=''; feedback().style.opacity='0'; }
+    if(fill()) fill().style.width='0%';
+    ['seedBubble','seedStatus','seedAwakenAnchor'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.opacity='';
     });
   }
 
-  /* ── startAction 가로채기 ── */
-  var _origStartAction = window.startAction;
-  window.startAction = function(type){
-    if (type !== 'netflix') {
-      if (typeof _origStartAction === 'function') _origStartAction(type);
-      return;
-    }
-    /* 에너지 체크 (기존 로직 동일) */
-    if (typeof state !== 'undefined' && state.energy < 12) {
-      if (typeof setSeedMessage === 'function') setSeedMessage(dialogues && dialogues.lowEnergy || '에너지가 부족해.');
-      return;
-    }
-    /* 버튼 비활성화 */
-    if (typeof state !== 'undefined') state.isActing = true;
-    if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(true);
-    if (typeof updateAwakenButtonUI === 'function') updateAwakenButtonUI();
+  function scoreToMult(score){
+    if(score>=80) return 1.5;
+    if(score>=50) return 1.2;
+    if(score>=20) return 1.0;
+    return 0.8;
+  }
 
-    /* 시작 말풍선 */
-    var inRoom = typeof state !== 'undefined' && !!state.awakened && typeof getCurrentScreenName === 'function' && getCurrentScreenName() === 'room';
-    var startLine = '뭐 볼지 골랐어. 시작해볼게.';
-    if (inRoom) {
-      if (typeof showRoomOwnerBubble === 'function') showRoomOwnerBubble(startLine);
-      setTimeout(function(){ if (typeof hideRoomOwnerBubble === 'function') hideRoomOwnerBubble(); }, 1200);
-    } else {
-      if (typeof setSeedMessage === 'function') setSeedMessage(startLine);
-    }
+  /* ── 스케줄별 CONFIG ── */
+  const CONFIGS = {
 
-    /* 오버레이 열기 */
-    window.openNetflixMiniGame(function(chosen){
-      /* 시간 경과 */
-      if (typeof advanceGameTime === 'function') advanceGameTime(actionMeta.netflix.minutes);
-      /* 코인 */
-      var coins = actionCoinReward.netflix || 0;
-      if (typeof addMoney === 'function' && coins) addMoney(coins);
-      /* 스트레스 (기존 -1) */
-      if (typeof state !== 'undefined') state.stats.stress = Math.max(0,(state.stats.stress||0)-1);
-      /* 완료 메시지 */
-      var msg = chosen.reveals[Math.floor(Math.random()*chosen.reveals.length)];
-      if (coins) msg += ' (+'+coins+'코인)';
-      if (inRoom) {
-        if (typeof showRoomOwnerBubble === 'function'){
-          showRoomOwnerBubble(msg);
-          setTimeout(function(){ if(typeof hideRoomOwnerBubble==='function') hideRoomOwnerBubble(); }, 3200);
+    /* 넷플릭스: 스테이지 안 포스터 선택 */
+    netflix:{
+      bgColor:'linear-gradient(160deg,#0a0a18,#12121f)',
+      emoji:'📺', label:'넷플릭스',
+      genres:[
+        {id:'drama', emoji:'🎭',label:'드라마',   hint:'★★★★',     stress:-2,stats:{social:2},           energy:-8,
+         lines:['몰입해서 봤더니 눈물이 좀 났어.','이야기가 생각보다 마음에 걸리네.']},
+        {id:'comedy',emoji:'😂',label:'코미디',   hint:'인기 급상승',stress:-5,stats:{humor:2,cute:1},     energy:-6,
+         lines:['너무 웃겨서 혼자 빵 터졌어.','기분이 확 풀렸어.']},
+        {id:'horror',emoji:'👻',label:'공포',     hint:'신작 공개', stress:3, stats:{scary:2,mystery:1},  energy:-10,
+         lines:['심장 쫄깃했어. 근데 또 보고 싶은 느낌.','무서운데 눈을 못 떼겠더라고.']},
+        {id:'docu',  emoji:'🎬',label:'다큐',     hint:'수상작',    stress:-1,stats:{mystery:2,practice:1},energy:-7,
+         lines:['이런 세계가 있는지 몰랐어. 영감 받았다.','왠지 뭔가 해보고 싶어졌어.']},
+        {id:'sleep', emoji:'💤',label:'보다가 잠듦',hint:'편안한 분위기',stress:-6,stats:{humor:-1},       energy:20,
+         lines:['정신 차려보니 엔딩 크레딧이 흐르고 있었어.','어느 순간 기억이 없네... 꿀잠이었나?']},
+        {id:'action',emoji:'💥',label:'액션',     hint:'화제작',    stress:1, stats:{scary:1,social:1},   energy:-12,
+         lines:['화면에서 눈을 못 뗐어. 완전 몰입.','손에 땀이 났다고.']},
+      ],
+      run(onDone){
+        const pool = this.genres.slice().sort(()=>Math.random()-.5).slice(0,5);
+        let chosen = null;
+        const bgColors={drama:'#1a3a5c',comedy:'#3d2a00',horror:'#2a0a2a',docu:'#0a2a1a',sleep:'#1a1a2a',action:'#3a1a00'};
+
+        const wrap = document.createElement('div');
+        wrap.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:10px;';
+
+        const ttl = document.createElement('div');
+        ttl.style.cssText='font-size:10px;font-weight:900;color:rgba(255,255,255,.55);text-align:center;';
+        ttl.textContent='뭐 볼지 골라봐. 뭐가 나올지는 몰라.';
+        wrap.appendChild(ttl);
+
+        const row = document.createElement('div');
+        row.style.cssText='display:flex;gap:7px;width:100%;justify-content:center;';
+
+        pool.forEach(g=>{
+          const card=document.createElement('div');
+          card.style.cssText=`flex:0 0 calc(20% - 6px);min-width:50px;height:84px;border-radius:9px;
+            background:${bgColors[g.id]||'#111'};border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;
+            cursor:pointer;transition:border-color .15s,transform .15s;
+            filter:blur(1px) saturate(0.4);`;
+          card.innerHTML=`<div style="font-size:24px;filter:blur(2px)">${g.emoji}</div>
+            <div style="font-size:8px;color:rgba(255,255,255,.45);font-weight:700;text-align:center;padding:0 3px;">${g.hint}</div>`;
+          card.addEventListener('click',()=>{
+            if(chosen) return;
+            chosen=g;
+            card.style.filter='none';
+            card.style.borderColor='#e50914';
+            card.style.transform='scale(1.08)';
+            card.innerHTML=`<div style="font-size:24px">${g.emoji}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.9);font-weight:900;text-align:center;">${g.label}</div>`;
+            row.querySelectorAll('div').forEach(c=>{ if(c!==card) c.style.opacity='.25'; });
+            const line=g.lines[Math.floor(Math.random()*g.lines.length)];
+            _flash(line,3000);
+            _t(()=>{
+              if(typeof applyStatDelta==='function') applyStatDelta(g.stats||{});
+              if(typeof state!=='undefined'){
+                if(g.energy) state.energy=Math.min(Math.max((state.energy||0)+g.energy,0),state.maxEnergy||100);
+                if(g.stress) state.stats.stress=Math.min(Math.max((state.stats.stress||0)+g.stress,0),100);
+              }
+              onDone(80,line);
+            },1500);
+          });
+          row.appendChild(card);
+        });
+        wrap.appendChild(row);
+        if(controls()) controls().appendChild(wrap);
+      }
+    },
+
+    /* 목욕: 거품 탭 */
+    bath:{
+      bgColor:'linear-gradient(160deg,#1a2a3a,#0d1a2a)',
+      emoji:'🛁', label:'목욕 중',
+      duration:8000,
+      run(onDone){
+        let bubbleCount=0;
+        const MAX=40;
+        if(scene()) scene().innerHTML=`<div style="font-size:48px;opacity:.6">🛁</div><div style="font-size:10px;color:rgba(255,255,255,.45);font-weight:700;">화면을 탭해서 거품을 내봐!</div>`;
+        const ctrl=controls();
+        if(!ctrl) return;
+        ctrl.style.cursor='pointer';
+        function spawnBubble(x,y){
+          if(bubbleCount>=MAX) return;
+          const b=document.createElement('div');
+          const size=12+Math.random()*18;
+          const tx=(Math.random()-.5)*60;
+          const ty=-(20+Math.random()*50);
+          b.style.cssText=`position:absolute;left:${x-size/2}px;top:${y-size/2}px;
+            width:${size}px;height:${size}px;border-radius:50%;pointer-events:none;
+            background:rgba(255,255,255,${0.25+Math.random()*0.35});
+            border:1px solid rgba(255,255,255,.4);
+            animation:smgBubbleRise .9s ease-out forwards;--tx:${tx}px;--ty:${ty}px;`;
+          ctrl.appendChild(b);
+          bubbleCount++;
+          _setScore(_score+2.5);
+          setTimeout(()=>{ b.remove(); bubbleCount--; },900);
         }
-      } else {
-        if (typeof setSeedMessage === 'function') setSeedMessage(msg, { autoClearMs:5000, idleAfterMs:typeof SEED_IDLE_MS!=='undefined'?SEED_IDLE_MS:6000 });
+        ctrl.addEventListener('pointerdown',e=>{
+          const rect=ctrl.getBoundingClientRect();
+          spawnBubble(e.clientX-rect.left,e.clientY-rect.top);
+          _flash(_score>=80?'거품이 풍성해!':_score>=40?'깨끗해지는 중~':'더 문질러봐!',600);
+        });
+        _t(()=>onDone(_score,_score>=80?'포근한 거품욕이었어. 완전 개운해!':'깔끔하게 씻었어.'),this.duration);
       }
-      /* 복원 */
-      if (typeof state !== 'undefined') state.isActing = false;
-      if (typeof setScheduleButtonsDisabled === 'function') setScheduleButtonsDisabled(false);
-      if (typeof updateScheduleUI === 'function') updateScheduleUI();
-      if (typeof triggerSaveNow === 'function') triggerSaveNow();
+    },
+
+    /* 산책: 걸음 탭 + 낮/밤 + 아이템 */
+    walk:{
+      bgColor:'',
+      emoji:'', label:'산책 중',
+      duration:8000,
+      run(onDone){
+        const isNight=(state.gameHour||7)<6||(state.gameHour||7)>=18;
+        if(bg()) bg().style.background=isNight?'linear-gradient(160deg,#0a0a1a,#0d1020)':'linear-gradient(160deg,#1a3a1a,#2a5a2a)';
+        if(scene()) scene().innerHTML=`<div style="font-size:36px;opacity:.4">${isNight?'🌙':'☀️'}</div>`;
+        let steps=0,charX=30,dir=1,activeItem=null;
+        const charEl=document.createElement('div');
+        charEl.style.cssText=`position:absolute;bottom:28%;font-size:26px;transition:left .15s linear;left:${charX}%;`;
+        charEl.textContent='🚶';
+        const ctrl=controls();
+        if(ctrl){
+          ctrl.appendChild(charEl);
+          ctrl.style.cursor='pointer';
+          ctrl.addEventListener('pointerdown',e=>{
+            if(activeItem&&activeItem.el){
+              const rect=ctrl.getBoundingClientRect();
+              const ix=e.clientX-rect.left, iy=e.clientY-rect.top;
+              const elL=parseFloat(activeItem.el.style.left);
+              const elT=parseFloat(activeItem.el.style.top);
+              if(Math.abs(ix-elL)<36&&Math.abs(iy-elT)<36){
+                _flash(activeItem.bonus,900);
+                _setScore(_score+15);
+                activeItem.el.remove();
+                activeItem=null;
+                return;
+              }
+            }
+            steps++;
+            charX+=dir*7;
+            if(charX>80){dir=-1;charEl.style.transform='scaleX(-1)';}
+            if(charX<10){dir=1;charEl.style.transform='';}
+            charEl.style.left=charX+'%';
+            _setScore(_score+1);
+            if(steps%10===0) _flash(steps+'걸음!',400);
+          });
+        }
+        const ITEMS_DAY=[{e:'🌸',bonus:'꽃을 발견했어!'},{e:'🐱',bonus:'고양이다!'},{e:'🍀',bonus:'네잎클로버!'}];
+        const ITEMS_NIGHT=[{e:'⭐',bonus:'별똥별이야!'},{e:'🏮',bonus:'가로등이 예쁘네.'},{e:'🦋',bonus:'밤 나비를 만났어!'}];
+        const itemPool=isNight?ITEMS_NIGHT:ITEMS_DAY;
+        function spawnItem(){
+          if(activeItem) return;
+          const item=itemPool[Math.floor(Math.random()*itemPool.length)];
+          const el=document.createElement('div');
+          const lx=15+Math.random()*65, ly=20+Math.random()*45;
+          el.style.cssText=`position:absolute;left:${lx}%;top:${ly}%;font-size:22px;cursor:pointer;animation:smgItemPop .3s ease;`;
+          el.textContent=item.e;
+          if(ctrl) ctrl.appendChild(el);
+          activeItem={el,bonus:item.bonus};
+          _t(()=>{ if(activeItem&&activeItem.el===el){el.remove();activeItem=null;} },3000);
+        }
+        function sched(){ _t(()=>{spawnItem();sched();},2000+Math.random()*1000); }
+        sched();
+        _t(()=>{
+          const msg=isNight?(steps>=15?'밤공기가 상쾌했어. 기분 전환 됐어.':'조용한 밤 산책이었어.'):(steps>=15?'햇살 받으며 잘 걸었어!':'가볍게 산책했어.');
+          onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
+  };
+
+  /* CSS */
+  const smgStyle=document.createElement('style');
+  smgStyle.textContent=`
+    @keyframes smgBubbleRise{
+      0%{transform:translate(0,0) scale(1);opacity:.8}
+      100%{transform:translate(var(--tx),var(--ty)) scale(.4);opacity:0}
+    }
+    @keyframes smgItemPop{
+      0%{transform:scale(0) rotate(-20deg);opacity:0}
+      70%{transform:scale(1.2) rotate(5deg);opacity:1}
+      100%{transform:scale(1) rotate(0);opacity:1}
+    }
+  `;
+  document.head.appendChild(smgStyle);
+
+  /* 공개 API */
+  function open(type,onDone){
+    const cfg=CONFIGS[type];
+    if(!cfg||_active) return false;
+    _active=true; _type=type; _score=0; _onDone=onDone;
+    _clearAll();
+    if(bg()&&cfg.bgColor) bg().style.background=cfg.bgColor;
+    if(scene()&&cfg.emoji) scene().innerHTML=`<div style="font-size:48px">${cfg.emoji}</div><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:700;">${cfg.label}</div>`;
+    if(controls()) controls().innerHTML='';
+    _show(); _setScore(0);
+    cfg.run.call(cfg,(score,msg)=>close(score,msg));
+    return true;
+  }
+
+  function close(score,msg){
+    if(!_active) return;
+    _active=false; _clearAll(); _hide();
+    if(typeof _onDone==='function') _onDone(score||0,msg||'');
+    _onDone=null; _type=null;
+  }
+
+  return {open,close,scoreToMult,CONFIGS};
+})();
+
+
+/* startAction 가로채기 */
+(function(){
+  const SMG_TYPES=['netflix','bath','walk'];
+  const _orig=window.startAction;
+
+  window.startAction=function(type){
+    if(!SMG_TYPES.includes(type)){
+      if(typeof _orig==='function') _orig(type);
+      return;
+    }
+    if(typeof state!=='undefined'&&state.energy<12&&type!=='sleep'){
+      if(typeof setSeedMessage==='function') setSeedMessage((typeof dialogues!=='undefined'&&dialogues.lowEnergy)||'에너지가 부족해.');
+      return;
+    }
+    if(typeof state!=='undefined') state.isActing=true;
+    if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(true);
+    if(typeof updateAwakenButtonUI==='function') updateAwakenButtonUI();
+
+    const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
+    const startLines={
+      netflix:'뭐 볼지 골라볼게.',
+      bath:'따뜻하게 몸부터 풀어볼게.',
+      walk:isNight?'잠깐 밤공기 마시러 나갔다 올게.':'잠깐 햇살 맞으러 나갔다 올게.'
+    };
+    if(typeof setSeedMessage==='function') setSeedMessage(startLines[type]||'');
+
+    const meta=(typeof actionMeta!=='undefined')?actionMeta[type]:null;
+    if(meta&&typeof startActionProgress==='function') startActionProgress(type,meta.duration||8000);
+
+    window.SMG.open(type,(score,msg)=>{
+      if(meta&&typeof advanceGameTime==='function') advanceGameTime(meta.minutes||60);
+
+      if(type!=='netflix'){
+        const mult=window.SMG.scoreToMult(score);
+        window._smgExtMult=mult;
+        if(typeof window._origFinishAction==='function') window._origFinishAction(type);
+        else if(typeof window.finishAction==='function') window.finishAction(type);
+        window._smgExtMult=null;
+      }
+
+      const coins=(typeof actionCoinReward!=='undefined')?(actionCoinReward[type]||0):0;
+      if(coins&&typeof addMoney==='function') addMoney(coins);
+
+      const finalMsg=msg||((typeof dialogues!=='undefined')?dialogues[type]:'');
+      const coinSuffix=coins?` (+${coins}코인)`:'';
+      if(typeof setSeedMessage==='function') setSeedMessage(finalMsg+coinSuffix,{autoClearMs:5000,idleAfterMs:typeof SEED_IDLE_MS!=='undefined'?SEED_IDLE_MS:6000});
+
+      if(typeof state!=='undefined') state.isActing=false;
+      if(typeof setScheduleButtonsDisabled==='function') setScheduleButtonsDisabled(false);
+      if(typeof updateScheduleUI==='function') updateScheduleUI();
+      if(typeof triggerSaveNow==='function') triggerSaveNow();
     });
   };
 
+  /* 원본 finishAction 보존 */
+  window._origFinishAction=window.finishAction;
 })();
 </script>
 </body>
