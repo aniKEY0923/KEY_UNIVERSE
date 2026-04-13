@@ -4116,7 +4116,7 @@ window.kvBgm = (function(){
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
             <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
-            <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">1시간</span></button>
+            <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
             <button class="schedule-btn" data-act="exhibit"><span class="emoji">🖼️</span><span class="title">전시회</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="netflix"><span class="emoji">📺</span><span class="title">넷플릭스</span><span class="time">2시간</span></button>
@@ -4363,7 +4363,7 @@ window.kvBgm = (function(){
               <div class="schedule-grid room-schedule-grid">
                 <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
-                <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">1시간</span></button>
+                <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
                 <button class="schedule-btn" data-act="exhibit"><span class="emoji">🖼️</span><span class="title">전시회</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="netflix"><span class="emoji">📺</span><span class="title">넷플릭스</span><span class="time">2시간</span></button>
@@ -4901,7 +4901,7 @@ const miniTalkLines = {
 const actionMeta = {
   practice: { text: '♪', duration: 1700, minutes: 134 },
   shoot:    { text: 'REC', duration: 1700, minutes: 128 },
-  walk:     { text: '…', duration: 1700, minutes: 74 },
+  walk:     { text: '…', duration: 1700, minutes: 120 },
   bath:     { text: '…', duration: 1700, minutes: 52 },
   exhibit:  { text: '…', duration: 1700, minutes: 116 },
   netflix:  { text: '▶', duration: 1700, minutes: 103 },
@@ -10922,142 +10922,170 @@ window.SMG = (function(){
         const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
         const stage=$id('seedStage');
 
-        /* 배경 교체 */
-        if(typeof updateSeedStageBackground==='function'){
-          updateSeedStageBackground(isNight?'walk':'walk-day');
-        }
-
-        /* 캐릭터 중앙 고정 */
-        if(typeof state!=='undefined'&&stage){
-          const rect=stage.getBoundingClientRect();
-          state.seedPlayer.x=(rect.width-(state.seedPlayer.w||54))/2;
-          state.seedPlayer.facing='right';
-          if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
-        }
-
-        /* 자동 배경 스크롤 RAF */
-        let bgPos=0, rafId=null;
-        const BG_SPEED=1.2; /* px/frame */
-        function scrollLoop(){
-          bgPos+=BG_SPEED;
-          if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
-          rafId=requestAnimationFrame(scrollLoop);
-        }
-        rafId=requestAnimationFrame(scrollLoop);
-
-        /* 아이템 풀 */
-        const ITEMS_DAY=[
-          {e:'🌸',b:'꽃을 잡았어!',score:8},
-          {e:'🐱',b:'고양이다!',score:12},
-          {e:'🍀',b:'네잎클로버!',score:15},
-          {e:'🍬',b:'사탕을 주웠어.',score:6},
-          {e:'🎈',b:'풍선이 날아왔어!',score:8},
+        /* ── 1단계: 시작 대사 ── */
+        const startLines=[
+          '잠깐 좀 걷고 올께~',
+          '바람 좀 쐬고 올게!',
+          '잠깐 산책 다녀올게.',
+          '좀 걷고 싶어. 다녀올게!'
         ];
-        const ITEMS_NIGHT=[
-          {e:'⭐',b:'별똥별이야!',score:15},
-          {e:'🏮',b:'가로등 아래 뭔가 있어.',score:8},
-          {e:'🦋',b:'밤 나비!',score:12},
-          {e:'🌙',b:'달빛 조각.',score:10},
-          {e:'🍄',b:'버섯을 발견했어!',score:8},
-        ];
-        const itemPool=isNight?ITEMS_NIGHT:ITEMS_DAY;
+        if(typeof setSeedMessage==='function')
+          setSeedMessage(startLines[Math.floor(Math.random()*startLines.length)]);
 
-        let caught=0, missed=0;
-        const activeItems=[];
+        /* ── 2단계: 700ms 후 배경 디졸브 → 게임 시작 ── */
+        _t(()=>{
 
-        /* 아이템 스폰 — 오른쪽에서 등장, 왼쪽으로 이동 */
-        function spawnItem(){
-          if(!ctrl()||!stage) return;
-          const rect=stage.getBoundingClientRect();
-          const item=itemPool[Math.floor(Math.random()*itemPool.length)];
-          const el=document.createElement('div');
-          const ly=18+Math.random()*52; /* 세로 위치 % */
-          const speed=1.4+Math.random()*1.0; /* 이동 속도 */
-          el.style.cssText=`
-            position:absolute;right:-32px;top:${ly}%;
-            font-size:24px;cursor:pointer;pointer-events:auto;
-            transition:transform .1s;
-            animation:smgItemPop .25s ease;
+          /* 디졸브 오버레이 — 현재 배경 위에 흰/검 막을 씌웠다가 새 배경으로 교체 */
+          const dissolve=document.createElement('div');
+          dissolve.style.cssText=`
+            position:absolute;inset:0;z-index:20;border-radius:18px;
+            background:rgba(255,255,255,0);pointer-events:none;
+            transition:background .35s ease;
           `;
-          el.textContent=item.e;
-          ctrl().appendChild(el);
+          if(stage) stage.appendChild(dissolve);
 
-          const entry={el,item,speed,x:rect.width+32,alive:true};
-          activeItems.push(entry);
-
-          /* 클릭/탭 이벤트 */
-          el.addEventListener('pointerdown',e=>{
-            e.stopPropagation();
-            if(!entry.alive) return;
-            entry.alive=false;
-            el.style.transform='scale(1.6)';
-            el.style.opacity='0';
-            el.style.transition='transform .2s,opacity .2s';
-            setTimeout(()=>el.remove(),200);
-            caught++;
-            _setScore(Math.min(100,_score+entry.item.score));
-            _flash(entry.item.b,900);
+          /* fade-out (하얗게) */
+          requestAnimationFrame(()=>{
+            dissolve.style.background='rgba(255,255,255,.85)';
           });
-        }
 
-        /* 아이템 이동 RAF */
-        let itemRafId=null;
-        function itemLoop(){
-          if(!stage) return;
-          const rect=stage.getBoundingClientRect();
-          for(let i=activeItems.length-1;i>=0;i--){
-            const entry=activeItems[i];
-            if(!entry.alive){
-              activeItems.splice(i,1);
-              continue;
-            }
-            entry.x-=entry.speed;
-            entry.el.style.right='';
-            entry.el.style.left=entry.x+'px';
-            /* 화면 밖으로 나가면 제거 */
-            if(entry.x<-40){
+          /* 배경 교체 후 fade-in */
+          _t(()=>{
+            if(typeof updateSeedStageBackground==='function')
+              updateSeedStageBackground(isNight?'walk':'walk-day');
+
+            dissolve.style.background='rgba(255,255,255,0)';
+            _t(()=>{ dissolve.remove(); },350);
+
+            /* ── 3단계: 게임 시작 ── */
+            startWalkGame();
+          },360);
+
+        },700);
+
+        /* ── 실제 게임 로직 ── */
+        function startWalkGame(){
+          /* 캐릭터 왼쪽 고정 */
+          if(typeof state!=='undefined'&&stage){
+            const rect=stage.getBoundingClientRect();
+            state.seedPlayer.x=Math.max(8, rect.width*0.12);
+            state.seedPlayer.facing='right';
+            if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
+          }
+
+          /* 자동 배경 스크롤 */
+          let bgPos=0, rafId=null;
+          const BG_SPEED=2.4;
+          function scrollLoop(){
+            bgPos+=BG_SPEED;
+            if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
+            rafId=requestAnimationFrame(scrollLoop);
+          }
+          rafId=requestAnimationFrame(scrollLoop);
+
+          /* 아이템 풀 */
+          const ITEMS_DAY=[
+            {e:'🌸',b:'꽃을 잡았어!',score:8},
+            {e:'🐱',b:'고양이다!',score:12},
+            {e:'🍀',b:'네잎클로버!',score:15},
+            {e:'🍬',b:'사탕을 주웠어.',score:6},
+            {e:'🎈',b:'풍선이 날아왔어!',score:8},
+          ];
+          const ITEMS_NIGHT=[
+            {e:'⭐',b:'별똥별이야!',score:15},
+            {e:'🏮',b:'가로등 아래 뭔가 있어.',score:8},
+            {e:'🦋',b:'밤 나비!',score:12},
+            {e:'🌙',b:'달빛 조각.',score:10},
+            {e:'🍄',b:'버섯을 발견했어!',score:8},
+          ];
+          const itemPool=isNight?ITEMS_NIGHT:ITEMS_DAY;
+          let caught=0;
+          const activeItems=[];
+
+          function spawnItem(){
+            if(!ctrl()||!stage) return;
+            const item=itemPool[Math.floor(Math.random()*itemPool.length)];
+            const el=document.createElement('div');
+            const ly=15+Math.random()*55;
+            const speed=2.8+Math.random()*2.0;
+            el.style.cssText=`
+              position:absolute;right:-32px;top:${ly}%;
+              font-size:26px;cursor:pointer;pointer-events:auto;
+              animation:smgItemPop .2s ease;
+            `;
+            el.textContent=item.e;
+            ctrl().appendChild(el);
+
+            const stageRect=stage.getBoundingClientRect();
+            const entry={el,item,speed,x:stageRect.width+32,alive:true};
+            activeItems.push(entry);
+
+            el.addEventListener('pointerdown',e=>{
+              e.stopPropagation();
+              if(!entry.alive) return;
               entry.alive=false;
-              entry.el.remove();
-              activeItems.splice(i,1);
-              missed++;
+              el.style.transform='scale(1.7)';
+              el.style.opacity='0';
+              el.style.transition='transform .18s,opacity .18s';
+              setTimeout(()=>el.remove(),200);
+              caught++;
+              _setScore(Math.min(100,_score+entry.item.score));
+              _flash(entry.item.b,900);
+            });
+          }
+
+          /* 아이템 이동 RAF */
+          let itemRafId=null;
+          function itemLoop(){
+            for(let i=activeItems.length-1;i>=0;i--){
+              const entry=activeItems[i];
+              if(!entry.alive){ activeItems.splice(i,1); continue; }
+              entry.x-=entry.speed;
+              entry.el.style.right='';
+              entry.el.style.left=entry.x+'px';
+              if(entry.x<-40){
+                entry.alive=false;
+                entry.el.remove();
+                activeItems.splice(i,1);
+              }
             }
+            itemRafId=requestAnimationFrame(itemLoop);
           }
           itemRafId=requestAnimationFrame(itemLoop);
+
+          /* 스폰 스케줄 — 600~900ms 간격 */
+          function schedSpawn(){
+            spawnItem();
+            _t(()=>schedSpawn(),600+Math.random()*300);
+          }
+          _t(()=>schedSpawn(),400);
+
+          /* 힌트 */
+          const hint=document.createElement('div');
+          hint.style.cssText=`
+            position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+            font-size:10px;font-weight:900;color:rgba(255,255,255,.85);
+            background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
+            padding:5px 12px;border-radius:8px;pointer-events:none;
+            transition:opacity .4s;white-space:nowrap;
+          `;
+          hint.textContent='날아오는 것들을 탭해서 잡아봐!';
+          if(ctrl()) ctrl().appendChild(hint);
+          _t(()=>{ hint.style.opacity='0'; },2500);
+
+          /* 종료 (8000 - 700ms 딜레이 보정) */
+          _t(()=>{
+            cancelAnimationFrame(rafId);
+            cancelAnimationFrame(itemRafId);
+            if(stage) stage.style.backgroundPositionX='';
+            activeItems.forEach(e=>{ if(e.el) e.el.remove(); });
+            activeItems.length=0;
+            const msg=isNight
+              ?(caught>=6?'밤 산책하면서 별도 잡고 기분 최고야.':caught>=3?'밤공기 마시며 산책했어.':'조용한 밤 산책이었어.')
+              :(caught>=6?'산책하면서 좋은 것들도 많이 발견했어!':caught>=3?'햇살 맞으며 잘 걸었어.':'가볍게 산책했어.');
+            onDone(_score,msg);
+          },7200); /* 8000 - 700(대사) - 360(디졸브) ≈ 7200 */
         }
-        itemRafId=requestAnimationFrame(itemLoop);
-
-        /* 스폰 스케줄 */
-        function schedSpawn(){
-          spawnItem();
-          _t(()=>schedSpawn(),1200+Math.random()*800);
-        }
-        _t(()=>schedSpawn(),600);
-
-        /* 힌트 */
-        const hint=document.createElement('div');
-        hint.style.cssText=`
-          position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-          font-size:10px;font-weight:900;color:rgba(255,255,255,.85);
-          background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
-          padding:5px 12px;border-radius:8px;pointer-events:none;
-          transition:opacity .4s;white-space:nowrap;
-        `;
-        hint.textContent='날아오는 것들을 탭해서 잡아봐!';
-        if(ctrl()) ctrl().appendChild(hint);
-        _t(()=>{ hint.style.opacity='0'; },2500);
-
-        /* 종료 */
-        _t(()=>{
-          cancelAnimationFrame(rafId);
-          cancelAnimationFrame(itemRafId);
-          if(stage) stage.style.backgroundPositionX='';
-          activeItems.forEach(e=>e.el&&e.el.remove());
-          activeItems.length=0;
-          const msg=isNight
-            ?(caught>=5?'밤 산책하면서 별도 잡고 기분 최고야.':caught>=2?'밤공기 마시며 산책했어.':'조용한 밤 산책이었어.')
-            :(caught>=5?'산책하면서 좋은 것들도 많이 발견했어!':caught>=2?'햇살 맞으며 잘 걸었어.':'가볍게 산책했어.');
-          onDone(_score,msg);
-        },this.duration);
       }
     },
 
