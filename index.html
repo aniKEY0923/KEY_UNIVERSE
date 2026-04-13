@@ -10927,7 +10927,7 @@ window.SMG = (function(){
           updateSeedStageBackground(isNight?'walk':'walk-day');
         }
 
-        /* 캐릭터를 스테이지 중앙에 고정 */
+        /* 캐릭터 중앙 고정 */
         if(typeof state!=='undefined'&&stage){
           const rect=stage.getBoundingClientRect();
           state.seedPlayer.x=(rect.width-(state.seedPlayer.w||54))/2;
@@ -10935,106 +10935,128 @@ window.SMG = (function(){
           if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
         }
 
-        /* 배경 스크롤 상태 */
-        let bgPos=0;          /* px 단위 누적 이동량 */
-        let scrollVel=0;      /* 현재 속도 (탭 시 +, 관성으로 감속) */
-        let rafId=null;
-        let steps=0, activeItem=null, isWalking=false;
-
-        /* 관성 스크롤 루프 */
+        /* 자동 배경 스크롤 RAF */
+        let bgPos=0, rafId=null;
+        const BG_SPEED=1.2; /* px/frame */
         function scrollLoop(){
-          if(scrollVel>0.3){
-            bgPos+=scrollVel;
-            scrollVel*=0.88; /* 감속 */
-            if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
-            rafId=requestAnimationFrame(scrollLoop);
-            /* 걷는 중 표시 */
-            if(!isWalking){
-              isWalking=true;
-            }
-          } else {
-            scrollVel=0;
-            isWalking=false;
-            rafId=null;
-          }
+          bgPos+=BG_SPEED;
+          if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
+          rafId=requestAnimationFrame(scrollLoop);
         }
-
-        /* 조작 힌트 */
-        const hint=document.createElement('div');
-        hint.style.cssText=`
-          position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-          font-size:10px;font-weight:900;color:rgba(255,255,255,.8);
-          background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
-          padding:5px 12px;border-radius:8px;pointer-events:none;
-          transition:opacity .4s;
-        `;
-        hint.textContent='탭할 때마다 걸어가!';
-        if(ctrl()) ctrl().appendChild(hint);
-        _t(()=>{ hint.style.opacity='0'; },2200);
+        rafId=requestAnimationFrame(scrollLoop);
 
         /* 아이템 풀 */
-        const ITEMS_DAY  =[{e:'🌸',b:'꽃을 발견했어!'},{e:'🐱',b:'고양이다!'},{e:'🍀',b:'네잎클로버!'}];
-        const ITEMS_NIGHT=[{e:'⭐',b:'별똥별이야!'},{e:'🏮',b:'가로등이 예쁘네.'},{e:'🦋',b:'밤 나비!'}];
+        const ITEMS_DAY=[
+          {e:'🌸',b:'꽃을 잡았어!',score:8},
+          {e:'🐱',b:'고양이다!',score:12},
+          {e:'🍀',b:'네잎클로버!',score:15},
+          {e:'🍬',b:'사탕을 주웠어.',score:6},
+          {e:'🎈',b:'풍선이 날아왔어!',score:8},
+        ];
+        const ITEMS_NIGHT=[
+          {e:'⭐',b:'별똥별이야!',score:15},
+          {e:'🏮',b:'가로등 아래 뭔가 있어.',score:8},
+          {e:'🦋',b:'밤 나비!',score:12},
+          {e:'🌙',b:'달빛 조각.',score:10},
+          {e:'🍄',b:'버섯을 발견했어!',score:8},
+        ];
         const itemPool=isNight?ITEMS_NIGHT:ITEMS_DAY;
 
+        let caught=0, missed=0;
+        const activeItems=[];
+
+        /* 아이템 스폰 — 오른쪽에서 등장, 왼쪽으로 이동 */
         function spawnItem(){
-          if(activeItem||!ctrl()) return;
+          if(!ctrl()||!stage) return;
+          const rect=stage.getBoundingClientRect();
           const item=itemPool[Math.floor(Math.random()*itemPool.length)];
           const el=document.createElement('div');
-          /* 아이템은 캐릭터 앞쪽(오른쪽) 영역에 등장 */
-          const lx=55+Math.random()*30;
-          const ly=25+Math.random()*40;
+          const ly=18+Math.random()*52; /* 세로 위치 % */
+          const speed=1.4+Math.random()*1.0; /* 이동 속도 */
           el.style.cssText=`
-            position:absolute;left:${lx}%;top:${ly}%;
-            font-size:22px;cursor:pointer;pointer-events:auto;
-            animation:smgItemPop .3s ease;transition:left .5s ease;
+            position:absolute;right:-32px;top:${ly}%;
+            font-size:24px;cursor:pointer;pointer-events:auto;
+            transition:transform .1s;
+            animation:smgItemPop .25s ease;
           `;
           el.textContent=item.e;
           ctrl().appendChild(el);
-          activeItem={el,bonus:item.b};
-          _t(()=>{ if(activeItem&&activeItem.el===el){el.remove();activeItem=null;} },3500);
-        }
-        function schedItem(){ _t(()=>{spawnItem();schedItem();},2000+Math.random()*1200); }
-        schedItem();
 
-        /* 탭 영역 */
-        const tapArea=document.createElement('div');
-        tapArea.style.cssText='position:absolute;inset:0;pointer-events:auto;cursor:pointer;';
-        tapArea.addEventListener('pointerdown',e=>{
-          /* 아이템 클릭 체크 */
-          if(activeItem&&activeItem.el){
-            const cr=tapArea.getBoundingClientRect();
-            const ix=e.clientX-cr.left, iy=e.clientY-cr.top;
-            const er=activeItem.el.getBoundingClientRect();
-            const ex=er.left-cr.left+er.width/2;
-            const ey=er.top-cr.top+er.height/2;
-            if(Math.abs(ix-ex)<44&&Math.abs(iy-ey)<44){
-              _flash(activeItem.bonus,1000);
-              _setScore(_score+15);
-              activeItem.el.remove();
-              activeItem=null;
-              return;
+          const entry={el,item,speed,x:rect.width+32,alive:true};
+          activeItems.push(entry);
+
+          /* 클릭/탭 이벤트 */
+          el.addEventListener('pointerdown',e=>{
+            e.stopPropagation();
+            if(!entry.alive) return;
+            entry.alive=false;
+            el.style.transform='scale(1.6)';
+            el.style.opacity='0';
+            el.style.transition='transform .2s,opacity .2s';
+            setTimeout(()=>el.remove(),200);
+            caught++;
+            _setScore(Math.min(100,_score+entry.item.score));
+            _flash(entry.item.b,900);
+          });
+        }
+
+        /* 아이템 이동 RAF */
+        let itemRafId=null;
+        function itemLoop(){
+          if(!stage) return;
+          const rect=stage.getBoundingClientRect();
+          for(let i=activeItems.length-1;i>=0;i--){
+            const entry=activeItems[i];
+            if(!entry.alive){
+              activeItems.splice(i,1);
+              continue;
+            }
+            entry.x-=entry.speed;
+            entry.el.style.right='';
+            entry.el.style.left=entry.x+'px';
+            /* 화면 밖으로 나가면 제거 */
+            if(entry.x<-40){
+              entry.alive=false;
+              entry.el.remove();
+              activeItems.splice(i,1);
+              missed++;
             }
           }
-          /* 배경 스크롤 — 탭마다 속도 누적 */
-          scrollVel+=14;
-          steps++;
-          _setScore(_score+1.5);
-          if(steps%10===0) _flash(steps+'걸음!',600);
-          if(!rafId) rafId=requestAnimationFrame(scrollLoop);
-        });
-        if(ctrl()) ctrl().appendChild(tapArea);
+          itemRafId=requestAnimationFrame(itemLoop);
+        }
+        itemRafId=requestAnimationFrame(itemLoop);
 
-        /* 종료 시 RAF 정리 */
-        const origOnDone=onDone;
+        /* 스폰 스케줄 */
+        function schedSpawn(){
+          spawnItem();
+          _t(()=>schedSpawn(),1200+Math.random()*800);
+        }
+        _t(()=>schedSpawn(),600);
+
+        /* 힌트 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+          font-size:10px;font-weight:900;color:rgba(255,255,255,.85);
+          background:rgba(0,0,0,.4);backdrop-filter:blur(3px);
+          padding:5px 12px;border-radius:8px;pointer-events:none;
+          transition:opacity .4s;white-space:nowrap;
+        `;
+        hint.textContent='날아오는 것들을 탭해서 잡아봐!';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2500);
+
+        /* 종료 */
         _t(()=>{
-          if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
-          /* 배경 위치 초기화 */
+          cancelAnimationFrame(rafId);
+          cancelAnimationFrame(itemRafId);
           if(stage) stage.style.backgroundPositionX='';
+          activeItems.forEach(e=>e.el&&e.el.remove());
+          activeItems.length=0;
           const msg=isNight
-            ?(steps>=15?'밤공기가 상쾌했어. 기분 전환 됐어.':'조용한 밤 산책이었어.')
-            :(steps>=15?'햇살 받으며 잘 걸었어!':'가볍게 산책했어.');
-          origOnDone(_score,msg);
+            ?(caught>=5?'밤 산책하면서 별도 잡고 기분 최고야.':caught>=2?'밤공기 마시며 산책했어.':'조용한 밤 산책이었어.')
+            :(caught>=5?'산책하면서 좋은 것들도 많이 발견했어!':caught>=2?'햇살 맞으며 잘 걸었어.':'가볍게 산책했어.');
+          onDone(_score,msg);
         },this.duration);
       }
     },
