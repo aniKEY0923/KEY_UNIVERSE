@@ -12251,9 +12251,351 @@ window.SMG = (function(){
       }
     },
 
+    /* ── 요리: 불 세기 타이밍 탭 ── */
+    cooking:{
+      duration:8000,
+      run(onDone){
+        if(typeof setSeedMessage==='function')
+          setSeedMessage('오늘은 직접 뭔가 만들어볼까. 불 조절이 관건이야.');
+
+        const RECIPES=[
+          {name:'파스타',    emoji:'🍝', perfectLine:'파스타 완성! 면이 딱 알단테야.',       goodLine:'조금 더 익혔어야 했나...',    burnLine:'타버렸어... 😭'},
+          {name:'스크램블',  emoji:'🍳', perfectLine:'완벽한 스크램블! 폭신폭신해.',         goodLine:'살짝 질겼지만 맛은 있어.',    burnLine:'너무 익혔어. 고무 같아...'},
+          {name:'카레',      emoji:'🍛', perfectLine:'카레 완성! 향이 좋다.',               goodLine:'조금 더 끓여야 했나.',        burnLine:'바닥이 눌어붙었어 😓'},
+          {name:'수프',      emoji:'🥣', perfectLine:'수프 맛있게 됐어! 따뜻하다.',         goodLine:'간이 조금 약했나.',           burnLine:'수분이 다 날아갔어...'},
+          {name:'볶음밥',    emoji:'🍚', perfectLine:'볶음밥 완성! 불맛이 살았어.',         goodLine:'센불에 좀 더 볶을 걸.',       burnLine:'새까맣게 됐어 😱'},
+        ];
+        const recipe=RECIPES[Math.floor(Math.random()*RECIPES.length)];
+
+        /* 배경 주방 느낌 오버레이 */
+        const bg=document.createElement('div');
+        bg.style.cssText=`
+          position:absolute;inset:0;border-radius:18px;
+          background:linear-gradient(180deg,rgba(255,245,220,.7) 0%,rgba(255,235,190,.5) 100%);
+          pointer-events:none;
+        `;
+        if(ctrl()) ctrl().appendChild(bg);
+
+        /* 레시피 표시 */
+        const recipeEl=document.createElement('div');
+        recipeEl.style.cssText=`
+          position:absolute;top:10px;left:50%;transform:translateX(-50%);
+          font-size:13px;font-weight:900;
+          color:rgba(80,50,20,.85);
+          background:rgba(255,252,240,.88);
+          border-radius:10px;padding:4px 14px;
+          pointer-events:none;white-space:nowrap;
+          border:1.5px solid rgba(200,160,80,.3);
+        `;
+        recipeEl.textContent=`${recipe.emoji} ${recipe.name} 만들기`;
+        if(ctrl()) ctrl().appendChild(recipeEl);
+
+        /* 불 세기 게이지 — 세로 바 */
+        const gaugeBg=document.createElement('div');
+        gaugeBg.style.cssText=`
+          position:absolute;left:18%;top:18%;bottom:18%;
+          width:22px;border-radius:11px;
+          background:rgba(200,180,150,.25);
+          border:1.5px solid rgba(200,160,80,.4);
+          overflow:hidden;pointer-events:none;
+        `;
+        const gaugeFill=document.createElement('div');
+        gaugeFill.style.cssText=`
+          position:absolute;bottom:0;left:0;right:0;
+          height:0%;border-radius:11px;
+          background:linear-gradient(0deg,#e84,#fa4,#ff8);
+          transition:height .04s linear;
+        `;
+        gaugeBg.appendChild(gaugeFill);
+
+        /* 완벽 구간 표시 */
+        const perfectZone=document.createElement('div');
+        perfectZone.style.cssText=`
+          position:absolute;bottom:35%;left:0;right:0;height:20%;
+          background:rgba(100,220,120,.35);
+          border-top:1.5px solid rgba(80,200,100,.6);
+          border-bottom:1.5px solid rgba(80,200,100,.6);
+          pointer-events:none;
+        `;
+        gaugeBg.appendChild(perfectZone);
+
+        /* good 구간 (완벽 위아래) */
+        const goodZoneTop=document.createElement('div');
+        goodZoneTop.style.cssText=`
+          position:absolute;bottom:55%;left:0;right:0;height:12%;
+          background:rgba(255,220,80,.25);pointer-events:none;
+        `;
+        gaugeBg.appendChild(goodZoneTop);
+        const goodZoneBot=document.createElement('div');
+        goodZoneBot.style.cssText=`
+          position:absolute;bottom:25%;left:0;right:0;height:10%;
+          background:rgba(255,220,80,.25);pointer-events:none;
+        `;
+        gaugeBg.appendChild(goodZoneBot);
+
+        if(ctrl()) ctrl().appendChild(gaugeBg);
+
+        /* 냄비/팬 이모지 */
+        const panEl=document.createElement('div');
+        panEl.style.cssText=`
+          position:absolute;left:50%;bottom:16%;transform:translateX(-50%);
+          font-size:36px;pointer-events:none;
+          transition:transform .1s;
+        `;
+        panEl.textContent='🍳';
+        if(ctrl()) ctrl().appendChild(panEl);
+
+        /* 탭 버튼 */
+        const tapBtn=document.createElement('div');
+        tapBtn.style.cssText=`
+          position:absolute;right:12%;top:50%;transform:translateY(-50%);
+          width:62px;height:62px;border-radius:50%;
+          background:rgba(255,180,60,.22);
+          border:2px solid rgba(255,160,40,.55);
+          display:flex;align-items:center;justify-content:center;
+          font-size:11px;font-weight:900;color:rgba(120,60,10,.85);
+          pointer-events:auto;cursor:pointer;user-select:none;
+          transition:background .08s,transform .08s;text-align:center;line-height:1.3;
+        `;
+        tapBtn.innerHTML='🔥<br>TAP';
+        if(ctrl()) ctrl().appendChild(tapBtn);
+
+        /* 힌트 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+          font-size:9px;font-weight:900;color:rgba(80,50,20,.8);
+          background:rgba(255,245,220,.75);backdrop-filter:blur(3px);
+          padding:4px 10px;border-radius:7px;pointer-events:none;
+          white-space:nowrap;transition:opacity .4s;
+        `;
+        hint.textContent='초록 구간에서 탭하면 완벽해!';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2500);
+
+        /* 게이지 올라가고 내려오는 루프 */
+        let heatPct=0;        /* 0~100 */
+        let direction=1;      /* 1=올라감, -1=내려감 */
+        let speed=12;         /* %/s */
+        let rafId=null;
+        let lastTs=0;
+        let hits=0, totalTaps=0;
+
+        function heatLoop(ts){
+          const dt=lastTs?(ts-lastTs)/1000:0;
+          lastTs=ts;
+          heatPct+=direction*speed*dt;
+
+          if(heatPct>=100){ heatPct=100; direction=-1; speed=10+Math.random()*8; }
+          if(heatPct<=0){   heatPct=0;   direction=1;  speed=10+Math.random()*8; }
+
+          gaugeFill.style.height=heatPct+'%';
+
+          /* 불 세기에 따라 냄비 흔들림 */
+          const shake=heatPct>70?`translateX(-50%) rotate(${(Math.random()-.5)*4}deg)`:'translateX(-50%)';
+          panEl.style.transform=shake;
+
+          rafId=requestAnimationFrame(heatLoop);
+        }
+        rafId=requestAnimationFrame(heatLoop);
+
+        /* 탭 판정 */
+        function onTap(e){
+          e.preventDefault();
+          totalTaps++;
+          tapBtn.style.transform='translateY(-50%) scale(.88)';
+          tapBtn.style.background='rgba(255,140,20,.45)';
+          setTimeout(()=>{
+            tapBtn.style.transform='translateY(-50%) scale(1)';
+            tapBtn.style.background='rgba(255,180,60,.22)';
+          },80);
+
+          /* 구간 판정 */
+          if(heatPct>=35&&heatPct<=55){
+            /* 완벽 구간 */
+            hits++;
+            _setScore(Math.min(100,_score+20));
+            _flash('완벽해! 🔥',700);
+          } else if((heatPct>=23&&heatPct<35)||(heatPct>55&&heatPct<=67)){
+            /* good 구간 */
+            hits++;
+            _setScore(Math.min(100,_score+8));
+            _flash('좋아!',500);
+          } else if(heatPct>80){
+            /* 탔어 */
+            _flash('타고 있어! 빨리!',600);
+          } else {
+            _flash('아직 이른 것 같아.',400);
+          }
+        }
+
+        tapBtn.addEventListener('pointerdown',onTap);
+        function onKey(e){
+          if((e.code==='Space'||e.code==='Enter')&&!e.repeat){ e.preventDefault(); onTap(e); }
+        }
+        window.addEventListener('keydown',onKey);
+
+        _t(()=>{
+          cancelAnimationFrame(rafId);
+          window.removeEventListener('keydown',onKey);
+          const acc=totalTaps>0?Math.round(hits/totalTaps*100):0;
+          const msg=_score>=80?recipe.perfectLine
+                   :_score>=40?recipe.goodLine
+                   :recipe.burnLine;
+          onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
+    /* ── 가드닝: 잡초 탭 제거, 꽃은 탭 금지 ── */
+    gardening:{
+      duration:8000,
+      run(onDone){
+        if(typeof setSeedMessage==='function')
+          setSeedMessage('잠깐 밖에서 손 좀 써볼게. 잡초 정리부터.');
+
+        /* 배경 초록 오버레이 */
+        const bg=document.createElement('div');
+        bg.style.cssText=`
+          position:absolute;inset:0;border-radius:18px;
+          background:linear-gradient(180deg,rgba(200,235,200,.45) 0%,rgba(160,210,160,.35) 100%);
+          pointer-events:none;
+        `;
+        if(ctrl()) ctrl().appendChild(bg);
+
+        /* 점수 표시 */
+        const scoreEl=document.createElement('div');
+        scoreEl.style.cssText=`
+          position:absolute;top:10px;right:12px;
+          font-size:11px;font-weight:900;color:rgba(40,80,40,.85);
+          background:rgba(220,250,220,.88);border-radius:8px;padding:3px 10px;
+          pointer-events:none;border:1px solid rgba(100,180,100,.3);
+        `;
+        scoreEl.textContent='잡초 0개 제거';
+        if(ctrl()) ctrl().appendChild(scoreEl);
+
+        /* 힌트 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+          font-size:9px;font-weight:900;color:rgba(40,80,40,.85);
+          background:rgba(220,250,220,.75);backdrop-filter:blur(3px);
+          padding:4px 10px;border-radius:7px;pointer-events:none;
+          white-space:nowrap;transition:opacity .4s;
+        `;
+        hint.textContent='🌿잡초만 탭! 🌸꽃은 건드리면 안 돼!';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2800);
+
+        const stageRect=$id('seedStage')?.getBoundingClientRect()||{width:320,height:214};
+        let weedCount=0, mistakeCount=0;
+
+        /* 아이템 스폰 */
+        const WEEDS=['🌿','🍃','🌾','🍂'];
+        const FLOWERS=['🌸','🌼','🌺','🌻','🌷'];
+        const activeItems=[];
+
+        function spawnItem(){
+          if(!ctrl()) return;
+          const isWeed=Math.random()<0.55;
+          const emoji=isWeed
+            ? WEEDS[Math.floor(Math.random()*WEEDS.length)]
+            : FLOWERS[Math.floor(Math.random()*FLOWERS.length)];
+
+          const el=document.createElement('div');
+          const x=10+Math.random()*(stageRect.width-60);
+          const y=30+Math.random()*(stageRect.height-80);
+          el.style.cssText=`
+            position:absolute;left:${x}px;top:${y}px;
+            font-size:${isWeed?22:26}px;
+            pointer-events:auto;cursor:pointer;
+            transition:transform .12s,opacity .15s;
+            user-select:none;
+            animation:smgItemPop .3s ease forwards;
+          `;
+          el.textContent=emoji;
+          el.dataset.isWeed=isWeed?'1':'0';
+          ctrl().appendChild(el);
+
+          const entry={el,isWeed,alive:true};
+          activeItems.push(entry);
+
+          /* 탭 이벤트 */
+          el.addEventListener('pointerdown',(e)=>{
+            e.preventDefault();
+            if(!entry.alive) return;
+            entry.alive=false;
+            const idx=activeItems.indexOf(entry);
+            if(idx>=0) activeItems.splice(idx,1);
+
+            if(isWeed){
+              /* 잡초 제거 성공 */
+              weedCount++;
+              scoreEl.textContent=`잡초 ${weedCount}개 제거`;
+              _setScore(Math.min(100,_score+14));
+              _flash('제거! 🌿',500);
+              el.style.transform='scale(0) rotate(30deg)';
+              el.style.opacity='0';
+              setTimeout(()=>el.remove(),160);
+            } else {
+              /* 꽃 건드림 — 패널티 */
+              mistakeCount++;
+              _setScore(Math.max(0,_score-18));
+              _flash('앗, 꽃이야! 😱',800);
+              el.style.transform='scale(1.3)';
+              el.style.filter='brightness(1.5)';
+              setTimeout(()=>{
+                el.style.transform='scale(1)';
+                el.style.filter='';
+              },300);
+              /* 꽃은 안 사라짐 */
+              entry.alive=true;
+              activeItems.push(entry);
+            }
+          });
+
+          /* 잡초는 일정 시간 후 자동 소멸 */
+          if(isWeed){
+            _t(()=>{
+              if(!entry.alive) return;
+              entry.alive=false;
+              const idx=activeItems.indexOf(entry);
+              if(idx>=0) activeItems.splice(idx,1);
+              el.style.opacity='0';
+              setTimeout(()=>el.remove(),200);
+            },3200+Math.random()*1000);
+          } else {
+            /* 꽃은 더 오래 유지 */
+            _t(()=>{
+              if(!entry.alive) return;
+              entry.alive=false;
+              const idx=activeItems.indexOf(entry);
+              if(idx>=0) activeItems.splice(idx,1);
+              el.style.opacity='0';
+              setTimeout(()=>el.remove(),200);
+            },5000+Math.random()*2000);
+          }
+
+          /* 다음 아이템 스폰 */
+          _t(()=>spawnItem(),600+Math.random()*800);
+        }
+
+        /* 처음 2개 스폰 */
+        _t(()=>{ spawnItem(); _t(()=>spawnItem(),400); },400);
+
+        _t(()=>{
+          /* 남은 아이템 정리 */
+          activeItems.forEach(e=>{ e.alive=false; e.el.remove(); });
+          const msg=weedCount>=10?`잡초 ${weedCount}개 싹 다 뽑았어! 정원이 깔끔해졌다.`
+                   :weedCount>=5?`잡초 ${weedCount}개 뽑았어. 조금씩 나아지고 있어.`
+                   :`잡초 ${weedCount}개밖에 못 뽑았어. 오늘은 좀 멍했나봐.`;
+          onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
   };
 
-  /* CSS 애니메이션 */
   const smgStyle=document.createElement('style');
   smgStyle.textContent=`
     #smgLayer{ pointer-events:none; }
@@ -12308,7 +12650,7 @@ window.SMG = (function(){
 
 /* startAction 가로채기 — netflix / bath / walk */
 (function(){
-  const SMG_TYPES=['dance','vocal','netflix','bath','walk','exhibit'];
+  const SMG_TYPES=['dance','vocal','netflix','bath','walk','exhibit','cooking','gardening'];
   const _orig=window.startAction;
   window._origFinishAction=window.finishAction;
 
@@ -12331,13 +12673,15 @@ window.SMG = (function(){
       netflix:'뭐 볼지 골라볼게.',
       bath:'따뜻하게 몸부터 풀어볼게.',
       exhibit:'전시를 천천히 둘러보고 올게.',
+      cooking:'오늘은 직접 뭔가 만들어볼까.',
+      gardening:'잠깐 밖에서 손 좀 써볼게.',
       walk:isNight?'잠깐 밤공기 마시러 나갔다 올게.':'잠깐 햇살 맞으러 나갔다 올게.'
     };
     if(typeof setSeedMessage==='function') setSeedMessage(startLines[type]||'');
 
     /* progress bar — netflix/bath/walk만 표시, dance/vocal은 미니게임 자체가 진행 표시 */
     const meta=typeof actionMeta!=='undefined'?actionMeta[type]:null;
-    const NO_PROGRESS_TYPES=['dance','vocal','exhibit'];
+    const NO_PROGRESS_TYPES=['dance','vocal','exhibit','cooking','gardening'];
     if(meta&&typeof startActionProgress==='function'&&!NO_PROGRESS_TYPES.includes(type)){
       startActionProgress(type,meta.duration||8000);
     }
