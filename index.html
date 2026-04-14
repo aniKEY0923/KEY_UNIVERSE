@@ -455,6 +455,11 @@ img{
     linear-gradient(rgba(220,240,255,.10), rgba(180,210,240,.18)),
     url("img/bathroom.png") center center / 108% 108% no-repeat;
 }
+.seed-stage.bg-gallery{
+  background:
+    linear-gradient(rgba(245,240,235,.08), rgba(210,200,190,.14)),
+    url("img/gallery.png") 0 center / auto 108% repeat-x;
+}
 /* 스트레스 위험 구간 (50+) — 배경 붉은 오버레이 */
 .seed-stage.stress-tint::after{
   content:"";
@@ -4955,7 +4960,7 @@ const actionCoinReward = {
   exhibit:   10,
   netflix:    7,
   meeting:   14,
-  shopping:   5,
+  shopping:   0,
   cooking:    8,
   gardening:  6,
   sleep:      5
@@ -7308,6 +7313,10 @@ function updateSeedStageBackground(mode = state.currentStageBg){
     seedStage.classList.add('bg-bathroom');
     return;
   }
+  if (mode === 'gallery') {
+    seedStage.classList.add('bg-gallery');
+    return;
+  }
 
   if (isNightTime()) {
     seedStage.classList.add('bg-default-night');
@@ -9151,38 +9160,187 @@ window.finishAction = function(type){
       break;
 
     case 'shopping': {
-      const stress = state.stats.stress || 0;
-      const money  = state.money || 0;
+      const stress  = state.stats.stress   || 0;
+      const money   = state.money          || 0;
+      const pleasure = state.stats.pleasure || 50;
+      const social  = state.stats.social   || 0;
 
-      /* 충동구매 — stress 30+ & 일정 확률 */
-      const impulseCost = 40 + Math.floor(Math.random() * 60); /* 40~99 코인 */
+      /* 구매 아이템 풀 — emoji + 대사 + 이미지(나중에 src 교체) */
+      const SHOP_ITEMS = [
+        { emoji:'🧢', label:'예쁜 모자',    line:'이 모자 어울리지? 마음에 들어서 바로 샀어.',  img:'img/shop_hat.png' },
+        { emoji:'👟', label:'운동화',        line:'운동화 마음에 들어! 신어보자마자 결정했어.',  img:'img/shop_shoes.png' },
+        { emoji:'👕', label:'티셔츠',        line:'이 티셔츠 어울리지? 색이 딱 취향이었어.',    img:'img/shop_tshirt.png' },
+        { emoji:'🧣', label:'스카프',        line:'이거 묶어보니까 생각보다 잘 어울리더라.',    img:'img/shop_scarf.png' },
+        { emoji:'💍', label:'반지',          line:'반지 하나 샀어. 작은 거지만 기분이 좋아.',    img:'img/shop_ring.png' },
+        { emoji:'🕶️', label:'선글라스',     line:'선글라스 써봤더니 너무 좋아서 그냥 샀어.',   img:'img/shop_sunglasses.png' },
+        { emoji:'🛁', label:'목욕 용품 세트',line:'목욕용품 세트 득템! 오늘 목욕이 기대돼.',    img:'img/shop_bath.png' },
+        { emoji:'🕯️', label:'향초',         line:'향이 너무 좋아서 냅다 샀어. 기대해.',        img:'img/shop_candle.png' },
+      ];
+
+      /* 유저에게 줄 선물 풀 */
+      const GIFTS_FOR_YOU = [
+        { emoji:'🌹', label:'장미',          line:'지나가다 예뻐보여서 샀어. 받아.',            img:'img/gift_rose.png' },
+        { emoji:'🧋', label:'버블티',        line:'맛있어 보여서 샀어. 같이 마셔.',             img:'img/gift_bubbletea.png' },
+        { emoji:'🥚', label:'에그타르트',    line:'지나가다 맛있어 보여서 샀어. 먹어봐.',        img:'img/gift_eggtart.png' },
+        { emoji:'🐣', label:'귀여운 키링',   line:'이거 귀여워서 그냥 샀어. 갖고 싶었잖아.',   img:'img/gift_keyring.png' },
+        { emoji:'🍪', label:'쿠키',          line:'향기가 너무 좋아서 한 봉지 샀어.',           img:'img/gift_cookie.png' },
+        { emoji:'💐', label:'꽃다발',        line:'꽃 보니까 생각나서. 별거 아닌데 받아.',      img:'img/gift_flowers.png' },
+      ];
+
+      let shoppingResult = null; /* 'eye' | 'basic' | 'impulse' | 'broke' */
+      let boughtItem = null;
+
+      /* 충동구매 */
+      const impulseCost = 40 + Math.floor(Math.random() * 60);
       if (stress >= 30 && Math.random() < 0.55 && money >= impulseCost) {
         addMoney(-impulseCost);
         applyScaled({ cute: +3, humor: +2 });
         state.energy -= 8;
-        state.stats.pleasure = clamp((state.stats.pleasure||50) + 20, 0, 100);
-        message = `너무 마음에 들어서 그냥 사버렸어… 😳 (-${impulseCost}코인)`;
+        state.stats.pleasure = clamp(pleasure + 20, 0, 100);
+        boughtItem = SHOP_ITEMS[Math.floor(Math.random() * SHOP_ITEMS.length)];
+        message = `${boughtItem.label}을(를) 충동구매해버렸어… 😳 (-${impulseCost}코인)`;
+        shoppingResult = 'impulse';
       } else if (stress >= 30 && Math.random() < 0.55 && money < impulseCost) {
-        /* 충동이 일었지만 코인 부족 */
         applyScaled({ cute: +1 });
         state.energy -= 6;
-        state.stats.pleasure = clamp((state.stats.pleasure||50) + 5, 0, 100);
+        state.stats.pleasure = clamp(pleasure + 5, 0, 100);
         message = '사고 싶었는데 지갑이 텅텅... 아쉽게 그냥 봤어.';
-      } else if (Math.random() < 0.45) {
+        shoppingResult = 'broke';
+      } else if (Math.random() < 0.40) {
         /* 아이쇼핑 */
         applyScaled({ social: +1 });
         state.energy -= 5;
-        state.stats.pleasure = clamp((state.stats.pleasure||50) + 6, 0, 100);
+        state.stats.pleasure = clamp(pleasure + 6, 0, 100);
         message = '딱히 산 건 없는데, 기분전환은 됐어.';
+        shoppingResult = 'eye';
       } else {
         /* 기본 쇼핑 */
-        const shopCost = 15 + Math.floor(Math.random() * 16); /* 15~30 코인 */
+        const shopCost = 15 + Math.floor(Math.random() * 16);
         addMoney(-Math.min(shopCost, money));
         applyScaled({ cute: +2, humor: +1 });
         state.energy -= 7;
-        state.stats.pleasure = clamp((state.stats.pleasure||50) + 12, 0, 100);
-        message = `귀여운 아이템 겟! 기분이 확 좋아졌어 🛍️ (-${Math.min(shopCost, money)}코인)`;
+        state.stats.pleasure = clamp(pleasure + 12, 0, 100);
+        boughtItem = SHOP_ITEMS[Math.floor(Math.random() * SHOP_ITEMS.length)];
+        message = `${boughtItem.label} 겟! 기분이 확 좋아졌어 🛍️ (-${Math.min(shopCost, money)}코인)`;
+        shoppingResult = 'basic';
       }
+
+      /* ── 구매 아이템 카드창 ── */
+      if (boughtItem && seedStage) {
+        setTimeout(() => {
+          const card = document.createElement('div');
+          card.style.cssText = `
+            position:absolute;left:50%;top:50%;
+            transform:translate(-50%,-50%) scale(.85);
+            z-index:12;width:130px;
+            background:rgba(255,252,248,.97);
+            border-radius:16px;border:1.5px solid rgba(241,167,200,.5);
+            box-shadow:0 12px 28px rgba(120,104,87,.22);
+            padding:12px 10px 10px;text-align:center;
+            transition:transform .28s ease,opacity .28s ease;
+            opacity:0;pointer-events:auto;
+          `;
+          /* 이모지 (이미지 없으면 이모지로 폴백) */
+          const imgEl = document.createElement('img');
+          imgEl.src = boughtItem.img;
+          imgEl.alt = boughtItem.label;
+          imgEl.style.cssText = 'width:56px;height:56px;object-fit:contain;margin-bottom:6px;';
+          imgEl.onerror = () => {
+            imgEl.replaceWith(Object.assign(document.createElement('div'), {
+              textContent: boughtItem.emoji,
+              style: 'font-size:40px;margin-bottom:6px;'
+            }));
+          };
+          const labelEl = document.createElement('div');
+          labelEl.style.cssText = 'font-size:11px;font-weight:900;color:#6a584a;margin-bottom:4px;';
+          labelEl.textContent = boughtItem.label;
+          const closeEl = document.createElement('div');
+          closeEl.style.cssText = `
+            font-size:9px;color:rgba(120,104,87,.6);
+            margin-top:6px;cursor:pointer;
+          `;
+          closeEl.textContent = '탭해서 닫기';
+          card.appendChild(imgEl);
+          card.appendChild(labelEl);
+          card.appendChild(closeEl);
+          seedStage.appendChild(card);
+
+          /* 등장 애니메이션 */
+          requestAnimationFrame(() => {
+            card.style.transform = 'translate(-50%,-50%) scale(1)';
+            card.style.opacity = '1';
+          });
+
+          /* 탭하거나 3.5초 후 닫기 */
+          const closeCard = () => {
+            card.style.transform = 'translate(-50%,-50%) scale(.85)';
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 300);
+          };
+          card.addEventListener('pointerdown', closeCard);
+          setTimeout(closeCard, 3500);
+        }, 800);
+      }
+
+      /* ── 유저 선물 이벤트 — pleasure 60+ & social 30+ 조건 ── */
+      if (pleasure >= 60 && social >= 30 && Math.random() < 0.45 && seedStage) {
+        const giftItem = GIFTS_FOR_YOU[Math.floor(Math.random() * GIFTS_FOR_YOU.length)];
+        setTimeout(() => {
+          /* 기존 메시지 덮어쓰기 */
+          if (typeof setSeedMessage === 'function')
+            setSeedMessage(giftItem.line, { autoClearMs: 5000, idleAfterMs: SEED_IDLE_MS });
+
+          const giftCard = document.createElement('div');
+          giftCard.style.cssText = `
+            position:absolute;left:50%;top:42%;
+            transform:translate(-50%,-50%) scale(.85);
+            z-index:13;width:140px;
+            background:linear-gradient(160deg,rgba(255,242,252,.98),rgba(255,252,248,.97));
+            border-radius:18px;border:1.5px solid rgba(241,167,200,.6);
+            box-shadow:0 14px 30px rgba(188,160,194,.28);
+            padding:14px 12px 10px;text-align:center;
+            transition:transform .3s ease,opacity .3s ease;
+            opacity:0;pointer-events:auto;
+          `;
+          const giftImgEl = document.createElement('img');
+          giftImgEl.src = giftItem.img;
+          giftImgEl.alt = giftItem.label;
+          giftImgEl.style.cssText = 'width:60px;height:60px;object-fit:contain;margin-bottom:6px;';
+          giftImgEl.onerror = () => {
+            giftImgEl.replaceWith(Object.assign(document.createElement('div'), {
+              textContent: giftItem.emoji,
+              style: 'font-size:44px;margin-bottom:6px;'
+            }));
+          };
+          const giftLabel = document.createElement('div');
+          giftLabel.style.cssText = 'font-size:10px;font-weight:900;color:#7a4a6a;margin-bottom:2px;';
+          giftLabel.textContent = `🎁 ${giftItem.label}`;
+          const giftClose = document.createElement('div');
+          giftClose.style.cssText = 'font-size:9px;color:rgba(120,104,87,.55);margin-top:8px;cursor:pointer;';
+          giftClose.textContent = '탭해서 받기 💕';
+          giftCard.appendChild(giftImgEl);
+          giftCard.appendChild(giftLabel);
+          giftCard.appendChild(giftClose);
+          seedStage.appendChild(giftCard);
+
+          requestAnimationFrame(() => {
+            giftCard.style.transform = 'translate(-50%,-50%) scale(1)';
+            giftCard.style.opacity = '1';
+          });
+
+          const closeGift = () => {
+            giftCard.style.transform = 'translate(-50%,-50%) scale(.85)';
+            giftCard.style.opacity = '0';
+            /* 선물 받으면 pleasure 소폭 추가 */
+            state.stats.pleasure = clamp((state.stats.pleasure || 50) + 5, 0, 100);
+            if (typeof updateScheduleUI === 'function') updateScheduleUI();
+            setTimeout(() => giftCard.remove(), 300);
+          };
+          giftCard.addEventListener('pointerdown', closeGift);
+          setTimeout(closeGift, 5000);
+        }, boughtItem ? 4500 : 1000); /* 구매 카드가 있으면 그 뒤에 등장 */
+      }
+
       break;
     }
 
@@ -11763,6 +11921,220 @@ window.SMG = (function(){
       }
     },
 
+    /* ── 전시회: 갤러리 배경 스크롤 + 작품 액자 탭 ── */
+    exhibit:{
+      duration:8000,
+      run(onDone){
+        const stage=$id('seedStage');
+        const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
+
+        /* ── 1단계: 시작 대사 ── */
+        const startLines=[
+          '전시를 천천히 둘러보고 올게.',
+          '요즘 전시 하나 보고 싶었어. 다녀올게.',
+          '조용히 작품 좀 보고 올게.',
+        ];
+        if(typeof setSeedMessage==='function')
+          setSeedMessage(startLines[Math.floor(Math.random()*startLines.length)]);
+
+        /* ── 2단계: 디졸브 → 갤러리 배경 ── */
+        _t(()=>{
+          const dissolve=document.createElement('div');
+          dissolve.style.cssText=`
+            position:absolute;inset:0;z-index:20;border-radius:18px;
+            background:rgba(255,252,245,0);pointer-events:none;
+            transition:background .35s ease;
+          `;
+          if(stage) stage.appendChild(dissolve);
+          requestAnimationFrame(()=>{ dissolve.style.background='rgba(255,252,245,.88)'; });
+          _t(()=>{
+            if(typeof updateSeedStageBackground==='function')
+              updateSeedStageBackground('gallery');
+            dissolve.style.background='rgba(255,252,245,0)';
+            _t(()=>{ dissolve.remove(); },350);
+            startExhibit();
+          },360);
+        },600);
+
+        /* ── 실제 게임 ── */
+        function startExhibit(){
+          /* 캐릭터 왼쪽 배치 */
+          if(typeof state!=='undefined'&&stage){
+            state.seedPlayer.x=Math.max(8,stageRect.width*0.15);
+            state.seedPlayer.facing='right';
+            if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
+          }
+
+          /* 느린 배경 스크롤 */
+          let bgPos=0,bgRaf=null;
+          function bgLoop(){
+            bgPos+=0.5;
+            if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
+            bgRaf=requestAnimationFrame(bgLoop);
+          }
+          bgRaf=requestAnimationFrame(bgLoop);
+
+          /* 작품 풀 */
+          const ARTWORKS=[
+            {e:'🖼️',title:'무제',        line:'이게 뭘 표현한 건지 모르겠는데... 계속 보게 돼.',  stat:{mystery:2},pleasure:8},
+            {e:'🎨',title:'색채 연구',    line:'색이 이렇게 많은데 하나도 어색하지 않아.',         stat:{cute:1,mystery:1},pleasure:7},
+            {e:'🗿',title:'조각',         line:'무게감이 느껴져. 공간을 꽉 채우는 존재감.',        stat:{scary:1,mystery:1},pleasure:6},
+            {e:'📸',title:'사진전',       line:'찍힌 순간이 여전히 살아있는 것 같아.',             stat:{social:1,cute:1},pleasure:7},
+            {e:'✏️',title:'드로잉',       line:'선 하나하나에 의도가 있는 것 같아. 좋아.',        stat:{mystery:1,humor:1},pleasure:6},
+            {e:'🌊',title:'파도',         line:'계속 보고 있으면 진짜 소리가 들릴 것 같아.',      stat:{mystery:2,scary:1},pleasure:9},
+            {e:'🌸',title:'꽃',           line:'단순한 것 같은데 계속 눈이 가.',                  stat:{cute:2},pleasure:7},
+            {e:'🌃',title:'야경',         line:'저 불빛들 뒤엔 각자의 이야기가 있겠지.',          stat:{mystery:1,social:1},pleasure:8},
+          ];
+
+          let viewed=0;
+          let activeEntry=null;
+          const STOP_X=stageRect.width*0.38;
+          const ART_SPEED=1.0;
+
+          function spawnArtwork(){
+            if(!ctrl()||!stage) return;
+            const art=ARTWORKS[Math.floor(Math.random()*ARTWORKS.length)];
+
+            const frame=document.createElement('div');
+            const fh=stageRect.height*0.52;
+            const fy=stageRect.height*0.15;
+            frame.style.cssText=`
+              position:absolute;top:${fy}px;
+              width:64px;height:${fh}px;
+              display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+              pointer-events:none;
+            `;
+
+            const border=document.createElement('div');
+            border.style.cssText=`
+              width:56px;height:56px;border-radius:6px;
+              background:rgba(255,252,245,.94);
+              border:3px solid rgba(180,150,100,.7);
+              box-shadow:2px 2px 8px rgba(0,0,0,.22);
+              display:flex;align-items:center;justify-content:center;
+              font-size:26px;transition:border-color .2s,box-shadow .2s;
+            `;
+            border.textContent=art.e;
+
+            const titleEl=document.createElement('div');
+            titleEl.style.cssText=`font-size:9px;font-weight:700;color:rgba(80,60,40,.8);text-align:center;`;
+            titleEl.textContent=art.title;
+
+            frame.appendChild(border);
+            frame.appendChild(titleEl);
+            ctrl().appendChild(frame);
+
+            let x=stageRect.width+80;
+            let stopped=false;
+            const entry={frame,art,x,stopped,alive:true};
+            if(activeEntry) activeEntry=null;
+
+            function moveFrame(){
+              if(!entry.alive) return;
+              if(!stopped){
+                entry.x-=ART_SPEED;
+                frame.style.left=entry.x+'px';
+
+                if(entry.x<=STOP_X&&!stopped){
+                  stopped=true;
+                  entry.stopped=true;
+                  frame.style.pointerEvents='auto';
+                  frame.style.cursor='pointer';
+                  border.style.borderColor='rgba(241,167,200,.9)';
+                  border.style.boxShadow='2px 2px 14px rgba(241,167,200,.55)';
+                  bgPos-=0; /* 배경 살짝 멈추는 느낌 — 스크롤 속도 줄임 */
+                  activeEntry=entry;
+
+                  /* 캐릭터 작품 바라봄 */
+                  if(typeof state!=='undefined'){
+                    state.seedPlayer.facing='right';
+                    if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
+                  }
+
+                  frame.addEventListener('pointerdown',()=>{
+                    if(!entry.alive||!entry.stopped) return;
+                    entry.alive=false;
+                    activeEntry=null;
+                    viewed++;
+
+                    if(typeof applyStatDelta==='function') applyStatDelta(art.stat||{});
+                    /* pleasure 적용 */
+                    if(typeof state!=='undefined')
+                      state.stats.pleasure=Math.min(100,(state.stats.pleasure||50)+art.pleasure);
+
+                    _setScore(Math.min(100,_score+20));
+                    _flash(art.line,2400);
+
+                    frame.style.transition='opacity .3s,transform .3s';
+                    frame.style.opacity='0';
+                    frame.style.transform='scale(1.08)';
+                    setTimeout(()=>frame.remove(),320);
+                    _t(()=>spawnArtwork(),1000+Math.random()*700);
+                  });
+
+                  /* 4초 후 자동 지나침 */
+                  _t(()=>{
+                    if(!entry.alive) return;
+                    stopped=false;
+                    entry.stopped=false;
+                    frame.style.pointerEvents='none';
+                    border.style.borderColor='rgba(180,150,100,.7)';
+                    border.style.boxShadow='2px 2px 8px rgba(0,0,0,.22)';
+                    if(activeEntry===entry) activeEntry=null;
+                    continueMove();
+                  },3800);
+                } else if(!stopped){
+                  requestAnimationFrame(moveFrame);
+                }
+              }
+            }
+
+            function continueMove(){
+              if(!entry.alive) return;
+              entry.x-=ART_SPEED;
+              frame.style.left=entry.x+'px';
+              if(entry.x<-80){
+                entry.alive=false;
+                frame.remove();
+                _t(()=>spawnArtwork(),600+Math.random()*500);
+              } else {
+                requestAnimationFrame(continueMove);
+              }
+            }
+
+            requestAnimationFrame(moveFrame);
+          }
+
+          /* 힌트 */
+          const hint=document.createElement('div');
+          hint.style.cssText=`
+            position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+            font-size:9px;font-weight:900;color:rgba(80,60,40,.85);
+            background:rgba(255,252,245,.7);backdrop-filter:blur(3px);
+            padding:4px 10px;border-radius:7px;pointer-events:none;
+            white-space:nowrap;transition:opacity .4s;
+          `;
+          hint.textContent='작품이 멈추면 탭해서 감상해봐!';
+          if(ctrl()) ctrl().appendChild(hint);
+          _t(()=>{ hint.style.opacity='0'; },2500);
+
+          /* 첫 작품 */
+          _t(()=>spawnArtwork(),500);
+
+          /* 종료 */
+          _t(()=>{
+            cancelAnimationFrame(bgRaf);
+            if(stage) stage.style.backgroundPositionX='';
+            if(ctrl()) ctrl().innerHTML='';
+            const msg=viewed>=4?'오늘 전시 진짜 좋았어. 한참 있었던 것 같아.'
+                     :viewed>=2?'조용한 전시장은 묘한 잔향을 남겨.'
+                     :'천천히 둘러봤어. 생각이 정리된 느낌.';
+            onDone(_score,msg);
+          },7200);
+        }
+      }
+    },
+
   };
 
   /* CSS 애니메이션 */
@@ -11820,7 +12192,7 @@ window.SMG = (function(){
 
 /* startAction 가로채기 — netflix / bath / walk */
 (function(){
-  const SMG_TYPES=['dance','vocal','netflix','bath','walk'];
+  const SMG_TYPES=['dance','vocal','netflix','bath','walk','exhibit'];
   const _orig=window.startAction;
   window._origFinishAction=window.finishAction;
 
@@ -11842,13 +12214,14 @@ window.SMG = (function(){
     const startLines={
       netflix:'뭐 볼지 골라볼게.',
       bath:'따뜻하게 몸부터 풀어볼게.',
+      exhibit:'전시를 천천히 둘러보고 올게.',
       walk:isNight?'잠깐 밤공기 마시러 나갔다 올게.':'잠깐 햇살 맞으러 나갔다 올게.'
     };
     if(typeof setSeedMessage==='function') setSeedMessage(startLines[type]||'');
 
     /* progress bar — netflix/bath/walk만 표시, dance/vocal은 미니게임 자체가 진행 표시 */
     const meta=typeof actionMeta!=='undefined'?actionMeta[type]:null;
-    const NO_PROGRESS_TYPES=['dance','vocal'];
+    const NO_PROGRESS_TYPES=['dance','vocal','exhibit'];
     if(meta&&typeof startActionProgress==='function'&&!NO_PROGRESS_TYPES.includes(type)){
       startActionProgress(type,meta.duration||8000);
     }
