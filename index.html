@@ -4097,6 +4097,11 @@ window.kvBgm = (function(){
   <div class="bar"><div class="fill scary" id="fill-stress"></div></div>
   <strong id="val-stress">0</strong>
 </div>
+<div class="seed-mini-row">
+  <span>Pleasure ✨</span>
+  <div class="bar"><div class="fill humor" id="fill-pleasure" style="background:linear-gradient(90deg,#f7bfd7,#ffe7a8)"></div></div>
+  <strong id="val-pleasure">50</strong>
+</div>
                </div>
             <div class="seed-stage-wrap">
               <div class="seed-stage bg-default" id="seedStage">
@@ -4656,7 +4661,8 @@ const state = {
     scary: 0,
     humor: 0,
     stress: 0,
-    popularity: 0
+    popularity: 0,
+    pleasure: 50
   },
   awakened: null,
   awards: {
@@ -5514,6 +5520,8 @@ function spendTimeWithVisitor(){
     advanceGameTime(240);
     const nextAffection = addAffection(friendName, 10);
     const moneyNow = addMoney(18);
+    /* pleasure — 친구와 시간 보내면 오름 */
+    state.stats.pleasure = clamp((state.stats.pleasure || 50) + 8, 0, 100);
     syncRoomUI();
     roomHint.textContent = `${friendName}와 네 시간을 함께 보냈어요.`;
     showRoomOwnerBubble('호감도가 10 올랐어!');
@@ -5930,7 +5938,8 @@ const statEls = {
   scary:      { fill: document.getElementById('fill-scary'),      val: document.getElementById('val-scary') },
   humor:      { fill: document.getElementById('fill-humor'),      val: document.getElementById('val-humor') },
   stress:     { fill: document.getElementById('fill-stress'),     val: document.getElementById('val-stress') },
-  popularity: { fill: document.getElementById('fill-popularity'), val: document.getElementById('val-popularity') }
+  popularity: { fill: document.getElementById('fill-popularity'), val: document.getElementById('val-popularity') },
+  pleasure:   { fill: document.getElementById('fill-pleasure'),   val: document.getElementById('val-pleasure') }
 };
 
 
@@ -6114,6 +6123,10 @@ function handleGift(kind, itemName, inRoom = false){
 
   /* 피로도 기록 갱신 */
   state.giftHistory[itemName] = prevCount + 1;
+
+  /* pleasure — 선물받을 때 오름. 희귀/컴백 보너스 */
+  const pleasureFromGift = isRare ? 15 : isComeback ? 10 : Math.round(6 * fatigueMult);
+  state.stats.pleasure = clamp((state.stats.pleasure || 50) + pleasureFromGift, 0, 100);
 
   updateScheduleUI();
   syncRoomUI();
@@ -6698,7 +6711,7 @@ function hardResetToNewGame(){
   state.birthEventSeenYear = 0;
   state.energy = 100;
   state.maxEnergy = 100;
-  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0, pleasure:50 };
   state.awakened = null;
   state.awards.season = 1;
   state.awards.lastHeldDay = 0;
@@ -8435,6 +8448,10 @@ function applyConcertMiniGameRewards(){
   }
   state.stats.popularity = Math.max(0, Math.min(100, (state.stats.popularity || 0) + popDelta));
 
+  /* pleasure — 콘서트 성공할수록 크게 오름 */
+  const pleasureGain = rewardTier === 3 ? 25 : rewardTier === 2 ? 15 : 5;
+  state.stats.pleasure = clamp((state.stats.pleasure || 50) + pleasureGain, 0, 100);
+
   applyStatDelta({
     practice: practiceGain,
     social: socialGain,
@@ -8548,16 +8565,20 @@ function updateScheduleUI(){
 
   /* ── 스트레스 단계 subline 업데이트 ── */
   const _stress = state.stats.stress || 0;
+  const _pleasure = state.stats.pleasure ?? 50;
   const _sublines = document.querySelectorAll('.schedule-subline');
   const _stressMsg = _stress >= 50 ? '⚠️ 번아웃 위험! 산책이나 목욕으로 쉬어줘.'
                    : _stress >= 25 ? '😓 스트레스가 쌓이고 있어. 스케줄 효율이 떨어지고 있어.'
                    : null;
+  const _pleasureMsg = !_stressMsg && _pleasure <= 20 ? '😶 요즘 즐거운 일이 없어. 기분전환이 필요해.'
+                     : !_stressMsg && _pleasure <= 35 ? '🥱 기분이 좀 처지네. 좋아하는 걸 해볼까.'
+                     : null;
+  const _activeMsg = _stressMsg || _pleasureMsg;
   _sublines.forEach(el => {
-    if (_stressMsg) {
-      el.textContent = _stressMsg;
-      el.style.color = _stress >= 50 ? '#c04040' : '#a07030';
+    if (_activeMsg) {
+      el.textContent = _activeMsg;
+      el.style.color = _stress >= 50 ? '#c04040' : _stress >= 25 ? '#a07030' : '#7a6aa0';
     } else {
-      /* 원래 텍스트 복원 */
       el.textContent = state.awakened
         ? '스케줄을 통해 코인을 모으고, 방 아이템을 구매해 친구 방문과 엔딩을 늘려보세요'
         : 'KEY:VERSE — KEY의 하루를 함께 만들어가세요.';
@@ -8583,12 +8604,15 @@ function updateScheduleUI(){
     if (rel?.fill) rel.fill.style.width = `${Math.min(100, state.stats[key] / statMax * 100)}%`;
   });
 
-  /* stress / popularity 바 직접 업데이트 (statEls에 없는 경우 대비) */
-  ['stress', 'popularity'].forEach(key => {
+  /* stress / popularity / pleasure 바 직접 업데이트 */
+  ['stress', 'popularity', 'pleasure'].forEach(key => {
     const val = state.stats[key] || 0;
     const fillEl = document.getElementById('fill-' + key);
     const valEl  = document.getElementById('val-'  + key);
-if (fillEl) fillEl.style.width = (key === 'stress' ? Math.min(100, val / 50 * 100) : Math.min(100, val)) + '%';
+    let pct;
+    if (key === 'stress') pct = Math.min(100, val / 50 * 100);
+    else pct = Math.min(100, val);
+    if (fillEl) fillEl.style.width = pct + '%';
     if (valEl)  valEl.textContent  = val;
   });
 
@@ -9126,11 +9150,41 @@ window.finishAction = function(type){
       seedStage && seedStage.classList.remove('stress-tint');
       break;
 
-    case 'shopping':
-      applyScaled({ cute: +2, social: +1, humor: +1 });
-      state.energy -= 10;
-      message = dialogues.shopping;
+    case 'shopping': {
+      const stress = state.stats.stress || 0;
+      const money  = state.money || 0;
+
+      /* 충동구매 — stress 30+ & 일정 확률 */
+      const impulseCost = 40 + Math.floor(Math.random() * 60); /* 40~99 코인 */
+      if (stress >= 30 && Math.random() < 0.55 && money >= impulseCost) {
+        addMoney(-impulseCost);
+        applyScaled({ cute: +3, humor: +2 });
+        state.energy -= 8;
+        state.stats.pleasure = clamp((state.stats.pleasure||50) + 20, 0, 100);
+        message = `너무 마음에 들어서 그냥 사버렸어… 😳 (-${impulseCost}코인)`;
+      } else if (stress >= 30 && Math.random() < 0.55 && money < impulseCost) {
+        /* 충동이 일었지만 코인 부족 */
+        applyScaled({ cute: +1 });
+        state.energy -= 6;
+        state.stats.pleasure = clamp((state.stats.pleasure||50) + 5, 0, 100);
+        message = '사고 싶었는데 지갑이 텅텅... 아쉽게 그냥 봤어.';
+      } else if (Math.random() < 0.45) {
+        /* 아이쇼핑 */
+        applyScaled({ social: +1 });
+        state.energy -= 5;
+        state.stats.pleasure = clamp((state.stats.pleasure||50) + 6, 0, 100);
+        message = '딱히 산 건 없는데, 기분전환은 됐어.';
+      } else {
+        /* 기본 쇼핑 */
+        const shopCost = 15 + Math.floor(Math.random() * 16); /* 15~30 코인 */
+        addMoney(-Math.min(shopCost, money));
+        applyScaled({ cute: +2, humor: +1 });
+        state.energy -= 7;
+        state.stats.pleasure = clamp((state.stats.pleasure||50) + 12, 0, 100);
+        message = `귀여운 아이템 겟! 기분이 확 좋아졌어 🛍️ (-${Math.min(shopCost, money)}코인)`;
+      }
       break;
+    }
 
     case 'cooking':
       applyScaled({ cute: +1, mystery: +1, social: +1 });
@@ -9163,6 +9217,28 @@ window.finishAction = function(type){
   if (stressDelta != null) {
     state.stats.stress = clamp((state.stats.stress || 0) + stressDelta, 0, 100);
   }
+
+  /* ── pleasure 효과 ──
+     여가 계열은 올라가고, 업무 계열은 자연 감소
+     기본값: 매 스케줄마다 -2 (자연 감소)
+  ────────────────────── */
+  const pleasureDeltaMap = {
+    dance:     -4,
+    vocal:     -3,
+    shoot:     -4,
+    meeting:   -5,
+    practice:  -3,
+    walk:      +5,
+    bath:      +6,
+    exhibit:   +4,
+    netflix:   +3,
+    cooking:   +7,
+    gardening: +8,
+    sleep:     +4,
+    shopping:   0, /* 쇼핑은 별도 분기에서 처리 */
+  };
+  const pleasureDelta = pleasureDeltaMap[type] ?? -2;
+  state.stats.pleasure = clamp((state.stats.pleasure || 50) + pleasureDelta, 0, 100);
 
   state.energy = clamp(state.energy, 0, state.maxEnergy);
   const earnedCoins = actionCoinReward[type] || 0;
@@ -9375,7 +9451,7 @@ function beginNewSeedRun(){
   state.birthEventSeenYear = 0;
   state.energy = 100;
   state.maxEnergy = 100;
-  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0 };
+  state.stats = { practice:0, mystery:0, social:0, cute:0, scary:0, humor:0, stress:0, popularity:0, pleasure:50 };
   state.awakened = null;
   state.isActing = false;
   state.currentStageBg = 'default';
@@ -9455,11 +9531,9 @@ function resetAll(){
     scary: 0,
     humor: 0,
     stress: 0,
-    popularity: 0
+    popularity: 0,
+    pleasure: 50
   };
-  state.awakened = null;
-  state.isActing = false;
-  state.currentStageBg = 'default';
   state.concertEventOffered = false;
   state.concertEventResolved = false;
   state.concertLevel = 0;
@@ -9632,7 +9706,8 @@ if (!p.roomDecor) p.roomDecor = {
     scary:      oldStats.scary      ?? 0,
     humor:      oldStats.humor      ?? 0,
     stress:     oldStats.stress     ?? 0,
-    popularity: oldStats.popularity ?? 0
+    popularity: oldStats.popularity ?? 0,
+    pleasure:   oldStats.pleasure   ?? 50
   };
 
   if (p.seedPlayer) {
@@ -9662,7 +9737,8 @@ function applySaveToState(save){
     scary:      p.stats?.scary      ?? 0,
     humor:      p.stats?.humor      ?? 0,
     stress:     p.stats?.stress     ?? 0,
-    popularity: p.stats?.popularity ?? 0
+    popularity: p.stats?.popularity ?? 0,
+    pleasure:   p.stats?.pleasure   ?? 50
   };
   state.awakened = p.awakened ?? null;
   state.awards = {
@@ -10451,6 +10527,8 @@ bootGame();
         }
       });
       state.stats.stress = 0;
+      /* 번아웃까지 간 건 pleasure에도 타격 — 하지만 휴가로 소폭 회복 */
+      state.stats.pleasure = clamp((state.stats.pleasure || 50) - 15 + 10, 0, 100);
       if (typeof state.energy === 'number') {
         state.energy = clamp(state.energy + (cfg.energyUp || 0), 0, state.maxEnergy || 100);
       }
