@@ -4114,7 +4114,8 @@ window.kvBgm = (function(){
           </div>
 
           <div class="schedule-grid room-schedule-grid" id="scheduleGrid">
-            <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="dance"><span class="emoji">💃</span><span class="title">안무연습</span><span class="time">2시간</span></button>
+            <button class="schedule-btn" data-act="vocal"><span class="emoji">🎤</span><span class="title">보컬연습</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">2시간</span></button>
             <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
@@ -4361,7 +4362,8 @@ window.kvBgm = (function(){
                 <div class="small">오늘 KEY에게 시킬 일을 선택해주세요.</div>
               </div>
               <div class="schedule-grid room-schedule-grid">
-                <button class="schedule-btn" data-act="practice"><span class="emoji">🎵</span><span class="title">연습</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="dance"><span class="emoji">💃</span><span class="title">안무연습</span><span class="time">2시간</span></button>
+                <button class="schedule-btn" data-act="vocal"><span class="emoji">🎤</span><span class="title">보컬연습</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="shoot"><span class="emoji">📹</span><span class="title">녹화</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="walk"><span class="emoji">🌙</span><span class="title">산책</span><span class="time">2시간</span></button>
                 <button class="schedule-btn" data-act="bath"><span class="emoji">🛁</span><span class="title">목욕</span><span class="time">1시간</span></button>
@@ -4848,6 +4850,8 @@ function unlockSpecialEndings(){
 window.__lastActionBubbleText = '';
 const dialogues = {
   intro: '어? 왔어? 오늘은 어떤 하루를 보내게 될까?',
+  dance: '몸이 기억하기 시작했어. 안무가 조금씩 붙는 느낌.',
+  vocal: '소리를 내면서 뭔가 정돈되는 느낌이 있어. 보컬 연습은 그런 거야.',
   practice: '집중해서 연습했어. 몸이 조금 더 기억해낸 것 같아.',
   shoot: '카메라 앞에서는 평소랑 또 다른 무드가 나와.',
   bath: '깨끗해지면 묘하게 기분도 정돈돼.',
@@ -4877,6 +4881,8 @@ const dialogues = {
 };
 
 const actionCoinReward = {
+  dance:    16,
+  vocal:    16,
   practice: 16,
   shoot: 20,
   walk: 8,
@@ -4899,14 +4905,16 @@ const miniTalkLines = {
 };
 
 const actionMeta = {
-  practice: { text: '♪', duration: 1700, minutes: 134 },
+  dance:    { text: '💃', duration: 1700, minutes: 134 },
+  vocal:    { text: '🎤', duration: 1700, minutes: 134 },
+  practice: { text: '♪',  duration: 1700, minutes: 134 },
   shoot:    { text: 'REC', duration: 1700, minutes: 128 },
-  walk:     { text: '…', duration: 1700, minutes: 120 },
-  bath:     { text: '…', duration: 1700, minutes: 52 },
-  exhibit:  { text: '…', duration: 1700, minutes: 116 },
-  netflix:  { text: '▶', duration: 1700, minutes: 103 },
+  walk:     { text: '…',  duration: 1700, minutes: 120 },
+  bath:     { text: '…',  duration: 1700, minutes: 52 },
+  exhibit:  { text: '…',  duration: 1700, minutes: 116 },
+  netflix:  { text: '▶',  duration: 1700, minutes: 103 },
   meeting:  { text: '?!', duration: 1700, minutes: 91 },
-  sleep:    { text: 'ZZZ', duration: 1700, minutes: 420 }
+  sleep:    { text: 'ZZZ',duration: 1700, minutes: 420 }
 };
 
 const seedDayBadge = document.getElementById('seedDayBadge');
@@ -5691,7 +5699,7 @@ function refreshDebugDateDisplay(){
       if (typeof state !== 'undefined' && state.stats && typeof state.stats[key] === 'number') {
         state.stats[key] = Math.min(100, state.stats[key] + 10);
         /* concertEventOffered 리셋 → practice 오르면 바로 콘서트 카드 재평가 */
-        if (key === 'practice') {
+        if (key === 'practice' || key === 'dance' || key === 'vocal') {
           state.concertEventOffered = false;
         }
         if (typeof updateScheduleUI === 'function') updateScheduleUI();
@@ -8837,6 +8845,8 @@ function startAction(type){
   startActionProgress(type, meta.duration);
 
   const actionStartLineMap = {
+    dance:'좋아, 안무 연습 시작해볼게. 몸이 기억할 때까지.',
+    vocal:'목 풀고 시작할게. 보컬은 컨디션이 중요하니까.',
     practice:'좋아, 연습부터 시작해볼게.',
     shoot:'지금부터 촬영 들어간다. 분위기 잘 잡아볼게.',
     walk:'잠깐 바람 쐬고 올게.',
@@ -8920,6 +8930,22 @@ window.finishAction = function(type){
   }
 
   switch(type){
+    case 'dance':
+      applyScaled({ practice: +3, scary: +1 });
+      state.energy -= 20;
+      message = stressPhase === 'danger' ? stressDangerLines[Math.floor(Math.random()*stressDangerLines.length)]
+               : stressPhase === 'warn'   ? stressWarnLines[Math.floor(Math.random()*stressWarnLines.length)]
+               : dialogues.dance;
+      break;
+
+    case 'vocal':
+      applyScaled({ practice: +2, mystery: +2 });
+      state.energy -= 16;
+      message = stressPhase === 'danger' ? stressDangerLines[Math.floor(Math.random()*stressDangerLines.length)]
+               : stressPhase === 'warn'   ? stressWarnLines[Math.floor(Math.random()*stressWarnLines.length)]
+               : dialogues.vocal;
+      break;
+
     case 'practice':
       applyScaled({ practice: +3, social: +1 });
       state.energy -= 18;
@@ -8978,6 +9004,8 @@ window.finishAction = function(type){
       break;
   };
   const stressDeltaMap = {
+    dance:    14,
+    vocal:    10,
     practice: 12,
     shoot: 3,
     exhibit: 3,
