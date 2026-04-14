@@ -4737,6 +4737,7 @@ oldCamera: false,
   endingFlags: {},
   money: 0,
   giftHistory: {},
+  fatFood: 0,
   equippedGiftWearables: { beanie:false, keyring:false, flower:false },
   giftInventory: { beanie:false, keyring:false, flower:false },
   keyCollection: [],
@@ -4819,6 +4820,7 @@ const MAIN_ENDINGS = [
   { name:'킬러 키', group:'메인', summary:'서늘한 존재감 속 장난기가 번뜩이는 각성.' },
   { name:'빌런 키', group:'메인', summary:'대중을 압도하는 카리스마형 각성.' },
   { name:'범동이 키', group:'메인', summary:'친화력과 입담이 폭발하는 각성.' },
+  { name:'뚱키',     group:'시크릿', summary:'칼로리 높은 음식을 너무 많이 먹으면... 일어나는 일.' },
   { name:'말랑콩떡 키', group:'메인', summary:'폭신한 귀여움과 유쾌함이 만난 각성.' }
 ];
 
@@ -4939,6 +4941,7 @@ const dialogues = {
   giftCarrotCurry: '당근카레는... 오늘은 조금 용기가 필요할 것 같아. 그래도 신경 써줘서 고마워.',
   giftFried: '두릅튀김이라니, 맛있게 잘 먹었어. 고마워.',
   giftPasta: '파스타 정말 맛있었다. 챙겨줘서 고마워.',
+  giftPuradak: '이거... 푸라닭이잖아. 왜 이걸... 먹긴 먹겠는데.',
   giftFlower: '지중해풍 꽃이라니, 방 안 공기까지 달라진 것 같아. 고마워.',
   giftKeyring: '핑크색 털뭉치 키링? 너무 귀엽다. 가방에 달아둘래.',
   giftBeanie: '고양이 비니까지 준비했어? 오늘은 조금 더 장난스럽게 보여도 좋겠다.',
@@ -5635,6 +5638,13 @@ debugOverlay.innerHTML = `
           <button type="button" class="debug-ending-btn" id="debugAddCoins" style="text-align:center;">코인 +1000</button>
         </div>
       </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:900;color:#5b4d42;margin-bottom:8px;">🔓 해금</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button type="button" class="debug-ending-btn" id="debugUnlockGifts" style="text-align:center;">선물 전체 해금</button>
+          <button type="button" class="debug-ending-btn" id="debugUnlockDecors" style="text-align:center;">가구 전체 해금</button>
+        </div>
+      </div>
       <div class="debug-ending-list" id="debugEndingList"></div>
     </div>
   </div>
@@ -5789,6 +5799,44 @@ function refreshDebugDateDisplay(){
         if (typeof updateScheduleUI === 'function') updateScheduleUI();
         if (typeof triggerSaveNow === 'function') triggerSaveNow();
       }
+    });
+  }
+
+  /* 선물 전체 해금 버튼 */
+  var debugUnlockGiftsBtn = document.getElementById('debugUnlockGifts');
+  if (debugUnlockGiftsBtn) {
+    debugUnlockGiftsBtn.addEventListener('click', function(){
+      if (typeof state === 'undefined') return;
+      /* GIFT_SHOP_ITEMS의 isUnlocked를 모두 true로 오버라이드 */
+      if (typeof GIFT_SHOP_ITEMS !== 'undefined') {
+        Object.values(GIFT_SHOP_ITEMS).forEach(function(arr){
+          arr.forEach(function(item){ item.isUnlocked = function(){ return true; }; });
+        });
+      }
+      if (typeof renderSeedGiftGrid === 'function') renderSeedGiftGrid();
+      if (typeof renderRoomGiftGrid === 'function') renderRoomGiftGrid();
+      if (typeof renderGiftShop === 'function') renderGiftShop();
+      if (typeof triggerSaveNow === 'function') triggerSaveNow();
+      debugUnlockGiftsBtn.textContent = '선물 해금 완료 ✓';
+      debugUnlockGiftsBtn.disabled = true;
+    });
+  }
+
+  /* 가구 전체 해금 버튼 */
+  var debugUnlockDecorsBtn = document.getElementById('debugUnlockDecors');
+  if (debugUnlockDecorsBtn) {
+    debugUnlockDecorsBtn.addEventListener('click', function(){
+      if (typeof state === 'undefined') return;
+      /* roomDecorConfig의 isUnlocked를 모두 true로 오버라이드 */
+      if (typeof roomDecorConfig !== 'undefined') {
+        Object.keys(roomDecorConfig).forEach(function(key){
+          roomDecorConfig[key].isUnlocked = function(){ return true; };
+        });
+      }
+      if (typeof renderRoomDecorButtons === 'function') renderRoomDecorButtons();
+      if (typeof triggerSaveNow === 'function') triggerSaveNow();
+      debugUnlockDecorsBtn.textContent = '가구 해금 완료 ✓';
+      debugUnlockDecorsBtn.disabled = true;
     });
   }
 
@@ -5963,7 +6011,8 @@ const GIFT_EFFECTS = {
     '고수샐러드': { stats:{ mystery:2 }, energy:3, messageKey:'giftCorianderSalad', bonus:'Mystery +2 · 에너지 +3' },
     '당근카레': { stats:{ practice:1, cute:1 }, energy:8, messageKey:'giftCarrotCurry', bonus:'Practice +1 · Cute +1 · 에너지 +8' },
     '두릅튀김': { stats:{ scary:1, mystery:1 }, energy:4, messageKey:'giftFried', bonus:'Scary +1 · Mystery +1 · 에너지 +4' },
-    '파스타': { stats:{ social:1, humor:1 }, energy:7, messageKey:'giftPasta', bonus:'Social +1 · Humor +1 · 에너지 +7' }
+    '파스타': { stats:{ social:1, humor:1 }, energy:7, messageKey:'giftPasta', bonus:'Social +1 · Humor +1 · 에너지 +7' },
+    '푸라닭': { stats:{ cute:-1, mystery:-1 }, energy:5, pleasureDelta:-8, messageKey:'giftPuradak', bonus:'Cute -1 · Mystery -1 · 에너지 +5 · Pleasure -8' }
   },
   item: {
     '지중해풍 꽃': { stats:{ cute:1, mystery:1 }, wearable:'flower', messageKey:'giftFlower', bonus:'Cute +1 · Mystery +1' },
@@ -5983,7 +6032,8 @@ const GIFT_SHOP_ITEMS = {
     { name:'고수샐러드',emoji:'🌿', kind:'food', cost:15, desc:'향이 강한 취향 음식.',       isUnlocked:()=>(state.stats.mystery>=10), unlockText:'Mystery 10 이상' },
     { name:'당근카레',  emoji:'🍛', kind:'food', cost:20, desc:'든든하게 챙길 수 있는 음식.',isUnlocked:()=>(state.stats.cute>=10),    unlockText:'Cute 10 이상' },
     { name:'두릅튀김',  emoji:'🍤', kind:'food', cost:25, desc:'조금 특별한 느낌의 음식.',   isUnlocked:()=>(state.stats.scary>=15),   unlockText:'Scary 15 이상' },
-    { name:'파스타',    emoji:'🍝', kind:'food', cost:20, desc:'무난하게 좋아할 만한 음식.', isUnlocked:()=>(state.stats.social>=15),  unlockText:'Social 15 이상' }
+    { name:'파스타',    emoji:'🍝', kind:'food', cost:20, desc:'무난하게 좋아할 만한 음식.', isUnlocked:()=>(state.stats.social>=15),  unlockText:'Social 15 이상' },
+    { name:'푸라닭',    emoji:'🍗', kind:'food', cost:12, desc:'싫어하는 음식... 먹이면 어떻게 될까?', isUnlocked:()=>true }
   ],
   item: [
     { name:'지중해풍 꽃',      emoji:'🌼', kind:'item', cost:30, desc:'방 분위기를 바꿔주는 선물.', isUnlocked:()=>true },
@@ -6118,6 +6168,10 @@ function handleGift(kind, itemName, inRoom = false){
     const scaledEnergy = Math.max(1, Math.round(effect.energy * fatigueMult));
     state.energy = clamp((state.energy || 0) + scaledEnergy, 0, state.maxEnergy || 100);
   }
+  /* pleasure 직접 변화 (피로도 미적용 — 싫어하는 음식은 항상 같은 타격) */
+  if (effect.pleasureDelta) {
+    state.stats.pleasure = clamp((state.stats.pleasure || 50) + effect.pleasureDelta, 0, 100);
+  }
   if (effect.wearable) {
     state.giftInventory[effect.wearable] = true;
     state.equippedGiftWearables.beanie = false;
@@ -6128,6 +6182,31 @@ function handleGift(kind, itemName, inRoom = false){
 
   /* 피로도 기록 갱신 */
   state.giftHistory[itemName] = prevCount + 1;
+
+  /* fatFood — 칼로리 높은 음식 줄 때 누적 (숨겨진 카운터) */
+  const FAT_FOOD_MAP = {
+    '당근카레':  2,
+    '파스타':    2,
+    '두릅튀김':  1.5,
+    '고수샐러드':0.5,
+    '샐러드':   -0.5, /* 샐러드는 오히려 감소 */
+  };
+  if (kind === 'food' && FAT_FOOD_MAP[itemName] !== undefined) {
+    state.fatFood = Math.max(0, (state.fatFood || 0) + FAT_FOOD_MAP[itemName]);
+  }
+
+  /* fatFood 힌트 대사 — 10 이상이면 슬쩍 반영 */
+  if ((state.fatFood || 0) >= 10 && kind === 'food') {
+    const fatLines = [
+      '요즘 맛있는 거 너무 많이 먹은 것 같아...',
+      '자꾸 먹다 보면 큰일 나는 거 아냐? 근데 맛있어.',
+      '오늘도 맛있게 먹었는데... 운동 좀 해야 할 것 같기도 해.',
+    ];
+    // fatFood 힌트는 pleasure/피로도 기반 대사 이후에 별도 표시용
+    state._fatFoodHint = fatLines[Math.floor(Math.random() * fatLines.length)];
+  } else {
+    state._fatFoodHint = null;
+  }
 
   /* pleasure — 선물받을 때 오름. 희귀/컴백 보너스 */
   const pleasureFromGift = isRare ? 15 : isComeback ? 10 : Math.round(6 * fatigueMult);
@@ -6158,8 +6237,23 @@ function handleGift(kind, itemName, inRoom = false){
     showRoomOwnerBubble(baseText);
     setTimeout(() => hideRoomOwnerBubble(), 2600);
     showRoomFloatFeedback(bonusText);
+    /* fatFood 힌트 — 잠시 후 추가 대사 */
+    if (state._fatFoodHint) {
+      setTimeout(() => {
+        showRoomOwnerBubble(state._fatFoodHint);
+        setTimeout(() => hideRoomOwnerBubble(), 2800);
+        state._fatFoodHint = null;
+      }, 3000);
+    }
   } else {
     setSeedMessage(baseText, { idleAfterMs:SEED_IDLE_MS });
+    /* fatFood 힌트 — 잠시 후 추가 대사 */
+    if (state._fatFoodHint) {
+      setTimeout(() => {
+        setSeedMessage(state._fatFoodHint, { autoClearMs:4000, idleAfterMs:SEED_IDLE_MS });
+        state._fatFoodHint = null;
+      }, 3200);
+    }
   }
 }
 
@@ -9121,6 +9215,8 @@ window.finishAction = function(type){
     case 'walk':
       applyScaled({ mystery: +2, scary: +1 });
       state.energy += 16;
+      /* 산책은 fatFood 소폭 감소 */
+      state.fatFood = Math.max(0, (state.fatFood || 0) - 1);
       message = dialogues.walk; /* 산책은 스트레스 해소니까 정상 대사 유지 */
       break;
 
@@ -9353,6 +9449,8 @@ window.finishAction = function(type){
     case 'gardening':
       applyScaled({ mystery: +1, cute: +1 });
       state.energy += 8;
+      /* 가드닝도 활동이라 fatFood 소폭 감소 */
+      state.fatFood = Math.max(0, (state.fatFood || 0) - 1);
       message = dialogues.gardening;
       break;
   };
@@ -9442,6 +9540,20 @@ function getTopStatName(){
 }
 
 function detectIdentity(){
+  /* ── 뚱키 분기 — fatFood 20 이상이면 우선 각성 ── */
+  const fatFood = state.fatFood || 0;
+  if (fatFood >= 20) {
+    return {
+      name: '뚱키',
+      score: 0,
+      largeImg: imageSet.defaultLarge,
+      roomImg: imageSet.defaultRoom,
+      bgImg: 'img/bg_awaken_default.png',
+      desc: `맛있는 걸 너무 많이 먹었더니… 뭔가 달라진 것 같아. 뚱키로 각성했습니다. 😳`,
+      badges: [['각성 계기', '과식'], ['fatFood', `${Math.round(fatFood)}`], ['상태', '배부름']]
+    };
+  }
+
   const s = state.stats;
   const sorted = Object.entries(s).sort((a,b) => b[1] - a[1]);
   const top = sorted[0][0];
@@ -9717,6 +9829,7 @@ oldCamera: false, };
   state.endingFlags = {};
   state.money = 0;
   state.giftHistory = {};
+  state.fatFood = 0;
   state.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
   state.giftInventory = { beanie:false, keyring:false, flower:false };
   state.keyCollection = [];
@@ -9799,6 +9912,7 @@ function serializeGameState(){
       endingFlags: { ...(state.endingFlags || {}) },
       money: state.money || 0,
       giftHistory: { ...(state.giftHistory || {}) },
+      fatFood: state.fatFood || 0,
       equippedGiftWearables: { ...(state.equippedGiftWearables || {}) },
       giftInventory: { ...(state.giftInventory || {}) },
       keyCollection: (state.keyCollection || []).map(item => deepClone(item)),
@@ -9846,6 +9960,7 @@ if (!p.roomDecor) p.roomDecor = {
   if (!p.endingFlags || typeof p.endingFlags !== 'object') p.endingFlags = {};
   if (typeof p.money !== 'number') p.money = 0;
   if (!p.giftHistory || typeof p.giftHistory !== 'object') p.giftHistory = {};
+  if (typeof p.fatFood !== 'number') p.fatFood = 0;
   if (!p.equippedGiftWearables || typeof p.equippedGiftWearables !== 'object') p.equippedGiftWearables = { beanie:false, keyring:false, flower:false };
   if (!p.giftInventory || typeof p.giftInventory !== 'object') p.giftInventory = { beanie:false, keyring:false, flower:false };
   if (!Array.isArray(p.keyCollection)) p.keyCollection = [];
@@ -9917,6 +10032,7 @@ function applySaveToState(save){
   state.roomSeenFriendEvents = Array.isArray(p.roomSeenFriendEvents) ? [...p.roomSeenFriendEvents] : [];
   state.money = p.money ?? 0;
   state.giftHistory = { ...(p.giftHistory || {}) };
+  state.fatFood = p.fatFood || 0;
   state.equippedGiftWearables = { beanie:false, keyring:false, flower:false, ...(p.equippedGiftWearables || {}) };
   state.giftInventory = { beanie:false, keyring:false, flower:false, ...(p.giftInventory || {}) };
   state.keyCollection = Array.isArray(p.keyCollection) ? p.keyCollection.map(item => deepClone(item)).filter(Boolean) : [];
