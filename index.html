@@ -10859,6 +10859,321 @@ window.SMG = (function(){
   ══════════════════════════════════════════════════ */
   const CONFIGS = {
 
+    /* ── 안무연습: 단일 레인 리듬 탭 ── */
+    dance:{
+      duration:8000,
+      run(onDone){
+        const stage=$id('seedStage');
+        const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
+
+        if(typeof setSeedMessage==='function')
+          setSeedMessage('안무 연습 시작! 큐사인에 맞춰 탭해봐.');
+
+        let hits=0, misses=0, combo=0;
+        let currentCue=null; /* 'left' | 'right' | null */
+        let cueTimer=null;
+
+        /* ── 큐사인 표시 엘리먼트 ── */
+        const cueEl=document.createElement('div');
+        cueEl.style.cssText=`
+          position:absolute;top:${stageRect.height*0.22}px;left:50%;
+          transform:translateX(-50%);
+          font-size:22px;font-weight:900;
+          color:rgba(255,255,255,.0);
+          background:rgba(0,0,0,.0);
+          padding:6px 16px;border-radius:10px;
+          pointer-events:none;text-align:center;
+          transition:color .1s,background .1s,opacity .15s;
+          white-space:nowrap;
+        `;
+        cueEl.textContent='';
+
+        /* ── 왼쪽 탭 버튼 ── */
+        const btnL=document.createElement('div');
+        btnL.style.cssText=`
+          position:absolute;left:8px;top:50%;transform:translateY(-50%);
+          width:52px;height:52px;border-radius:50%;
+          background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);
+          display:flex;align-items:center;justify-content:center;
+          font-size:22px;pointer-events:auto;cursor:pointer;
+          transition:background .1s,transform .1s;user-select:none;
+        `;
+        btnL.textContent='←';
+
+        /* ── 오른쪽 탭 버튼 ── */
+        const btnR=document.createElement('div');
+        btnR.style.cssText=`
+          position:absolute;right:8px;top:50%;transform:translateY(-50%);
+          width:52px;height:52px;border-radius:50%;
+          background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);
+          display:flex;align-items:center;justify-content:center;
+          font-size:22px;pointer-events:auto;cursor:pointer;
+          transition:background .1s,transform .1s;user-select:none;
+        `;
+        btnR.textContent='→';
+
+        if(ctrl()){
+          ctrl().appendChild(cueEl);
+          ctrl().appendChild(btnL);
+          ctrl().appendChild(btnR);
+        }
+
+        /* ── 큐사인 발생 ── */
+        function showCue(){
+          currentCue=Math.random()<0.5?'left':'right';
+          const isLeft=currentCue==='left';
+          cueEl.textContent=isLeft?'← 왼쪽!':'오른쪽! →';
+          cueEl.style.color='rgba(255,255,255,.95)';
+          cueEl.style.background=isLeft?'rgba(201,195,232,.55)':'rgba(241,167,200,.55)';
+          cueEl.style.opacity='1';
+
+          /* 강조 버튼 */
+          const activeBtn=isLeft?btnL:btnR;
+          activeBtn.style.background='rgba(255,255,255,.42)';
+          activeBtn.style.transform='translateY(-50%) scale(1.15)';
+
+          /* CUE_WINDOW ms 안에 안 누르면 miss */
+          cueTimer=setTimeout(()=>{
+            missCue();
+          },900);
+        }
+
+        function missCue(){
+          currentCue=null;
+          cueEl.style.opacity='0';
+          btnL.style.background='rgba(255,255,255,.14)';
+          btnL.style.transform='translateY(-50%) scale(1)';
+          btnR.style.background='rgba(255,255,255,.14)';
+          btnR.style.transform='translateY(-50%) scale(1)';
+          misses++;
+          combo=0;
+          _flash('놓쳤어!',500);
+          _t(()=>showCue(), 600+Math.random()*400);
+        }
+
+        function hitCue(dir){
+          if(!currentCue) return;
+          clearTimeout(cueTimer);
+          const correct=dir===currentCue;
+          currentCue=null;
+          cueEl.style.opacity='0';
+          btnL.style.background='rgba(255,255,255,.14)';
+          btnL.style.transform='translateY(-50%) scale(1)';
+          btnR.style.background='rgba(255,255,255,.14)';
+          btnR.style.transform='translateY(-50%) scale(1)';
+
+          if(correct){
+            hits++;
+            combo++;
+            _setScore(Math.min(100,_score+7));
+            /* 캐릭터 방향 전환 */
+            if(typeof state!=='undefined'){
+              state.seedPlayer.facing=dir==='left'?'left':'right';
+              if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
+            }
+            _flash(combo>=5?`${combo} COMBO! 🔥`:'GOOD 👍',600);
+          } else {
+            misses++;
+            combo=0;
+            _flash('반대야!',500);
+          }
+
+          _t(()=>showCue(), 500+Math.random()*400);
+        }
+
+        /* 버튼 이벤트 */
+        btnL.addEventListener('pointerdown',e=>{ e.preventDefault(); hitCue('left'); });
+        btnR.addEventListener('pointerdown',e=>{ e.preventDefault(); hitCue('right'); });
+
+        /* 키보드 지원 */
+        function onKey(e){
+          if(e.repeat) return;
+          if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') hitCue('left');
+          if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') hitCue('right');
+        }
+        window.addEventListener('keydown',onKey);
+
+        /* 첫 큐 */
+        _t(()=>showCue(),800);
+
+        /* 힌트 */
+        const hint=document.createElement('div');
+        hint.style.cssText=`
+          position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+          font-size:9px;font-weight:900;color:rgba(255,255,255,.7);
+          background:rgba(0,0,0,.35);backdrop-filter:blur(3px);
+          padding:4px 10px;border-radius:7px;pointer-events:none;
+          white-space:nowrap;transition:opacity .4s;
+        `;
+        hint.textContent='큐사인 방향을 타이밍 맞춰 탭해봐!';
+        if(ctrl()) ctrl().appendChild(hint);
+        _t(()=>{ hint.style.opacity='0'; },2500);
+
+        _t(()=>{
+          clearTimeout(cueTimer);
+          window.removeEventListener('keydown',onKey);
+          /* 종료 시 캐릭터 오른쪽으로 복원 */
+          if(typeof state!=='undefined'){
+            state.seedPlayer.facing='right';
+            if(typeof renderSeedPlayer==='function') renderSeedPlayer({});
+          }
+          const total=hits+misses||1;
+          const acc=Math.round(hits/total*100);
+          const msg=acc>=80?`안무 완벽했어! 정확도 ${acc}% 💃`
+                   :acc>=50?`꽤 잘 맞췄어. 정확도 ${acc}%`
+                   :`오늘은 박자가 좀 안 맞았나봐. 정확도 ${acc}%`;
+          onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
+    /* ── 보컬연습: 꾹 누르기로 음 유지 ── */
+    vocal:{
+      duration:8000,
+      run(onDone){
+        if(typeof setSeedMessage==='function')
+          setSeedMessage('보컬 연습 시작! 버튼을 꾹 눌러서 음을 유지해봐.');
+
+        const stage=$id('seedStage');
+        const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
+
+        /* 음 유지 바 */
+        const barWrap=document.createElement('div');
+        barWrap.style.cssText=`
+          position:absolute;left:20%;right:20%;top:${stageRect.height*0.35}px;
+          height:14px;border-radius:999px;
+          background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);
+          overflow:hidden;pointer-events:none;
+        `;
+        const barFill=document.createElement('div');
+        barFill.style.cssText=`
+          height:100%;width:0%;border-radius:999px;
+          background:linear-gradient(90deg,rgba(201,195,232,.9),rgba(241,167,200,.9));
+          transition:width .05s linear;
+        `;
+        barWrap.appendChild(barFill);
+
+        /* 음표 아이콘 */
+        const noteIcon=document.createElement('div');
+        noteIcon.style.cssText=`
+          position:absolute;left:50%;transform:translateX(-50%);
+          top:${stageRect.height*0.18}px;font-size:32px;
+          pointer-events:none;transition:transform .1s,opacity .1s;opacity:.5;
+        `;
+        noteIcon.textContent='🎵';
+
+        /* 홀드 버튼 */
+        const holdBtn=document.createElement('div');
+        holdBtn.style.cssText=`
+          position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+          width:80px;height:80px;border-radius:50%;
+          background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.5);
+          display:flex;align-items:center;justify-content:center;
+          font-size:13px;font-weight:900;color:rgba(255,255,255,.85);
+          pointer-events:auto;cursor:pointer;user-select:none;
+          transition:background .1s,transform .1s;
+        `;
+        holdBtn.textContent='HOLD';
+
+        if(ctrl()){ ctrl().appendChild(barWrap); ctrl().appendChild(noteIcon); ctrl().appendChild(holdBtn); }
+
+        /* 홀드 상태 */
+        let holding=false;
+        let holdAccum=0;   /* 누적 홀드 시간 ms */
+        let holdStart=0;
+        let waveRaf=null;
+        let wavePhase=0;
+
+        /* 음파 애니메이션 */
+        function waveLoop(){
+          if(!holding){ waveRaf=null; return; }
+          wavePhase+=0.15;
+          const scale=1+Math.sin(wavePhase)*0.08;
+          noteIcon.style.transform=`translateX(-50%) scale(${scale})`;
+          noteIcon.style.opacity='1';
+          waveRaf=requestAnimationFrame(waveLoop);
+        }
+
+        /* 점수 업데이트 루프 */
+        let scoreRaf=null;
+        let lastTs=0;
+        function scoreLoop(ts){
+          if(!holding){ scoreRaf=null; return; }
+          if(lastTs){ holdAccum+=ts-lastTs; }
+          lastTs=ts;
+          /* 바 채우기 — 최대 8초 */
+          const pct=Math.min(100,holdAccum/80);
+          barFill.style.width=pct+'%';
+          _setScore(Math.min(100,holdAccum/80));
+          scoreRaf=requestAnimationFrame(scoreLoop);
+        }
+
+        function startHold(){
+          if(holding) return;
+          holding=true;
+          holdStart=performance.now();
+          lastTs=0;
+          holdBtn.style.background='rgba(241,167,200,.45)';
+          holdBtn.style.transform='translateX(-50%) scale(.93)';
+          holdBtn.textContent='♪♪♪';
+          if(!waveRaf) waveRaf=requestAnimationFrame(waveLoop);
+          if(!scoreRaf) scoreRaf=requestAnimationFrame(scoreLoop);
+        }
+
+        function stopHold(){
+          if(!holding) return;
+          holding=false;
+          holdBtn.style.background='rgba(255,255,255,.15)';
+          holdBtn.style.transform='translateX(-50%) scale(1)';
+          holdBtn.textContent='HOLD';
+          noteIcon.style.opacity='.5';
+          noteIcon.style.transform='translateX(-50%) scale(1)';
+          const held=(performance.now()-holdStart)/1000;
+          if(held>0.5) _flash(held>2?`${held.toFixed(1)}초! 🎤`:'놓쳤어...',800);
+        }
+
+        holdBtn.addEventListener('pointerdown', e=>{ e.preventDefault(); startHold(); });
+        holdBtn.addEventListener('pointerup',   ()=>stopHold());
+        holdBtn.addEventListener('pointercancel',()=>stopHold());
+        holdBtn.addEventListener('pointerleave',()=>stopHold());
+
+        /* 키보드 지원 */
+        function onKeyDown(e){ if((e.code==='Space'||e.code==='Enter')&&!e.repeat){ e.preventDefault(); startHold(); } }
+        function onKeyUp(e)  { if(e.code==='Space'||e.code==='Enter') stopHold(); }
+        window.addEventListener('keydown',onKeyDown);
+        window.addEventListener('keyup',onKeyUp);
+
+        /* 가이드 — 음표가 흘러지나감 (홀드할 타이밍 힌트) */
+        function spawnGuide(){
+          if(!ctrl()) return;
+          const el=document.createElement('div');
+          const ly=stageRect.height*0.25+Math.random()*stageRect.height*0.25;
+          el.style.cssText=`
+            position:absolute;left:-24px;top:${ly}px;
+            font-size:20px;pointer-events:none;
+            animation:smgNoteFloat 2.2s linear forwards;
+          `;
+          el.textContent=['🎵','🎶','♪','♩'][Math.floor(Math.random()*4)];
+          ctrl().appendChild(el);
+          setTimeout(()=>el.remove(),2300);
+        }
+        function schedGuide(){ spawnGuide(); _t(()=>schedGuide(),800+Math.random()*600); }
+        schedGuide();
+
+        _t(()=>{
+          cancelAnimationFrame(waveRaf);
+          cancelAnimationFrame(scoreRaf);
+          window.removeEventListener('keydown',onKeyDown);
+          window.removeEventListener('keyup',onKeyUp);
+          stopHold();
+          const msg=_score>=80?'오늘 보컬 컨디션 진짜 좋았어! 🎤'
+                   :_score>=50?'음을 잘 유지했어. 조금씩 나아지고 있어.'
+                   :'오늘은 목이 좀 안 풀렸나봐.';
+          onDone(_score,msg);
+        },this.duration);
+      }
+    },
+
     /* ── 넷플릭스: 기존 배경 유지, 포스터만 스테이지 위에 ── */
     netflix:{
       duration:0,
@@ -11217,6 +11532,10 @@ window.SMG = (function(){
       70%{transform:scale(1.2) rotate(5deg);opacity:1}
       100%{transform:scale(1) rotate(0);opacity:1}
     }
+    @keyframes smgNoteFloat{
+      0%{transform:translateX(0);opacity:1}
+      100%{transform:translateX(calc(100vw + 48px));opacity:.4}
+    }
   `;
   document.head.appendChild(smgStyle);
 
@@ -11254,7 +11573,7 @@ window.SMG = (function(){
 
 /* startAction 가로채기 — netflix / bath / walk */
 (function(){
-  const SMG_TYPES=['netflix','bath','walk'];
+  const SMG_TYPES=['dance','vocal','netflix','bath','walk'];
   const _orig=window.startAction;
   window._origFinishAction=window.finishAction;
 
