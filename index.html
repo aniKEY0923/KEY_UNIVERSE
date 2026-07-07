@@ -7393,7 +7393,7 @@ function isNightTime(hour = state.gameHour){
 
 function updateSeedStageBackground(mode = state.currentStageBg){
   state.currentStageBg = mode;
-  seedStage.classList.remove('bg-default', 'bg-default-night', 'bg-walk', 'bg-walk-day', 'bg-bathroom');
+  seedStage.classList.remove('bg-default', 'bg-default-night', 'bg-walk', 'bg-walk-day', 'bg-bathroom', 'bg-gallery');
 
   if (mode === 'walk') {
     seedStage.classList.add('bg-walk');
@@ -10697,31 +10697,52 @@ bootGame();
         <button type="button" class="bo-return-btn" id="boReturnBtn">돌아간다</button>
       </div>`;
     document.body.appendChild(div);
-    $('boSokcho').addEventListener('click', () => startTrip('sokcho'));
-    $('boHotel').addEventListener('click',  () => startTrip('hotel'));
+    $('boSokcho').addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if ($('boSokcho').disabled) return;
+      startTrip('sokcho');
+    });
+    $('boHotel').addEventListener('click',  (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if ($('boHotel').disabled) return;
+      startTrip('hotel');
+    });
     $('boReturnBtn').addEventListener('click', finishBurnout);
   }
   window.buildBurnoutOverlay = buildBurnoutOverlay;
 
   /* ── 번아웃 열기 ────────────────────────────────────────── */
   let _burnoutOpen = false;  // 단순 플래그 — state.burnout 의존 안 함
+  let _burnoutReadyTimer = null;
 
   function openBurnoutV7() {
     if (_burnoutOpen) return;
     buildBurnoutOverlay();
     _burnoutOpen = true;
+    _currentTripCfg = null;
+    cancelAnimationFrame(_tripRaf);
+    clearTimeout(_burnoutReadyTimer);
 
-    $('boBubble').textContent = '지쳐버린 것 같아. 어딘가 쉬고 싶어...';
+    /* A) 번아웃 도착: 즉시 여행 시작 금지, 먼저 선택 UI만 보여준다 */
+    $('boBubble').textContent = '번아웃이 온 것 같아. 어디로 쉬러 갈까?';
     $('boScene').src = '';
     $('boProgressWrap').className = 'bo-progress-wrap';
+    $('boProgressLabel').textContent = '이동 중...';
     $('boProgressFill').style.width = '0%';
     $('boActions').style.display = '';
     $('boReturnBtn').className = 'bo-return-btn';
-    [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = false));
+    [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = true));
     $('boChar').src = state?.awakened?.roomImg || 'img/KEY_default_s.png';
 
     $('burnoutOverlay').classList.add('show');
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(true));
+
+    /* 같은 탭/클릭 이벤트가 선택 버튼으로 이어지는 사고 방지 */
+    _burnoutReadyTimer = setTimeout(() => {
+      [$('boSokcho'), $('boHotel')].forEach(b => b && (b.disabled = false));
+    }, 450);
   }
   window.openBurnout = openBurnoutV7;
   window.openBurnoutVacation = openBurnoutV7;
@@ -10749,8 +10770,9 @@ bootGame();
 
   function startTrip(kind) {
     const cfg = TRIP_CFG[kind];
-    if (!cfg) return;
+    if (!cfg || !_burnoutOpen || _currentTripCfg) return;
     _currentTripCfg = cfg;
+    clearTimeout(_burnoutReadyTimer);
 
     $('boActions').style.display = 'none';
     const scene = $('boScene');
@@ -10787,6 +10809,7 @@ bootGame();
   /* ── 귀환 처리 ──────────────────────────────────────────── */
   function finishBurnout() {
     cancelAnimationFrame(_tripRaf);
+    clearTimeout(_burnoutReadyTimer);
     const cfg = _currentTripCfg;
     _currentTripCfg = null;
     _burnoutOpen = false;
@@ -10807,6 +10830,10 @@ bootGame();
         state.energy = clamp(state.energy + (cfg.energyUp || 0), 0, state.maxEnergy || 100);
       }
     }
+
+    /* D) 여행/휴식 종료 후 원래 스케줄 배경으로 복귀 */
+    safe(() => updateSeedStageBackground && updateSeedStageBackground('default'));
+    safe(() => syncSeedStageLayout && syncSeedStageLayout({ immediate:true }));
 
     safe(() => setScheduleButtonsDisabled && setScheduleButtonsDisabled(false));
     safe(() => updateScheduleUI && updateScheduleUI());
@@ -11298,6 +11325,10 @@ window.SMG = (function(){
   let _timers  = [];
   let _onDone  = null;
 
+  /* 2026-07-07 패치: 스케줄 미니게임 체감 시간이 너무 짧아서 기본 길이를 3배로 늘림 */
+  const DEFAULT_SMG_DURATION = 24000;
+  const WALK_SCROLL_SPEED = 3.6; // 기존 2.4px/frame × 1.5
+
   /* DOM 참조 */
   const $id  = id => document.getElementById(id);
   const ctrl = () => $id('smgControls');
@@ -11357,7 +11388,7 @@ window.SMG = (function(){
 
     /* ── 안무연습: 단일 레인 리듬 탭 ── */
     dance:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
         const stage=$id('seedStage');
         const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
@@ -11525,7 +11556,7 @@ window.SMG = (function(){
 
     /* ── 보컬연습: 꾹 누르기로 음 유지 ── */
     vocal:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
         if(typeof setSeedMessage==='function')
           setSeedMessage('보컬 연습 시작! 탭 속도로 음 높이를 맞춰봐.');
@@ -11781,8 +11812,9 @@ window.SMG = (function(){
 
     /* ── 산책: 기존 캐릭터 좌표 이동 + walk 배경 + 아이템 ── */
     walk:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
+        const durationMs=this.duration;
         const isNight=(typeof state!=='undefined')&&((state.gameHour||7)<6||(state.gameHour||7)>=18);
         const stage=$id('seedStage');
 
@@ -11829,7 +11861,7 @@ window.SMG = (function(){
           /* 자동 배경 스크롤 */
           let bgPos=0, bgRaf=null;
           function bgLoop(){
-            bgPos+=2.4;
+            bgPos+=WALK_SCROLL_SPEED;
             if(stage) stage.style.backgroundPositionX=`${-bgPos}px`;
             bgRaf=requestAnimationFrame(bgLoop);
           }
@@ -11954,14 +11986,14 @@ window.SMG = (function(){
               ?(caught>=6?'밤 산책하면서 별도 잡고 기분 최고야.':caught>=3?'밤공기 마시며 산책했어.':'조용한 밤 산책이었어.')
               :(caught>=6?'산책하면서 좋은 것들도 많이 발견했어!':caught>=3?'햇살 맞으며 잘 걸었어.':'가볍게 산책했어.');
             onDone(_score,msg);
-          },7200);
+          },durationMs);
         }
       }
     },
 
     /* ── 목욕: bathroom 배경 + bathtub 오버레이 + 거품 탭 ── */
     bath:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
         /* 배경 교체 */
         if(typeof updateSeedStageBackground==='function'){
@@ -12039,8 +12071,9 @@ window.SMG = (function(){
 
     /* ── 전시회: 갤러리 배경 스크롤 + 작품 액자 탭 ── */
     exhibit:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
+        const durationMs=this.duration;
         const stage=$id('seedStage');
         const stageRect=stage?stage.getBoundingClientRect():{width:320,height:214};
 
@@ -12246,14 +12279,14 @@ window.SMG = (function(){
                      :viewed>=2?'조용한 전시장은 묘한 잔향을 남겨.'
                      :'천천히 둘러봤어. 생각이 정리된 느낌.';
             onDone(_score,msg);
-          },7200);
+          },durationMs);
         }
       }
     },
 
     /* ── 요리: 불 세기 타이밍 탭 ── */
     cooking:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
         if(typeof setSeedMessage==='function')
           setSeedMessage('오늘은 직접 뭔가 만들어볼까. 불 조절이 관건이야.');
@@ -12449,7 +12482,7 @@ window.SMG = (function(){
 
     /* ── 가드닝: 잡초 탭 제거, 꽃은 탭 금지 ── */
     gardening:{
-      duration:8000,
+      duration:DEFAULT_SMG_DURATION,
       run(onDone){
         if(typeof setSeedMessage==='function')
           setSeedMessage('잠깐 밖에서 손 좀 써볼게. 잡초 정리부터.');
@@ -12630,6 +12663,7 @@ window.SMG = (function(){
 
   function close(score,msg){
     if(!_active) return;
+    const finishedType=_type;
     _active=false;
     _clearAll();
     _closeLayer();
@@ -12640,6 +12674,16 @@ window.SMG = (function(){
     if(typeof updateSeedStageBackground==='function'){
       updateSeedStageBackground('default');
     }
+
+    /* 2026-07-07 패치: 산책은 미니게임 중 캐릭터를 왼쪽으로 이동시키므로 종료 후 기본 위치로 복구 */
+    if(finishedType==='walk'){
+      try{
+        if(typeof placeSeedPlayerInitial==='function') placeSeedPlayerInitial();
+        if(typeof state!=='undefined' && state.seedPlayer) state.seedPlayer.facing='right';
+        if(typeof renderSeedPlayer==='function') renderSeedPlayer({immediate:true});
+      }catch(e){}
+    }
+
     if(typeof _onDone==='function') _onDone(score||0,msg||'');
     _onDone=null; _type=null;
   }
@@ -12683,7 +12727,8 @@ window.SMG = (function(){
     const meta=typeof actionMeta!=='undefined'?actionMeta[type]:null;
     const NO_PROGRESS_TYPES=['dance','vocal','exhibit','cooking','gardening'];
     if(meta&&typeof startActionProgress==='function'&&!NO_PROGRESS_TYPES.includes(type)){
-      startActionProgress(type,meta.duration||8000);
+      const progressDuration=(window.SMG&&window.SMG.CONFIGS&&window.SMG.CONFIGS[type]&&window.SMG.CONFIGS[type].duration)||meta.duration||8000;
+      startActionProgress(type,progressDuration);
     }
 
     window.SMG.open(type,(score,msg)=>{
