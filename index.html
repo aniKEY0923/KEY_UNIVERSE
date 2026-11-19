@@ -3937,7 +3937,18 @@ body.ending-modal-open{
 .awards-confirm-no:hover{ transform:translateY(-2px); background:rgba(255,255,255,.96); }
 
 </style>
-</head>
+<style>
+#firstMeeting{border:0;padding:0;border-radius:22px;width:min(90vw,390px);max-height:90dvh;overflow:auto;color:#42343d;background:#fffbf5;box-shadow:0 16px 70px #34252c44}
+#firstMeeting::backdrop{background:#382f3be6}
+.meeting-portrait{height:clamp(100px,24dvh,190px);display:grid;place-items:end center;background:center/cover url('img/room_default.png')}
+.meeting-portrait img{height:95%;max-width:90%;object-fit:contain;min-height:0}
+#meetingForm{display:grid;gap:14px;padding:22px}
+#meetingLine{margin:0;font-size:19px;line-height:1.55}
+#meetingName{width:100%;font:inherit;padding:10px;border:1px solid #ad929f;border-radius:8px}
+#meetingOptions{display:flex;gap:8px;flex-wrap:wrap}
+#meetingOptions button{padding:8px 14px;border-radius:18px;background:#f5e3eb;border:0}
+#firstMeeting [hidden]{display:none}
+</style></head>
 <script>
 /* ══════════════════════════════════════════════════════════════
    HTML Audio BGM — 유튜브 대신 MP3 직접 재생
@@ -4028,6 +4039,15 @@ window.kvBgm = (function(){
 })();
 </script>
 <body>
+<dialog id="firstMeeting" aria-labelledby="meetingLine">
+  <div class="meeting-portrait"><img src="img/KEY_default.png" alt="키"></div>
+  <form id="meetingForm">
+    <h2 id="meetingLine" aria-live="polite"></h2>
+    <div id="meetingOptions" hidden><button type="button">키</button><button type="button">기범이</button><button type="button">버미</button></div>
+    <input id="meetingName" aria-labelledby="meetingLine" autocomplete="off" maxlength="20" required>
+    <button class="primary-btn" id="meetingNext">다음</button>
+  </form>
+</dialog>
 <!-- YouTube BGM 플레이어 holder — head 스크립트에서 참조하므로 body 최상단에 위치 -->
 <div class="app">
 
@@ -4649,6 +4669,7 @@ const miniGame = {
 };
 
 const state = {
+  meeting: null,
   day: 1,
   gameHour: 7,
   gameMinute: 0,
@@ -6796,6 +6817,8 @@ const seedDecorLayer = document.getElementById('seedDecorLayer');
 const roomDecorLayer = document.getElementById('roomDecorLayer');
 
 function hardResetToNewGame(){
+  state.meeting = null;
+  syncMeeting();
   try{
     localStorage.removeItem(LOCAL_SAVE_KEY);
     localStorage.removeItem('furnitureLayout');
@@ -9787,6 +9810,8 @@ function syncRoomUI(){
 }
 
 function resetAll(){
+  state.meeting = null;
+  syncMeeting();
   clearRunningActionTimers();
   state.day = 1;
   state.gameHour = 7;
@@ -9889,6 +9914,7 @@ function serializeGameState(){
     slotId: SLOT_ID,
     clientUpdatedAt: Date.now(),
     progress: {
+      meeting: state.meeting,
       day: state.day,
       gameHour: state.gameHour,
       gameMinute: state.gameMinute ?? 0,
@@ -9997,6 +10023,8 @@ function applySaveToState(save){
 
   const p = migrated.progress;
 
+  state.meeting = p.meeting === undefined ? {player:'릴프릭', key:'키'} : p.meeting;
+  syncMeeting();
   state.day = p.day ?? 1;
   state.gameHour = p.gameHour ?? 7;
   state.gameMinute = p.gameMinute ?? 0;
@@ -10255,6 +10283,63 @@ function updateAuthUI(user){
     logoutButtons.forEach(btn => btn.style.display = 'none');
   }
 }
+
+const meetingDialog = document.getElementById('firstMeeting');
+const meetingName = document.getElementById('meetingName');
+const meetingLine = document.getElementById('meetingLine');
+const meetingOptions = document.getElementById('meetingOptions');
+const meetingNext = document.getElementById('meetingNext');
+let meetingStep = 0;
+let meetingPlayer = '';
+let meetingKey = '';
+
+function syncMeeting(){
+  if (state.meeting){
+    if (meetingDialog.open) meetingDialog.close();
+    return;
+  }
+  meetingStep = 0;
+  meetingLine.textContent = '안녕! 내가 너를 뭐라고 부르면 좋을까?';
+  meetingName.disabled = meetingName.hidden = false;
+  meetingName.value = '릴프릭';
+  meetingOptions.hidden = true;
+  meetingNext.textContent = '다음';
+  if (!meetingDialog.open) meetingDialog.showModal();
+}
+meetingDialog.addEventListener('cancel', event => event.preventDefault());
+meetingOptions.addEventListener('click', event => {
+  if (event.target.tagName === 'BUTTON') meetingName.value = event.target.textContent;
+});
+document.getElementById('meetingForm').addEventListener('submit', event => {
+  event.preventDefault();
+  const name = meetingName.value.trim();
+  if (meetingStep < 2 && !name){
+    meetingName.value = '';
+    meetingName.reportValidity();
+    return;
+  }
+  if (meetingStep === 0){
+    meetingPlayer = name;
+    meetingLine.textContent = '반가워, ' + name + '! 너는 나를 뭐라고 부르고 싶어?';
+    meetingOptions.hidden = false;
+    meetingName.value = '키';
+    meetingName.placeholder = '원하는 호칭 직접 입력';
+    meetingStep = 1;
+  } else if (meetingStep === 1){
+    meetingKey = name;
+    meetingLine.textContent = name + '! 좋아. ' + meetingPlayer + ', 우리 방으로 갈까?';
+    meetingOptions.hidden = true;
+    meetingName.disabled = meetingName.hidden = true;
+    meetingNext.textContent = '방으로 가기';
+    meetingNext.focus();
+    meetingStep = 2;
+  } else {
+    state.meeting = {player:meetingPlayer, key:meetingKey};
+    meetingDialog.close();
+    setSeedMessage(meetingPlayer + ', 오늘은 뭐 하고 싶어?', {autoClearMs:4500});
+    triggerSaveNow();
+  }
+});
 
 async function bootGame(){
   const localSave = loadLocalSave();
@@ -12763,3 +12848,4 @@ window.SMG = (function(){
 </script>
 </body>
 </html>
+
